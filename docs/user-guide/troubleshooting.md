@@ -248,6 +248,8 @@ Linux Flatpak:
 flatpak run --env=AERION_DEBUG=1 io.github.clabs_public_forks.Aerion
 
 ```
+Logs print to the terminal you launched from. To save them to a file instead, add `> aerion-debug.log 2>&1` to the end of the command, reproduce the issue, then quit Aerion.
+
 Copy only the portion that relates to your issue and be sure to redact any potentially personally identifiable information as needed.
 
 ## Getting More Help

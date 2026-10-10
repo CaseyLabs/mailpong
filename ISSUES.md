@@ -46,6 +46,17 @@ has not yet been confirmed against the code.
   folder set in `internal/imap`'s IDLE) routed to the same incremental sync,
   which would also retire the 30 s throttle state; cheaper: a shorter Sent
   poll interval.
+- **M10 low** `app/app.go` `Shutdown`: running folder syncs are never
+  cancelled or awaited, so a background body fetch (`app/sync.go`
+  `FetchBodiesInBackground` goroutine) outlives teardown. Seen in a Flatpak
+  debug run 2026-10-10: `imapPool.CloseAll()` cut a 2.5 MB body literal
+  mid-read, the "after broken stream" retry asked the pool for a new
+  connection, and credential lookup failed with `sql: database is closed`
+  just before `a.db.Close()` logged. Harmless today (the partial body is not
+  stored), but the retry can race the DB close. Fix: call `CancelAllSyncs`
+  early in `Shutdown` and wait (bounded) for folder sync slots to release
+  before closing the pool and DB; optionally make `Pool.GetConnection`
+  refuse new connections after `CloseAll`.
 
 ### Chat list
 

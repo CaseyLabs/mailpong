@@ -3,6 +3,7 @@ context
 aerion
 aerion.exe
 aerion-creds
+IDEAS.md
 
 # Wails build artifacts
 build/bin/
