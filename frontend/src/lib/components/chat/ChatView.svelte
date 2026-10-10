@@ -5,7 +5,7 @@
   import { onMount, tick, untrack } from 'svelte'
   import Icon from '@iconify/svelte'
   import { _ } from '$lib/i18n'
-  import { GetIdentities, MarkAsSpam, MarkAsNotSpam, MarkAsRead, MarkAsUnread, OpenURL } from '../../../../wailsjs/go/app/App'
+  import { GetIdentities, OpenURL } from '../../../../wailsjs/go/app/App'
   import { ConfirmDialog } from '$lib/components/ui/confirm-dialog'
   import ComposeButton from '$lib/components/common/ComposeButton.svelte'
   import { toasts } from '$lib/stores/toast'
@@ -21,7 +21,8 @@
   import { ChatThread } from './chatThread.svelte'
   import { ChatComposer as ComposerState } from './chatComposer.svelte'
   import { buildThreadItems, myAddresses, replyRecipients, replyTarget, threadPeople, type ReplyMode } from './chatFormat'
-  import { archiveChat, deleteMessagesPermanently, pinChat, setSenderLow, snoozeChat, trashMessages, undoAction, unsnoozeChat } from './chatTriage'
+  import { ChatScroll } from './chatScroll.svelte'
+  import { ChatActions } from './chatActions.svelte'
 
   interface Props {
     threadId?: string | null
@@ -52,27 +53,21 @@
     isFocused = false, isFlashing = false, showBackButton = false, onBack, onEscape, focusedMessageIdInFocus = null,
   }: Props = $props()
 
-  const SCROLL_AMOUNT = 100
-  // After a load, keep the scroll anchored while bodies render and grow.
-  const ANCHOR_MS = 2000
   const FOCUS_WAIT_MS = 3000
 
-  let scroller = $state<HTMLDivElement | null>(null)
-  let content = $state<HTMLDivElement | null>(null)
   let header = $state<ChatViewHeader | null>(null)
   let composerRef = $state<ChatComposer | null>(null)
-  let focusedMessageId = $state<string | null>(null)
   let showDeleteConfirm = $state(false)
   // Set by focusComposer() until the composer can take focus (after a load).
   // Expires so a request that couldn't apply doesn't steal focus later.
   let pendingFocus = $state<{ replyAll?: boolean; until: number } | null>(null)
   const imagesLoaded = new Set<string>()
-  let anchor: { id: string | null; until: number } | null = null
 
+  const scroll = new ChatScroll(() => messageIds)
   const thread = new ChatThread({
     onGone: (next) => onActionComplete?.(next),
-    onLoaded: () => void scrollToStart(),
-    scroller: () => scroller,
+    onLoaded: () => void scroll.toStart(thread.messages.find((m) => !m.isRead)?.id ?? null),
+    scroller: () => scroll.scroller,
   })
 
   const myEmails = $derived(myAddresses(accountStore.accounts))
@@ -88,7 +83,7 @@
     buildThreadItems(focusedMessageIdInFocus ? shown.filter((m) => m.id === focusedMessageIdInFocus) : shown, !!senderEmailOf(threadId)),
   )
   const people = $derived(threadPeople(thread.messages, myEmails))
-  const messageIds = $derived(thread.messages.map((m) => m.id))
+  const messageIds: string[] = $derived(thread.messages.map((m) => m.id))
   const effectiveFolderType = $derived(folderType || 'inbox')
   const allRead = $derived(thread.messages.every((m) => m.isRead))
   const isStarred = $derived(thread.messages.length > 0 && thread.messages.every((m) => m.isStarred))
@@ -96,6 +91,11 @@
   const isSpam = $derived(folderType === 'spam')
   const chatItem = $derived(chatList.items.find((c) => c.accountId === accountId && c.threadId === threadId) ?? null)
   const threadKey = $derived(chatItem?.threadKey ?? (threadId ?? '').replace(/[<>]/g, ''))
+  const actions = new ChatActions({
+    thread, scroll, onActionComplete: (next) => onActionComplete?.(next),
+    accountId: () => accountId, threadKey: () => threadKey, messageIds: () => messageIds,
+    chatItem: () => chatItem, people: () => people, allRead: () => allRead, isTrash: () => isTrash, isSpam: () => isSpam,
+  })
 
   onMount(() => {
     const stop = thread.start()
@@ -158,22 +158,15 @@
   // Keep a new pending bubble in view.
   $effect(() => {
     if (composer.pendingHere.length === 0) return
-    anchor = null
-    void tick().then(() => scroller && (scroller.scrollTop = scroller.scrollHeight))
+    void scroll.toEnd()
   })
 
   // Bodies (iframes) grow after render; re-apply the load anchor as they do.
-  $effect(() => {
-    if (!content) return
-    const observer = new ResizeObserver(() => applyAnchor())
-    observer.observe(content)
-    return () => observer.disconnect()
-  })
+  $effect(() => scroll.observe())
 
   $effect(() => {
     imagesLoaded.clear()
-    focusedMessageId = null
-    anchor = null
+    scroll.reset()
     thread.open(threadId, folderId, accountId)
   })
 
@@ -185,43 +178,12 @@
     if (thread.messages.length > 0) thread.autoSendReadReceipts()
   })
 
-  // Scroll to the first unread message, else to the bottom.
-  async function scrollToStart() {
-    const firstUnread = thread.messages.find((m) => !m.isRead)
-    anchor = { id: firstUnread?.id ?? null, until: Date.now() + ANCHOR_MS }
-    await tick()
-    applyAnchor()
-  }
-
-  function applyAnchor() {
-    if (!anchor || !scroller || Date.now() > anchor.until) {
-      anchor = null
-      return
-    }
-    const el = anchor.id ? scroller.querySelector<HTMLElement>(`[data-message-id="${anchor.id}"]`) : null
-    scroller.scrollTop = el
-      ? el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 48
-      : scroller.scrollHeight
-  }
-
   function handleKeyDown(e: KeyboardEvent) {
     if (!isFocused) return
     const el = e.target as HTMLElement | null
     if (el?.closest('textarea, input, [contenteditable="true"]')) return
-    if (e.key === 'Tab' && messageIds.length > 0) {
-      // Move between messages; at either end native Tab leaves the view.
-      const idx = focusedMessageId ? messageIds.indexOf(focusedMessageId) : -1
-      if (e.shiftKey ? idx <= 0 : idx >= messageIds.length - 1) return
-      e.preventDefault()
-      focusMessage(messageIds[e.shiftKey ? idx - 1 : idx + 1])
-      return
-    }
+    scroll.handleTab(e)
     // Delete/Backspace on a focused message is App's shortcut (it calls trash()).
-  }
-
-  function focusMessage(id: string) {
-    focusedMessageId = id
-    scroller?.querySelector<HTMLElement>(`[data-message-id="${id}"]`)?.focus()
   }
 
   function openLink(url: string) {
@@ -236,57 +198,6 @@
       return
     }
     OpenURL(url).catch((err: unknown) => console.error('Failed to open URL:', err))
-  }
-
-  const afterUndo = () => {
-    thread.reload()
-    onActionComplete?.()
-  }
-  const triageTarget = () => ({ accountId: accountId ?? '', threadKey, messageIds })
-
-  export async function archive() {
-    if (await archiveChat(messageIds, afterUndo)) onActionComplete?.(true)
-  }
-
-  // deleteMessages moves to Trash (undoable), or deletes permanently in Trash.
-  // wholeThread advances to the next chat; single messages reload via events.
-  async function deleteMessages(ids: string[], wholeThread: boolean) {
-    if (!(await (isTrash ? deleteMessagesPermanently(ids) : trashMessages(ids, afterUndo)))) return
-    focusedMessageId = null
-    if (wholeThread) onActionComplete?.(true)
-  }
-
-  async function toggleRead() {
-    // Only messages that change, so every pending id gets a readChanged echo.
-    const ids = thread.messages.filter((m) => !!m.isRead === allRead).map((m) => m.id)
-    if (ids.length === 0) return
-    // Tag as our own change so the readChanged echo updates flags in place.
-    ids.forEach((id) => thread.pendingReadIds.add(id))
-    try {
-      await (allRead ? MarkAsUnread(ids) : MarkAsRead(ids))
-      toasts.success($_(allRead ? 'toast.markedAsUnread' : 'toast.markedAsRead'))
-    } catch (err) {
-      console.error('Read status toggle failed:', err)
-      toasts.error($_('toast.failedToUpdateReadStatus'))
-      ids.forEach((id) => thread.pendingReadIds.delete(id))
-    }
-  }
-
-  function togglePin() {
-    if (accountId && threadKey) void pinChat(triageTarget(), !chatItem?.isPinned, afterUndo)
-  }
-
-  async function snooze(until: Date) {
-    if (accountId && threadKey && (await snoozeChat(triageTarget(), until, afterUndo))) onActionComplete?.(true)
-  }
-
-  function unsnooze() {
-    if (accountId && threadKey) void unsnoozeChat(triageTarget(), afterUndo)
-  }
-
-  function toggleSenderLow() {
-    const sender = people[0]
-    if (accountId && chatItem && sender) void setSenderLow(accountId, sender, !chatItem.isLowPriority)
   }
 
   async function handleMenuActionComplete(next?: boolean) {
@@ -315,28 +226,29 @@
   // switches the reply mode first when given.
   export function focusComposer(replyAll?: boolean) { pendingFocus = { replyAll, until: Date.now() + FOCUS_WAIT_MS } }
   export function openSnooze() { header?.openSnooze() }
-  export function hasFocusedMessage(): boolean { return focusedMessageId !== null }
-  export function getFocusedMessageId(): string | null { return focusedMessageId }
+  export function hasFocusedMessage(): boolean { return scroll.focusedId !== null }
+  export function getFocusedMessageId(): string | null { return scroll.focusedId }
   export function getLastMessageId(): string | null { return messageIds.at(-1) ?? null }
   export function refreshFlags() { return thread.refreshFlags() }
-  export function scrollUp() { anchor = null; scroller?.scrollBy({ top: -SCROLL_AMOUNT, behavior: 'smooth' }) }
-  export function scrollDown() { anchor = null; scroller?.scrollBy({ top: SCROLL_AMOUNT, behavior: 'smooth' }) }
+  export function scrollUp() { scroll.by(-1) }
+  export function scrollDown() { scroll.by(1) }
   export function isImagesLoaded(id: string): boolean { return imagesLoaded.has(id) }
   export function loadImages() { window.dispatchEvent(new CustomEvent('load-remote-images')) }
   export function openAlwaysLoadDropdown() { window.dispatchEvent(new CustomEvent('open-always-load-dropdown')) }
-  export function markRead() { void toggleRead() }
+  export function markRead() { void actions.toggleRead() }
 
+  export const archive = () => actions.archive()
   export function reply() { replyAs('reply') }
   export function replyAll() { replyAs('reply-all') }
   export function forward() { replyAs('forward') }
   function replyAs(mode: ReplyMode) {
-    const id = focusedMessageId ?? getLastMessageId()
+    const id = scroll.focusedId ?? getLastMessageId()
     if (id) onReply?.(mode, id, imagesLoaded.has(id))
   }
 
   export function trash() {
-    if (focusedMessageId) {
-      void deleteMessages([focusedMessageId], false)
+    if (scroll.focusedId) {
+      void actions.deleteMessages([scroll.focusedId], false)
       return
     }
     deleteChat()
@@ -346,43 +258,29 @@
   // focus; in Trash it asks before deleting permanently.
   function deleteChat() {
     if (isTrash) showDeleteConfirm = true
-    else void deleteMessages(messageIds, true)
+    else void actions.deleteMessages(messageIds, true)
   }
 
   export function deletePermanently() {
-    if (focusedMessageId) {
-      void deleteMessages([focusedMessageId], false)
+    if (scroll.focusedId) {
+      void actions.deleteMessages([scroll.focusedId], false)
       return
     }
     showDeleteConfirm = true
   }
 
-  export async function spam() {
-    try {
-      if (isSpam) {
-        await MarkAsNotSpam(messageIds)
-        toasts.success($_('toast.markedAsNotSpam'), undoAction(afterUndo))
-      } else {
-        const moved = await MarkAsSpam(messageIds)
-        toasts.success($_(moved ? 'toast.markedAsSpam' : 'toast.deletedFromFolder'), moved ? undoAction(afterUndo) : [])
-      }
-      onActionComplete?.(true)
-    } catch (err) {
-      console.error('Spam toggle failed:', err)
-      toasts.error($_(isSpam ? 'toast.failedToMarkAsNotSpam' : 'toast.failedToMarkAsSpam'))
-    }
-  }
+  export const spam = () => actions.spam()
 
   // Select-all inside the focused (or last) message's rendered body, if any.
   export function selectAllText() {
-    const id = focusedMessageId ?? getLastMessageId()
-    const iframe = id ? scroller?.querySelector<HTMLIFrameElement>(`[data-message-id="${id}"] iframe`) : null
+    const id = scroll.focusedId ?? getLastMessageId()
+    const iframe = id ? scroll.scroller?.querySelector<HTMLIFrameElement>(`[data-message-id="${id}"] iframe`) : null
     iframe?.contentWindow?.postMessage({ type: 'select-all' }, '*')
   }
 
   // Context menu for the focused message, else the thread menu.
   export function openContextMenu() {
-    const el = focusedMessageId ? scroller?.querySelector<HTMLElement>(`[data-message-id="${focusedMessageId}"]`) : null
+    const el = scroll.focusedId ? scroll.messageEl(scroll.focusedId) : null
     if (!el) {
       header?.openMenu()
       return
@@ -433,32 +331,32 @@
       {showBackButton}
       {onBack}
       {onCompose}
-      onArchive={archive}
+      onArchive={() => void actions.archive()}
       onReplyChat={focusComposer}
       onForward={forward}
       onExpand={() => void expand()}
       onDelete={deleteChat}
-      onSpam={() => void spam()}
-      onPin={togglePin}
-      onSnooze={snooze}
-      onUnsnooze={unsnooze}
-      onToggleRead={toggleRead}
-      onToggleSenderLow={toggleSenderLow}
+      onSpam={() => void actions.spam()}
+      onPin={() => actions.togglePin()}
+      onSnooze={(d) => void actions.snooze(d)}
+      onUnsnooze={() => actions.unsnooze()}
+      onToggleRead={() => void actions.toggleRead()}
+      onToggleSenderLow={() => actions.toggleSenderLow()}
       {onToggleSenderChat}
       onActionComplete={handleMenuActionComplete}
       {onReply}
     />
 
     <div
-      bind:this={scroller}
+      bind:this={scroll.scroller}
       class="flex-1 min-h-0 overflow-y-auto scrollbar-thin"
       role="log"
       aria-label={$_('chat.threadLabel')}
       onfocusin={() => setFocusedPane('viewer')}
-      onwheel={() => (anchor = null)}
-      onpointerdown={() => (anchor = null)}
+      onwheel={scroll.release}
+      onpointerdown={scroll.release}
     >
-      <div bind:this={content} class="pb-6">
+      <div bind:this={scroll.content} class="pb-6">
         {#each items as item (item.msg.id)}
           {#if item.newDay}<div class="px-4"><ChatDaySeparator date={item.date} /></div>{/if}
           <ChatBubble
@@ -467,8 +365,7 @@
             accountId={accountId ?? ''}
             folderId={folderId ?? ''}
             folderType={effectiveFolderType}
-            focused={focusedMessageId === item.msg.id}
-            onFocusChange={(f) => { if (f) focusedMessageId = item.msg.id; else if (focusedMessageId === item.msg.id) focusedMessageId = null }}
+            onFocusChange={(f) => { if (f) scroll.focusedId = item.msg.id; else if (scroll.focusedId === item.msg.id) scroll.focusedId = null }}
             {onReply}
             {onComposeToAddress}
             {onEditDraft}
@@ -494,6 +391,6 @@
   description={$_('viewer.deleteConversationDescription')}
   confirmLabel={$_('viewer.deletePermanently')}
   variant="destructive"
-  onConfirm={() => { showDeleteConfirm = false; void deleteMessages(messageIds, true) }}
+  onConfirm={() => { showDeleteConfirm = false; void actions.deleteMessages(messageIds, true) }}
   onCancel={() => (showDeleteConfirm = false)}
 />

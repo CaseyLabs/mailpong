@@ -243,6 +243,8 @@ export function GetAutostart():Promise<boolean>;
 
 export function GetChatAutoAdvance():Promise<string>;
 
+export function GetChatCombineSenders():Promise<boolean>;
+
 export function GetChatCount(arg1:string,arg2:string):Promise<number>;
 
 export function GetChatDraft(arg1:string,arg2:string):Promise<app.ChatDraft>;
@@ -611,6 +613,8 @@ export function SetAutostart(arg1:boolean):Promise<void>;
 
 export function SetChatAutoAdvance(arg1:string):Promise<void>;
 
+export function SetChatCombineSenders(arg1:boolean):Promise<void>;
+
 export function SetChatIncludeQuote(arg1:boolean):Promise<void>;
 
 export function SetChatNotifyPriorityOnly(arg1:boolean):Promise<void>;
@@ -675,7 +679,7 @@ export function SetSMIMESignPolicy(arg1:string,arg2:string):Promise<void>;
 
 export function SetSenderCategory(arg1:string,arg2:string,arg3:string):Promise<void>;
 
-export function SetSenderChat(arg1:string,arg2:string,arg3:boolean):Promise<void>;
+export function SetSenderChat(arg1:string,arg2:string,arg3:boolean):Promise<boolean>;
 
 export function SetShowMessageListCircles(arg1:boolean):Promise<void>;
 

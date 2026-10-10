@@ -450,6 +450,10 @@ export function GetChatAutoAdvance() {
   return window['go']['app']['App']['GetChatAutoAdvance']();
 }
 
+export function GetChatCombineSenders() {
+  return window['go']['app']['App']['GetChatCombineSenders']();
+}
+
 export function GetChatCount(arg1, arg2) {
   return window['go']['app']['App']['GetChatCount'](arg1, arg2);
 }
@@ -1184,6 +1188,10 @@ export function SetAutostart(arg1) {
 
 export function SetChatAutoAdvance(arg1) {
   return window['go']['app']['App']['SetChatAutoAdvance'](arg1);
+}
+
+export function SetChatCombineSenders(arg1) {
+  return window['go']['app']['App']['SetChatCombineSenders'](arg1);
 }
 
 export function SetChatIncludeQuote(arg1) {

@@ -67,3 +67,16 @@ func (s *Store) DeleteChatLink(accountID, threadKey string) error {
 	}
 	return nil
 }
+
+// MoveChatLink moves a chat draft link from one chat key to another, or drops
+// it when to is empty; the draft itself stays. A link already on to wins.
+func (s *Store) MoveChatLink(accountID, from, to string) error {
+	if to != "" {
+		_, err := s.db.Exec(`UPDATE OR IGNORE chat_drafts SET thread_key = ? WHERE account_id = ? AND thread_key = ?`,
+			chatThreadKey(to), accountID, chatThreadKey(from))
+		if err != nil {
+			return fmt.Errorf("failed to move chat draft: %w", err)
+		}
+	}
+	return s.DeleteChatLink(accountID, from)
+}

@@ -238,6 +238,10 @@ On by default. Chat replies quote the replied-to message below your text, so rec
 
 Which chat opens when the current one leaves the list (dragging a chat onto a sidebar folder does not open another): the next (older) chat, which is the default, or the previous (newer) chat.
 
+### Combine Messages from Each Sender
+
+On by default. All the threads a sender starts show as one chat; threads started from your own addresses stay separate. When off, threads show separately unless you combined that sender. Choices made from a chat's menu (**Combine messages from this sender** or **Show as separate threads**) apply whichever way this is set. When a thread joins a sender's chat (after an upgrade or turning this on), its pin, snooze and unsent chat reply move to that chat; when a sender's chat goes back to separate threads (turning this off or splitting one sender), the chat's pin, snooze and reply link are dropped, and the draft stays in Drafts.
+
 ### Show Low Priority Group
 
 On by default. The All filter lists newsletters and bulk mail in a collapsed Low priority group. When off, they appear only under the Low priority filter, and a pinned low-priority chat appears only under Low priority too.

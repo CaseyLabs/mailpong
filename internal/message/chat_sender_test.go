@@ -53,6 +53,7 @@ func senderChatFixture(t *testing.T) (*Store, string, string, time.Time) {
 			t.Fatalf("seed %s: %v", m.id, err)
 		}
 	}
+	splitSenders(t, s)
 	return s, accountID, inboxID, now
 }
 
@@ -320,8 +321,12 @@ func TestSenderChatDueSnooze(t *testing.T) {
 	}
 }
 
-func TestSenderChatCleanup(t *testing.T) {
-	s, accountID, _, now := senderChatFixture(t)
+// TestSenderChatStaleKeys checks that state keys follow the inbox chat list:
+// a combined sender keeps its state with or without inbox mail, a split
+// sender or one the default no longer combines drops it, and a pinned or
+// snoozed thread that joins a sender chat moves into it.
+func TestSenderChatStaleKeys(t *testing.T) {
+	s, accountID, inboxID, now := senderChatFixture(t)
 	if err := s.SetSenderChat(accountID, lms, true); err != nil {
 		t.Fatal(err)
 	}
@@ -331,40 +336,97 @@ func TestSenderChatCleanup(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if err := s.SetSenderChat(accountID, "ghost@x", true); err != nil {
+	if err := s.ClearSenderChat(accountID, "ghost@x"); err != nil {
 		t.Fatal(err)
 	}
+	if n, err := s.CleanupChatState(); err != nil || n != 0 {
+		t.Errorf("CleanupChatState = %d, %v; want 0 (sender chat state is not cleaned there)", n, err)
+	}
 
+	type move = ChatKeyMove
 	steps := []struct {
-		name    string
-		before  func() error
-		removed int64
-		kept    bool // sender chat state for lms
+		name   string
+		before func() error
+		want   []move
 	}{
-		{"combined senders keep state, with or without messages", func() error { return nil }, 0, true},
+		{"combined senders keep state", func() error { return nil }, nil},
 		{"messages leaving the inbox keep state", func() error {
 			_, err := s.db.Exec(`UPDATE messages SET folder_id = 'sent-1' WHERE from_email LIKE ?`, lms)
 			return err
-		}, 0, true},
-		{"flag off drops state", func() error { return s.SetSenderChat(accountID, lms, false) }, 1, false},
+		}, nil},
+		{"default off drops senders without a choice", func() error {
+			_, err := s.db.Exec(`INSERT INTO settings (key, value) VALUES ('chat_combine_senders', 'false')`)
+			return err
+		}, []move{{accountID, SenderChatKey("ghost@x"), ""}}},
+		{"split drops state", func() error { return s.SetSenderChat(accountID, lms, false) },
+			[]move{{accountID, SenderChatKey("ghost@x"), ""}, {accountID, lmsKey, ""}}},
 	}
 	for _, st := range steps {
 		t.Run(st.name, func(t *testing.T) {
 			if err := st.before(); err != nil {
 				t.Fatal(err)
 			}
-			n, err := s.CleanupChatState()
-			if err != nil || n != st.removed {
-				t.Errorf("CleanupChatState = %d, %v; want %d", n, err, st.removed)
-			}
-			got, err := s.GetChatState(accountID, lmsKey)
+			got, err := s.StaleChatKeys()
 			if err != nil {
 				t.Fatal(err)
 			}
-			if kept := got.PinnedAt != nil; kept != st.kept {
-				t.Errorf("sender chat state kept = %v, want %v", kept, st.kept)
+			if !reflect.DeepEqual(got, st.want) {
+				t.Errorf("StaleChatKeys = %+v, want %+v", got, st.want)
 			}
 		})
+	}
+	if err := s.MoveChatState(ChatKeyMove{accountID, lmsKey, ""}); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := s.GetChatState(accountID, lmsKey); err != nil || !got.empty() {
+		t.Errorf("dropped state = %+v, %v; want empty", got, err)
+	}
+
+	// Back in the inbox, lms's thread t@x is pinned while split, then lms
+	// combines: the pin moves into the sender chat.
+	if _, err := s.db.Exec(`UPDATE messages SET folder_id = ? WHERE from_email LIKE ? AND account_id = ?`, inboxID, lms, accountID); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.SetChatState(accountID, "t@x", pinned); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.SetSenderChat(accountID, lms, true); err != nil {
+		t.Fatal(err)
+	}
+	got, err := s.StaleChatKeys()
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []move{{accountID, SenderChatKey("ghost@x"), ""}, {accountID, "t@x", lmsKey}}
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("StaleChatKeys = %+v, want %+v", got, want)
+	}
+	if err := s.MoveChatState(want[1]); err != nil {
+		t.Fatal(err)
+	}
+	if st, err := s.GetChatState(accountID, lmsKey); err != nil || st.PinnedAt == nil || !st.PinnedAt.Equal(now) {
+		t.Errorf("sender chat state = %+v, %v; want pinned at %v", st, err, now)
+	}
+	if st, err := s.GetChatState(accountID, "t@x"); err != nil || !st.empty() {
+		t.Errorf("thread state = %+v, %v; want empty", st, err)
+	}
+}
+
+func TestSenderChatChoice(t *testing.T) {
+	s, accountID, _, _ := senderChatFixture(t)
+	if err := s.ClearSenderChat(accountID, lms); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := s.SenderChatChoice(accountID, lms); err != nil || got != nil {
+		t.Errorf("SenderChatChoice after clear = %v, %v; want nil", got, err)
+	}
+	for _, combined := range []bool{true, false} {
+		if err := s.SetSenderChat(accountID, lms, combined); err != nil {
+			t.Fatal(err)
+		}
+		if got, err := s.SenderChatChoice(accountID, " NoReply@lms.example "); err != nil || got == nil || *got != combined {
+			t.Errorf("SenderChatChoice = %v, %v; want %v", got, err, combined)
+		}
 	}
 }
 
@@ -433,5 +495,83 @@ func TestSenderChatSearchUnifiedInbox(t *testing.T) {
 				t.Errorf("results = %v, want %v", got, want)
 			}
 		})
+	}
+}
+
+// TestSenderChatDefault checks that senders combine without a sender_chat
+// row, except the account's own addresses and mail without a sender, and
+// that with the chat_combine_senders setting off only combined rows do.
+func TestSenderChatDefault(t *testing.T) {
+	s, accountID, inboxID := newBodyFailedTestStore(t)
+	now := time.Now().UTC().Truncate(time.Second)
+	if _, err := s.db.Exec(`INSERT INTO identities (id, account_id, email, name) VALUES ('id-1', ?, 'Alias@Example.com', 'Alias')`, accountID); err != nil {
+		t.Fatalf("seed identity: %v", err)
+	}
+	seed := []struct{ id, thread, from string }{
+		{"b1", "", "bob@example.com"},
+		{"b2", "<b@x>", "Bob@Example.com"},
+		{"m1", "", "test@example.com"},
+		{"m2", "", "alias@example.com"},
+		{"e1", "", ""},
+	}
+	for i, m := range seed {
+		err := s.Create(&Message{
+			ID: m.id, AccountID: accountID, FolderID: inboxID, UID: uint32(i + 1),
+			ThreadID: m.thread, Subject: m.id, FromEmail: m.from,
+			Date: now.Add(-time.Duration(i) * time.Hour), ReceivedAt: now,
+		})
+		if err != nil {
+			t.Fatalf("seed %s: %v", m.id, err)
+		}
+	}
+
+	chats, err := s.ListChats("", ChatSectionAll, now, 0, 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	keys := chatKeys(chats)
+	sort.Strings(keys)
+	if want := []string{"e1", "m1", "m2", SenderChatKey("bob@example.com")}; !reflect.DeepEqual(keys, want) {
+		t.Errorf("chats = %v, want %v", keys, want)
+	}
+
+	for email, want := range map[string]bool{"bob@example.com": true, "TEST@example.com": false, "alias@example.com": false, "": false} {
+		if got, err := s.IsSenderChat(accountID, email); err != nil || got != want {
+			t.Errorf("IsSenderChat(%q) = %v, %v; want %v", email, got, err, want)
+		}
+	}
+
+	if err := s.SetSenderChat(accountID, "bob@example.com", false); err != nil {
+		t.Fatal(err)
+	}
+	if on, err := s.IsSenderChat(accountID, "bob@example.com"); err != nil || on {
+		t.Errorf("after split: IsSenderChat = %v, %v; want false", on, err)
+	}
+	chats, err = s.ListChats("", ChatSectionAll, now, 0, 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := len(chats); got != 5 {
+		t.Errorf("after split: %d chats, want 5: %v", got, chatKeys(chats))
+	}
+
+	// With the default off, only senders combined explicitly combine.
+	if _, err := s.db.Exec(`INSERT INTO settings (key, value) VALUES ('chat_combine_senders', 'false')`); err != nil {
+		t.Fatalf("turn default off: %v", err)
+	}
+	if _, err := s.db.Exec(`DELETE FROM sender_chat`); err != nil {
+		t.Fatal(err)
+	}
+	if on, err := s.IsSenderChat(accountID, "bob@example.com"); err != nil || on {
+		t.Errorf("default off: IsSenderChat = %v, %v; want false", on, err)
+	}
+	if n, err := s.CountChats("", ChatSectionAll, now); err != nil || n != 5 {
+		t.Errorf("default off: CountChats = %d, %v; want 5", n, err)
+	}
+	if err := s.SetSenderChat(accountID, "bob@example.com", true); err != nil {
+		t.Fatal(err)
+	}
+	if n, err := s.CountChats("", ChatSectionAll, now); err != nil || n != 4 {
+		t.Errorf("default off, bob combined: CountChats = %d, %v; want 4", n, err)
 	}
 }

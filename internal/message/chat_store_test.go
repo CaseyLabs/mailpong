@@ -48,7 +48,22 @@ func chatFixture(t *testing.T) (*Store, string, string, time.Time) {
 			t.Fatalf("seed %s: %v", m.id, err)
 		}
 	}
+	splitSenders(t, s)
 	return s, accountID, inboxID, now
+}
+
+// splitSenders shows every sender with mail so far as separate threads, so
+// tests can check thread chats; senders combine by default.
+func splitSenders(t *testing.T, s *Store) {
+	t.Helper()
+	_, err := s.db.Exec(`
+		INSERT OR IGNORE INTO sender_chat (account_id, email, combined)
+		SELECT DISTINCT f.account_id, LOWER(m.from_email), 0
+		FROM messages m INNER JOIN folders f ON m.folder_id = f.id
+		WHERE COALESCE(m.from_email, '') <> ''`)
+	if err != nil {
+		t.Fatalf("split senders: %v", err)
+	}
 }
 
 func chatKeys(chats []*Chat) []string {
@@ -188,6 +203,7 @@ func TestSenderCategoryOverride(t *testing.T) {
 	if err := s.Create(&Message{ID: "p1", AccountID: accountID, FolderID: inboxID, UID: 100, FromEmail: "promo@shop.example", Date: now}); err != nil {
 		t.Fatal(err)
 	}
+	splitSenders(t, s)
 	if got := lowKeys(); !reflect.DeepEqual(got, []string{"p1", "b1", "d@x", "e@x"}) {
 		t.Errorf("new mail from low sender: low = %v", got)
 	}

@@ -12,6 +12,7 @@ import (
 	"github.com/hkdb/aerion/internal/message"
 	"github.com/hkdb/aerion/internal/settings"
 	"github.com/hkdb/aerion/internal/smtp"
+	"github.com/hkdb/aerion/internal/undo"
 )
 
 func TestChatTextToHTML(t *testing.T) {
@@ -306,10 +307,28 @@ func TestChatReplyEmpty(t *testing.T) {
 // SetSenderChat refuses an unknown account before writing anything.
 func TestSetSenderChatUnknownAccount(t *testing.T) {
 	a := newChatReplyTestApp(t)
-	if err := a.SetSenderChat("nope", "bob@example.com", true); err == nil {
+	if _, err := a.SetSenderChat("nope", "bob@example.com", false); err == nil {
 		t.Fatal("SetSenderChat for unknown account: want error")
 	}
-	if on, err := a.messageStore.IsSenderChat("nope", "bob@example.com"); err != nil || on {
-		t.Errorf("IsSenderChat = %v, %v; want false", on, err)
+	// Senders combine by default, so a write would have split bob.
+	if on, err := a.messageStore.IsSenderChat("nope", "bob@example.com"); err != nil || !on {
+		t.Errorf("IsSenderChat = %v, %v; want true", on, err)
+	}
+}
+
+// SetSenderChat on a sender that already combines (the default) reports no
+// change and records no undo, so Undo can't reach an unrelated action.
+func TestSetSenderChatUnchanged(t *testing.T) {
+	a := newChatReplyTestApp(t)
+	a.undoStack = undo.NewStack(10, time.Minute)
+	changed, err := a.SetSenderChat("acct-1", "Bob@Example.com", true)
+	if err != nil || changed {
+		t.Fatalf("SetSenderChat = %v, %v; want false, nil", changed, err)
+	}
+	if n := a.undoStack.Size(); n != 0 {
+		t.Errorf("undo stack size = %d, want 0", n)
+	}
+	if choice, err := a.messageStore.SenderChatChoice("acct-1", "bob@example.com"); err != nil || choice != nil {
+		t.Errorf("SenderChatChoice = %v, %v; want nil", choice, err)
 	}
 }

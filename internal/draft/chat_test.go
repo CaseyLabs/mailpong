@@ -85,3 +85,47 @@ func TestChatLinkSenderKeyPersists(t *testing.T) {
 		t.Fatalf("GetChatLink after reopen = %+v, %v; want %+v", got, err, link)
 	}
 }
+
+// MoveChatLink re-keys a link unless the target has one, which wins; an
+// empty target drops the link. Drafts stay either way.
+func TestMoveChatLink(t *testing.T) {
+	db := openTestDB(t)
+	accountID := insertTestAccount(t, db)
+	store := NewStore(db)
+	links := map[string]ChatLink{}
+	for _, key := range []string{"a@x", "b@x", "c@x"} {
+		d := &Draft{AccountID: accountID, Subject: key}
+		if err := store.Create(d); err != nil {
+			t.Fatal(err)
+		}
+		links[key] = ChatLink{DraftID: d.ID, MessageID: key}
+		if err := store.SetChatLink(accountID, key, links[key]); err != nil {
+			t.Fatal(err)
+		}
+	}
+	const sender = "sender:bob@example.com"
+	steps := []struct {
+		from, to string
+		want     ChatLink // link on sender afterwards
+	}{
+		{"a@x", sender, links["a@x"]},
+		{"b@x", sender, links["a@x"]},
+		{"c@x", "", links["a@x"]},
+	}
+	for _, st := range steps {
+		if err := store.MoveChatLink(accountID, st.from, st.to); err != nil {
+			t.Fatalf("MoveChatLink(%q, %q): %v", st.from, st.to, err)
+		}
+		if got, _ := store.GetChatLink(accountID, st.from); got != nil {
+			t.Errorf("MoveChatLink(%q, %q): source link kept: %+v", st.from, st.to, got)
+		}
+		if got, err := store.GetChatLink(accountID, sender); err != nil || got == nil || *got != st.want {
+			t.Errorf("MoveChatLink(%q, %q): sender link = %+v, %v; want %+v", st.from, st.to, got, err, st.want)
+		}
+	}
+	for key, link := range links {
+		if d, err := store.Get(link.DraftID); err != nil || d == nil {
+			t.Errorf("draft for %s = %v, %v; want kept", key, d, err)
+		}
+	}
+}

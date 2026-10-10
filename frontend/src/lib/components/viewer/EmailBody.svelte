@@ -744,29 +744,29 @@ ${processedHtml}
 <div class="email-body relative">
   {#if bodyHtml}
     {#if hasRemoteImages && imagesBlocked}
-      <div class="flex items-center gap-2 px-3 py-2 mb-3 rounded-md bg-yellow-500/10 border border-yellow-500/30 text-sm">
-        <Icon icon="mdi:image-off" class="w-4 h-4 text-yellow-600 shrink-0" />
-        <span class="text-yellow-700 dark:text-yellow-400">{$_('viewer.remoteImagesBlocked')}</span>
-
-        <div class="ml-auto flex items-center gap-1">
-          <!-- Load Images button -->
+      <!-- Compact split button instead of a banner: load once, or always via the chevron. -->
+      <div class="flex justify-end mb-2">
+        <div class="inline-flex items-stretch rounded-md border border-border text-xs text-muted-foreground">
           <button
-            class="px-2 py-1 text-xs font-medium rounded bg-yellow-600 text-white hover:bg-yellow-700 transition-colors"
+            class="flex items-center gap-1.5 px-2 py-1 rounded-l-md hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring {fromEmail ? '' : 'rounded-r-md'}"
+            title={$_('viewer.remoteImagesBlocked')}
             onclick={loadImages}
           >
+            <Icon icon="mdi:image-off-outline" class="w-3.5 h-3.5 shrink-0" />
             {$_('viewer.loadImages')}
           </button>
 
-          <!-- Always Load dropdown -->
           {#if fromEmail}
             <DropdownMenu.Root bind:open={alwaysLoadDropdownOpen}>
               <DropdownMenu.Trigger
-                class="px-2 py-1 text-xs font-medium rounded bg-yellow-600 text-white hover:bg-yellow-700 transition-colors flex items-center gap-1"
+                class="flex items-center px-1 border-l border-border rounded-r-md hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+                title={$_('viewer.alwaysLoad')}
+                aria-label={$_('viewer.alwaysLoad')}
               >
-                {$_('viewer.alwaysLoad')}
-                <Icon icon="mdi:chevron-down" class="w-3 h-3" />
+                <Icon icon="mdi:chevron-down" class="w-3.5 h-3.5" />
               </DropdownMenu.Trigger>
               <DropdownMenu.Content align="end">
+                <div class="px-2 py-1.5 text-xs font-medium text-muted-foreground">{$_('viewer.alwaysLoad')}</div>
                 <DropdownMenu.Item onSelect={handleAlwaysLoadDomain}>
                   <Icon icon="mdi:domain" class="w-4 h-4 mr-2" />
                   {$_('viewer.forDomain', { values: { domain: extractDomain(fromEmail) || 'this domain' } })}

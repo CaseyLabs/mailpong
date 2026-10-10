@@ -51,6 +51,7 @@ const (
 	KeyChatNotifyPriorityOnly     = "chat_notify_priority_only" // skip new-mail notifications for low-priority mail (defaults on)
 	KeyChatAutoAdvance            = "chat_auto_advance"         // "next" or "previous": which chat opens after Done, Snooze, delete, or move
 	KeyChatShowLowGroup           = "chat_show_low_group"       // show the Low priority group under the All filter (defaults on)
+	KeyChatCombineSenders         = "chat_combine_senders"      // combine each sender's threads into one chat (defaults on); read in SQL by message.senderCombinedExpr
 )
 
 // Extension enable/disable keys. Format: extension_<name>_enabled.
@@ -748,6 +749,17 @@ func (s *Store) GetChatNotifyPriorityOnly() (bool, error) {
 // low-priority mail.
 func (s *Store) SetChatNotifyPriorityOnly(only bool) error {
 	return s.Set(KeyChatNotifyPriorityOnly, strconv.FormatBool(only))
+}
+
+// GetChatCombineSenders returns whether each sender's threads combine into
+// one chat unless the sender is split. Defaults to true.
+func (s *Store) GetChatCombineSenders() (bool, error) {
+	return s.getBoolDefaultTrue(KeyChatCombineSenders)
+}
+
+// SetChatCombineSenders sets whether senders combine by default.
+func (s *Store) SetChatCombineSenders(combine bool) error {
+	return s.Set(KeyChatCombineSenders, strconv.FormatBool(combine))
 }
 
 // SetSpellcheckEnabled sets the composer spellcheck master toggle

@@ -47,6 +47,18 @@ has not yet been confirmed against the code.
   which would also retire the 30 s throttle state; cheaper: a shorter Sent
   poll interval.
 
+### Chat list
+
+- **M7 low** `internal/message/chat_store.go` `StaleChatKeys`: turning
+  **Combine messages from each sender** off drops a sender chat's pin,
+  snooze and chat draft link instead of handing them back to one of its
+  threads, so they are lost.
+- **M8 low, unverified** `chatKeyRows`: while the combine default is on,
+  every chat list, count, snooze wake and new-mail lookup takes the window
+  pass over the whole scope (`hasSenderChats` skips it only when the
+  default is off and no sender is combined). Not timed on a large mailbox;
+  if slow, index or cache thread starters.
+
 ### Upstream independence
 
 This fork may eventually stop tracking upstream Aerion. Until then, some code

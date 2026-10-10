@@ -17,11 +17,21 @@
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
 
+  --color-selection: hsl(var(--selection, var(--primary)));
+  --color-selection-foreground: hsl(var(--selection-foreground, var(--primary-foreground)));
+
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
 
   --color-destructive: hsl(var(--destructive));
   --color-destructive-foreground: hsl(var(--destructive-foreground));
+
+  --color-info: hsl(var(--info));
+  --color-info-foreground: hsl(var(--info-foreground));
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
 
   --color-muted: hsl(var(--muted));
   --color-muted-foreground: hsl(var(--muted-foreground));
@@ -175,6 +185,11 @@ mark {
   color: inherit;
   border-radius: 2px;
   padding: 0 2px;
+}
+
+/* Solid selected chat row: the primary-tinted mark would vanish on it. */
+[data-focused] [aria-selected='true'] mark {
+  background-color: hsl(var(--selection-foreground, var(--primary-foreground)) / 0.3);
 }
 
 /* Pane focus flash animation for keyboard navigation */
@@ -351,14 +366,16 @@ mark {
 
 /* Full-layout list + detail columns. When the window can't fit the stored
    list width, the list shrinks first (down to LIST_MIN in uiState) so the
-   detail pane keeps about 20rem; the detail pane only shrinks after that. */
+   detail pane keeps about 30rem; the detail pane only shrinks after that.
+   A smaller basis left the list at full width while the reading pane
+   narrowed to less than the list. */
 .pane-list-resizable {
   flex-shrink: 1000;
   min-width: 280px;
 }
 
 .pane-detail {
-  flex: 1 1 20rem;
+  flex: 1 1 30rem;
   min-width: 0;
 }
 

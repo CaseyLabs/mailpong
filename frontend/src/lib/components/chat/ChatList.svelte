@@ -418,7 +418,7 @@
 
   <div
     bind:this={listRef}
-    class="flex-1 overflow-y-auto py-1 outline-hidden"
+    class="group/list flex-1 overflow-y-auto py-1 outline-hidden"
     role="listbox"
     tabindex="0"
     aria-label={`${$_('chat.listLabel')}: ${scopeLabel}`}

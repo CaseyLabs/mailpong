@@ -15,7 +15,7 @@ The mail section shows email as chats. Each chat is one email thread, listed by 
 - **Reply box** - A reply box stays docked at the bottom of the open chat. Typed text is saved as a draft. A **Reply** / **Reply All** toggle after the text field picks who gets the reply (highlighted while Reply All is on), and **Send** comes last, filling in once there is something to send. The empty field names the recipients, for example "Reply to Linda, Sean...". A quote mark at the end of a message shows or hides its quoted text.
 - **Top bar** - **Compose**, **Archive**, **Delete**, and **Spam** sit on the left, followed by icon buttons for Reply, Reply All, Forward, and **Open in full composer** (moves the reply box's draft to the full composer); Snooze, Pin, Mark read/unread, and the ⋯ menu sit on the right. The chat's people and subject are centered on a bar below the buttons, separated from them by a line. On a narrow pane the labelled buttons show icons only, and Spam, Forward, Pin, and Mark read/unread move into the ⋯ menu. **Delete** always acts on the whole chat.
 - **Triage** - **Archive** archives the chat and opens the next one. **Pin** keeps a chat at the top, **Snooze** hides it until a chosen time (or until new mail arrives), and **Mark unread** brings it back later. Each chat's ⋯ menu and row context menu can move its sender to Low priority or back to Priority.
-- **Sender chats** - Choose **Combine messages from this sender** in a chat's ⋯ menu or row context menu to show all of one sender's threads as a single chat. The row shows the sender and the latest subject. Inside the chat, a subject label marks where the subject changes from the message before it, and replies go to the latest message you received. **Show as separate threads** splits it again. Both actions can be undone. Search across all accounts still lists the sender's threads separately.
+- **Sender chats** - By default (see [Settings](settings.md#combine-messages-from-each-sender)), all the threads a sender starts show as a single chat; threads started from your own addresses stay separate. The row shows the sender and the latest subject. Inside the chat, a subject label marks where the subject changes from the message before it, and replies go to the latest message you received. Choose **Show as separate threads** in a chat's ⋯ menu or row context menu to split one sender's threads, and **Combine messages from this sender** to combine them again. Both actions can be undone. A thread you started stays separate even when its sender's messages are combined. Search across all accounts still lists the sender's threads separately.
 - **Low priority** - Mail with mailing-list or bulk headers is low priority. A thread counts as low only while every message in it is, so a person's reply lifts it into Chats. By default, low-priority mail does not raise notifications.
 
 Pin, snooze, and sender priority are stored locally on this computer and are not synced to the server or other devices. Pin is separate from the server star.
@@ -195,13 +195,13 @@ Adjust how much space each message takes in the list:
 For privacy, Aerion blocks remote images in emails by default. These images can be used to track when you open an email.
 
 To load images in a specific message:
-- Click **Load Images** or press `Ctrl+L`
+- Click the small **Load Images** button above the message body or press `Ctrl+L`
 
 To always load images from a sender:
-- Click the dropdown arrow next to Load Images or pres `Ctrl-Shift-L`
+- Click the dropdown arrow next to Load Images or press `Ctrl+Shift+L`
 - Select:
     - **For this domain** - Trusting all e-mails from this domain from now on
-    - **For this e-mail address**) - Trusting all e-mails from this e-mail address from now on
+    - **For this e-mail address** - Trusting all e-mails from this e-mail address from now on
 
 ## Tracking Element Removal
 

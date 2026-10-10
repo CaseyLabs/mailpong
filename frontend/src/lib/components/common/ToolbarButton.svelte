@@ -18,7 +18,7 @@
 </script>
 
 <button
-  class="flex items-center gap-2 {compact ? 'px-2' : 'px-3'} py-2 rounded-md text-sm font-medium whitespace-nowrap shrink-0 transition-colors disabled:opacity-50 disabled:pointer-events-none {primary
+  class="flex items-center gap-2 {compact ? 'px-2' : 'px-3'} py-2 rounded-md text-sm font-medium whitespace-nowrap shrink-0 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:pointer-events-none {primary
     ? 'border border-transparent bg-primary text-primary-foreground hover:bg-primary/90'
     : 'border border-border text-foreground hover:bg-muted'}"
   {title}

@@ -212,6 +212,10 @@ func TestMigrationV32_LocalRecordIDsRewrittenToUUIDs(t *testing.T) {
 	if _, err := db.Exec(`ALTER TABLE attachments DROP COLUMN embedded`); err != nil {
 		t.Fatalf("drop attachments.embedded for re-migrate: %v", err)
 	}
+	// And v50's combined on sender_chat.
+	if _, err := db.Exec(`ALTER TABLE sender_chat DROP COLUMN combined`); err != nil {
+		t.Fatalf("drop sender_chat.combined for re-migrate: %v", err)
+	}
 
 	// Re-run migrations — migration 32 should rewrite the seeded local- id.
 	if err := db.Migrate(); err != nil {
@@ -379,6 +383,10 @@ func TestMigrationV33_CleansExistingOrphans(t *testing.T) {
 	// And v49's embedded on attachments.
 	if _, err := db.Exec(`ALTER TABLE attachments DROP COLUMN embedded`); err != nil {
 		t.Fatalf("drop attachments.embedded for re-migrate: %v", err)
+	}
+	// And v50's combined on sender_chat.
+	if _, err := db.Exec(`ALTER TABLE sender_chat DROP COLUMN combined`); err != nil {
+		t.Fatalf("drop sender_chat.combined for re-migrate: %v", err)
 	}
 
 	// Seed: orphan state row whose addressbook doesn't exist. Pre-migration,
@@ -576,6 +584,7 @@ func TestMigrationV46_ChatTriage(t *testing.T) {
 		`DROP TABLE sender_category`,
 		`ALTER TABLE messages DROP COLUMN is_bulk`,
 		`ALTER TABLE attachments DROP COLUMN embedded`,
+		`ALTER TABLE sender_chat DROP COLUMN combined`,
 		`DELETE FROM migrations WHERE version >= 46`,
 		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username)
 			VALUES ('acct-1', 'Test', 'user@example.com', 'imap.example.com', 'smtp.example.com', 'user@example.com')`,
@@ -691,6 +700,7 @@ func TestMigrationV49_EmbeddedAttachments(t *testing.T) {
 
 	for _, stmt := range []string{
 		`ALTER TABLE attachments DROP COLUMN embedded`,
+		`ALTER TABLE sender_chat DROP COLUMN combined`,
 		`DELETE FROM migrations WHERE version >= 49`,
 		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username)
 			VALUES ('acct-1', 'Test', 'user@example.com', 'imap.example.com', 'smtp.example.com', 'user@example.com')`,
@@ -765,6 +775,41 @@ func TestMigrationV49_EmbeddedAttachments(t *testing.T) {
 		}
 		if got != want {
 			t.Errorf("message %s has_attachments = %d, want %d", id, got, want)
+		}
+	}
+}
+
+// TestMigrationV50_SenderChatCombined upgrades a v49 database: existing
+// sender_chat rows were opt-ins to combining and stay combined.
+func TestMigrationV50_SenderChatCombined(t *testing.T) {
+	db := openTestDB(t)
+
+	for _, stmt := range []string{
+		`ALTER TABLE sender_chat DROP COLUMN combined`,
+		`DELETE FROM migrations WHERE version >= 50`,
+		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username)
+			VALUES ('acct-1', 'Test', 'user@example.com', 'imap.example.com', 'smtp.example.com', 'user@example.com')`,
+		`INSERT INTO sender_chat (account_id, email) VALUES ('acct-1', 'a@x')`,
+	} {
+		if _, err := db.Exec(stmt); err != nil {
+			t.Fatalf("prepare v49 state (%s): %v", stmt, err)
+		}
+	}
+
+	if err := db.Migrate(); err != nil {
+		t.Fatalf("migrate to v50: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO sender_chat (account_id, email, combined) VALUES ('acct-1', 'b@x', 0)`); err != nil {
+		t.Fatalf("insert split sender: %v", err)
+	}
+
+	for email, want := range map[string]int{"a@x": 1, "b@x": 0} {
+		var got int
+		if err := db.QueryRow(`SELECT combined FROM sender_chat WHERE email = ?`, email).Scan(&got); err != nil {
+			t.Fatalf("read combined %s: %v", email, err)
+		}
+		if got != want {
+			t.Errorf("sender %s combined = %d, want %d", email, got, want)
 		}
 	}
 }

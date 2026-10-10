@@ -106,56 +106,71 @@ func (a *App) SetSenderCategory(accountID, email, category string) error {
 }
 
 // SetSenderChat combines (or splits again) the threads a sender starts into
-// one sender chat. Splitting drops the sender chat's pin/snooze state and
-// releases its chat draft link (the draft is kept). Undoable.
-func (a *App) SetSenderChat(accountID, email string, combined bool) error {
+// one sender chat, and reports whether that changed anything: a sender that
+// already combines (or is already split) is left alone, with no undo entry.
+// Splitting drops the sender chat's pin/snooze state and releases its chat
+// draft link (the draft is kept). Undoable.
+func (a *App) SetSenderChat(accountID, email string, combined bool) (bool, error) {
 	email = message.NormalizeSenderEmail(email)
 	if email == "" {
-		return fmt.Errorf("sender email is required")
+		return false, fmt.Errorf("sender email is required")
 	}
 	acc, err := a.accountStore.Get(accountID)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if acc == nil {
-		return fmt.Errorf("account %s not found", accountID)
+		return false, fmt.Errorf("account %s not found", accountID)
 	}
 	a.chatStateMu.Lock()
 	defer a.chatStateMu.Unlock()
 	previous, err := a.messageStore.IsSenderChat(accountID, email)
 	if err != nil {
-		return err
+		return false, err
 	}
 	if previous == combined {
-		return nil
+		return false, nil
+	}
+	choice, err := a.messageStore.SenderChatChoice(accountID, email)
+	if err != nil {
+		return false, err
 	}
 	var state message.ChatState
 	if previous {
 		if state, err = a.messageStore.GetChatState(accountID, message.SenderChatKey(email)); err != nil {
-			return err
+			return false, err
 		}
 	}
-	if err := a.applySenderChat(accountID, email, combined, message.ChatState{}); err != nil {
-		return err
+	if err := a.applySenderChat(accountID, email, &combined, choice, message.ChatState{}); err != nil {
+		return false, err
 	}
 	description := "Combine sender chat"
 	if !combined {
 		description = "Split sender chat"
 	}
-	a.undoStack.Push(undo.NewSenderChatCommand(senderChatRestorer{a}, accountID, email, previous, state, description))
-	return nil
+	a.undoStack.Push(undo.NewSenderChatCommand(senderChatRestorer{a}, accountID, email, choice, state, description))
+	return true, nil
 }
 
-// applySenderChat sets the combine flag. Combining writes state to the sender
-// chat; splitting clears its state and draft link. If a later write fails,
-// the flag is set back so the chat keeps its previous form.
-func (a *App) applySenderChat(accountID, email string, combined bool, state message.ChatState) error {
-	if err := a.messageStore.SetSenderChat(accountID, email, combined); err != nil {
+// writeSenderChoice records a sender's combine choice; nil clears it.
+func (a *App) writeSenderChoice(accountID, email string, choice *bool) error {
+	if choice == nil {
+		return a.messageStore.ClearSenderChat(accountID, email)
+	}
+	return a.messageStore.SetSenderChat(accountID, email, *choice)
+}
+
+// applySenderChat records choice (nil follows the default). If the sender
+// then combines, state is written to the sender chat; otherwise its state and
+// draft link are cleared. If a later write fails, rollback is recorded so the
+// chat keeps its previous form.
+func (a *App) applySenderChat(accountID, email string, choice, rollback *bool, state message.ChatState) error {
+	if err := a.writeSenderChoice(accountID, email, choice); err != nil {
 		return err
 	}
 	key := message.SenderChatKey(email)
-	var err error
-	if !combined {
+	combined, err := a.messageStore.IsSenderChat(accountID, email)
+	if err == nil && !combined {
 		state = message.ChatState{}
 		err = a.draftStore.DeleteChatLink(accountID, key)
 	}
@@ -165,7 +180,7 @@ func (a *App) applySenderChat(accountID, email string, combined bool, state mess
 	if err == nil {
 		return nil
 	}
-	if rbErr := a.messageStore.SetSenderChat(accountID, email, !combined); rbErr != nil {
+	if rbErr := a.writeSenderChoice(accountID, email, rollback); rbErr != nil {
 		return errors.Join(err, rbErr)
 	}
 	a.emitChatsChanged(accountID)
@@ -176,10 +191,14 @@ func (a *App) applySenderChat(accountID, email string, combined bool, state mess
 // frontend binding.
 type senderChatRestorer struct{ a *App }
 
-func (r senderChatRestorer) RestoreSenderChat(accountID, email string, combined bool, state message.ChatState) error {
+func (r senderChatRestorer) RestoreSenderChat(accountID, email string, choice *bool, state message.ChatState) error {
 	r.a.chatStateMu.Lock()
 	defer r.a.chatStateMu.Unlock()
-	return r.a.applySenderChat(accountID, email, combined, state)
+	current, err := r.a.messageStore.SenderChatChoice(accountID, email)
+	if err != nil {
+		return err
+	}
+	return r.a.applySenderChat(accountID, email, choice, current, state)
 }
 
 // chatStateRestorer adapts App to undo.ChatStateRestorer without adding a
@@ -240,13 +259,49 @@ func (a *App) initChatState() {
 	log := logging.WithComponent("app.chat")
 	a.chatStateMu.Lock()
 	n, err := a.messageStore.CleanupChatState()
-	a.chatStateMu.Unlock()
 	if err != nil {
 		log.Warn().Err(err).Msg("Failed to clean up chat state")
 	} else if n > 0 {
 		log.Info().Int64("rows", n).Msg("Removed chat state for deleted threads")
 	}
+	changed, err := a.moveStaleChatState()
+	if err != nil {
+		log.Warn().Err(err).Msg("Failed to move chat state to sender chats")
+	}
+	a.chatStateMu.Unlock()
+	for accountID := range changed {
+		a.emitChatsChanged(accountID)
+	}
 	a.armSnoozeTimer(time.Second)
+}
+
+// moveStaleChatState moves pins, snoozes and chat draft links whose thread now
+// belongs to a sender chat into that chat, and drops them from sender chats
+// whose sender no longer combines (as splitting does), so state follows the
+// chat list after an upgrade or a change to the combine default. It returns
+// the accounts it changed. Callers hold chatStateMu.
+func (a *App) moveStaleChatState() (map[string]bool, error) {
+	moves, err := a.messageStore.StaleChatKeys()
+	if err != nil {
+		return nil, err
+	}
+	changed := map[string]bool{}
+	var errs []error
+	for _, m := range moves {
+		if err := a.messageStore.MoveChatState(m); err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		if err := a.draftStore.MoveChatLink(m.AccountID, m.From, m.To); err != nil {
+			errs = append(errs, err)
+		}
+		changed[m.AccountID] = true
+	}
+	if len(moves) > 0 {
+		log := logging.WithComponent("app.chat")
+		log.Info().Int("keys", len(moves)).Msg("Moved chat state to match sender chats")
+	}
+	return changed, errors.Join(errs...)
 }
 
 // armSnoozeTimer schedules wakeSnoozes for the earliest snooze end, waiting

@@ -1,8 +1,10 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/hkdb/aerion/internal/account"
 	"github.com/hkdb/aerion/internal/certificate"
@@ -279,6 +281,39 @@ func (a *App) GetChatNotifyPriorityOnly() (bool, error) {
 // SetChatNotifyPriorityOnly sets whether new-mail notifications skip low-priority mail
 func (a *App) SetChatNotifyPriorityOnly(only bool) error {
 	return a.settingsStore.SetChatNotifyPriorityOnly(only)
+}
+
+// GetChatCombineSenders returns whether each sender's threads combine into one chat by default
+func (a *App) GetChatCombineSenders() (bool, error) {
+	return a.settingsStore.GetChatCombineSenders()
+}
+
+// SetChatCombineSenders sets whether senders combine by default; per-sender
+// choices still win. When the value changes, pins, snoozes and chat draft
+// links move to the chats their threads now belong to, and chat lists reload.
+func (a *App) SetChatCombineSenders(combine bool) error {
+	a.chatStateMu.Lock()
+	defer a.chatStateMu.Unlock()
+	previous, err := a.settingsStore.GetChatCombineSenders()
+	if err != nil {
+		return err
+	}
+	if err := a.settingsStore.SetChatCombineSenders(combine); err != nil {
+		return err
+	}
+	if previous == combine {
+		return nil
+	}
+	_, moveErr := a.moveStaleChatState()
+	a.armSnoozeTimer(time.Second)
+	accounts, err := a.accountStore.List()
+	if err != nil {
+		return errors.Join(moveErr, err)
+	}
+	for _, acc := range accounts {
+		a.emitChatsChanged(acc.ID)
+	}
+	return moveErr
 }
 
 // GetChatSendKey returns the chat composer's send key ("enter" or "ctrl-enter")

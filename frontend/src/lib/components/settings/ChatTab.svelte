@@ -12,6 +12,7 @@
     autoAdvance: string
     notifyPriorityOnly: boolean
     showLowGroup: boolean
+    combineSenders: boolean
   }
 
   let {
@@ -20,6 +21,7 @@
     autoAdvance = $bindable(),
     notifyPriorityOnly = $bindable(),
     showLowGroup = $bindable(),
+    combineSenders = $bindable(),
   }: Props = $props()
 
   const sendKeyOptions = $derived([
@@ -81,6 +83,14 @@
         </Select.Content>
       </Select.Root>
       <p class="text-xs text-muted-foreground">{$_('settingsChat.autoAdvanceDescription')}</p>
+    </div>
+
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <Label for="chat-combine-senders">{$_('settingsChat.combineSenders')}</Label>
+        <p class="text-xs text-muted-foreground">{$_('settingsChat.combineSendersDescription')}</p>
+      </div>
+      <Switch id="chat-combine-senders" checked={combineSenders} onCheckedChange={(v) => (combineSenders = v)} />
     </div>
 
     <div class="flex items-center justify-between gap-4">

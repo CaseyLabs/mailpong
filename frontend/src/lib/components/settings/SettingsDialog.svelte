@@ -5,7 +5,7 @@
   import * as Tabs from '$lib/components/ui/tabs'
   import { Button } from '$lib/components/ui/button'
   // @ts-ignore - wailsjs path
-  import { GetReadReceiptResponsePolicy, SetReadReceiptResponsePolicy, GetMarkAsReadDelay, SetMarkAsReadDelay, GetMessageListDensity, SetMessageListDensity, GetThemeMode, SetThemeMode, GetShowTitleBar, SetShowTitleBar, GetRunBackground, SetRunBackground, GetStartHidden, SetStartHidden, GetAutostart, SetAutostart, GetLanguage, SetLanguage, GetComposerMode, SetComposerMode, GetMailtoMode, SetMailtoMode, GetComposerFormat, SetComposerFormat, GetNativeTitleBar, SetNativeTitleBar, GetAlwaysLoadImages, SetAlwaysLoadImages, GetDarkMailContent, SetDarkMailContent, GetDarkComposerBody, SetDarkComposerBody, GetAccentBarUnread, SetAccentBarUnread, GetAccentUnreadStyle, SetAccentUnreadStyle, GetShowMessageListCircles, SetShowMessageListCircles, GetShowMessageListProfilePics, SetShowMessageListProfilePics, GetAlwaysShowMessageCheckbox, SetAlwaysShowMessageCheckbox, GetShowMessagePreview, SetShowMessagePreview, GetShowViewerCircles, SetShowViewerCircles, GetSpellcheckEnabled, SetSpellcheckEnabled, GetSpellcheckLanguages, SetSpellcheckLanguages, GetChatSendKey, SetChatSendKey, GetChatIncludeQuote, SetChatIncludeQuote, GetChatAutoAdvance, SetChatAutoAdvance, GetChatNotifyPriorityOnly, SetChatNotifyPriorityOnly, GetChatShowLowGroup, SetChatShowLowGroup, QuitApp } from '../../../../wailsjs/go/app/App.js'
+  import { GetReadReceiptResponsePolicy, SetReadReceiptResponsePolicy, GetMarkAsReadDelay, SetMarkAsReadDelay, GetMessageListDensity, SetMessageListDensity, GetThemeMode, SetThemeMode, GetShowTitleBar, SetShowTitleBar, GetRunBackground, SetRunBackground, GetStartHidden, SetStartHidden, GetAutostart, SetAutostart, GetLanguage, SetLanguage, GetComposerMode, SetComposerMode, GetMailtoMode, SetMailtoMode, GetComposerFormat, SetComposerFormat, GetNativeTitleBar, SetNativeTitleBar, GetAlwaysLoadImages, SetAlwaysLoadImages, GetDarkMailContent, SetDarkMailContent, GetDarkComposerBody, SetDarkComposerBody, GetAccentBarUnread, SetAccentBarUnread, GetAccentUnreadStyle, SetAccentUnreadStyle, GetShowMessageListCircles, SetShowMessageListCircles, GetShowMessageListProfilePics, SetShowMessageListProfilePics, GetAlwaysShowMessageCheckbox, SetAlwaysShowMessageCheckbox, GetShowMessagePreview, SetShowMessagePreview, GetShowViewerCircles, SetShowViewerCircles, GetSpellcheckEnabled, SetSpellcheckEnabled, GetSpellcheckLanguages, SetSpellcheckLanguages, GetChatSendKey, SetChatSendKey, GetChatIncludeQuote, SetChatIncludeQuote, GetChatAutoAdvance, SetChatAutoAdvance, GetChatNotifyPriorityOnly, SetChatNotifyPriorityOnly, GetChatShowLowGroup, SetChatShowLowGroup, GetChatCombineSenders, SetChatCombineSenders, QuitApp } from '../../../../wailsjs/go/app/App.js'
   import { addToast } from '$lib/stores/toast'
   import { setMessageListDensity as updateDensityStore, setThemeMode as updateThemeStore, setShowTitleBar as updateShowTitleBarStore, setRunBackground as updateRunBackgroundStore, setStartHidden as updateStartHiddenStore, setAutostart as updateAutostartStore, setLanguage as updateLanguageStore, setComposerMode as updateComposerModeStore, setMailtoMode as updateMailtoModeStore, setComposerFormat as updateComposerFormatStore, setNativeTitleBar as updateNativeTitleBarStore, setAlwaysLoadImages as updateAlwaysLoadImagesStore, setDarkMailContent as updateDarkMailContentStore, setDarkComposerBody as updateDarkComposerBodyStore, setAccentBarUnread as updateAccentBarUnreadStore, setAccentUnreadStyle as updateAccentUnreadStyleStore, setShowMessageListCircles as updateShowMessageListCirclesStore, setShowMessageListProfilePics as updateShowMessageListProfilePicsStore, setAlwaysShowMessageCheckbox as updateAlwaysShowMessageCheckboxStore, setShowMessagePreview as updateShowMessagePreviewStore, setShowViewerCircles as updateShowViewerCirclesStore, setSpellcheckEnabled as updateSpellcheckEnabledStore, setSpellcheckLanguages as updateSpellcheckLanguagesStore, setChatSendKey as updateChatSendKeyStore, setChatAutoAdvance as updateChatAutoAdvanceStore, setChatShowLowGroup as updateChatShowLowGroupStore, type ChatSendKey, type ChatAutoAdvance, type MessageListDensity, type ThemeMode, type ComposerMode, type ComposerFormat, DEFAULT_THEME } from '$lib/stores/settings.svelte'
   import { syncSpellcheckLanguagesIfActive, defaultSpellcheckLanguages } from '$lib/spellcheck/settings'
@@ -65,6 +65,7 @@
   let chatAutoAdvance = $state<string>('next')
   let chatNotifyPriorityOnly = $state<boolean>(true)
   let chatShowLowGroup = $state<boolean>(true)
+  let chatCombineSenders = $state<boolean>(true)
   let originalNativeTitleBar = false
   // Snapshot of the saved theme at dialog open time. Used to revert live preview
   // if the dialog closes without Save (Cancel / ESC / click-outside).
@@ -116,7 +117,7 @@
     loading = true
     hasSaved = false
     try {
-      const [policy, delayMs, density, theme, titleBar, runBg, startHid, autoSt, lang, comp, mail, compFmt, nativeTB, alwaysImages, darkMail, darkComposer, accentBar, accentStyle, listCircles, listProfilePics, alwaysCheckbox, messagePreview, viewerCircles, scEnabled, scLangs, sendKey, includeQuote, autoAdvance, notifyPriority, showLow] = await Promise.all([
+      const [policy, delayMs, density, theme, titleBar, runBg, startHid, autoSt, lang, comp, mail, compFmt, nativeTB, alwaysImages, darkMail, darkComposer, accentBar, accentStyle, listCircles, listProfilePics, alwaysCheckbox, messagePreview, viewerCircles, scEnabled, scLangs, sendKey, includeQuote, autoAdvance, notifyPriority, showLow, combineSenders] = await Promise.all([
         GetReadReceiptResponsePolicy(),
         GetMarkAsReadDelay(),
         GetMessageListDensity(),
@@ -147,6 +148,7 @@
         GetChatAutoAdvance(),
         GetChatNotifyPriorityOnly(),
         GetChatShowLowGroup(),
+        GetChatCombineSenders(),
       ])
       readReceiptResponsePolicy = policy
       // Convert ms to seconds for display
@@ -181,6 +183,7 @@
       chatAutoAdvance = autoAdvance || 'next'
       chatNotifyPriorityOnly = notifyPriority ?? true
       chatShowLowGroup = showLow ?? true
+      chatCombineSenders = combineSenders ?? true
       originalNativeTitleBar = nativeTitleBar
     } catch (err) {
       console.error('Failed to load settings:', err)
@@ -228,6 +231,7 @@
       await SetChatAutoAdvance(chatAutoAdvance)
       await SetChatNotifyPriorityOnly(chatNotifyPriorityOnly)
       await SetChatShowLowGroup(chatShowLowGroup)
+      await SetChatCombineSenders(chatCombineSenders)
       // Update the reactive stores so UI updates immediately
       updateDensityStore(messageListDensity as MessageListDensity)
       updateThemeStore(themeMode as ThemeMode)
@@ -410,6 +414,7 @@
               bind:autoAdvance={chatAutoAdvance}
               bind:notifyPriorityOnly={chatNotifyPriorityOnly}
               bind:showLowGroup={chatShowLowGroup}
+              bind:combineSenders={chatCombineSenders}
             />
           </Tabs.Content>
 

@@ -204,10 +204,11 @@ func (c *ChatStateCommand) Undo() error {
 	return c.restorer.RestoreChatState(c.accountID, c.threadKey, c.previous)
 }
 
-// SenderChatRestorer writes a sender's combine flag back, along with the
-// sender chat's pin/snooze state when the flag is restored to combined.
+// SenderChatRestorer writes a sender's combine choice back (nil follows the
+// default), along with the sender chat's pin/snooze state when the sender
+// combines again.
 type SenderChatRestorer interface {
-	RestoreSenderChat(accountID, email string, combined bool, state message.ChatState) error
+	RestoreSenderChat(accountID, email string, choice *bool, state message.ChatState) error
 }
 
 // SenderChatCommand undoes combining a sender's threads into one chat, or
@@ -217,19 +218,19 @@ type SenderChatCommand struct {
 	restorer  SenderChatRestorer
 	accountID string
 	email     string
-	combined  bool
+	choice    *bool
 	state     message.ChatState
 }
 
 // NewSenderChatCommand creates a SenderChatCommand that restores the
-// previous flag (combined) and, for a combined sender, its chat state.
-func NewSenderChatCommand(restorer SenderChatRestorer, accountID, email string, combined bool, state message.ChatState, description string) *SenderChatCommand {
+// previous choice and, for a combined sender, its chat state.
+func NewSenderChatCommand(restorer SenderChatRestorer, accountID, email string, choice *bool, state message.ChatState, description string) *SenderChatCommand {
 	return &SenderChatCommand{
 		BaseCommand: NewBaseCommand(description),
 		restorer:    restorer,
 		accountID:   accountID,
 		email:       email,
-		combined:    combined,
+		choice:      choice,
 		state:       state,
 	}
 }
@@ -237,7 +238,7 @@ func NewSenderChatCommand(restorer SenderChatRestorer, accountID, email string, 
 // Execute performs the action (already done at creation time)
 func (c *SenderChatCommand) Execute() error { return nil }
 
-// Undo restores the flag and state from before the change
+// Undo restores the choice and state from before the change
 func (c *SenderChatCommand) Undo() error {
-	return c.restorer.RestoreSenderChat(c.accountID, c.email, c.combined, c.state)
+	return c.restorer.RestoreSenderChat(c.accountID, c.email, c.choice, c.state)
 }

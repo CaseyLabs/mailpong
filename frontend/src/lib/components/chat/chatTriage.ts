@@ -29,7 +29,7 @@ export interface ChatRowActions {
 
 type After = () => void
 
-function t(key: string, values?: Record<string, string | number>): string {
+export function t(key: string, values?: Record<string, string | number>): string {
   return get(_)(key, values ? { values } : undefined)
 }
 
@@ -156,8 +156,21 @@ export async function setSenderLow(accountId: string, sender: Person, low: boole
 }
 
 // setSenderChat combines a sender's threads into one sender chat, or splits
-// it back into threads. Undoable.
-export function setSenderChat(accountId: string, sender: Person, combined: boolean, afterUndo?: After): Promise<boolean> {
-  const msg = t(combined ? 'chat.senderCombinedToast' : 'chat.senderSplitToast', { sender: displayName(sender) })
-  return run(() => SetSenderChat(accountId, sender.email, combined), msg, t('chat.stateChangeFailed'), true, afterUndo)
+// it back into threads. Undoable. Resolves false, with no Undo, when the
+// sender already was that way (for example a thread I started that the
+// sender replied to, while the sender already combines).
+export async function setSenderChat(accountId: string, sender: Person, combined: boolean, afterUndo?: After): Promise<boolean> {
+  const name = displayName(sender)
+  try {
+    if (!(await SetSenderChat(accountId, sender.email, combined))) {
+      toasts.info(t(combined ? 'chat.senderAlreadyCombined' : 'chat.senderAlreadySplit', { sender: name }))
+      return false
+    }
+  } catch (err) {
+    console.error('Sender chat change failed:', err)
+    toasts.error(t('chat.stateChangeFailed'))
+    return false
+  }
+  toasts.success(t(combined ? 'chat.senderCombinedToast' : 'chat.senderSplitToast', { sender: name }), undoAction(afterUndo))
+  return true
 }

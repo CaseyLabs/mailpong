@@ -1458,4 +1458,12 @@ var migrations = []Migration{
 		`,
 		Run: backfillEmbeddedAttachments,
 	},
+	{
+		Version: 50,
+		SQL: `
+			-- Senders combine into sender chats by default; a row records a
+			-- per-sender choice. Existing rows were opt-ins to combining.
+			ALTER TABLE sender_chat ADD COLUMN combined INTEGER NOT NULL DEFAULT 1;
+		`,
+	},
 }

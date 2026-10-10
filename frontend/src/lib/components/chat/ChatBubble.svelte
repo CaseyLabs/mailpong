@@ -17,7 +17,9 @@
   import { toasts } from '$lib/stores/toast'
   import ChatRichCard from './ChatRichCard.svelte'
   import ChatSecurityBanners from './ChatSecurityBanners.svelte'
-  import { formatTime, linkify, parseRecipients, displayName, type ReplyMode, type ThreadItem } from './chatFormat'
+  import { securityStatus, TONES } from './chatSecurity'
+  import { linkify, parseRecipients, displayName, type ReplyMode, type ThreadItem } from './chatFormat'
+  import { formatTime } from '$lib/utils/date'
   import type { ChatThread } from './chatThread.svelte'
 
 
@@ -27,7 +29,6 @@
     accountId: string
     folderId: string
     folderType: string
-    focused: boolean
     onFocusChange: (focused: boolean) => void
     onReply?: (mode: ReplyMode, messageId: string, imagesLoaded?: boolean) => void
     onComposeToAddress?: (to: string) => void
@@ -39,7 +40,7 @@
   }
 
   let {
-    item, thread, accountId, folderId, folderType, focused, onFocusChange,
+    item, thread, accountId, folderId, folderType, onFocusChange,
     onReply, onComposeToAddress, onEditDraft, onImagesLoaded, imagesLoaded, onActionComplete, onOpenLink,
   }: Props = $props()
 
@@ -78,6 +79,8 @@
   const senderName = $derived(msg.fromName || msg.fromEmail || $_('viewer.unknown'))
   const photo = $derived(contactPhotos.get(msg.fromEmail))
   const time = $derived(formatTime(item.date))
+  const security = $derived(securityStatus(msg, thread, $_))
+  const badges = $derived(security.filter((l) => l.badge))
   const recipientsTitle = $derived(
     [
       `${$_('viewer.from')} ${msg.fromName ? `${msg.fromName} <${msg.fromEmail}>` : msg.fromEmail}`,
@@ -153,7 +156,7 @@
   {onReply}
 >
   <div
-    class="group flex gap-2 px-4 {item.groupStart ? 'mt-3' : 'mt-0.5'} {item.mine ? 'flex-row-reverse' : ''}"
+    class="group flex gap-2 px-4 {item.groupStart ? (mode === 'full' && !item.newDay ? 'mt-3 pt-3 border-t border-border' : 'mt-3') : 'mt-0.5'} {item.mine ? 'flex-row-reverse' : ''}"
     data-message-id={msg.id}
     tabindex="-1"
     role="article"
@@ -177,19 +180,27 @@
           <span class="truncate">{item.subject}</span>
         </div>
       {/if}
-      {#if item.groupStart}
-        <div class="flex items-baseline gap-2 px-1 mb-0.5 text-xs text-muted-foreground" title={recipientsTitle}>
-          {#if !item.mine}<span class="font-medium text-foreground/80">{senderName}</span>{/if}
-          {#if msg.isDraft}<span class="text-destructive font-medium">{$_('chat.draft')}</span>{/if}
-          <span>{time}</span>
+      {#if item.groupStart || badges.length > 0}
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-1 mb-0.5 text-xs text-muted-foreground" title={item.groupStart ? recipientsTitle : undefined}>
+          {#if item.groupStart}
+            {#if !item.mine}<span class="font-medium text-foreground/80">{senderName}</span>{/if}
+            {#if msg.isDraft}<span class="text-destructive font-medium">{$_('chat.draft')}</span>{/if}
+            <span>{time}</span>
+          {/if}
+          {#each badges as b (b.icon + b.text)}
+            <span class="inline-flex items-center gap-1 px-1.5 py-px rounded-full border text-[11px] leading-4 {TONES[b.tone]}" title={b.text}>
+              <Icon icon={b.icon} class="w-3 h-3 shrink-0" aria-hidden="true" />
+              <span class="max-w-48 truncate">{b.text}</span>
+            </span>
+          {/each}
         </div>
       {/if}
 
       <div class="flex flex-col gap-1.5 w-full {item.mine ? 'items-end' : 'items-start'}">
-        <ChatSecurityBanners {msg} {thread} />
+        <ChatSecurityBanners {msg} {thread} lines={security} />
 
         <div
-          class="relative w-full rounded-2xl {focused ? 'ring-2 ring-primary/40' : ''} {mode === 'bubble' && !bare ? (item.mine ? 'w-auto bg-primary text-primary-foreground rounded-br-md' : 'w-auto bg-muted text-foreground rounded-bl-md') : ''}"
+          class="relative w-full rounded-2xl group-focus-visible:ring-2 group-focus-visible:ring-primary/40 {mode === 'bubble' && !bare ? (item.mine ? 'w-auto bg-primary text-primary-foreground rounded-br-md' : 'w-auto bg-muted text-foreground rounded-bl-md') : ''}"
         >
           {#if notFetched && thread.bodyErrors.has(msg.id)}
             <div class="flex items-center gap-2 px-3.5 py-2 text-sm text-muted-foreground bg-muted rounded-2xl">
@@ -226,11 +237,11 @@
           {:else if mode === 'card'}
             <ChatRichCard subject={msg.subject} preview={msg.chat?.text ?? ''} expanded={cardExpanded} onToggle={() => (cardExpanded = !cardExpanded)} body={emailBody} />
           {:else}
-            <div class="rounded-xl border border-border overflow-hidden">{@render emailBody()}</div>
+            <div class="overflow-hidden">{@render emailBody()}</div>
           {/if}
 
           <!-- Hover / focus actions -->
-          <div class="absolute {actionsPos} flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+          <div class="absolute {actionsPos} flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 group-has-focus-visible:opacity-100 transition-opacity">
             {#if msg.isDraft && onEditDraft}
               <button class="p-1 rounded hover:bg-muted" title={$_('viewer.editDraft')} onclick={() => onEditDraft(msg.id)}>
                 <Icon icon="mdi:pencil" class="w-4 h-4 text-muted-foreground" />

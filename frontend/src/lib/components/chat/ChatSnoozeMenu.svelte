@@ -18,7 +18,7 @@
     onActiveChange?: (active: boolean) => void
   }
 
-  let { snoozedUntil, onSnooze, onUnsnooze, triggerClass = 'p-2 rounded-md hover:bg-muted transition-colors', iconClass = 'w-5 h-5', onActiveChange }: Props = $props()
+  let { snoozedUntil, onSnooze, onUnsnooze, triggerClass = 'p-2 rounded-md hover:bg-muted transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden', iconClass = 'w-5 h-5', onActiveChange }: Props = $props()
 
   let menuOpen = $state(false)
   let pickOpen = $state(false)

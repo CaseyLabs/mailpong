@@ -96,10 +96,14 @@
   }
 </script>
 
+{#snippet snoozed()}
+  {#if snoozeLabel}<Icon icon="mdi:alarm-snooze" class="inline w-3.5 h-3.5 -mt-0.5" /> {$_('chat.snoozedUntil', { values: { time: snoozeLabel } })} · {/if}
+{/snippet}
+
 {#snippet iconButton(icon: string, label: string, onclick: () => void, active?: boolean, disabled = false)}
   <!-- aria-pressed only for toggles (active passed); plain actions omit it. -->
   <button
-    class="p-2 rounded-md hover:bg-muted transition-colors disabled:opacity-50 disabled:pointer-events-none"
+    class="p-2 rounded-md hover:bg-muted transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-hidden disabled:opacity-50 disabled:pointer-events-none"
     title={label}
     aria-label={label}
     aria-pressed={active}
@@ -201,7 +205,7 @@
     </div>
   </div>
 
-  <div class="flex items-center gap-3 min-w-0 px-4 pt-3 pb-1">
+  <div class="flex items-center gap-3 min-w-0 px-4 py-3 border-b border-border">
     <div class="flex -space-x-1 shrink-0" aria-hidden="true">
       {#each people.slice(0, MAX_AVATARS) as p (p.email)}
         {@const photo = contactPhotos.get(p.email)}
@@ -212,10 +216,17 @@
     </div>
 
     <div class="min-w-0">
-      <h2 class="text-sm font-semibold text-foreground truncate" title={people.map((p) => p.email).join(', ')}>{title}</h2>
-      <p class="text-sm text-muted-foreground truncate" title={senderEmail || subject}>
-        {#if snoozeLabel}<Icon icon="mdi:alarm-snooze" class="inline w-3.5 h-3.5 -mt-0.5" /> {$_('chat.snoozedUntil', { values: { time: snoozeLabel } })} · {/if}{senderEmail || subject || $_('viewer.noSubject')}
-      </p>
+      {#if senderEmail || !subject}
+        <h2 class="text-sm font-semibold text-foreground truncate" title={people.map((p) => p.email).join(', ')}>{title}</h2>
+        <p class="text-sm text-muted-foreground truncate" title={senderEmail || subject}>
+          {@render snoozed()}{senderEmail || $_('viewer.noSubject')}
+        </p>
+      {:else}
+        <h2 class="text-base font-semibold text-foreground truncate" title={subject}>{subject}</h2>
+        <p class="text-sm text-muted-foreground truncate" title={people.map((p) => p.email).join(', ')}>
+          {@render snoozed()}{title}
+        </p>
+      {/if}
     </div>
   </div>
 </header>
