@@ -48,6 +48,9 @@ func (a *App) initBackgroundSync(ctx context.Context) {
 			"accountId": accountID,
 			"folderId":  folderID,
 		})
+		// The scheduled sync syncs the folder list first; add the Sent IDLE
+		// connection once it has found Sent.
+		a.ensureSentIdle(accountID)
 		// Mirror the unread count to the sidebar so badges refresh after a
 		// scheduled sync (the manual SyncFolder path emits this at
 		// app/sync.go:110; the scheduler path was missing it).
@@ -91,7 +94,7 @@ func (a *App) initBackgroundSync(ctx context.Context) {
 		} else {
 			for _, acc := range accounts {
 				if acc.Enabled {
-					a.idleManager.StartAccount(acc.ID, acc.Name)
+					a.startAccountIdle(acc.ID)
 				}
 			}
 		}
@@ -121,6 +124,8 @@ func (a *App) processIdleEvents(ctx context.Context) {
 	// Per-account deferral for new-mail syncs suppressed during our own
 	// move/delete bursts (see ownExpungeEchoSuppress).
 	newMailDeferred := make(map[string]*time.Timer)
+	// Per-account debounce for Sent-folder IDLE activity.
+	sentDebounce := make(map[string]*time.Timer)
 
 	for {
 		select {
@@ -133,6 +138,21 @@ func (a *App) processIdleEvents(ctx context.Context) {
 				Str("folder", event.Folder).
 				Uint32("count", event.Count).
 				Msg("Received IDLE event")
+
+			// Sent-folder activity only syncs Sent: it must not reach the
+			// inbox handlers (notifications, inbox syncs).
+			if event.Folder != "INBOX" {
+				acctID := event.AccountID
+				timerMu.Lock()
+				if t := sentDebounce[acctID]; t != nil {
+					t.Stop()
+				}
+				sentDebounce[acctID] = time.AfterFunc(idleFlagResyncDebounce, func() {
+					a.syncSentAfterIdle(acctID)
+				})
+				timerMu.Unlock()
+				continue
+			}
 
 			switch event.Type {
 			case imap.EventNewMail:
@@ -347,7 +367,6 @@ func (a *App) handleIdleNewMail(event imap.MailEvent) {
 		a.handleNewMailNotification(*newMailInfo)
 	}
 
-	a.scheduleSentSyncAfterIdle(event.AccountID)
 }
 
 // idleFlagResyncDebounce coalesces a burst of IDLE flag-change notifications
@@ -490,8 +509,6 @@ func (a *App) reconcileInboxFlags(accountID string, attempt int) {
 		log.Warn().Err(syncErr).Str("accountID", accountID).Msg("IDLE flag re-sync failed")
 		return
 	}
-
-	a.scheduleSentSyncAfterIdle(accountID)
 
 	// Update the sidebar unread badge.
 	if updated, ferr := a.folderStore.Get(folderID); ferr == nil && updated != nil {
@@ -1004,7 +1021,7 @@ func (a *App) restartIDLE() {
 
 	for _, acc := range accounts {
 		if acc.Enabled {
-			a.idleManager.StartAccount(acc.ID, acc.Name)
+			a.startAccountIdle(acc.ID)
 		}
 	}
 	log.Info().Int("accounts", len(accounts)).Msg("IDLE restarted for accounts")

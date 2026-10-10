@@ -145,3 +145,38 @@ func TestFailedDialFreesSlot(t *testing.T) {
 		t.Fatalf("dialing = %d after failed dial, want 0", n)
 	}
 }
+
+func TestCloseRefusesConnectionsWithoutCredentialLookup(t *testing.T) {
+	tests := []struct {
+		name  string
+		close func(*Pool)
+	}{
+		{"Close", func(p *Pool) { p.Close() }},
+		{"Close after CloseAll", func(p *Pool) { p.CloseAll(); p.Close() }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			lookups := 0
+			p := NewPool(PoolConfig{MaxConnections: 1, WaiterTimeout: time.Second},
+				func(string) (*ClientConfig, error) {
+					lookups++
+					return nil, errNoCredentials
+				})
+			tt.close(p)
+			if _, err := p.GetConnection(context.Background(), "acct"); !errors.Is(err, ErrPoolClosed) {
+				t.Fatalf("GetConnection error = %v, want ErrPoolClosed", err)
+			}
+			if lookups != 0 {
+				t.Fatalf("getCredentials called %d times after Close", lookups)
+			}
+		})
+	}
+}
+
+func TestCloseAllLeavesPoolUsable(t *testing.T) {
+	p := newTestPool(1)
+	p.CloseAll()
+	if _, err := p.GetConnection(context.Background(), "acct"); !errors.Is(err, errNoCredentials) {
+		t.Fatalf("GetConnection error = %v, want credentials error (pool still open)", err)
+	}
+}

@@ -82,7 +82,7 @@ func TestReplaceFolderSyncWaitsForRelease(t *testing.T) {
 
 			start := time.Now()
 			a.syncMu.Lock()
-			ctx, release := a.replaceFolderSyncLocked(key, tt.maxWait)
+			ctx, release, _ := a.replaceFolderSyncLocked(key, tt.maxWait)
 			a.syncMu.Unlock()
 			waited := time.Since(start)
 			<-released
@@ -102,6 +102,66 @@ func TestReplaceFolderSyncWaitsForRelease(t *testing.T) {
 			release()
 			if a.hasSyncSlot(key) {
 				t.Fatal("release left its own entry in place")
+			}
+		})
+	}
+}
+
+func TestShutdownSyncs(t *testing.T) {
+	tests := []struct {
+		name         string
+		holdSlot     bool // the sync ignores cancellation until the test ends
+		wantReleased bool
+	}{
+		{"running sync releases", false, true},
+		{"stuck sync is abandoned within the bound", true, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := &App{ctx: context.Background(), syncContexts: make(map[string]*syncSlot)}
+			ctx, release, ok := a.beginFolderSync("acc:inbox")
+			if !ok {
+				t.Fatal("beginFolderSync: want ok")
+			}
+			released := make(chan struct{})
+			stop := make(chan struct{})
+			defer close(stop)
+			go func() {
+				<-ctx.Done()
+				if tt.holdSlot {
+					<-stop
+				}
+				release()
+				close(released)
+			}()
+
+			start := time.Now()
+			a.shutdownSyncs(200 * time.Millisecond)
+			if elapsed := time.Since(start); elapsed > 2*time.Second {
+				t.Fatalf("shutdownSyncs took %v, want it bounded", elapsed)
+			}
+			select {
+			case <-released:
+				if !tt.wantReleased {
+					t.Fatal("stuck sync released unexpectedly")
+				}
+			default:
+				if tt.wantReleased {
+					t.Fatal("shutdownSyncs returned before the slot released")
+				}
+			}
+			if ctx.Err() == nil {
+				t.Fatal("running sync was not cancelled")
+			}
+
+			if _, _, ok := a.beginFolderSync("acc:other"); ok {
+				t.Fatal("beginFolderSync after shutdown: want !ok")
+			}
+			a.syncMu.Lock()
+			_, _, ok = a.replaceFolderSyncLocked("acc:other", time.Millisecond)
+			a.syncMu.Unlock()
+			if ok {
+				t.Fatal("replaceFolderSyncLocked after shutdown: want !ok")
 			}
 		})
 	}

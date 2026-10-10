@@ -11,7 +11,7 @@ import (
 // newBodyFailedTestStore opens a migrated temp DB, seeds one (account, folder)
 // row, and returns a message Store ready to attach test messages to. Mirrors
 // the test-scaffolding patterns in internal/database/database_test.go.
-func newBodyFailedTestStore(t *testing.T) (*Store, string, string) {
+func newBodyFailedTestStore(t testing.TB) (*Store, string, string) {
 	t.Helper()
 
 	path := filepath.Join(t.TempDir(), "test.db")

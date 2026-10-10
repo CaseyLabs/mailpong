@@ -2,6 +2,7 @@ package imap
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -10,6 +11,9 @@ import (
 	"github.com/hkdb/aerion/internal/logging"
 	"github.com/rs/zerolog"
 )
+
+// ErrPoolClosed is returned by GetConnection after Close.
+var ErrPoolClosed = errors.New("imap pool is closed")
 
 // IsConnectionError checks if an error indicates a dead/broken connection.
 // These errors warrant discarding the connection and getting a new one from the pool.
@@ -101,6 +105,7 @@ type Pool struct {
 	dialing     map[string]int                 // accountID -> dials in flight, counted against MaxConnections
 	waiters     map[string][]chan *PooledConnection
 	mu          sync.Mutex
+	closed      bool // set by Close; GetConnection then returns ErrPoolClosed
 	log         zerolog.Logger
 
 	// Credentials provider function
@@ -122,6 +127,10 @@ func NewPool(config PoolConfig, getCredentials func(accountID string) (*ClientCo
 // GetConnection gets or creates a connection for an account
 func (p *Pool) GetConnection(ctx context.Context, accountID string) (*PooledConnection, error) {
 	p.mu.Lock()
+	if p.closed {
+		p.mu.Unlock()
+		return nil, ErrPoolClosed
+	}
 
 	// Try to find an available connection, dropping idle dead ones so they
 	// stop counting toward the limit.
@@ -258,6 +267,12 @@ func (p *Pool) createConnection(ctx context.Context, accountID string) (*PooledC
 	if err != nil {
 		p.wakeWaiterLocked(accountID)
 		return nil, err
+	}
+	// Close ran during the dial: don't leave a live session no one will close.
+	if p.closed {
+		client.ForceClose()
+		p.wakeWaiterLocked(accountID)
+		return nil, ErrPoolClosed
 	}
 
 	conn := &PooledConnection{
@@ -496,6 +511,24 @@ func (p *Pool) CloseAccount(accountID string) {
 		Str("account", accountID).
 		Int("closed", len(conns)).
 		Msg("Closed all connections for account")
+}
+
+// Close marks the pool closed, so later GetConnection calls fail with
+// ErrPoolClosed instead of dialing, then closes every connection. Use it at
+// shutdown; CloseAll leaves the pool usable.
+func (p *Pool) Close() {
+	p.mu.Lock()
+	p.closed = true
+	// Wake every queued caller so it fails fast instead of waiting out
+	// WaiterTimeout; accounts with only dials in flight have no connections
+	// for CloseAll to visit.
+	for accountID := range p.waiters {
+		for len(p.waiters[accountID]) > 0 {
+			p.wakeWaiterLocked(accountID)
+		}
+	}
+	p.mu.Unlock()
+	p.CloseAll()
 }
 
 // CloseAll closes all connections in the pool

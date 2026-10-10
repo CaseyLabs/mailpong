@@ -41,9 +41,13 @@ func (a *App) SyncFolder(accountID, folderID string) error {
 	if _, exists := a.syncContexts[syncKey]; exists {
 		log.Debug().Str("account", accountID).Str("folder", folderID).Msg("Cancelling existing sync for restart")
 	}
-	ctx, release := a.replaceFolderSyncLocked(syncKey, slotReleaseWait)
+	ctx, release, ok := a.replaceFolderSyncLocked(syncKey, slotReleaseWait)
 
 	a.syncMu.Unlock()
+	if !ok {
+		log.Debug().Str("account", accountID).Str("folder", folderID).Msg("SyncFolder skipped, app is shutting down")
+		return nil
+	}
 
 	// The body fetch goroutine releases the slot when it finishes; earlier
 	// returns release it here.
@@ -413,6 +417,9 @@ const slotReleaseWait = 5 * time.Second
 func (a *App) beginFolderSync(key string) (ctx context.Context, release func(), ok bool) {
 	a.syncMu.Lock()
 	defer a.syncMu.Unlock()
+	if a.shuttingDown {
+		return nil, nil, false
+	}
 	if _, busy := a.syncContexts[key]; busy {
 		return nil, nil, false
 	}
@@ -445,12 +452,16 @@ func (a *App) registerFolderSyncLocked(key string) (context.Context, func()) {
 // replaceFolderSyncLocked cancels the sync registered under key, if any, and
 // waits up to maxWait for it to release its slot, so the two syncs don't
 // overlap; then it registers a new sync as registerFolderSyncLocked does.
-// The caller holds syncMu, which is dropped while waiting.
-func (a *App) replaceFolderSyncLocked(key string, maxWait time.Duration) (context.Context, func()) {
+// The caller holds syncMu, which is dropped while waiting. ok is false when
+// shutdown has begun, before or during the wait; nothing is registered then.
+func (a *App) replaceFolderSyncLocked(key string, maxWait time.Duration) (ctx context.Context, release func(), ok bool) {
+	if a.shuttingDown {
+		return nil, nil, false
+	}
 	timeout := time.NewTimer(maxWait)
 	defer timeout.Stop()
 	// Re-check after each wait: another sync may have claimed the slot.
-	for old, ok := a.syncContexts[key]; ok; old, ok = a.syncContexts[key] {
+	for old, exists := a.syncContexts[key]; exists; old, exists = a.syncContexts[key] {
 		old.cancel()
 		a.syncMu.Unlock()
 		select {
@@ -458,10 +469,58 @@ func (a *App) replaceFolderSyncLocked(key string, maxWait time.Duration) (contex
 			a.syncMu.Lock()
 		case <-timeout.C:
 			a.syncMu.Lock()
-			return a.registerFolderSyncLocked(key)
+			return a.registerIfRunningLocked(key)
+		}
+		if a.shuttingDown {
+			return nil, nil, false
 		}
 	}
-	return a.registerFolderSyncLocked(key)
+	return a.registerIfRunningLocked(key)
+}
+
+// registerIfRunningLocked registers a sync unless shutdown has begun. The
+// caller holds syncMu.
+func (a *App) registerIfRunningLocked(key string) (context.Context, func(), bool) {
+	if a.shuttingDown {
+		return nil, nil, false
+	}
+	ctx, release := a.registerFolderSyncLocked(key)
+	return ctx, release, true
+}
+
+// shutdownSyncs stops every running folder sync before the IMAP pool and the
+// database close. It refuses new syncs, cancels the running ones, and waits up
+// to wait for their slots to release, logging any that don't.
+func (a *App) shutdownSyncs(wait time.Duration) {
+	log := logging.WithComponent("app")
+
+	a.syncMu.Lock()
+	a.shuttingDown = true
+	pending := make(map[string]chan struct{}, len(a.syncContexts))
+	for key, slot := range a.syncContexts {
+		pending[key] = slot.done
+	}
+	a.syncMu.Unlock()
+
+	a.CancelAllSyncs()
+
+	// Refuse new connections now, so retries inside cancelled syncs fail fast.
+	if a.imapPool != nil {
+		a.imapPool.Close()
+	}
+
+	deadline := time.After(wait)
+	for key, done := range pending {
+		select {
+		case <-done:
+		case <-deadline:
+			select {
+			case <-done:
+			default:
+				log.Warn().Str("syncKey", key).Msg("Sync did not stop before shutdown")
+			}
+		}
+	}
 }
 
 // syncPeriodDays returns the account's sync period, or the 30-day default

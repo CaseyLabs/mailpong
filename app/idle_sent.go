@@ -8,39 +8,62 @@ import (
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
-// idleSentMinInterval is the minimum gap between Sent syncs triggered by IDLE
-// inbox activity for one account, so a stream of flag events (mail read on a
-// phone) doesn't start a Sent sync for each one.
-const idleSentMinInterval = 30 * time.Second
-
-// scheduleSentSyncAfterIdle runs syncSentAfterIdle at most once per
-// idleSentMinInterval per account. Activity inside the interval coalesces into
-// one trailing sync at its end, so a reply sent elsewhere is still picked up.
-func (a *App) scheduleSentSyncAfterIdle(accountID string) {
-	a.idleSentMu.Lock()
-	defer a.idleSentMu.Unlock()
-	if a.idleSentPending[accountID] {
+// ensureSentIdle makes the account's Sent IDLE connection follow its current
+// Sent folder: a connection on a stale path is stopped and a missing one is
+// started. A connection that already exists is left alone even if it died, so
+// scheduled syncs don't re-dial a server that rejects it; restartIDLE and
+// network recovery revive those. Called after folder syncs.
+func (a *App) ensureSentIdle(accountID string) {
+	if a.idleManager == nil {
 		return
 	}
-	a.idleSentPending[accountID] = true
-	wait := max(idleSentMinInterval-time.Since(a.idleSentLast[accountID]), 0)
-	time.AfterFunc(wait, func() {
-		a.idleSentMu.Lock()
-		delete(a.idleSentPending, accountID)
-		a.idleSentLast[accountID] = time.Now()
-		a.idleSentMu.Unlock()
-		a.syncSentAfterIdle(accountID)
-	})
+	acc, err := a.accountStore.Get(accountID)
+	if err != nil || acc == nil || !acc.Enabled {
+		return
+	}
+	want := ""
+	if sent, err := a.GetSpecialFolder(accountID, folder.TypeSent); err == nil && sent != nil && sent.Path != "INBOX" {
+		want = sent.Path
+	}
+	found := false
+	for _, f := range a.idleManager.Watched(accountID) {
+		switch f {
+		case "INBOX":
+		case want:
+			found = true
+		default:
+			a.idleManager.StopFolder(accountID, f)
+		}
+	}
+	if want != "" && !found {
+		a.idleManager.StartAccount(accountID, acc.Name, want)
+	}
 }
 
-// syncSentAfterIdle syncs the Sent folder after IDLE reports inbox activity.
-// IDLE watches INBOX only, so mail sent from another client (e.g. the Gmail
-// web UI) would otherwise reach Sent, and the chat thread, only on the next
-// scheduled sync. A reply sent elsewhere also flags its inbox original
-// \Answered, so the IDLE flag event catches most of them. When a sync of the
-// Sent folder is already running, it schedules another attempt rather than
-// dropping the activity, since that sync may have listed Sent before the
-// reply arrived.
+// startAccountIdle starts IDLE for an enabled account on INBOX and, when it is
+// known, the Sent folder, reviving connections that died. Connections that
+// already run are left alone. ensureSentIdle covers Sent once folder syncs
+// have found it.
+func (a *App) startAccountIdle(accountID string) {
+	if a.idleManager == nil {
+		return
+	}
+	acc, err := a.accountStore.Get(accountID)
+	if err != nil || acc == nil || !acc.Enabled {
+		return
+	}
+	folders := []string{"INBOX"}
+	if sent, err := a.GetSpecialFolder(accountID, folder.TypeSent); err == nil && sent != nil && sent.Path != "" && sent.Path != "INBOX" {
+		folders = append(folders, sent.Path)
+	}
+	a.idleManager.StartAccount(acc.ID, acc.Name, folders...)
+}
+
+// syncSentAfterIdle syncs the Sent folder after its own IDLE connection
+// reports activity, so mail sent from another client (e.g. the Gmail web UI)
+// reaches Sent, and the chat thread, within seconds. When a sync of the Sent
+// folder is already running, it retries shortly rather than dropping the
+// activity, since that sync may have listed Sent before the message arrived.
 func (a *App) syncSentAfterIdle(accountID string) {
 	defer recoverPanic("app.idle", "sync Sent after IDLE")
 	log := logging.WithComponent("app.idle")
@@ -53,7 +76,13 @@ func (a *App) syncSentAfterIdle(accountID string) {
 	ctx, release, ok := a.beginFolderSync(syncKey)
 	if !ok {
 		if a.ctx.Err() == nil {
-			a.scheduleSentSyncAfterIdle(accountID)
+			// One retry chain per account; further activity is covered by it.
+			if _, pending := a.idleSentRetry.LoadOrStore(accountID, struct{}{}); !pending {
+				time.AfterFunc(idleFlagResyncDebounce, func() {
+					a.idleSentRetry.Delete(accountID)
+					a.syncSentAfterIdle(accountID)
+				})
+			}
 		}
 		return
 	}

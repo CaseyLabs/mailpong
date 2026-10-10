@@ -332,3 +332,54 @@ func TestSetSenderChatUnchanged(t *testing.T) {
 		t.Errorf("SenderChatChoice = %v, %v; want nil", choice, err)
 	}
 }
+
+// Splitting a sender chat hands its pin and draft link to the
+// newest inbox thread the sender started; a sender with none loses them.
+func TestSplitSenderChat(t *testing.T) {
+	a := newChatReplyTestApp(t)
+	if err := a.messageStore.Create(&message.Message{
+		ID: "m-2", AccountID: "acct-1", FolderID: "f-1", UID: 2, Subject: "Dinner",
+		FromEmail: "bob@example.com", Date: time.Date(2026, 10, 2, 12, 0, 0, 0, time.UTC),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	pinned := time.Date(2026, 10, 3, 0, 0, 0, 0, time.UTC)
+	tests := []struct{ name, email, wantKey string }{
+		{"newest inbox thread", "bob@example.com", "m-2"},
+		{"no inbox mail", "ghost@example.com", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			key := message.SenderChatKey(tt.email)
+			if err := a.messageStore.SetChatState("acct-1", key, message.ChatState{PinnedAt: &pinned}); err != nil {
+				t.Fatal(err)
+			}
+			d := &draft.Draft{AccountID: "acct-1", Subject: "Hi"}
+			if err := a.draftStore.Create(d); err != nil {
+				t.Fatal(err)
+			}
+			link := draft.ChatLink{DraftID: d.ID, MessageID: "m-1"}
+			if err := a.draftStore.SetChatLink("acct-1", key, link); err != nil {
+				t.Fatal(err)
+			}
+			if err := a.splitSenderChat("acct-1", tt.email); err != nil {
+				t.Fatal(err)
+			}
+			if st, err := a.messageStore.GetChatState("acct-1", key); err != nil || st.PinnedAt != nil {
+				t.Errorf("sender chat state = %+v, %v; want empty", st, err)
+			}
+			if got, err := a.draftStore.GetChatLink("acct-1", key); err != nil || got != nil {
+				t.Errorf("sender chat link = %+v, %v; want none", got, err)
+			}
+			if tt.wantKey == "" {
+				return
+			}
+			if st, err := a.messageStore.GetChatState("acct-1", tt.wantKey); err != nil || st.PinnedAt == nil || !st.PinnedAt.Equal(pinned) {
+				t.Errorf("thread state = %+v, %v; want pinned", st, err)
+			}
+			if got, err := a.draftStore.GetChatLink("acct-1", tt.wantKey); err != nil || got == nil || *got != link {
+				t.Errorf("thread link = %+v, %v; want %+v", got, err, link)
+			}
+		})
+	}
+}

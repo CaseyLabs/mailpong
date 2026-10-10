@@ -52,7 +52,7 @@ func DefaultIdleConfig() IdleConfig {
 	}
 }
 
-// IdleConnection manages an IDLE connection for a single account
+// IdleConnection manages an IDLE connection for a single account folder
 type IdleConnection struct {
 	accountID      string
 	accountName    string
@@ -66,20 +66,20 @@ type IdleConnection struct {
 	running bool
 	stopCh  chan struct{}
 	doneCh  chan struct{} // Closed when goroutine exits
-	folder  string        // Currently watching folder (usually "INBOX")
+	folder  string        // Watched folder (INBOX or the Sent folder)
 	client  *imapclient.Client
 	events  chan<- MailEvent
 }
 
-// newIdleConnection creates a new IDLE connection for an account
-func newIdleConnection(accountID, accountName string, config IdleConfig, getCredentials func(accountID string) (*ClientConfig, error)) *IdleConnection {
+// newIdleConnection creates a new IDLE connection for one folder of an account
+func newIdleConnection(accountID, accountName, folder string, config IdleConfig, getCredentials func(accountID string) (*ClientConfig, error)) *IdleConnection {
 	return &IdleConnection{
 		accountID:      accountID,
 		accountName:    accountName,
 		config:         config,
 		getCredentials: getCredentials,
-		log:            logging.WithComponent("imap-idle").With().Str("account", accountName).Logger(),
-		folder:         "INBOX",
+		log:            logging.WithComponent("imap-idle").With().Str("account", accountName).Str("folder", folder).Logger(),
+		folder:         folder,
 	}
 }
 
@@ -399,11 +399,11 @@ func (ic *IdleConnection) ensureConnected(ctx context.Context) error {
 		return fmt.Errorf("server does not support IDLE")
 	}
 
-	// Select INBOX
+	// Select the watched folder
 	selectCmd := client.Select(ic.folder, nil)
 	if _, err := selectCmd.Wait(); err != nil {
 		client.Close()
-		return fmt.Errorf("failed to select INBOX: %w", err)
+		return fmt.Errorf("failed to select %s: %w", ic.folder, err)
 	}
 
 	ic.mu.Lock()
@@ -468,6 +468,12 @@ func (ic *IdleConnection) idleCycle(ctx context.Context) error {
 	}
 }
 
+// idleKey identifies one IDLE connection: an account's watched folder.
+type idleKey struct {
+	accountID string
+	folder    string
+}
+
 // IdleManager manages IDLE connections for multiple accounts
 type IdleManager struct {
 	config         IdleConfig
@@ -475,8 +481,8 @@ type IdleManager struct {
 	isConnected    func() bool // optional: propagated to connections
 	log            zerolog.Logger
 
-	// Connections per account
-	connections map[string]*IdleConnection
+	// Connections per account and folder
+	connections map[idleKey]*IdleConnection
 	mu          sync.Mutex
 
 	// Event channel
@@ -485,7 +491,6 @@ type IdleManager struct {
 	// Control
 	ctx    context.Context
 	cancel context.CancelFunc
-	wg     sync.WaitGroup
 }
 
 // NewIdleManager creates a new IDLE manager
@@ -494,7 +499,7 @@ func NewIdleManager(config IdleConfig, getCredentials func(accountID string) (*C
 		config:         config,
 		getCredentials: getCredentials,
 		log:            logging.WithComponent("idle-manager"),
-		connections:    make(map[string]*IdleConnection),
+		connections:    make(map[idleKey]*IdleConnection),
 		events:         make(chan MailEvent, 100),
 	}
 }
@@ -508,25 +513,27 @@ func (m *IdleManager) SetConnectivityCheck(check func() bool) {
 
 // Start starts the IDLE manager
 func (m *IdleManager) Start(ctx context.Context) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.ctx, m.cancel = context.WithCancel(ctx)
 	m.log.Info().Msg("IDLE manager started")
 }
 
 // Stop stops all IDLE connections
 func (m *IdleManager) Stop() {
+	m.mu.Lock()
 	if m.cancel != nil {
 		m.cancel()
 	}
-
-	m.mu.Lock()
-	for accountID, conn := range m.connections {
-		m.log.Debug().Str("account", accountID).Msg("Stopping IDLE connection")
-		conn.Stop()
-	}
-	m.connections = make(map[string]*IdleConnection)
+	conns := m.connections
+	m.connections = make(map[idleKey]*IdleConnection)
 	m.mu.Unlock()
 
-	m.wg.Wait()
+	for key, conn := range conns {
+		m.log.Debug().Str("account", key.accountID).Str("folder", key.folder).Msg("Stopping IDLE connection")
+		conn.Stop()
+	}
+
 	m.log.Info().Msg("IDLE manager stopped")
 }
 
@@ -535,53 +542,94 @@ func (m *IdleManager) Events() <-chan MailEvent {
 	return m.events
 }
 
-// StartAccount starts IDLE for a specific account
-func (m *IdleManager) StartAccount(accountID, accountName string) {
+// StartAccount starts one IDLE connection per folder for an account, watching
+// INBOX when no folders are given. Folders that already have a running
+// connection are left alone, so calling it again only adds missing ones.
+func (m *IdleManager) StartAccount(accountID, accountName string, folders ...string) {
+	if len(folders) == 0 {
+		folders = []string{"INBOX"}
+	}
+
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	// Check if already running
-	if conn, exists := m.connections[accountID]; exists {
-		conn.mu.Lock()
-		running := conn.running
-		conn.mu.Unlock()
-		if running {
-			m.log.Debug().Str("account", accountName).Msg("IDLE already running for account")
-			return
+	for _, folder := range folders {
+		key := idleKey{accountID, folder}
+		if conn, exists := m.connections[key]; exists {
+			conn.mu.Lock()
+			running := conn.running
+			conn.mu.Unlock()
+			if running {
+				m.log.Debug().Str("account", accountName).Str("folder", folder).Msg("IDLE already running for folder")
+				continue
+			}
+			// Goroutine exited (e.g., max reconnect attempts reached) — remove stale entry
+			m.log.Debug().Str("account", accountName).Str("folder", folder).Msg("Replacing dead IDLE connection")
+			delete(m.connections, key)
 		}
-		// Goroutine exited (e.g., max reconnect attempts reached) — remove stale entry
-		m.log.Debug().Str("account", accountName).Msg("Replacing dead IDLE connection")
-		delete(m.connections, accountID)
-	}
 
-	// Create and start IDLE connection
-	conn := newIdleConnection(accountID, accountName, m.config, m.getCredentials)
-	conn.isConnected = m.isConnected
-	m.connections[accountID] = conn
+		conn := newIdleConnection(accountID, accountName, folder, m.config, m.getCredentials)
+		conn.isConnected = m.isConnected
+		m.connections[key] = conn
 
-	m.wg.Add(1)
-	go func() {
-		defer m.wg.Done()
+		// Start returns at once (the loop runs in its own goroutine) and marks
+		// the connection running, so a repeated StartAccount sees it as live.
 		conn.Start(m.ctx, m.events)
-	}()
 
-	m.log.Info().Str("account", accountName).Msg("Started IDLE for account")
+		m.log.Info().Str("account", accountName).Str("folder", folder).Msg("Started IDLE for folder")
+	}
 }
 
-// StopAccount stops IDLE for a specific account
+// StopAccount stops all IDLE connections of an account
 func (m *IdleManager) StopAccount(accountID string) {
+	m.stopWhere(func(key idleKey) bool { return key.accountID == accountID })
+}
+
+// StopFolder stops the IDLE connection of one account folder, if any.
+func (m *IdleManager) StopFolder(accountID, folder string) {
+	m.stopWhere(func(key idleKey) bool { return key == idleKey{accountID, folder} })
+}
+
+// stopWhere removes the matching connections under the lock, then stops them
+// in parallel without it, so a slow teardown doesn't block StartAccount.
+func (m *IdleManager) stopWhere(match func(idleKey) bool) {
+	m.mu.Lock()
+	stopping := make(map[idleKey]*IdleConnection)
+	for key, conn := range m.connections {
+		if match(key) {
+			stopping[key] = conn
+			delete(m.connections, key)
+		}
+	}
+	m.mu.Unlock()
+
+	var wg sync.WaitGroup
+	for key, conn := range stopping {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			conn.Stop()
+			m.log.Info().Str("accountID", key.accountID).Str("folder", key.folder).Msg("Stopped IDLE for folder")
+		}()
+	}
+	wg.Wait()
+}
+
+// Watched returns the folders an account has IDLE connections for, running or not.
+func (m *IdleManager) Watched(accountID string) []string {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-
-	if conn, exists := m.connections[accountID]; exists {
-		conn.Stop()
-		delete(m.connections, accountID)
-		m.log.Info().Str("accountID", accountID).Msg("Stopped IDLE for account")
+	var folders []string
+	for key := range m.connections {
+		if key.accountID == accountID {
+			folders = append(folders, key.folder)
+		}
 	}
+	return folders
 }
 
-// RestartAccount restarts IDLE for a specific account
-func (m *IdleManager) RestartAccount(accountID, accountName string) {
+// RestartAccount restarts IDLE for an account on the given folders
+func (m *IdleManager) RestartAccount(accountID, accountName string, folders ...string) {
 	m.StopAccount(accountID)
-	m.StartAccount(accountID, accountName)
+	m.StartAccount(accountID, accountName, folders...)
 }

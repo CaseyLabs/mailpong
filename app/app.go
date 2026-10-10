@@ -313,6 +313,7 @@ type App struct {
 	// Sync management - tracks active syncs per account for cancel-and-restart
 	syncContexts    map[string]*syncSlot // keyed by "accountID:folderID"
 	syncLastRequest map[string]time.Time // last sync request time for debounce
+	shuttingDown    bool                 // set by shutdownSyncs; no sync may start after it
 	syncCancelled   bool                 // set by CancelAllSyncs to stop SyncAllComplete loop
 	wakeSyncing     bool                 // guards syncAfterWake against concurrent calls
 	syncMu          goSync.Mutex         // protects sync maps
@@ -324,10 +325,8 @@ type App struct {
 	ownFlagChangeAt map[string]time.Time // accountID -> last own flag STORE time
 	ownExpungeAt    map[string]time.Time // accountID -> last own move/delete IMAP op time
 
-	// Throttles the Sent sync that follows IDLE inbox activity (idle_sent.go).
-	idleSentMu      goSync.Mutex
-	idleSentLast    map[string]time.Time // accountID -> last Sent sync start
-	idleSentPending map[string]bool      // accountID -> a Sent sync is scheduled
+	// accountIDs with a Sent-after-IDLE retry already scheduled (idle_sent.go)
+	idleSentRetry goSync.Map
 
 	// Draft IMAP sync goroutine tracking — cancel in-flight syncDraftToIMAP
 	draftSyncContexts map[string]context.CancelFunc // keyed by draft ID
@@ -775,8 +774,6 @@ func (a *App) Startup(ctx context.Context) {
 	a.syncLastRequest = make(map[string]time.Time)
 	a.ownFlagChangeAt = make(map[string]time.Time)
 	a.ownExpungeAt = make(map[string]time.Time)
-	a.idleSentLast = make(map[string]time.Time)
-	a.idleSentPending = make(map[string]bool)
 	a.draftSyncContexts = make(map[string]context.CancelFunc)
 	a.draftSyncDone = make(map[string]chan struct{})
 
@@ -1073,6 +1070,11 @@ func (a *App) Shutdown(ctx context.Context) {
 		log.Info().Msg("CardDAV scheduler stopped")
 	}
 
+	// Cancel running folder syncs and wait for them, so none asks the pool
+	// for a connection or reads the DB after they close. Other pool users
+	// (drafts, undo, actions) are stopped only by the pool closing.
+	a.shutdownSyncs(slotReleaseWait)
+
 	// Tear down extension registrations and their background work
 	// (calendar sync and alarms, extension stores) before the DB closes.
 	for _, unreg := range a.extensionUnregs {
@@ -1082,7 +1084,7 @@ func (a *App) Shutdown(ctx context.Context) {
 
 	// Close all IMAP connections
 	if a.imapPool != nil {
-		a.imapPool.CloseAll()
+		a.imapPool.Close()
 		log.Info().Msg("IMAP connections closed")
 	}
 

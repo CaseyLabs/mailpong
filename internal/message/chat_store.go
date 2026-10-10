@@ -886,7 +886,8 @@ func (s *Store) CleanupChatState() (int64, error) {
 // ChatKeyMove is a key of local chat state (pin/snooze or chat draft link)
 // that no longer names a chat in the inbox list. From is a thread that now
 // belongs to sender chat To, or a sender chat whose sender no longer
-// combines, with To empty.
+// combines, with To the newest inbox thread the sender started (empty when there is
+// none, which drops the state).
 type ChatKeyMove struct {
 	AccountID string
 	From, To  string
@@ -930,6 +931,14 @@ func (s *Store) StaleChatKeys() ([]ChatKeyMove, error) {
 		return nil, fmt.Errorf("failed to iterate chat state keys: %w", err)
 	}
 
+	for i, m := range moves {
+		to, err := s.NewestInboxThreadKey(m.AccountID, strings.TrimPrefix(m.From, SenderChatPrefix))
+		if err != nil {
+			return nil, err
+		}
+		moves[i].To = to
+	}
+
 	chatKeys, err := s.inboxChatKeys(threads)
 	if err != nil {
 		return nil, err
@@ -942,6 +951,35 @@ func (s *Store) StaleChatKeys() ([]ChatKeyMove, error) {
 		}
 	}
 	return moves, nil
+}
+
+// NewestInboxThreadKey returns the thread key of the inbox thread a sender
+// started that has the newest message, for an account, or "" when the sender
+// started none. Starters are matched as chatKeyRows does, so the thread shows
+// as its own chat once the sender is split.
+func (s *Store) NewestInboxThreadKey(accountID, email string) (string, error) {
+	key := threadKeyExpr("m.")
+	var threadKey string
+	err := s.db.QueryRow(`
+		SELECT k.thread_key
+		FROM (
+			SELECT `+key+` AS thread_key, m.date,
+				FIRST_VALUE(COALESCE(LOWER(m.from_email), '')) OVER (PARTITION BY `+key+` ORDER BY m.date, m.id) AS starter
+			FROM messages m
+			INNER JOIN folders f ON m.folder_id = f.id
+			WHERE f.folder_type = 'inbox' AND f.account_id = ?
+		) k
+		WHERE k.starter = ?
+		GROUP BY k.thread_key
+		ORDER BY MAX(k.date) DESC, k.thread_key DESC
+		LIMIT 1`, accountID, email).Scan(&threadKey)
+	if err == sql.ErrNoRows {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("failed to find newest inbox thread: %w", err)
+	}
+	return threadKey, nil
 }
 
 // MoveChatState moves m.From's pin/snooze state into m.To, or drops it when

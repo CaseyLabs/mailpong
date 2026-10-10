@@ -66,8 +66,8 @@ func (a *App) AddAccount(config account.AccountConfig) (*account.Account, error)
 	a.updateDBConnectionPool()
 
 	// Start IDLE for the new account
-	if a.idleManager != nil && acc.Enabled {
-		a.idleManager.StartAccount(acc.ID, acc.Name)
+	if acc.Enabled {
+		a.startAccountIdle(acc.ID)
 	}
 
 	log.Info().Str("account_id", acc.ID).Str("email", acc.Email).Msg("Account created")
@@ -161,8 +161,8 @@ func (a *App) AddMicrosoftSharedMailbox(primaryAccountID, sharedEmail, displayNa
 
 	a.updateDBConnectionPool()
 
-	if a.idleManager != nil && acc.Enabled {
-		a.idleManager.StartAccount(acc.ID, acc.Name)
+	if acc.Enabled {
+		a.startAccountIdle(acc.ID)
 	}
 
 	log.Info().
@@ -319,10 +319,7 @@ func (a *App) SetAccountEnabled(id string, enabled bool) error {
 	if a.idleManager != nil {
 		if enabled {
 			// Start IDLE for the account
-			acc, err := a.accountStore.Get(id)
-			if err == nil && acc != nil {
-				a.idleManager.StartAccount(acc.ID, acc.Name)
-			}
+			a.startAccountIdle(id)
 		} else {
 			// Stop IDLE for the account
 			a.idleManager.StopAccount(id)

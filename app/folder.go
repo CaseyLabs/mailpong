@@ -44,6 +44,7 @@ func (a *App) SyncFolders(accountID string) error {
 		if checkpointErr := a.db.Checkpoint(); checkpointErr != nil {
 			log.Warn().Err(checkpointErr).Msg("WAL checkpoint after SyncFolders failed")
 		}
+		a.ensureSentIdle(accountID)
 	}
 	return err
 }

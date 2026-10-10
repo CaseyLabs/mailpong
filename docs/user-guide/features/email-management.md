@@ -160,7 +160,7 @@ If you need to see only messages that are either unread, starred, or with attach
 
 Aerion periodically checks for new mail. The sync interval can be adjusted in settings.
 
-Aerion also holds IDLE connections for push e-mail. When new e-mail arrive, it triggers a sync of that account's core folders.
+Aerion also holds IDLE connections for push e-mail: one on the Inbox and one on the Sent folder per account. New e-mail in the Inbox triggers a sync of that account's core folders, and mail sent from another client shows up in Sent (and its chat) within seconds.
 
 ### Manual Sync
 

@@ -39,44 +39,33 @@ has not yet been confirmed against the code.
 
 ### Mail sync
 
-- **M6 low** `app/idle_sent.go`: Sent activity from other clients is
-  inferred from inbox IDLE events, so a new (non-reply) message sent
-  elsewhere reaches Sent and its chat thread only on the next scheduled
-  sync. Deeper fix: IDLE on the Sent folder too (a second connection, or a
-  folder set in `internal/imap`'s IDLE) routed to the same incremental sync,
-  which would also retire the 30 s throttle state; cheaper: a shorter Sent
-  poll interval.
-- **M10 low** `app/app.go` `Shutdown`: running folder syncs are never
-  cancelled or awaited, so a background body fetch (`app/sync.go`
-  `FetchBodiesInBackground` goroutine) outlives teardown. Seen in a Flatpak
-  debug run 2026-10-10: `imapPool.CloseAll()` cut a 2.5 MB body literal
-  mid-read, the "after broken stream" retry asked the pool for a new
-  connection, and credential lookup failed with `sql: database is closed`
-  just before `a.db.Close()` logged. Harmless today (the partial body is not
-  stored), but the retry can race the DB close. Fix: call `CancelAllSyncs`
-  early in `Shutdown` and wait (bounded) for folder sync slots to release
-  before closing the pool and DB; optionally make `Pool.GetConnection`
-  refuse new connections after `CloseAll`.
+- **M11 low** `app/sync.go` `shutdownSyncs`: it waits only for slots still in
+  `syncContexts`. `CancelAllSyncs` replaces that map, so a sync cancelled just
+  before quit (network change, wake) is not awaited and can still touch the DB
+  as it closes. The closed pool stops its connections. Fix: keep cancelled
+  slots' `done` channels until released. Draft, undo and action goroutines are
+  likewise not awaited, only cut off by `Pool.Close`.
 
 ### Chat list
 
-- **M7 low** `internal/message/chat_store.go` `StaleChatKeys`: turning
-  **Combine messages from each sender** off drops a sender chat's pin,
-  snooze and chat draft link instead of handing them back to one of its
-  threads, so they are lost.
-- **M8 low, unverified** `chatKeyRows`: while the combine default is on,
-  every chat list, count, snooze wake and new-mail lookup takes the window
-  pass over the whole scope (`hasSenderChats` skips it only when the
-  default is off and no sender is combined). Not timed on a large mailbox;
-  if slow, index or cache thread starters.
+- **M12 low** `app/chat.go` `splitSenderChat`: the chat draft link moves to
+  the newest thread the sender started, but its `MessageID` (the reply
+  target) can sit in another thread of the old sender chat, so the reply
+  threads under that message. Undoing a split restores the sender chat's
+  pin and snooze but leaves the pin and link on the thread. A failing
+  `MoveChatLink` after `MoveChatState` rolls the choice back with the pin
+  already moved.
+- **M12 low** chat list timing at 50k inbox messages (benchmark
+  `BenchmarkChatQueries`): `ListChats` takes about 320 ms with combining off
+  and 380 ms on, `CountChats` 110 ms off and 250 ms on. The grouped query
+  with JSON aggregates over the whole inbox dominates; the sender-chat window
+  pass adds about 60 and 140 ms. Fix by paging before aggregating, or by
+  caching thread starters.
 
-- **M9 low, unverified** chat UI (mail UI polish, merged 2026-10-10): checks
-  not yet done in the running app: light themes (built-in and Adwaita
-  hover and selection), measured row heights (target 72-80px with
-  preview), selection switching solid/neutral on pane focus, signed,
-  encrypted and bad-signature messages, the Settings > Chat combine
-  switch, and the list giving way to the reading pane as the window
-  narrows.
+- **M9 low, unverified** chat UI: checked on fake data only (2026-10-10), all
+  passing. Still unchecked with real mail: hover on real rows, and opening a
+  chat in the narrow layout (the list-only layout was seen at 700px, but the
+  reading pane opening was not, to avoid marking real mail read).
 
 ### Upstream independence
 

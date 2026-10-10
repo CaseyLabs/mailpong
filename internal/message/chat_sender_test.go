@@ -358,7 +358,7 @@ func TestSenderChatStaleKeys(t *testing.T) {
 			_, err := s.db.Exec(`INSERT INTO settings (key, value) VALUES ('chat_combine_senders', 'false')`)
 			return err
 		}, []move{{accountID, SenderChatKey("ghost@x"), ""}}},
-		{"split drops state", func() error { return s.SetSenderChat(accountID, lms, false) },
+		{"split without inbox mail drops state", func() error { return s.SetSenderChat(accountID, lms, false) },
 			[]move{{accountID, SenderChatKey("ghost@x"), ""}, {accountID, lmsKey, ""}}},
 	}
 	for _, st := range steps {
@@ -409,6 +409,72 @@ func TestSenderChatStaleKeys(t *testing.T) {
 	}
 	if st, err := s.GetChatState(accountID, "t@x"); err != nil || !st.empty() {
 		t.Errorf("thread state = %+v, %v; want empty", st, err)
+	}
+}
+
+// TestSenderChatSplitHandOff checks that a split sender's state moves to the
+// thread of the sender's newest inbox thread it started, keeps state already there, and
+// is dropped when the sender has no inbox mail.
+func TestSenderChatSplitHandOff(t *testing.T) {
+	s, accountID, inboxID, now := senderChatFixture(t)
+	pinned := ChatState{PinnedAt: ptr(now)}
+	later := now.Add(time.Hour)
+	tests := []struct {
+		name     string
+		onThread ChatState
+		inbox    bool
+		wantTo   string
+		wantPin  time.Time
+	}{
+		// t@x is the newest thread lms started (o@x was started by alice).
+		{"moves to the newest thread", ChatState{}, true, "t@x", now},
+		{"target state wins", ChatState{PinnedAt: ptr(later)}, true, "t@x", later},
+		{"no inbox mail drops", ChatState{}, false, "", time.Time{}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := s.SetSenderChat(accountID, lms, true); err != nil {
+				t.Fatal(err)
+			}
+			for key, st := range map[string]ChatState{lmsKey: pinned, "t@x": tt.onThread} {
+				if err := s.SetChatState(accountID, key, st); err != nil {
+					t.Fatal(err)
+				}
+			}
+			folder := "sent-1"
+			if tt.inbox {
+				folder = inboxID
+			}
+			if _, err := s.db.Exec(`UPDATE messages SET folder_id = ? WHERE from_email LIKE ? AND account_id = ?`, folder, lms, accountID); err != nil {
+				t.Fatal(err)
+			}
+			if err := s.SetSenderChat(accountID, lms, false); err != nil {
+				t.Fatal(err)
+			}
+			moves, err := s.StaleChatKeys()
+			if err != nil {
+				t.Fatal(err)
+			}
+			want := []ChatKeyMove{{accountID, lmsKey, tt.wantTo}}
+			if !reflect.DeepEqual(moves, want) {
+				t.Fatalf("StaleChatKeys = %+v, want %+v", moves, want)
+			}
+			if err := s.MoveChatState(moves[0]); err != nil {
+				t.Fatal(err)
+			}
+			if st, err := s.GetChatState(accountID, lmsKey); err != nil || !st.empty() {
+				t.Errorf("sender chat state = %+v, %v; want empty", st, err)
+			}
+			if tt.wantTo == "" {
+				return
+			}
+			if st, err := s.GetChatState(accountID, tt.wantTo); err != nil || st.PinnedAt == nil || !st.PinnedAt.Equal(tt.wantPin) {
+				t.Errorf("thread state = %+v, %v; want pinned at %v", st, err, tt.wantPin)
+			}
+			if err := s.SetChatState(accountID, tt.wantTo, ChatState{}); err != nil {
+				t.Fatal(err)
+			}
+		})
 	}
 }
 

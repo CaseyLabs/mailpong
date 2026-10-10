@@ -108,8 +108,10 @@ func (a *App) SetSenderCategory(accountID, email, category string) error {
 // SetSenderChat combines (or splits again) the threads a sender starts into
 // one sender chat, and reports whether that changed anything: a sender that
 // already combines (or is already split) is left alone, with no undo entry.
-// Splitting drops the sender chat's pin/snooze state and releases its chat
-// draft link (the draft is kept). Undoable.
+// Splitting hands the sender chat's pin/snooze state and chat draft link to
+// the newest inbox thread the sender started, or drops them when there is
+// none (the draft is kept). Undoable; undo does not take the state back from
+// that thread.
 func (a *App) SetSenderChat(accountID, email string, combined bool) (bool, error) {
 	email = message.NormalizeSenderEmail(email)
 	if email == "" {
@@ -162,7 +164,8 @@ func (a *App) writeSenderChoice(accountID, email string, choice *bool) error {
 
 // applySenderChat records choice (nil follows the default). If the sender
 // then combines, state is written to the sender chat; otherwise its state and
-// draft link are cleared. If a later write fails, rollback is recorded so the
+// draft link move to the sender's newest inbox thread (see splitSenderChat).
+// If a later write fails, rollback is recorded so the
 // chat keeps its previous form.
 func (a *App) applySenderChat(accountID, email string, choice, rollback *bool, state message.ChatState) error {
 	if err := a.writeSenderChoice(accountID, email, choice); err != nil {
@@ -172,7 +175,7 @@ func (a *App) applySenderChat(accountID, email string, choice, rollback *bool, s
 	combined, err := a.messageStore.IsSenderChat(accountID, email)
 	if err == nil && !combined {
 		state = message.ChatState{}
-		err = a.draftStore.DeleteChatLink(accountID, key)
+		err = a.splitSenderChat(accountID, email)
 	}
 	if err == nil {
 		err = a.restoreChatState(accountID, key, state)
@@ -185,6 +188,22 @@ func (a *App) applySenderChat(accountID, email string, choice, rollback *bool, s
 	}
 	a.emitChatsChanged(accountID)
 	return err
+}
+
+// splitSenderChat moves a split sender chat's pin/snooze state and chat draft
+// link to the newest inbox thread the sender started, where state already
+// there wins. With no such thread they are dropped.
+func (a *App) splitSenderChat(accountID, email string) error {
+	key := message.SenderChatKey(email)
+	to, err := a.messageStore.NewestInboxThreadKey(accountID, email)
+	if err != nil {
+		return err
+	}
+	move := message.ChatKeyMove{AccountID: accountID, From: key, To: to}
+	if err := a.messageStore.MoveChatState(move); err != nil {
+		return err
+	}
+	return a.draftStore.MoveChatLink(accountID, key, to)
 }
 
 // senderChatRestorer adapts App to undo.SenderChatRestorer without adding a
@@ -276,9 +295,10 @@ func (a *App) initChatState() {
 }
 
 // moveStaleChatState moves pins, snoozes and chat draft links whose thread now
-// belongs to a sender chat into that chat, and drops them from sender chats
-// whose sender no longer combines (as splitting does), so state follows the
-// chat list after an upgrade or a change to the combine default. It returns
+// belongs to a sender chat into that chat, and moves them from sender chats
+// whose sender no longer combines to the thread of the sender's newest inbox
+// message (dropping them when there is none), so state follows the chat list
+// after an upgrade or a change to the combine default. It returns
 // the accounts it changed. Callers hold chatStateMu.
 func (a *App) moveStaleChatState() (map[string]bool, error) {
 	moves, err := a.messageStore.StaleChatKeys()
