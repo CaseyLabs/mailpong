@@ -59,6 +59,14 @@ has not yet been confirmed against the code.
   default is off and no sender is combined). Not timed on a large mailbox;
   if slow, index or cache thread starters.
 
+- **M9 low, unverified** chat UI (mail UI polish, merged 2026-10-10): checks
+  not yet done in the running app: light themes (built-in and Adwaita
+  hover and selection), measured row heights (target 72-80px with
+  preview), selection switching solid/neutral on pane focus, signed,
+  encrypted and bad-signature messages, the Settings > Chat combine
+  switch, and the list giving way to the reading pane as the window
+  narrows.
+
 ### Upstream independence
 
 This fork may eventually stop tracking upstream Aerion. Until then, some code
