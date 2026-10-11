@@ -954,6 +954,7 @@ export namespace appstate {
 	    collapsedSidebars?: Record<string, boolean>;
 	    paneWidths?: Record<string, number>;
 	    chatGroupsExpanded?: Record<string, boolean>;
+	    chatGroupsShowFewer?: Record<string, boolean>;
 	
 	    static createFrom(source: any = {}) {
 	        return new UIState(source);
@@ -977,6 +978,7 @@ export namespace appstate {
 	        this.collapsedSidebars = source["collapsedSidebars"];
 	        this.paneWidths = source["paneWidths"];
 	        this.chatGroupsExpanded = source["chatGroupsExpanded"];
+	        this.chatGroupsShowFewer = source["chatGroupsShowFewer"];
 	    }
 	}
 
@@ -2288,7 +2290,6 @@ export namespace message {
 	    // Go type: time
 	    snoozedUntil?: any;
 	    isLowPriority: boolean;
-	    lastFromMe: boolean;
 	    recipients?: Address[];
 	
 	    static createFrom(source: any = {}) {
@@ -2318,7 +2319,6 @@ export namespace message {
 	        this.isPinned = source["isPinned"];
 	        this.snoozedUntil = this.convertValues(source["snoozedUntil"], null);
 	        this.isLowPriority = source["isLowPriority"];
-	        this.lastFromMe = source["lastFromMe"];
 	        this.recipients = this.convertValues(source["recipients"], Address);
 	    }
 	

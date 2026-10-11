@@ -222,27 +222,6 @@ func TestSenderChatSections(t *testing.T) {
 	}
 }
 
-func TestSenderChatLastFromMe(t *testing.T) {
-	s, accountID, _, now := senderChatFixture(t)
-	if err := s.SetSenderChat(accountID, lms, true); err != nil {
-		t.Fatal(err)
-	}
-	// My reply in t@x is newer than every message in the sender chat.
-	if err := s.Create(&Message{ID: "ts", AccountID: accountID, FolderID: "sent-1", UID: 301, ThreadID: "<t@x>",
-		Subject: "Re: Forum post", FromEmail: "test@example.com", Date: now.Add(-time.Hour), ReceivedAt: now.Add(-time.Hour), IsRead: true}); err != nil {
-		t.Fatal(err)
-	}
-	chats, err := s.ListChats("", ChatSectionAll, now, 0, 100)
-	if err != nil {
-		t.Fatal(err)
-	}
-	for key, want := range map[string]bool{lmsKey: true, "o@x": false, "n9": false} {
-		if c := chatByKey(chats, key); c == nil || c.LastFromMe != want {
-			t.Errorf("chat %s LastFromMe = %v, want %v", key, c != nil && c.LastFromMe, want)
-		}
-	}
-}
-
 func TestSenderChatSearch(t *testing.T) {
 	s, accountID, inboxID, _ := senderChatFixture(t)
 	if err := s.SetSenderChat(accountID, lms, true); err != nil {

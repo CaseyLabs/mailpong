@@ -30,6 +30,9 @@ export interface UIState {
   // Chat list groups ('pinned', 'chats', 'low') -> expanded. Missing entry ->
   // the group's default (see isChatGroupExpanded).
   chatGroupsExpanded: Record<string, boolean>
+  // Chat list groups trimmed to their first few rows ("Show fewer") -> true.
+  // Missing entry -> every row shows.
+  chatGroupsShowFewer: Record<string, boolean>
 }
 
 // Pane width constraints
@@ -58,6 +61,7 @@ const defaultState: UIState = {
   collapsedSidebars: {},
   paneWidths: {},
   chatGroupsExpanded: {},
+  chatGroupsShowFewer: {},
 }
 
 // Current state (in-memory cache)
@@ -82,6 +86,8 @@ let paneWidthsState = $state<Record<string, number>>({})
 
 // Reactive mirror of chatGroupsExpanded, read by the chat list.
 let chatGroupsExpandedState = $state<Record<string, boolean>>({})
+// Reactive mirror of chatGroupsShowFewer.
+let chatGroupsShowFewerState = $state<Record<string, boolean>>({})
 
 // Clamp a value within bounds
 export function clamp(value: number, min: number, max: number): number {
@@ -114,11 +120,13 @@ export async function loadUIState(): Promise<UIState> {
         collapsedSidebars: state.collapsedSidebars || {},
         paneWidths: state.paneWidths || {},
         chatGroupsExpanded: state.chatGroupsExpanded || {},
+        chatGroupsShowFewer: state.chatGroupsShowFewer || {},
       }
       activeExtensionState = currentState.activeExtension
       collapsedSidebarsState = currentState.collapsedSidebars
       paneWidthsState = currentState.paneWidths
       chatGroupsExpandedState = currentState.chatGroupsExpanded
+      chatGroupsShowFewerState = currentState.chatGroupsShowFewer
     }
   } catch (err) {
     console.error('Failed to load UI state:', err)
@@ -170,6 +178,7 @@ export function saveUIState(updates: Partial<UIState>): void {
         collapsedSidebars: currentState.collapsedSidebars,
         paneWidths: currentState.paneWidths,
         chatGroupsExpanded: currentState.chatGroupsExpanded,
+        chatGroupsShowFewer: currentState.chatGroupsShowFewer,
       }
       await SaveUIState(backendState)
     } catch (err) {
@@ -283,4 +292,15 @@ export function isChatGroupExpanded(group: ChatGroup): boolean {
 export function toggleChatGroupExpanded(group: ChatGroup): void {
   chatGroupsExpandedState = { ...chatGroupsExpandedState, [group]: !isChatGroupExpanded(group) }
   saveUIState({ chatGroupsExpanded: chatGroupsExpandedState })
+}
+
+// A group set to "Show fewer" lists only its first few rows. Missing entry ->
+// every row shows.
+export function isChatGroupShowingFewer(group: ChatGroup): boolean {
+  return chatGroupsShowFewerState[group] ?? false
+}
+
+export function toggleChatGroupShowFewer(group: ChatGroup): void {
+  chatGroupsShowFewerState = { ...chatGroupsShowFewerState, [group]: !isChatGroupShowingFewer(group) }
+  saveUIState({ chatGroupsShowFewer: chatGroupsShowFewerState })
 }

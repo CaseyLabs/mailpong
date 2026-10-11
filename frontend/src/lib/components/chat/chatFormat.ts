@@ -107,6 +107,18 @@ export function threadPeople(messages: messageModels.Message[], myEmails: Set<st
   return people
 }
 
+// Rows a chat list group set to "Show fewer" keeps.
+export const GROUP_FEWER_CAP = 3
+
+// trimGroup returns a group's rows on screen: its first GROUP_FEWER_CAP when
+// set to "Show fewer", plus the selected chat when it is among the rest.
+export function trimGroup<T extends { key: string }>(items: T[], fewer: boolean, selectedKey: string | null): T[] {
+  if (!fewer || items.length <= GROUP_FEWER_CAP) return items
+  const shown = items.slice(0, GROUP_FEWER_CAP)
+  const selected = items.findIndex((c) => c.key === selectedKey)
+  return selected >= GROUP_FEWER_CAP ? [...shown, items[selected]] : shown
+}
+
 export interface ReplyTarget {
   messageId: string
   defaultReplyAll: boolean
@@ -131,6 +143,15 @@ export function replyTarget(messages: messageModels.Message[], myEmails: Set<str
     if (email && !myEmails.has(email)) others.add(email)
   }
   return { messageId: theirs.id, defaultReplyAll: others.size > 1 }
+}
+
+// replyAlias returns the send-as address a reply to msg goes out from: the
+// non-default identity listed in its To or Cc, else ''. Mirrors the backend's
+// selectReplyFromIdentity except for its Bcc and forwarding-header lookups.
+export function replyAlias(msg: messageModels.Message, identities: { email: string; isDefault: boolean }[]): string {
+  const addressed = new Set([...parseRecipients(msg.toList), ...parseRecipients(msg.ccList)].map((p) => p.email.trim().toLowerCase()))
+  const id = identities.find((i) => addressed.has(i.email.trim().toLowerCase()))
+  return id && !id.isDefault ? id.email.trim() : ''
 }
 
 export interface ReplyRecipients {
@@ -205,29 +226,38 @@ export interface ThreadItem {
   newDay: boolean
   // First message of a same-sender run: show avatar and name.
   groupStart: boolean
-  // Set where the subject changes after the first (sender chats only):
-  // label the bubble.
+  // Set on the first message of every subject run in a sender chat with two
+  // or more distinct subjects: render a heading before it.
   subject?: string
 }
 
+// Keep in sync with subjectPrefixRe in internal/message/chat_store.go.
 const SUBJECT_PREFIX_RE = /^\s*((re|fwd?|aw|wg|sv|vs)(\[\d+\])?\s*:\s*)+/i
 
+// displaySubject drops reply and forward prefixes ("Re: ", "Fwd: ", ...) for
+// display in the chat list and chat view.
+export function displaySubject(subject = ''): string {
+  return subject.replace(SUBJECT_PREFIX_RE, '').trim()
+}
+
 // baseSubject drops reply and forward prefixes, for comparing subjects.
-function baseSubject(subject: string): string {
-  return subject.replace(SUBJECT_PREFIX_RE, '').trim().toLowerCase()
+export function baseSubject(subject: string): string {
+  return displaySubject(subject).toLowerCase()
 }
 
 // buildThreadItems groups messages into bubble runs. labelSubjects (a
-// sender chat, which mixes threads) labels each change from the previous
-// non-empty subject and starts a new run there.
+// sender chat, which mixes threads) labels the first message of each subject
+// run, and starts a new bubble run there, when the chat has two or more
+// distinct subjects. Empty subjects continue the previous run.
 export function buildThreadItems(messages: messageModels.Message[], labelSubjects = false): ThreadItem[] {
+  const bases = labelSubjects ? messages.map((m) => baseSubject(m.subject || '')) : []
+  const multiSubject = new Set(bases.filter(Boolean)).size >= 2
   const items: ThreadItem[] = []
   let prev: ThreadItem | null = null
   let prevBase: string | null = null
-  for (const msg of messages) {
-    // The first subject and empty subjects get no label.
-    const base = labelSubjects ? baseSubject(msg.subject || '') : ''
-    const subject = base && prevBase !== null && base !== prevBase ? msg.subject : undefined
+  messages.forEach((msg, i) => {
+    const base = bases[i] ?? ''
+    const subject = multiSubject && base && base !== prevBase ? displaySubject(msg.subject) : undefined
     if (base) prevBase = base
     const date = new Date(msg.date)
     const mine = !!msg.mine
@@ -237,7 +267,7 @@ export function buildThreadItems(messages: messageModels.Message[], labelSubject
     const item: ThreadItem = { msg, date, mine, newDay, groupStart, subject }
     items.push(item)
     prev = item
-  }
+  })
   return items
 }
 

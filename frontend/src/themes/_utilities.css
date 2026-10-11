@@ -1,19 +1,21 @@
 /* Avatar circle utility classes — read theme-defined --avatar-* variables.
-   Used by getAvatarColor() in conversation/message components. */
-.avatar-1  { background-color: hsl(var(--avatar-1));  color: hsl(var(--avatar-fg)); }
-.avatar-2  { background-color: hsl(var(--avatar-2));  color: hsl(var(--avatar-fg)); }
-.avatar-3  { background-color: hsl(var(--avatar-3));  color: hsl(var(--avatar-fg)); }
-.avatar-4  { background-color: hsl(var(--avatar-4));  color: hsl(var(--avatar-fg)); }
-.avatar-5  { background-color: hsl(var(--avatar-5));  color: hsl(var(--avatar-fg)); }
-.avatar-6  { background-color: hsl(var(--avatar-6));  color: hsl(var(--avatar-fg)); }
-.avatar-7  { background-color: hsl(var(--avatar-7));  color: hsl(var(--avatar-fg)); }
-.avatar-8  { background-color: hsl(var(--avatar-8));  color: hsl(var(--avatar-fg)); }
-.avatar-9  { background-color: hsl(var(--avatar-9));  color: hsl(var(--avatar-fg)); }
-.avatar-10 { background-color: hsl(var(--avatar-10)); color: hsl(var(--avatar-fg)); }
-.avatar-11 { background-color: hsl(var(--avatar-11)); color: hsl(var(--avatar-fg)); }
-.avatar-12 { background-color: hsl(var(--avatar-12)); color: hsl(var(--avatar-fg)); }
-.avatar-13 { background-color: hsl(var(--avatar-13)); color: hsl(var(--avatar-fg)); }
-.avatar-14 { background-color: hsl(var(--avatar-14)); color: hsl(var(--avatar-fg)); }
+   Used by getAvatarColor() in conversation/message components. The fill is an
+   opaque 30% tint over the background (stacked group avatars must not show
+   through each other); --avatar-fg is no longer read but stays in the themes. */
+.avatar-1  { background-color: color-mix(in srgb, hsl(var(--avatar-1)) 30%, hsl(var(--background))); color: hsl(var(--foreground)); }
+.avatar-2  { background-color: color-mix(in srgb, hsl(var(--avatar-2)) 30%, hsl(var(--background))); color: hsl(var(--foreground)); }
+.avatar-3  { background-color: color-mix(in srgb, hsl(var(--avatar-3)) 30%, hsl(var(--background))); color: hsl(var(--foreground)); }
+.avatar-4  { background-color: color-mix(in srgb, hsl(var(--avatar-4)) 30%, hsl(var(--background))); color: hsl(var(--foreground)); }
+.avatar-5  { background-color: color-mix(in srgb, hsl(var(--avatar-5)) 30%, hsl(var(--background))); color: hsl(var(--foreground)); }
+.avatar-6  { background-color: color-mix(in srgb, hsl(var(--avatar-6)) 30%, hsl(var(--background))); color: hsl(var(--foreground)); }
+.avatar-7  { background-color: color-mix(in srgb, hsl(var(--avatar-7)) 30%, hsl(var(--background))); color: hsl(var(--foreground)); }
+.avatar-8  { background-color: color-mix(in srgb, hsl(var(--avatar-8)) 30%, hsl(var(--background))); color: hsl(var(--foreground)); }
+.avatar-9  { background-color: color-mix(in srgb, hsl(var(--avatar-9)) 30%, hsl(var(--background))); color: hsl(var(--foreground)); }
+.avatar-10 { background-color: color-mix(in srgb, hsl(var(--avatar-10)) 30%, hsl(var(--background))); color: hsl(var(--foreground)); }
+.avatar-11 { background-color: color-mix(in srgb, hsl(var(--avatar-11)) 30%, hsl(var(--background))); color: hsl(var(--foreground)); }
+.avatar-12 { background-color: color-mix(in srgb, hsl(var(--avatar-12)) 30%, hsl(var(--background))); color: hsl(var(--foreground)); }
+.avatar-13 { background-color: color-mix(in srgb, hsl(var(--avatar-13)) 30%, hsl(var(--background))); color: hsl(var(--foreground)); }
+.avatar-14 { background-color: color-mix(in srgb, hsl(var(--avatar-14)) 30%, hsl(var(--background))); color: hsl(var(--foreground)); }
 
 /* Dark theme mark (highlight) override. Applies to every theme whose CSS
    block declares `color-scheme: dark` — applyTheme() mirrors that into the

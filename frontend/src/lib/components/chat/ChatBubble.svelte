@@ -18,7 +18,7 @@
   import ChatRichCard from './ChatRichCard.svelte'
   import ChatSecurityBanners from './ChatSecurityBanners.svelte'
   import { securityStatus, TONES } from './chatSecurity'
-  import { linkify, parseRecipients, displayName, type ReplyMode, type ThreadItem } from './chatFormat'
+  import { linkify, parseRecipients, displayName, displaySubject, type ReplyMode, type ThreadItem } from './chatFormat'
   import { formatTime } from '$lib/utils/date'
   import type { ChatThread } from './chatThread.svelte'
 
@@ -122,7 +122,7 @@
     {#if seg.url}
       <a
         href={seg.url}
-        class="underline underline-offset-2 break-all {item.mine ? 'text-primary-foreground' : 'text-primary'}"
+        class="underline underline-offset-2 break-all text-primary"
         onclick={(e) => { e.preventDefault(); onOpenLink(seg.url!) }}
       >{seg.text}</a>
     {:else}{seg.text}{/if}
@@ -156,7 +156,7 @@
   {onReply}
 >
   <div
-    class="group flex gap-2 px-4 {item.groupStart ? (mode === 'full' && !item.newDay ? 'mt-3 pt-3 border-t border-border' : 'mt-3') : 'mt-0.5'} {item.mine ? 'flex-row-reverse' : ''}"
+    class="group flex gap-2 px-4 {item.groupStart ? (mode === 'full' && !item.newDay && !item.subject ? 'mt-3 pt-3 border-t border-border' : 'mt-3') : 'mt-0.5'} {item.mine ? 'flex-row-reverse' : ''}"
     data-message-id={msg.id}
     tabindex="-1"
     role="article"
@@ -173,19 +173,13 @@
       </div>
     {/if}
 
-    <div class="flex flex-col min-w-0 {mode === 'bubble' ? 'max-w-[75%]' : 'flex-1 max-w-[min(100%,52rem)]'} {item.mine ? 'items-end' : 'items-start'}">
-      {#if item.subject}
-        <div class="flex items-center gap-1 max-w-full px-1 mb-0.5 text-xs font-medium text-foreground/70" title={item.subject}>
-          <Icon icon="mdi:email-outline" class="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-          <span class="truncate">{item.subject}</span>
-        </div>
-      {/if}
+    <div class="flex flex-col min-w-0 {mode === 'bubble' ? 'max-w-[min(75%,36rem)]' : 'flex-1 max-w-[min(100%,52rem)]'} {item.mine ? 'items-end' : 'items-start'}">
       {#if item.groupStart || badges.length > 0}
         <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-1 mb-0.5 text-xs text-muted-foreground" title={item.groupStart ? recipientsTitle : undefined}>
           {#if item.groupStart}
             {#if !item.mine}<span class="font-medium text-foreground/80">{senderName}</span>{/if}
             {#if msg.isDraft}<span class="text-destructive font-medium">{$_('chat.draft')}</span>{/if}
-            <span>{time}</span>
+            <span class="tabular-nums">{time}</span>
           {/if}
           {#each badges as b (b.icon + b.text)}
             <span class="inline-flex items-center gap-1 px-1.5 py-px rounded-full border text-[11px] leading-4 {TONES[b.tone]}" title={b.text}>
@@ -200,7 +194,7 @@
         <ChatSecurityBanners {msg} {thread} lines={security} />
 
         <div
-          class="relative w-full rounded-2xl group-focus-visible:ring-2 group-focus-visible:ring-primary/40 {mode === 'bubble' && !bare ? (item.mine ? 'w-auto bg-primary text-primary-foreground rounded-br-md' : 'w-auto bg-muted text-foreground rounded-bl-md') : ''}"
+          class="relative w-full rounded-2xl group-focus-visible:ring-2 group-focus-visible:ring-primary/40 {mode === 'bubble' && !bare ? (item.mine ? 'w-auto bg-bubble-own text-foreground rounded-br-md' : 'w-auto bg-muted text-foreground rounded-bl-md') : ''}"
         >
           {#if notFetched && thread.bodyErrors.has(msg.id)}
             <div class="flex items-center gap-2 px-3.5 py-2 text-sm text-muted-foreground bg-muted rounded-2xl">
@@ -221,21 +215,21 @@
               {#if msg.chat!.hasQuoted}
                 <!-- Quiet marker at the end of the text, not a pill below it -->
                 <button
-                  class="inline-flex align-middle ml-1.5 -my-1 px-1 rounded opacity-50 group-hover:opacity-70 hover:opacity-100! focus-visible:opacity-100! transition-opacity {item.mine ? 'hover:bg-primary-foreground/20' : 'hover:bg-foreground/10'}"
+                  class="inline-flex align-middle ml-1.5 -my-1 px-1 rounded opacity-50 group-hover:opacity-70 hover:opacity-100! focus-visible:opacity-100! transition-opacity hover:bg-foreground/10"
                   title={showQuoted ? $_('chat.hideQuoted') : $_('chat.showQuoted')}
                   aria-label={showQuoted ? $_('chat.hideQuoted') : $_('chat.showQuoted')}
                   aria-expanded={showQuoted}
                   onclick={() => (showQuoted = !showQuoted)}
-                ><Icon icon="mdi:format-quote-close" class="w-4 h-4" /></button>
+                ><Icon icon="mdi:dots-horizontal" class="w-4 h-4" /></button>
                 {#if showQuoted}
-                  <div class="mt-2 pl-2 border-l-2 text-[13px] opacity-80 {item.mine ? 'border-primary-foreground/40' : 'border-foreground/20'}">
+                  <div class="mt-2 pl-2 border-l-2 text-[13px] opacity-80 border-foreground/20">
                     {@render text(msg.chat!.quoted ?? '')}
                   </div>
                 {/if}
               {/if}
             </div>
           {:else if mode === 'card'}
-            <ChatRichCard subject={msg.subject} preview={msg.chat?.text ?? ''} expanded={cardExpanded} onToggle={() => (cardExpanded = !cardExpanded)} body={emailBody} />
+            <ChatRichCard subject={displaySubject(msg.subject)} preview={msg.chat?.text ?? ''} expanded={cardExpanded} onToggle={() => (cardExpanded = !cardExpanded)} body={emailBody} />
           {:else}
             <div class="overflow-hidden">{@render emailBody()}</div>
           {/if}

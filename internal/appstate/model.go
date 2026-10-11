@@ -39,4 +39,8 @@ type UIState struct {
 	// Chat list group expand/collapse: "pinned", "chats" or "low" -> expanded.
 	// Missing entry -> the group's default (Low collapsed, the rest expanded).
 	ChatGroupsExpanded map[string]bool `json:"chatGroupsExpanded,omitempty"`
+
+	// Chat list groups trimmed to their first few rows ("Show fewer"):
+	// "pinned", "chats" or "low" -> true. Missing entry -> every row shows.
+	ChatGroupsShowFewer map[string]bool `json:"chatGroupsShowFewer,omitempty"`
 }

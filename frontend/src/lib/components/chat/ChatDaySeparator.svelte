@@ -1,12 +1,13 @@
 <script lang="ts">
-  // ChatDaySeparator — centered day label between messages of different days.
+  // ChatDaySeparator — full-width heading row above a message that starts a
+  // new day and/or a new subject: subject, day, then a hairline.
   import { formatDay } from './chatFormat'
 
-  let { date }: { date: Date } = $props()
+  let { date, subject }: { date?: Date; subject?: string } = $props()
 </script>
 
-<div class="flex items-center gap-3 py-1.5 text-xs text-muted-foreground" role="separator">
-  <div class="flex-1 h-px bg-border"></div>
-  <span class="px-2 py-0.5 rounded-full bg-muted font-medium">{formatDay(date)}</span>
-  <div class="flex-1 h-px bg-border"></div>
+<div class="flex items-center gap-2 pt-4 pb-1.5 text-xs text-muted-foreground" role="separator">
+  {#if subject}<span class="min-w-0 truncate font-semibold text-foreground" title={subject}>{subject}</span>{/if}
+  {#if date}<span class="shrink-0">{formatDay(date)}</span>{/if}
+  <div class="flex-1 h-px bg-divider"></div>
 </div>

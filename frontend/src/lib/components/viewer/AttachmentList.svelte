@@ -199,7 +199,7 @@
   <div class="space-y-2">
     {#each encryptedAttachments as att (att.filename)}
       {@const isDownloading = downloadingIds.has(att.filename)}
-      <div class="flex items-center gap-3 p-2 rounded-md border border-border bg-muted/30 hover:bg-muted/50 transition-colors group">
+      <div class="flex items-center gap-3 p-2 rounded-md border border-divider bg-muted/30 hover:bg-muted/50 transition-colors group">
         <div class="shrink-0 w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center">
           <Icon icon={getFileIcon(att.contentType)} class="w-5 h-5 text-primary" />
         </div>
@@ -218,14 +218,14 @@
             </div>
           {:else}
             <button
-              class="p-2 rounded-md hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
+              class="p-2 rounded-md hover:bg-muted transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100"
               title={$_('attachment.open')}
               onclick={() => handleEncryptedOpen(att)}
             >
               <Icon icon="mdi:open-in-new" class="w-4 h-4 text-muted-foreground" />
             </button>
             <button
-              class="p-2 rounded-md hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
+              class="p-2 rounded-md hover:bg-muted transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100"
               title={$_('attachment.download')}
               onclick={() => handleEncryptedDownload(att)}
             >
@@ -256,7 +256,7 @@
   <div class="space-y-2">
     {#each attachments as att (att.id)}
       {@const isDownloading = downloadingIds.has(att.id)}
-      <div class="flex items-center gap-3 p-2 rounded-md border border-border bg-muted/30 hover:bg-muted/50 transition-colors group">
+      <div class="flex items-center gap-3 p-2 rounded-md border border-divider bg-muted/30 hover:bg-muted/50 transition-colors group">
         <div class="shrink-0 w-10 h-10 rounded-md bg-primary/10 flex items-center justify-center">
           <Icon icon={getFileIcon(att.contentType)} class="w-5 h-5 text-primary" />
         </div>
@@ -266,9 +266,6 @@
           </div>
           <div class="text-xs text-muted-foreground">
             {formatSize(att.size)}
-            {#if att.isInline}
-              <span class="ml-2 text-primary">{$_('attachment.inline')}</span>
-            {/if}
           </div>
         </div>
         <div class="flex items-center gap-1 shrink-0">
@@ -278,14 +275,14 @@
             </div>
           {:else}
             <button
-              class="p-2 rounded-md hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
+              class="p-2 rounded-md hover:bg-muted transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100"
               title={$_('attachment.open')}
               onclick={() => handleOpen(att)}
             >
               <Icon icon="mdi:open-in-new" class="w-4 h-4 text-muted-foreground" />
             </button>
             <button
-              class="p-2 rounded-md hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
+              class="p-2 rounded-md hover:bg-muted transition-colors opacity-0 group-hover:opacity-100 focus-visible:opacity-100 group-focus-within:opacity-100"
               title={$_('attachment.download')}
               onclick={() => handleDownload(att)}
             >

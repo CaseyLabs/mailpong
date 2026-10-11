@@ -146,14 +146,14 @@ func TestListChatsFlags(t *testing.T) {
 
 	tests := []struct {
 		key                  string
-		pinned, low, fromMe  bool
+		pinned, low          bool
 		unread, messageCount int
 	}{
-		{"a@x", false, false, false, 1, 2},
-		{"b1", false, true, false, 1, 1},
-		{"c@x", true, false, true, 0, 1},
-		{"d@x", false, true, false, 0, 1},
-		{"e@x", false, false, false, 0, 2},
+		{"a@x", false, false, 1, 2},
+		{"b1", false, true, 1, 1},
+		{"c@x", true, false, 0, 1},
+		{"d@x", false, true, 0, 1},
+		{"e@x", false, false, 0, 2},
 	}
 	for _, tt := range tests {
 		c := byKey[tt.key]
@@ -161,11 +161,11 @@ func TestListChatsFlags(t *testing.T) {
 			t.Errorf("%s: missing", tt.key)
 			continue
 		}
-		if c.IsPinned != tt.pinned || c.IsLowPriority != tt.low || c.LastFromMe != tt.fromMe ||
+		if c.IsPinned != tt.pinned || c.IsLowPriority != tt.low ||
 			c.UnreadCount != tt.unread || c.MessageCount != tt.messageCount {
-			t.Errorf("%s: pinned=%v low=%v fromMe=%v unread=%d count=%d, want %v %v %v %d %d",
-				tt.key, c.IsPinned, c.IsLowPriority, c.LastFromMe, c.UnreadCount, c.MessageCount,
-				tt.pinned, tt.low, tt.fromMe, tt.unread, tt.messageCount)
+			t.Errorf("%s: pinned=%v low=%v unread=%d count=%d, want %v %v %d %d",
+				tt.key, c.IsPinned, c.IsLowPriority, c.UnreadCount, c.MessageCount,
+				tt.pinned, tt.low, tt.unread, tt.messageCount)
 		}
 	}
 }
@@ -488,6 +488,44 @@ func TestListChatsSentRecipients(t *testing.T) {
 		return
 	}
 	t.Errorf("s2@x missing from %v", chatKeys(chats))
+}
+
+func TestTrimSubjectPrefix(t *testing.T) {
+	tests := []struct{ in, want string }{
+		{"Budget", "Budget"},
+		{"Re: Budget", "Budget"},
+		{"RE: Fwd: re[2]: Budget", "Budget"},
+		{"  AW:Budget ", "Budget"},
+		{"Re: ", ""},
+		{"Reply: Budget", "Reply: Budget"},
+	}
+	for _, tt := range tests {
+		if got := trimSubjectPrefix(tt.in); got != tt.want {
+			t.Errorf("trimSubjectPrefix(%q) = %q, want %q", tt.in, got, tt.want)
+		}
+	}
+}
+
+func TestSearchChatsHighlightSkipsPrefix(t *testing.T) {
+	s, accountID, inboxID, now := chatFixture(t)
+	if err := s.Create(&Message{ID: "h1", AccountID: accountID, FolderID: inboxID, UID: 300, ThreadID: "<h@x>",
+		Subject: "Re: budget review", FromEmail: "dana@example.com", Date: now, ReceivedAt: now}); err != nil {
+		t.Fatal(err)
+	}
+	results, err := s.SearchChats(inboxID, "re", 0, 50, "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, r := range results {
+		if r.ThreadID != "<h@x>" {
+			continue
+		}
+		if want := "budget <mark>re</mark>view"; r.HighlightedSubject != want {
+			t.Errorf("highlighted subject = %q, want %q", r.HighlightedSubject, want)
+		}
+		return
+	}
+	t.Fatal("search did not find the thread")
 }
 
 func TestSearchChatsSentRecipients(t *testing.T) {

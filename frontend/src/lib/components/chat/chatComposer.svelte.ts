@@ -87,9 +87,14 @@ export class ChatComposer {
     return this.replyAllChoice ?? this.#opts.target()?.defaultReplyAll ?? false
   }
 
+  // Who reply and reply all reach; null while unknown.
+  get choices(): ReplyRecipients | null {
+    return this.#opts.recipients()
+  }
+
   // Who a send would reach in the current reply mode.
   get recipients(): Person[] {
-    const r = this.#opts.recipients()
+    const r = this.choices
     if (!r) return []
     return this.replyAll ? r.all : r.reply
   }

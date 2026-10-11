@@ -1,19 +1,18 @@
 <script lang="ts">
-  // ChatViewHeader — the open chat's top bar. Left: Compose, Archive, Delete,
-  // Spam, icon-only Reply, Reply All and Forward, then Expand (open in the
-  // full composer). Right: Snooze, Pin, Unread and a "⋯" button that opens the
-  // shared thread context menu. People and subject sit centered on a second
-  // row. On narrow panes Spam, Forward, Pin and Unread move into the "⋯" menu
-  // so the buttons keep to one row; the menu's Spam and Read/Unread call the
-  // same handlers as the buttons.
+  // ChatViewHeader — the open chat's top bar, a single row. Left: Back (when
+  // the chat covers the list) and the title block: every participant, then a
+  // subtitle (the subject, or subject and message counts for a sender chat with several subjects).
+  // Right: Compose (when set), Archive, Delete, Snooze, Pin and a "⋯" button
+  // that opens the shared thread context menu. Reply, Spam, Forward and
+  // Read/Unread live in the menu, on each bubble and in the reply box. On
+  // narrow panes Pin moves into the menu too, and Forward joins it for
+  // multi-message chats, which the menu itself does not offer.
   import Icon from '@iconify/svelte'
   import { _ } from '$lib/i18n'
-  import Avatar from '$lib/components/kit/Avatar.svelte'
   import ComposeButton from '$lib/components/common/ComposeButton.svelte'
   import ToolbarButton from '$lib/components/common/ToolbarButton.svelte'
   import MessageContextMenu from '$lib/components/common/MessageContextMenu.svelte'
   import { ContextMenuItem } from '$lib/components/ui/context-menu'
-  import { contactPhotos } from '$lib/stores/contactPhotos.svelte'
   import { canToggleSenderChat, chatSender, displayName, type Person, type ReplyMode } from './chatFormat'
   import ChatSnoozeMenu from './ChatSnoozeMenu.svelte'
   import { formatSnoozedUntil } from './chatSnooze'
@@ -21,6 +20,8 @@
   interface Props {
     subject: string
     people: Person[]
+    // Distinct subjects in a sender chat (1 when it has none).
+    subjectCount: number
     // Set for a sender chat: the header names the sender, not a subject.
     senderEmail: string
     messageIds: string[]
@@ -34,18 +35,13 @@
     // null when the chat's priority is unknown (not in the loaded list).
     isLowPriority: boolean | null
     canTriage: boolean
-    // False when the chat has no reply target yet; disables Reply buttons.
-    canReply: boolean
     isTrash: boolean
-    isSpam: boolean
     showBackButton: boolean
     onBack?: () => void
     // Set only when the chat covers the list, which otherwise holds Compose.
     onCompose?: () => void
     onArchive: () => void
-    onReplyChat: (replyAll: boolean) => void
     onForward: () => void
-    onExpand: () => void
     onDelete: () => void
     onSpam: () => void
     onPin: () => void
@@ -59,8 +55,8 @@
   }
 
   let {
-    subject, people: allPeople, senderEmail, messageIds, accountId, folderId, folderType, isStarred, allRead, isPinned, snoozedUntil, isLowPriority, canTriage, canReply, isTrash, isSpam,
-    showBackButton, onBack, onCompose, onArchive, onReplyChat, onForward, onExpand, onDelete, onSpam, onPin, onSnooze, onUnsnooze, onToggleRead, onToggleSenderLow, onToggleSenderChat, onActionComplete, onReply,
+    subject, people: allPeople, subjectCount, senderEmail, messageIds, accountId, folderId, folderType, isStarred, allRead, isPinned, snoozedUntil, isLowPriority, canTriage, isTrash,
+    showBackButton, onBack, onCompose, onArchive, onForward, onDelete, onSpam, onPin, onSnooze, onUnsnooze, onToggleRead, onToggleSenderLow, onToggleSenderChat, onActionComplete, onReply,
   }: Props = $props()
 
   // A sender chat shows just its sender.
@@ -68,6 +64,7 @@
 
   let menuAnchor = $state<HTMLElement | null>(null)
   let snoozeMenu = $state<ChatSnoozeMenu | null>(null)
+  const MAX_NAMES = 6
   const COMPACT_WIDTH = 860
   const NARROW_WIDTH = 600
   let width = $state(0)
@@ -76,15 +73,19 @@
   const narrow = $derived(width > 0 && width < NARROW_WIDTH)
   const pinInMenu = $derived(narrow && canTriage)
   // The shared menu offers Forward only for single-message threads.
-  const forwardInMenu = $derived(narrow && messageIds.length > 1)
+  const forwardInMenu = $derived(messageIds.length > 1)
   const senderInMenu = $derived(canTriage && isLowPriority !== null && people.length > 0)
 
-  const MAX_AVATARS = 3
   const title = $derived.by(() => {
     if (people.length === 0) return $_('viewer.unknown')
-    const names = people.slice(0, 3).map(displayName).join(', ')
-    return people.length > 3 ? `${names} ${$_('chat.andMore', { values: { count: people.length - 3 } })}` : names
+    const names = people.slice(0, MAX_NAMES).map(displayName).join(', ')
+    return people.length > MAX_NAMES ? `${names} ${$_('chat.andMore', { values: { count: people.length - MAX_NAMES } })}` : names
   })
+  const subtitle = $derived(
+    senderEmail && subjectCount > 1
+      ? `${$_('chat.subjectCount', { values: { count: subjectCount } })} · ${$_('chat.messageCount', { values: { count: messageIds.length } })}`
+      : subject || $_('viewer.noSubject'),
+  )
   const snoozeLabel = $derived(snoozedUntil ? formatSnoozedUntil(snoozedUntil) : '')
 
   export function openSnooze() { snoozeMenu?.open() }
@@ -111,7 +112,7 @@
     {disabled}
     {onclick}
   >
-    <Icon {icon} class="w-5 h-5 {active ? 'text-primary' : 'text-muted-foreground'}" />
+    <Icon {icon} class="w-5 h-5 {active ? 'text-foreground' : 'text-muted-foreground'}" />
   </button>
 {/snippet}
 
@@ -142,48 +143,34 @@
   {/if}
 {/snippet}
 
-<header bind:clientWidth={width}>
-  <div class="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 px-3 py-2 border-b border-border">
-    <div class="flex items-center gap-2">
-      {#if showBackButton}
-        {@render iconButton('mdi:arrow-left', $_('responsive.back'), () => onBack?.())}
-        <div class="w-px h-5 bg-border"></div>
-      {/if}
-      {#if onCompose}<ComposeButton {compact} onclick={onCompose} />{/if}
-      <ToolbarButton icon="mdi:archive-outline" label={$_('viewer.archive')} {compact} onclick={onArchive} />
-      <ToolbarButton
-        icon={isTrash ? 'mdi:delete-forever' : 'mdi:delete-outline'}
-        label={$_('viewer.delete')}
-        title={$_(isTrash ? 'viewer.deletePermanently' : 'viewer.delete')}
-        {compact}
-        onclick={onDelete}
-      />
-      {#if !narrow}
-        <ToolbarButton
-          icon={isSpam ? 'mdi:email-check-outline' : 'mdi:alert-octagon-outline'}
-          label={$_(isSpam ? 'viewer.notSpam' : 'viewer.spam')}
-          title={$_(isSpam ? 'viewer.markAsNotSpam' : 'viewer.markAsSpam')}
-          {compact}
-          onclick={onSpam}
-        />
-      {/if}
-      <div class="w-px h-5 bg-border"></div>
-      <div class="flex items-center gap-0.5">
-        {@render iconButton('mdi:reply', $_('viewer.reply'), () => onReplyChat(false), undefined, !canReply)}
-        {@render iconButton('mdi:reply-all', $_('viewer.replyAll'), () => onReplyChat(true), undefined, !canReply)}
-        {#if !narrow}{@render iconButton('mdi:share', $_('viewer.forward'), onForward)}{/if}
-      </div>
-      <div class="w-px h-5 bg-border"></div>
-      {@render iconButton('mdi:arrow-expand', $_('chat.expand'), onExpand, undefined, !canReply)}
-    </div>
+<header bind:clientWidth={width} class="flex items-center gap-3 px-3 py-2 border-b border-divider">
+  {#if showBackButton}
+    {@render iconButton('mdi:arrow-left', $_('responsive.back'), () => onBack?.())}
+  {/if}
 
-    <div class="ml-auto flex items-center justify-end gap-0.5">
+  <div class="min-w-0 flex-1 px-1">
+    <h2 class="text-sm font-semibold text-foreground truncate" title={people.map((p) => p.email).join(', ')}>{title}</h2>
+    <p class="text-sm text-muted-foreground truncate" title={senderEmail ? undefined : subject}>
+      {@render snoozed()}{subtitle}
+    </p>
+  </div>
+
+  <div class="flex items-center gap-2 shrink-0">
+    {#if onCompose}<ComposeButton {compact} onclick={onCompose} />{/if}
+    <ToolbarButton ghost icon="mdi:archive-outline" label={$_('viewer.archive')} {compact} onclick={onArchive} />
+    <ToolbarButton
+      ghost
+      icon={isTrash ? 'mdi:delete-forever' : 'mdi:delete-outline'}
+      label={$_('viewer.delete')}
+      title={$_(isTrash ? 'viewer.deletePermanently' : 'viewer.delete')}
+      {compact}
+      onclick={onDelete}
+    />
+    <div class="w-px h-5 bg-divider"></div>
+    <div class="flex items-center gap-0.5">
       {#if canTriage}
         <ChatSnoozeMenu bind:this={snoozeMenu} {snoozedUntil} {onSnooze} {onUnsnooze} />
         {#if !narrow}{@render iconButton(isPinned ? 'mdi:pin' : 'mdi:pin-outline', isPinned ? $_('chat.unpin') : $_('chat.pin'), onPin, isPinned)}{/if}
-      {/if}
-      {#if !narrow}
-        {@render iconButton(allRead ? 'mdi:email-outline' : 'mdi:email-open-outline', allRead ? $_('viewer.markAsUnread') : $_('viewer.markAsRead'), onToggleRead)}
       {/if}
 
       <MessageContextMenu
@@ -203,31 +190,6 @@
           {@render iconButton('mdi:dots-vertical', $_('chat.moreActions'), openMenu)}
         </span>
       </MessageContextMenu>
-    </div>
-  </div>
-
-  <div class="flex items-center gap-3 min-w-0 px-4 py-3 border-b border-border">
-    <div class="flex -space-x-1 shrink-0" aria-hidden="true">
-      {#each people.slice(0, MAX_AVATARS) as p (p.email)}
-        {@const photo = contactPhotos.get(p.email)}
-        <div class="rounded-full ring-2 ring-background">
-          <Avatar email={p.email} name={p.name} size={32} photoData={photo?.data} photoMediaType={photo?.mediaType} />
-        </div>
-      {/each}
-    </div>
-
-    <div class="min-w-0">
-      {#if senderEmail || !subject}
-        <h2 class="text-sm font-semibold text-foreground truncate" title={people.map((p) => p.email).join(', ')}>{title}</h2>
-        <p class="text-sm text-muted-foreground truncate" title={senderEmail || subject}>
-          {@render snoozed()}{senderEmail || $_('viewer.noSubject')}
-        </p>
-      {:else}
-        <h2 class="text-base font-semibold text-foreground truncate" title={subject}>{subject}</h2>
-        <p class="text-sm text-muted-foreground truncate" title={people.map((p) => p.email).join(', ')}>
-          {@render snoozed()}{title}
-        </p>
-      {/if}
     </div>
   </div>
 </header>

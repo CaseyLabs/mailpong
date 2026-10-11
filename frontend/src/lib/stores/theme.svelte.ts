@@ -6,6 +6,7 @@
 // module level silently fails at runtime.
 
 import { getThemeMode, type ThemeMode } from './settings.svelte'
+import { WindowSetBackgroundColour } from '$wailsjs/runtime/runtime'
 
 export type { ThemeMode }
 
@@ -35,6 +36,29 @@ export function applyTheme(themeName: ThemeMode) {
   const dark = scheme === 'dark'
   document.documentElement.classList.toggle('dark', dark)
   isDarkActive = dark
+  syncWindowBackground()
+}
+
+/** Match the native window background to the theme's --background, so the
+ *  area the webview has not painted yet while the window grows shows the theme
+ *  colour instead of a light strip. Read through a probe element because the
+ *  body's background-color transitions between themes. */
+function syncWindowBackground() {
+  const probe = document.createElement('div')
+  probe.style.backgroundColor = 'hsl(var(--background))'
+  document.body.appendChild(probe)
+  const colour = getComputedStyle(probe).backgroundColor
+  probe.remove()
+  // Only an opaque rgb() colour is usable: a missing or translucent
+  // --background resolves to rgba(), which would paint the window black.
+  const rgb = colour.match(/^rgb\((\d+(?:\.\d+)?), (\d+(?:\.\d+)?), (\d+(?:\.\d+)?)\)$/)
+  if (!rgb) return
+  const [r, g, b] = rgb.slice(1).map((c) => Math.round(Number(c)))
+  try {
+    WindowSetBackgroundColour(r, g, b, 255)
+  } catch {
+    // No Wails runtime (plain browser): nothing to sync.
+  }
 }
 
 /** Resolve a ThemeMode (which may be 'system') to a concrete theme and apply it. */

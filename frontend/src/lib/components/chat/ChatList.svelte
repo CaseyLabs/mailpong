@@ -1,28 +1,30 @@
 <script lang="ts">
   // ChatList — the mail section's list pane: chats for the current scope
   // (unified inbox, an account inbox, or any folder), grouped into Pinned,
-  // Chats and Low priority (each collapsible and remembered across sessions;
-  // Low starts collapsed), with paged loading.
+  // Chats and Low priority (each collapsible, and trimmable to its first few
+  // rows with "Show fewer", both remembered across sessions; Low starts
+  // collapsed), with paged loading.
   //
   // Exposes the same ref API App.svelte uses on MessageList (selection,
   // open, delete, move, sync) so keyboard shortcuts keep working, plus the
   // triage actions on the selected chat. The chat list has no multi-select.
   import { onMount, untrack } from 'svelte'
-  import Icon from '@iconify/svelte'
   import { _ } from '$lib/i18n'
   import ChatRow from './ChatRow.svelte'
   import ChatListHeader from './ChatListHeader.svelte'
   import ChatLowGroupHeader from './ChatLowGroupHeader.svelte'
+  import ChatGroupHeader from './ChatGroupHeader.svelte'
+  import ChatListEmpty from './ChatListEmpty.svelte'
   import { ConfirmDialog } from '$lib/components/ui/confirm-dialog'
-  import { chatList, type ChatFilter, type ChatItem } from '$lib/stores/chat.svelte'
+  import { chatList, type ChatItem } from '$lib/stores/chat.svelte'
   import { accountStore } from '$lib/stores/accounts.svelte'
   import { contactPhotos } from '$lib/stores/contactPhotos.svelte'
   import { getLayoutMode, hideViewer, showSidebar, isSidebarHidden, toggleActiveSidebar } from '$lib/stores/layout.svelte'
   import { setFocusedPane } from '$lib/stores/keyboard.svelte'
   import { getChatAutoAdvance, getChatShowLowGroup } from '$lib/stores/settings.svelte'
-  import { type ChatGroup, isChatGroupExpanded, toggleChatGroupExpanded } from '$lib/stores/uiState.svelte'
+  import { type ChatGroup, isChatGroupExpanded, isChatGroupShowingFewer, toggleChatGroupExpanded, toggleChatGroupShowFewer } from '$lib/stores/uiState.svelte'
   import { SyncFolder, CancelFolderSync } from '../../../../wailsjs/go/app/App'
-  import { canToggleSenderChat, rowPeople } from './chatFormat'
+  import { canToggleSenderChat, GROUP_FEWER_CAP, rowPeople, trimGroup } from './chatFormat'
   import { archiveChat, deleteMessagesPermanently, markChatUnread, type ChatRowActions, pinChat, setSenderChat, setSenderLow, snoozeChat, trashMessages, unsnoozeChat } from './chatTriage'
   import type { folder } from '../../../../wailsjs/go/models'
 
@@ -99,8 +101,40 @@
   const chatsOpen = $derived(!chatsHeader || isChatGroupExpanded('chats'))
   const lowOpen = $derived(isChatGroupExpanded('low'))
 
+  // A group set to "Show fewer" lists its first few rows (see trimGroup).
+  // Chats trims only beside another group.
+  const trimmed = (group: ChatGroup, items: ChatItem[]) => trimGroup(items, isChatGroupShowingFewer(group), selectedKey)
+  const pinnedShown = $derived(trimmed('pinned', pinned))
+  const mainShown = $derived(chatsHeader ? trimmed('chats', main) : main)
+  const lowShown = $derived(trimmed('low', low))
+
+  // The group's "Show fewer" / hidden-rows button text, or undefined when
+  // there is nothing to trim. hidden formats the count of rows (of total)
+  // not shown.
+  function fewerLabel(group: ChatGroup, items: ChatItem[], shown: ChatItem[], hidden: (count: number) => string, total = items.length): string | undefined {
+    if (items.length <= GROUP_FEWER_CAP) return undefined
+    if (!isChatGroupShowingFewer(group)) return $_('chat.showFewer')
+    return shown.length < items.length ? hidden(total - shown.length) : undefined
+  }
+  const moreInGroup = (count: number) => $_('chat.moreInGroup', { values: { count } })
+  const pinnedFewer = $derived(fewerLabel('pinned', pinned, pinnedShown, (count) => $_('chat.morePinned', { values: { count } })))
+  // Chats may have unloaded rows, so its count is open-ended.
+  const chatsFewer = $derived(
+    chatsHeader ? fewerLabel('chats', main, mainShown, (count) => (chatList.hasMore ? $_('chat.showMore') : moreInGroup(count))) : undefined,
+  )
+  const lowFewer = $derived(fewerLabel('low', low, lowShown, moreInGroup, Math.max(chatList.lowCount, low.length)))
+
   // Keyboard navigation order: what's on screen, top to bottom.
-  const visible = $derived([...(pinnedOpen ? pinned : []), ...(chatsOpen ? main : []), ...(lowOpen ? low : [])])
+  const visible = $derived([...(pinnedOpen ? pinnedShown : []), ...(chatsOpen ? mainShown : []), ...(lowOpen ? lowShown : [])])
+  // Whether another page could add rows on screen: some open group shows
+  // all of its rows and could still get more. Pinned chats sort first, so
+  // once any other row is loaded no page adds pinned rows; Low stops growing
+  // once all lowCount rows are loaded.
+  const canGrow = $derived(
+    (pinnedOpen && main.length === 0 && low.length === 0) ||
+      (chatsOpen && mainShown.length === main.length) ||
+      (showLowGroup && lowOpen && lowShown.length === low.length && low.length < chatList.lowCount),
+  )
 
   // Load the next page when the list is scrolled near its end, and keep
   // loading while it doesn't fill the view (e.g. a page of mostly collapsed
@@ -111,8 +145,9 @@
   }
 
   function maybeLoadMore() {
-    // With every group collapsed, more rows wouldn't show, so don't page.
-    if (!pinnedOpen && !chatsOpen && !lowOpen) return
+    // With every group collapsed or trimmed, more rows wouldn't show, so
+    // don't page.
+    if (!canGrow) return
     if (chatList.hasMore && !chatList.loading && nearEnd()) void chatList.loadMore()
   }
 
@@ -354,31 +389,15 @@
     if (isSidebarHidden()) toggleActiveSidebar()
   }
 
-  // Inbox zero: nothing left in an inbox under the All filter.
-  const inboxZero = $derived(
-    chatList.filter === 'all' && !chatList.isSearch && (chatList.isUnified || folderType === 'inbox'),
-  )
-
   // Only core folders auto-sync, so other folders stay empty until synced once.
   const neverSynced = $derived.by(() => {
     if (chatList.isUnified || chatList.isSearch || !accountId || !folderId) return false
     const f = accountStore.getFolder(accountId, folderId)
     return !!f && !f.lastSync
   })
-
-  const emptyText = $derived.by(() => {
-    if (chatList.isSearch) return $_('chat.noResults', { values: { query: chatList.query.trim() } })
-    const byFilter: Record<ChatFilter, string> = {
-      all: $_('chat.noChats'),
-      unread: $_('chat.noUnread'),
-      low: $_('chat.noLow'),
-      snoozed: $_('chat.noSnoozed'),
-    }
-    return byFilter[chatList.filter]
-  })
 </script>
 
-{#snippet rows(list: ChatItem[])}
+{#snippet rows(list: ChatItem[], inPinned = false)}
   {#each list as c (c.key)}
     <ChatRow
       bind:this={rowRefs[c.key]}
@@ -387,6 +406,7 @@
       selected={selectedKey === c.key}
       folderType={chatList.isUnified ? 'inbox' : folderType}
       showAccount={chatList.isUnified}
+      {inPinned}
       {myEmails}
       onSelect={() => open(c)}
       actions={rowActions(c)}
@@ -397,21 +417,16 @@
   {/each}
 {/snippet}
 
-{#snippet group(label: string, items: ChatItem[], id?: ChatGroup)}
-  {@const open = !id || isChatGroupExpanded(id)}
-  <div role="group" aria-label={label}>
-    {#if id}
-      <button
-        class="flex items-center gap-1 w-full px-4 pt-3 pb-1 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground"
-        aria-expanded={open}
-        onclick={() => toggleChatGroupExpanded(id)}
-      >
-        <Icon icon={open ? 'mdi:chevron-down' : 'mdi:chevron-right'} class="w-3.5 h-3.5 shrink-0" />
-        {label}
-      </button>
-    {/if}
-    {#if open}{@render rows(items)}{/if}
-  </div>
+{#snippet group(label: string, items: ChatItem[], id: ChatGroup, fewerLabel: string | undefined, header: boolean)}
+  <ChatGroupHeader
+    {label}
+    open={!header || isChatGroupExpanded(id)}
+    onToggle={header ? () => toggleChatGroupExpanded(id) : undefined}
+    {fewerLabel}
+    onToggleFewer={() => toggleChatGroupShowFewer(id)}
+  >
+    {@render rows(items, id === 'pinned')}
+  </ChatGroupHeader>
 {/snippet}
 
 <div class="flex flex-col h-full {isFlashing ? 'pane-focus-flash' : ''}">
@@ -443,40 +458,24 @@
     data-focused={isFocused || undefined}
     onscroll={maybeLoadMore}
   >
-    {#if chatList.error && chatList.items.length === 0}
-      <div class="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
-        <Icon icon="mdi:alert-circle-outline" class="w-10 h-10" />
-        <p>{$_('chat.loadFailed')}</p>
-        <button class="text-sm text-primary hover:underline" onclick={() => chatList.reload()}>{$_('messageList.tryAgain')}</button>
-      </div>
-    {:else if chatList.items.length === 0 && !chatList.loading}
-      <div class="flex flex-col items-center justify-center h-full gap-2 text-muted-foreground">
-        {#if inboxZero}
-          <Icon icon="mdi:check-circle-outline" class="w-12 h-12 text-primary" />
-          <p class="text-base font-medium text-foreground">{$_('chat.inboxZero')}</p>
-          <p class="text-sm">{$_('chat.inboxZeroHint')}</p>
-        {:else if neverSynced && syncBusy}
-          <Icon icon="mdi:loading" class="w-10 h-10 animate-spin" />
-          <p>{$_('sidebar.syncing')}</p>
-        {:else if neverSynced}
-          <Icon icon="mdi:cloud-sync-outline" class="w-10 h-10" />
-          <p>{$_('chat.notSynced')}</p>
-          <button class="text-sm text-primary hover:underline" onclick={toggleFolderSync}>{$_('chat.syncNow')}</button>
-        {:else}
-          <Icon icon="mdi:chat-outline" class="w-10 h-10" />
-          <p>{emptyText}</p>
-        {/if}
-      </div>
+    {#if chatList.items.length === 0 && (chatList.error || !chatList.loading)}
+      <ChatListEmpty
+        failed={!!chatList.error}
+        {folderType}
+        {neverSynced}
+        {syncBusy}
+        onSyncNow={toggleFolderSync}
+      />
     {:else}
-      {#if pinned.length > 0}{@render group($_('chat.pinned'), pinned, 'pinned')}{/if}
+      {#if pinned.length > 0}{@render group($_('chat.pinned'), pinnedShown, 'pinned', pinnedFewer, true)}{/if}
       {#if grouped}
-        {#if main.length > 0}{@render group($_('chat.chats'), main, chatsHeader ? 'chats' : undefined)}{/if}
+        {#if main.length > 0}{@render group($_('chat.chats'), mainShown, 'chats', chatsFewer, chatsHeader)}{/if}
       {:else}
         {@render rows(main)}
       {/if}
       {#if showLowGroup}
         <ChatLowGroupHeader onArchived={reloadAfterUndo} />
-        {#if lowOpen}{@render group($_('chat.filterLow'), low)}{/if}
+        {#if lowOpen}{@render group($_('chat.filterLow'), lowShown, 'low', lowFewer, false)}{/if}
       {/if}
     {/if}
     {#if chatList.loading && chatList.items.length > 0}

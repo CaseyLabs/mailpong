@@ -1,10 +1,12 @@
 <script lang="ts">
   // ChatListHeader — scope menu (all inboxes, an account inbox, or the folder
-  // sidebar), sync and compose buttons, search field, and filter chips.
+  // sidebar), sync and compose buttons, search field, and filter tabs.
   import Icon from '@iconify/svelte'
   import { DropdownMenu } from 'bits-ui'
   import { _ } from '$lib/i18n'
   import { cn } from '$lib/utils'
+  import { formatDistanceToNow } from 'date-fns'
+  import { getCurrentDateFnsLocale } from '$lib/stores/settings.svelte'
   import ResponsiveSidebarToggle from '$lib/components/kit/ResponsiveSidebarToggle.svelte'
   import ComposeButton from '$lib/components/common/ComposeButton.svelte'
   import { accountStore } from '$lib/stores/accounts.svelte'
@@ -65,6 +67,16 @@
     { value: 'snoozed', label: $_('chat.filterSnoozed') },
   ])
 
+  // Bumped on hover so the relative "Last synced" time is fresh when the tooltip shows.
+  let syncHover = $state(0)
+  const syncTitle = $derived.by(() => {
+    void syncHover
+    if (syncBusy) return `${$_('sidebar.syncing')} ${$_('sidebar.clickToCancel')}`
+    const last = accountStore.lastSyncTime
+    const idle = $_('sidebar.syncAllAccounts')
+    return last ? `${idle}\n${$_('chat.lastSynced', { values: { time: formatDistanceToNow(last, { addSuffix: true, locale: getCurrentDateFnsLocale() }) } })}` : idle
+  })
+
   function handleSearchKeydown(e: KeyboardEvent) {
     if (e.key !== 'Escape') return
     e.preventDefault()
@@ -80,7 +92,7 @@
   const itemClass = 'relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden focus:bg-accent focus:text-accent-foreground'
 </script>
 
-<div class="flex flex-col gap-2 px-3 pt-3 pb-2 border-b border-border">
+<div class="@container flex flex-col gap-2 px-3 pt-3">
   <div class="flex items-center gap-1 min-w-0" bind:clientWidth={topRowWidth}>
     <ResponsiveSidebarToggle />
     <DropdownMenu.Root>
@@ -129,7 +141,8 @@
     <div class="flex-1"></div>
     <button
       class="p-2 rounded-md hover:bg-muted transition-colors {ring}"
-      title={syncBusy ? `${$_('sidebar.syncing')} ${$_('sidebar.clickToCancel')}` : $_('sidebar.syncAllAccounts')}
+      title={syncTitle}
+      onmouseenter={() => syncHover++}
       aria-label={$_('sidebar.syncAllAccounts')}
       onclick={onSync}
     >
@@ -161,8 +174,9 @@
     {/if}
   </div>
 
-  <!-- Wraps rather than scrolls, so a narrow list shows every pill without a scrollbar. -->
-  <div class="flex flex-wrap items-center gap-1.5" role="group" aria-label={$_('chat.filters')}>
+  <!-- One non-wrapping row; the gap narrows in a narrow pane so every tab still fits.
+       The row's divider is the header's bottom edge. -->
+  <div class="-mx-3 px-3 flex items-center gap-2.5 @[16rem]:gap-4 border-b border-divider text-xs" role="group" aria-label={$_('chat.filters')}>
     {#each filters as f (f.value)}
       {@const active = filter === f.value}
       {@const unavailable = isSearch && !searchSupports(f.value)}
@@ -170,7 +184,7 @@
       <button
         disabled={unavailable}
         title={unavailable ? $_('chat.filterUnavailableInSearch') : undefined}
-        class="px-2.5 py-0.5 rounded-full text-xs whitespace-nowrap transition-colors {active ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground enabled:hover:bg-primary/20 enabled:hover:text-foreground'} disabled:opacity-50 disabled:cursor-not-allowed {ring}"
+        class="shrink-0 -mb-px py-1.5 border-b-2 whitespace-nowrap transition-colors {active ? 'border-foreground text-foreground font-semibold' : 'border-transparent text-muted-foreground enabled:hover:text-foreground'} disabled:opacity-50 disabled:cursor-not-allowed {ring}"
         aria-pressed={active}
         onclick={() => onFilter(f.value)}
       >

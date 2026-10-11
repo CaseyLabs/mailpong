@@ -53,6 +53,9 @@ func TestGetUIStateDefault(t *testing.T) {
 	if state.ChatGroupsExpanded == nil {
 		t.Error("ChatGroupsExpanded is nil, want initialized map")
 	}
+	if state.ChatGroupsShowFewer == nil {
+		t.Error("ChatGroupsShowFewer is nil, want initialized map")
+	}
 }
 
 func TestSaveGetUIState(t *testing.T) {
@@ -72,6 +75,7 @@ func TestSaveGetUIState(t *testing.T) {
 		CollapsedSidebars:    map[string]bool{"mail": true, "calendar": false},
 		PaneWidths:           map[string]int{"contacts.sidebar": 280, "contacts.list": 360},
 		ChatGroupsExpanded:   map[string]bool{"pinned": false, "low": true},
+		ChatGroupsShowFewer:  map[string]bool{"chats": true},
 	}
 
 	if err := store.SaveUIState(saved); err != nil {
@@ -120,6 +124,9 @@ func TestSaveGetUIState(t *testing.T) {
 	}
 	if !got.ChatGroupsExpanded["low"] {
 		t.Error("ChatGroupsExpanded[low] = false, want true")
+	}
+	if !got.ChatGroupsShowFewer["chats"] || got.ChatGroupsShowFewer["pinned"] {
+		t.Errorf("ChatGroupsShowFewer = %v, want chats=true only", got.ChatGroupsShowFewer)
 	}
 }
 

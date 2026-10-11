@@ -76,6 +76,7 @@ func defaultUIState() *UIState {
 		CollapsedSidebars:    make(map[string]bool),
 		PaneWidths:           make(map[string]int),
 		ChatGroupsExpanded:   make(map[string]bool),
+		ChatGroupsShowFewer:  make(map[string]bool),
 	}
 }
 
@@ -111,6 +112,9 @@ func (s *Store) GetUIState() (*UIState, error) {
 	}
 	if state.ChatGroupsExpanded == nil {
 		state.ChatGroupsExpanded = make(map[string]bool)
+	}
+	if state.ChatGroupsShowFewer == nil {
+		state.ChatGroupsShowFewer = make(map[string]bool)
 	}
 
 	return &state, nil

@@ -78,6 +78,11 @@ func main() {
 }
 
 // runMainMode runs the main application window
+// windowBackground is opaque Nord Dark, the default theme; the frontend
+// replaces it with the active theme's background. A translucent colour shows a
+// light strip while the window widens.
+var windowBackground = &options.RGBA{R: 47, G: 53, B: 65, A: 255}
+
 func runMainMode(mailtoData *app.MailtoData, rawMailtoArg string) {
 	// Determine activation message: pass raw mailto URL if present, otherwise just "show"
 	activateMsg := "show"
@@ -155,7 +160,7 @@ func runMainMode(mailtoData *app.MailtoData, rawMailtoArg string) {
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
-		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
+		BackgroundColour: windowBackground,
 		OnStartup:        application.Startup,
 		OnShutdown:       application.Shutdown,
 		OnBeforeClose:    application.BeforeClose,
@@ -250,7 +255,7 @@ func runComposerMode() {
 			// so we can rewrite "/" to "/composer.html"
 			Handler: composerAssetHandler,
 		},
-		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
+		BackgroundColour: windowBackground,
 		OnStartup:        composerApp.Startup,
 		OnShutdown:       composerApp.Shutdown,
 		Bind: []interface{}{

@@ -15,9 +15,9 @@
 </script>
 
 <div class="flex flex-row-reverse px-4 mt-3" role="status">
-  <div class="flex flex-col items-end gap-1 max-w-[75%]">
+  <div class="flex flex-col items-end gap-1 max-w-[min(75%,36rem)]">
     <div
-      class="px-3.5 py-2 text-sm whitespace-pre-wrap wrap-anywhere rounded-2xl rounded-br-md bg-primary text-primary-foreground {pending.status === 'sending' ? 'opacity-70' : ''} {pending.status === 'failed' ? 'ring-2 ring-destructive' : ''}"
+      class="px-3.5 py-2 text-sm whitespace-pre-wrap wrap-anywhere rounded-2xl rounded-br-md bg-bubble-own text-foreground {pending.status === 'sending' ? 'opacity-70' : ''} {pending.status === 'failed' ? 'ring-2 ring-destructive' : ''}"
     >
       {pending.text}
       {#each pending.attachmentNames as name (name)}

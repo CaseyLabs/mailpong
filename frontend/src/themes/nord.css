@@ -26,6 +26,8 @@
     --destructive: 354 39% 56%;            /* nord11 #BF616A — Aurora red */
     --destructive-foreground: 219 28% 95%; /* nord6 */
     --border: 219 28% 88%;                 /* nord4 #D8DEE9 */
+    --bubble-own: 219 28% 88%;             /* nord4 — neutral, differs from others' --muted */
+    --divider: 219 27% 92%;                /* nord5 — equals --muted; keep dividers off muted fills */
     --input: 219 28% 88%;                  /* nord4 */
     --ring: 213 32% 52%;                   /* nord10 */
     /* Avatar palette: Aurora (5) + Frost (4). Most colors are lightness 52-73%,
@@ -68,6 +70,8 @@
     --destructive: 354 39% 56%;            /* nord11 #BF616A — Aurora red */
     --destructive-foreground: 219 28% 95%; /* nord6 */
     --border: 220 17% 36%;                 /* nord3 #4C566A */
+    --bubble-own: 220 17% 36%;             /* nord3 — neutral, differs from others' --muted */
+    --divider: 222 16% 28%;                /* nord1 — equals --muted; keep dividers off muted fills */
     --input: 220 17% 36%;                  /* nord3 */
     --ring: 193 43% 67%;                   /* nord8 */
     /* Avatar palette: same 9 Aurora + Frost colors as Nord Light. */

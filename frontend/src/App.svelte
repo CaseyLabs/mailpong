@@ -43,7 +43,7 @@
   } from '$lib/stores/keyboard.svelte'
   import { isDialogGuardActive } from '$lib/stores/dialogGuard'
   import { dispatchExtensionShortcut } from '$lib/stores/extensionShortcuts.svelte'
-  import { initLayout, getLayoutMode, getResponsiveView, showViewer, hideViewer, showSidebar, hideSidebar, isResponsive, isSidebarHidden, toggleActiveSidebar } from '$lib/stores/layout.svelte'
+  import { initLayout, registerViewerSelection, getLayoutMode, getResponsiveView, showViewer, hideViewer, showSidebar, hideSidebar, isResponsive, isSidebarHidden, toggleActiveSidebar } from '$lib/stores/layout.svelte'
   // @ts-ignore - wailsjs path
   import { PrepareReply, GetPendingMailto, GetDraft, MarkAsRead, MarkAsUnread, Star, Unstar, Archive, MarkAsSpam, MarkAsNotSpam, Undo, GetTermsAccepted, SetTermsAccepted, RefreshWindowConstraints, AcceptCertificate, GetStartHiddenActive, CloseWindow, QuitApp, OpenComposerWindow, GetSystemTheme, NotifyStartupComplete, GetOAuthBuildStatus, GetOAuthWarningDisabled, SetOAuthWarningDisabled, GetLastSeenVersion, SetLastSeenVersion, GetAppInfo, ChatDraftsFlushed } from '../wailsjs/go/app/App.js'
   // @ts-ignore - wailsjs path
@@ -98,6 +98,11 @@
   // Always resets on conversation change, on Esc, on back-arrow, and on app reload.
   let focusMode = $state<'off' | 'thread' | 'message'>('off')
   let focusedMessageIdInFocus = $state<string | null>(null)
+  // A selected conversation (restored at startup or picked in full mode or
+  // before switching views) reopens as the viewer overlay in responsive
+  // layouts; see registerViewerSelection.
+  registerViewerSelection('mail', () => selectedThreadId !== null)
+
   const viewerIsOverlay = $derived(isResponsive() || focusMode !== 'off')
   const viewerIsVisible = $derived(getResponsiveView() === 'viewer' || focusMode !== 'off')
 
@@ -1688,6 +1693,7 @@
         folderId={selectedConversationFolderId}
         folderType={selectedFolderType}
         accountId={selectedConversationAccountId}
+        showAccount={selectedAccountId === 'unified' && selectedFolderId === 'inbox'}
         onReply={handleReply}
         onCompose={viewerIsOverlay ? handleCompose : undefined}
         onComposeToAddress={handleComposeToAddress}

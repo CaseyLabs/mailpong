@@ -46,9 +46,15 @@ export function formatRelativeDate(date: Date): string {
   return format(date, 'MMM d, yyyy')
 }
 
-const timeFormat = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' })
+const is12Hour = ['h11', 'h12'].includes(
+  new Intl.DateTimeFormat(undefined, { hour: 'numeric' }).resolvedOptions().hourCycle ?? ''
+)
+const timeFormat = new Intl.DateTimeFormat(undefined, {
+  hour: is12Hour ? 'numeric' : '2-digit',
+  minute: '2-digit',
+})
 
-/** Clock time per locale ("14:05" or "02:05 PM"), shared by chat list rows and bubbles. */
+/** Clock time per locale ("2:05 PM" without a leading zero, or "14:05"), shared by chat list rows and bubbles. */
 export function formatTime(date: Date): string {
   return timeFormat.format(date)
 }

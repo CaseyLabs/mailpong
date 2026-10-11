@@ -67,6 +67,17 @@ has not yet been confirmed against the code.
   `LinkTo` worked out in `StaleChatKeys`, and have `splitSenderChat` use the
   same planner.
 
+- **M15 low** `frontend/src/lib/components/chat/chatFormat.ts` `replyAlias`:
+  the reply box's "from" cannot see the alias that `selectReplyFromIdentity`
+  picks from forwarding headers (Delivered-To, X-Original-To,
+  X-Forwarded-For) or Bcc, which need an IMAP fetch. For such mail the line
+  shows the account label (or nothing) while the reply goes out from the
+  alias. Fix with a binding that returns the resolved identity.
+
+- **M16 low** sender chat header: the title uses the first message's sender
+  address ("TrackingUpdates@fedex.com") while the list row shows the display
+  name ("FedEx Tracking").
+
 ### Upstream independence
 
 This fork may eventually stop tracking upstream Aerion. Until then, some code
@@ -81,6 +92,15 @@ cleanup here, so it can be done once the fork is independent.
   `components/chat/chatTriage.ts`.
 - **U3** non-English locale files: this fork updates English only, so the
   other locales drift. Remove them, or decide to maintain them.
+
+### Themes
+
+- **T1 low** non-Nord themes: the owner plans to keep only Nord (Light and
+  Dark) now that the calmer chat view has landed, so contrast checks cover
+  Nord only. Until then, the soft-tint avatars miss 4.5:1 in places
+  (Catppuccin, VS Code Dark), and own bubbles fall back to a 20% primary tint
+  because only Nord defines `--bubble-own`. Each theme's `--avatar-fg` is
+  still defined but no longer read; drop it with the themes.
 
 ### Dependencies
 

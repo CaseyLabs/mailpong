@@ -26,6 +26,7 @@ Owner preferences carried into the repo so cloud sessions follow them too.
 
 - Never add "Generated with Claude Code" or any similar line to pull request descriptions.
 - Never list Claude as a co-author or add any Claude/Anthropic trailer to commit messages.
+- Commit as the session's configured git identity. Never set the author or committer to Claude or an Anthropic address, even if a hook asks for it.
 
 ## Compaction
 

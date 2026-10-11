@@ -1,7 +1,8 @@
 // Responsive layout store for tiled/narrow windows
 // Three modes: full (>1024px), medium (768-1024px), narrow (<768px)
 
-import { isSidebarCollapsed, toggleSidebarCollapsed } from './uiState.svelte'
+import { untrack } from 'svelte'
+import { getActiveExtension, isSidebarCollapsed, toggleSidebarCollapsed } from './uiState.svelte'
 
 export type LayoutMode = 'full' | 'medium' | 'narrow'
 export type ResponsiveView = 'default' | 'viewer' | 'sidebar'
@@ -12,8 +13,25 @@ let responsiveView = $state<ResponsiveView>('default')
 let narrowMql: MediaQueryList | null = null
 let mediumMql: MediaQueryList | null = null
 
+// Each view with a detail pane registers whether it has a selection to show.
+// The viewer overlay state is shared, so in a responsive layout it follows the
+// active view's selection whenever the window leaves full mode or the active
+// view changes: a selection made in full mode or in another view stays on
+// screen, and a view without one does not show an empty overlay.
+const viewerSelections = new Map<string, () => boolean>()
+
+export function registerViewerSelection(view: string, hasSelection: () => boolean) {
+  viewerSelections.set(view, hasSelection)
+}
+
+function syncViewerToActiveView() {
+  if (layoutMode === 'full') return
+  responsiveView = viewerSelections.get(getActiveExtension())?.() ? 'viewer' : 'default'
+}
+
 function updateMode() {
   if (!narrowMql || !mediumMql) return
+  const wasFull = layoutMode === 'full'
 
   if (narrowMql.matches) {
     layoutMode = 'narrow'
@@ -26,6 +44,8 @@ function updateMode() {
   // Reset overlays when entering full mode
   if (layoutMode === 'full') {
     responsiveView = 'default'
+  } else if (wasFull) {
+    syncViewerToActiveView()
   }
 }
 
@@ -37,6 +57,13 @@ export function initLayout() {
 
   narrowMql.addEventListener('change', updateMode)
   mediumMql.addEventListener('change', updateMode)
+
+  $effect.root(() => {
+    $effect(() => {
+      getActiveExtension()
+      untrack(syncViewerToActiveView)
+    })
+  })
 }
 
 export function getLayoutMode(): LayoutMode {

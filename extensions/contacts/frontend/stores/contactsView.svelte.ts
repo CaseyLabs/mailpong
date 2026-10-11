@@ -20,7 +20,7 @@ import type { v1 } from '$wailsjs/go/models'
 // SourceSidebar, DetailPane) handle overlay class application + back
 // buttons + scrim; this store handles the "which view do we want to be
 // in next" decisions on user actions.
-import { isResponsive, showViewer, hideSidebar } from '$lib/stores/layout.svelte'
+import { isResponsive, showViewer, hideSidebar, registerViewerSelection } from '$lib/stores/layout.svelte'
 
 // Source ID values the sidebar can dispatch:
 //   ""                  → merged listing across all sources
@@ -36,6 +36,10 @@ let detail = $state<v1.Contact | null>(null)
 let loading = $state<boolean>(false)
 let hasMore = $state<boolean>(false)
 let loadingMore = $state<boolean>(false)
+
+// Keep an open contact on screen when the window narrows or the user returns
+// to Contacts from another view in a responsive layout.
+registerViewerSelection('contacts', () => detail !== null)
 
 export const contactsView = {
   get selectedSourceId(): string {

@@ -17,8 +17,8 @@
   --color-primary: hsl(var(--primary));
   --color-primary-foreground: hsl(var(--primary-foreground));
 
-  --color-selection: hsl(var(--selection, var(--primary)));
-  --color-selection-foreground: hsl(var(--selection-foreground, var(--primary-foreground)));
+  --color-divider: hsl(var(--divider, var(--border)));
+  --color-bubble-own: hsl(var(--bubble-own, var(--primary) / 0.2));
 
   --color-secondary: hsl(var(--secondary));
   --color-secondary-foreground: hsl(var(--secondary-foreground));
@@ -185,11 +185,6 @@ mark {
   color: inherit;
   border-radius: 2px;
   padding: 0 2px;
-}
-
-/* Solid selected chat row: the primary-tinted mark would vanish on it. */
-[data-focused] [aria-selected='true'] mark {
-  background-color: hsl(var(--selection-foreground, var(--primary-foreground)) / 0.3);
 }
 
 /* Pane focus flash animation for keyboard navigation */

@@ -13,13 +13,11 @@
   import { chatList, senderEmailOf } from '$lib/stores/chat.svelte'
   import { contactPhotos } from '$lib/stores/contactPhotos.svelte'
   import ChatViewHeader from './ChatViewHeader.svelte'
-  import ChatBubble from './ChatBubble.svelte'
-  import ChatDaySeparator from './ChatDaySeparator.svelte'
+  import ChatStream from './ChatStream.svelte'
   import ChatComposer from './ChatComposer.svelte'
-  import ChatPendingBubble from './ChatPendingBubble.svelte'
   import { ChatThread } from './chatThread.svelte'
   import { ChatComposer as ComposerState } from './chatComposer.svelte'
-  import { buildThreadItems, myAddresses, replyRecipients, replyTarget, threadPeople, type ReplyMode } from './chatFormat'
+  import { baseSubject, buildThreadItems, displaySubject, myAddresses, replyAlias, replyRecipients, replyTarget, threadPeople, type ReplyMode } from './chatFormat'
   import { ChatScroll } from './chatScroll.svelte'
   import { ChatActions } from './chatActions.svelte'
 
@@ -28,6 +26,8 @@
     folderId?: string | null
     folderType?: string | null
     accountId?: string | null
+    // The unified inbox mixes accounts, so the reply box names the sending one.
+    showAccount?: boolean
     onReply?: (mode: ReplyMode, messageId: string, imagesLoaded?: boolean) => void
     onCompose?: () => void
     onComposeToAddress?: (toAddress: string) => void
@@ -47,7 +47,7 @@
   }
 
   let {
-    threadId = null, folderId = null, folderType = null, accountId = null,
+    threadId = null, folderId = null, folderType = null, accountId = null, showAccount = false,
     onReply, onCompose, onComposeToAddress, onEditDraft, onExpandDraft, onActionComplete, onToggleSenderChat,
     isFocused = false, isFlashing = false, showBackButton = false, onBack, onEscape, focusedMessageIdInFocus = null,
   }: Props = $props()
@@ -73,8 +73,18 @@
   const target = $derived(replyTarget(thread.messages, myEmails))
   // The account's identity addresses, which PrepareReply leaves out of a
   // reply; null until loaded.
-  let identityEmails = $state<Set<string> | null>(null)
+  let identities = $state<{ email: string; isDefault: boolean }[] | null>(null)
+  const identityEmails = $derived(identities ? new Set(identities.map((id) => id.email.trim().toLowerCase())) : null)
   const recipients = $derived(target ? replyRecipients(thread.messages, target.messageId, identityEmails ?? myEmails) : null)
+  const targetMessage = $derived(target ? thread.messages.find((m) => m.id === target.messageId) : undefined)
+  const replySubject = $derived(displaySubject(targetMessage?.subject))
+  // The alias the reply goes out from, else the account in the unified inbox.
+  const replyFrom = $derived.by(() => {
+    const alias = targetMessage && identities ? replyAlias(targetMessage, identities) : ''
+    if (alias) return alias
+    if (!showAccount) return ''
+    return accountStore.accounts.find((a) => a.account.id === accountId)?.account.name || ''
+  })
   const composer = new ComposerState({ target: () => target, recipients: () => recipients })
   // The docked composer shows its own draft; hide draft copies while it has one.
   const shown = $derived(composer.draftId ? thread.messages.filter((m) => !m.isDraft) : thread.messages)
@@ -114,12 +124,12 @@
 
   $effect(() => {
     const account = accountId
-    identityEmails = null
+    identities = null
     if (!account) return
     let stale = false
     GetIdentities(account)
       .then((ids) => {
-        if (!stale) identityEmails = new Set(ids.map((id) => id.email.trim().toLowerCase()))
+        if (!stale) identities = ids.map((id) => ({ email: id.email, isDefault: id.isDefault }))
       })
       .catch((err) => {
         if (!stale) console.error('Failed to load identities:', err)
@@ -308,9 +318,10 @@
   {:else if thread.conversation}
     <ChatViewHeader
       bind:this={header}
-      subject={thread.conversation.subject}
+      subject={displaySubject(thread.conversation.subject)}
       senderEmail={senderEmailOf(threadId)}
       {people}
+      subjectCount={Math.max(1, new Set(items.flatMap((i) => (i.subject ? [baseSubject(i.subject)] : []))).size)}
       {messageIds}
       accountId={accountId ?? ''}
       folderId={folderId ?? ''}
@@ -321,16 +332,12 @@
       snoozedUntil={chatItem?.snoozedUntil ?? null}
       isLowPriority={chatItem ? chatItem.isLowPriority : null}
       canTriage={!!accountId && !!threadKey}
-      {canReply}
       {isTrash}
-      {isSpam}
       {showBackButton}
       {onBack}
       {onCompose}
       onArchive={() => void actions.archive()}
-      onReplyChat={focusComposer}
       onForward={forward}
-      onExpand={() => void expand()}
       onDelete={deleteChat}
       onSpam={() => void actions.spam()}
       onPin={() => actions.togglePin()}
@@ -353,31 +360,25 @@
       onpointerdown={scroll.release}
     >
       <div bind:this={scroll.content} class="pb-6">
-        {#each items as item (item.msg.id)}
-          {#if item.newDay}<div class="px-4"><ChatDaySeparator date={item.date} /></div>{/if}
-          <ChatBubble
-            {item}
-            {thread}
-            accountId={accountId ?? ''}
-            folderId={folderId ?? ''}
-            folderType={effectiveFolderType}
-            onFocusChange={(f) => { if (f) scroll.focusedId = item.msg.id; else if (scroll.focusedId === item.msg.id) scroll.focusedId = null }}
-            {onReply}
-            {onComposeToAddress}
-            {onEditDraft}
-            onImagesLoaded={() => imagesLoaded.add(item.msg.id)}
-            imagesLoaded={() => imagesLoaded.has(item.msg.id)}
-            onActionComplete={handleMenuActionComplete}
-            onOpenLink={openLink}
-          />
-        {/each}
-        {#each composer.pendingHere as p (p.id)}
-          <ChatPendingBubble pending={p} onRetry={() => composer.retry(p.id)} onEdit={() => composer.edit(p.id)} />
-        {/each}
+        <ChatStream
+          {items}
+          {thread}
+          {composer}
+          accountId={accountId ?? ''}
+          folderId={folderId ?? ''}
+          folderType={effectiveFolderType}
+          {imagesLoaded}
+          onFocusChange={(id, f) => { if (f) scroll.focusedId = id; else if (scroll.focusedId === id) scroll.focusedId = null }}
+          {onReply}
+          {onComposeToAddress}
+          {onEditDraft}
+          onActionComplete={handleMenuActionComplete}
+          onOpenLink={openLink}
+        />
       </div>
     </div>
 
-    <ChatComposer bind:this={composerRef} {composer} disabled={!canReply} {onEscape} />
+    <ChatComposer bind:this={composerRef} {composer} subject={replySubject} from={replyFrom} disabled={!canReply} {onEscape} onExpand={() => void expand()} />
   {/if}
 </div>
 

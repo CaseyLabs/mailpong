@@ -47,7 +47,6 @@ export interface ChatItem {
   isPinned: boolean
   snoozedUntil: Date | null
   isLowPriority: boolean
-  lastFromMe: boolean
   highlightedSubject?: string
   highlightedSnippet?: string
 }
@@ -98,7 +97,6 @@ function toItem(c: message.Chat | message.ChatSearchResult | message.Conversatio
     isPinned: !!chat.isPinned,
     snoozedUntil: chat.snoozedUntil ? new Date(chat.snoozedUntil) : null,
     isLowPriority: !!chat.isLowPriority,
-    lastFromMe: !!chat.lastFromMe,
     highlightedSubject: search.highlightedSubject || undefined,
     highlightedSnippet: search.highlightedSnippet || undefined,
   }

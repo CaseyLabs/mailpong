@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
+	"regexp"
 	"slices"
 	"sort"
 	"strings"
@@ -41,12 +42,9 @@ type Chat struct {
 	IsPinned      bool       `json:"isPinned"`
 	SnoozedUntil  *time.Time `json:"snoozedUntil,omitempty"`
 	IsLowPriority bool       `json:"isLowPriority"`
-	LastFromMe    bool       `json:"lastFromMe"` // latest message is mine: awaiting their reply
 	// Recipients names the other side of threads where every sender is me
 	// (Sent folder rows).
 	Recipients []Address `json:"recipients,omitempty"`
-
-	threadKeys []string // thread keys grouped into this chat
 }
 
 // senderOfChatKey returns the sender email of a sender chat key, or "".
@@ -252,7 +250,6 @@ var chatListColumns = `
 				MIN(` + isLowExpr + `) AS is_low,
 				MAX(REPLACE(SUBSTR(m.received_at, 1, 19), 'T', ' ')) AS latest_received,
 				` + recipientsJSONExpr + ` AS recipients_json,
-				` + senderThreadKeysExpr + ` AS thread_keys,
 				CASE WHEN ` + isSenderKey("ck.chat_key") + ` THEN MAX(m.date || char(31) || COALESCE(m.subject, '')) END AS latest_subject
 `
 
@@ -448,9 +445,6 @@ func (s *Store) ListChats(scope, section string, now time.Time, offset, limit in
 			chats = append(chats, c)
 		}
 	}
-	if err := s.fillLastFromMe(chats); err != nil {
-		return nil, err
-	}
 	return chats, nil
 }
 
@@ -475,13 +469,13 @@ func chatPageDetails(tx *sql.Tx, scope, section string, page [][2]string, thread
 	byRef := make(map[chatRef]*Chat, len(page))
 	for rows.Next() {
 		c := &Chat{}
-		var snippet, latestDate, messageIDs, participantsJSON, latestReceived, recipientsJSON, threadKeys, latestSubject sql.NullString
+		var snippet, latestDate, messageIDs, participantsJSON, latestReceived, recipientsJSON, latestSubject sql.NullString
 		var pinnedAt, snoozedUntil sql.NullInt64
 		if err := rows.Scan(
 			&c.ThreadID, &c.ThreadKey, &c.Subject, &snippet, &c.MessageCount, &c.UnreadCount,
 			&c.HasAttachments, &c.IsStarred, &latestDate, &messageIDs, &c.IsEncrypted,
 			&c.AccountID, &c.AccountName, &c.AccountColor, &c.FolderID, &participantsJSON,
-			&c.IsLowPriority, &latestReceived, &recipientsJSON, &threadKeys, &latestSubject, &pinnedAt, &snoozedUntil,
+			&c.IsLowPriority, &latestReceived, &recipientsJSON, &latestSubject, &pinnedAt, &snoozedUntil,
 		); err != nil {
 			return nil, fmt.Errorf("failed to scan chat: %w", err)
 		}
@@ -491,14 +485,6 @@ func chatPageDetails(tx *sql.Tx, scope, section string, page [][2]string, thread
 			// date, U+001F, subject: the newest message's subject. Dates
 			// share one storage format, so text order is date order.
 			_, c.Subject, _ = strings.Cut(latestSubject.String, "\x1f")
-		}
-		// Only sender chats aggregate their thread keys; a thread chat's
-		// key is its one thread key.
-		c.threadKeys = []string{c.ThreadKey}
-		if threadKeys.Valid {
-			if err := json.Unmarshal([]byte(threadKeys.String), &c.threadKeys); err != nil {
-				return nil, fmt.Errorf("failed to parse chat thread keys: %w", err)
-			}
 		}
 		if latestDate.String != "" {
 			c.LatestDate = parseTimeString(latestDate.String)
@@ -615,8 +601,13 @@ func (s *Store) mergeChatResults(found []*ConversationSearchResult, query, cond 
 			senderFirst[refs[i]] = r
 		}
 	}
-	if err := s.fillLatestSubjects(cond, args, query, senderFirst); err != nil {
+	if err := s.fillLatestSubjects(cond, args, senderFirst); err != nil {
 		return nil, err
+	}
+	// Chat rows hide reply prefixes, so highlight the subject without them:
+	// a marked prefix would no longer read as one.
+	for _, r := range results {
+		r.HighlightedSubject = highlightMatches(trimSubjectPrefix(r.Subject), query)
 	}
 	if found[0].FolderType != "sent" {
 		return results, nil
@@ -646,7 +637,7 @@ func (s *Store) mergeChatResults(found []*ConversationSearchResult, query, cond 
 // message in the folder scope cond (taking args), as ListChats does. Results
 // are newest first, so that message is in the result's first thread; first
 // maps that thread to its result.
-func (s *Store) fillLatestSubjects(cond string, args []any, query string, first map[chatRef]*ChatSearchResult) error {
+func (s *Store) fillLatestSubjects(cond string, args []any, first map[chatRef]*ChatSearchResult) error {
 	if len(first) == 0 {
 		return nil
 	}
@@ -672,10 +663,18 @@ func (s *Store) fillLatestSubjects(cond string, args []any, query string, first 
 		}
 		if r := first[ref]; r != nil {
 			_, r.Subject, _ = strings.Cut(latest, "\x1f")
-			r.HighlightedSubject = highlightMatches(r.Subject, query)
 		}
 	}
 	return rows.Err()
+}
+
+// subjectPrefixRe matches leading reply and forward prefixes ("Re: ",
+// "Fwd: ", ...), as the frontend's displaySubject does.
+var subjectPrefixRe = regexp.MustCompile(`(?i)^\s*((re|fwd?|aw|wg|sv|vs)(\[\d+\])?\s*:\s*)+`)
+
+// trimSubjectPrefix drops a subject's reply and forward prefixes.
+func trimSubjectPrefix(subject string) string {
+	return strings.TrimSpace(subjectPrefixRe.ReplaceAllString(subject, ""))
 }
 
 // mergeParticipants appends the addresses in more not already in list,
@@ -794,85 +793,6 @@ func (s *Store) CountChats(scope, section string, now time.Time) (int, error) {
 		return 0, fmt.Errorf("failed to count chats: %w", err)
 	}
 	return n, nil
-}
-
-// fillLastFromMe marks chats whose latest message is mine: either a Sent copy
-// at least as new as the latest listed message, or a listed message from one
-// of the account's identities.
-func (s *Store) fillLastFromMe(chats []*Chat) error {
-	if len(chats) == 0 {
-		return nil
-	}
-
-	mine := map[string]map[string]bool{} // account -> lowercased identity emails
-	rows, err := s.db.Query(myAddresses)
-	if err != nil {
-		return fmt.Errorf("failed to load identities: %w", err)
-	}
-	for rows.Next() {
-		var accountID, email string
-		if err := rows.Scan(&accountID, &email); err != nil {
-			rows.Close()
-			return fmt.Errorf("failed to scan identity: %w", err)
-		}
-		if mine[accountID] == nil {
-			mine[accountID] = map[string]bool{}
-		}
-		mine[accountID][email] = true
-	}
-	rows.Close()
-
-	// Latest Sent date per chat on this page, matching each account's thread
-	// keys as one JSON array.
-	type threadRef struct{ accountID, key string }
-	chatOf := map[threadRef]*Chat{}
-	keysOf := map[string][]string{}
-	for _, c := range chats {
-		for _, k := range c.threadKeys {
-			chatOf[threadRef{c.AccountID, k}] = c
-			keysOf[c.AccountID] = append(keysOf[c.AccountID], k)
-		}
-	}
-	conds := make([]string, 0, len(keysOf))
-	args := make([]any, 0, len(keysOf)*4)
-	for accountID, keys := range keysOf {
-		conds = append(conds, "(m.account_id = ? AND "+threadKeysMatch("m.")+")")
-		args = append(args, accountID)
-		args = append(args, threadKeysArgs(keys)...)
-	}
-	rows, err = s.db.Query(`
-		SELECT m.account_id, `+threadKeyExpr("m.")+` AS k, m.date
-		FROM messages m
-		INNER JOIN folders f ON m.folder_id = f.id AND f.folder_type = 'sent'
-		WHERE `+strings.Join(conds, " OR "), args...)
-	if err != nil {
-		return fmt.Errorf("failed to query sent replies: %w", err)
-	}
-	latestSent := map[*Chat]time.Time{}
-	for rows.Next() {
-		var accountID, key string
-		var date sql.NullString
-		if err := rows.Scan(&accountID, &key, &date); err != nil {
-			rows.Close()
-			return fmt.Errorf("failed to scan sent reply: %w", err)
-		}
-		c := chatOf[threadRef{accountID, key}]
-		if t := parseTimeString(date.String); c != nil && t.After(latestSent[c]) {
-			latestSent[c] = t
-		}
-	}
-	rows.Close()
-
-	for _, c := range chats {
-		if sent, ok := latestSent[c]; ok && !sent.Before(c.LatestDate) {
-			c.LastFromMe = true
-			continue
-		}
-		if len(c.Participants) > 0 && mine[c.AccountID][strings.ToLower(c.Participants[0].Email)] {
-			c.LastFromMe = true
-		}
-	}
-	return nil
 }
 
 // GetChatState returns a thread's pin/snooze state (zero when unset).
