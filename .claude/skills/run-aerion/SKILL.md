@@ -58,6 +58,11 @@ click, confirm the switch with `(await window.go.app.App.GetUIState()).activeExt
 Wait about 1.5 s before reading saved state, because UI-state saves are debounced
 by 1 s.
 
+For any visual review, check the change with the Accounts column (the Mail
+sidebar) both expanded and collapsed. Toggle it with the **Hide sidebar** /
+**Show sidebar** button, or call `layout.toggleActiveSidebar()`, and confirm
+with `ui.collapsedSidebars`. Restore the user's original state afterwards.
+
 When finished, put back anything you changed (see Gotchas), close the tab, then:
 
 ```bash
