@@ -975,6 +975,9 @@ func (s *Store) NewestInboxThreadKey(accountID, email string) (string, error) {
 // account in a single pass over its inbox, keyed by sender. Senders who
 // started no thread are absent.
 func (s *Store) newestInboxThreadKeys(accountID string, emails []string) (map[string]string, error) {
+	if len(emails) == 0 {
+		return map[string]string{}, nil
+	}
 	key := threadKeyExpr("m.")
 	args := []any{accountID}
 	for _, e := range emails {

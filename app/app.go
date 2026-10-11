@@ -331,14 +331,11 @@ type App struct {
 
 	// accountIDs with a Sent-after-IDLE retry already scheduled (idle_sent.go)
 	idleSentRetry goSync.Map
-	// Throttles the Sent sync that inbox IDLE activity starts when the Sent
-	// IDLE connection isn't running (idle_sent.go).
-	idleSentMu      goSync.Mutex
-	idleSentLast    map[string]time.Time // accountID -> last fallback Sent sync
-	idleSentPending map[string]bool      // accountID -> a fallback Sent sync is scheduled
+	// Fallback Sent sync throttle; see syncSentIfUnwatched.
+	idleSentMu   goSync.Mutex
+	idleSentNext map[string]time.Time // accountID -> latest scheduled fallback Sent sync
 
-	// idleAccountMu serializes starting an account's IDLE connections with
-	// stopping them on disable or removal, so a start can't follow the stop.
+	// idleAccountMu orders IDLE starts against stopAccountIdle.
 	idleAccountMu goSync.Mutex
 
 	// Draft IMAP sync goroutine tracking — cancel in-flight syncDraftToIMAP
@@ -781,8 +778,7 @@ func (a *App) Startup(ctx context.Context) {
 	a.ownExpungeAt = make(map[string]time.Time)
 	a.draftSyncContexts = make(map[string]context.CancelFunc)
 	a.draftSyncDone = make(map[string]chan struct{})
-	a.idleSentLast = make(map[string]time.Time)
-	a.idleSentPending = make(map[string]bool)
+	a.idleSentNext = make(map[string]time.Time)
 
 	// Initialize and start background email sync (polling + IDLE)
 	a.initBackgroundSync(ctx)

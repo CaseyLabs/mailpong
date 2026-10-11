@@ -267,18 +267,14 @@ func (a *App) handleIdleNewMail(event imap.MailEvent) {
 	// Use composite key for sync tracking
 	syncKey := event.AccountID + ":" + folderID
 
-	// Check if a sync is already running for this folder - skip IDLE sync if so
-	a.syncMu.Lock()
-	if _, exists := a.syncContexts[syncKey]; exists {
-		a.syncMu.Unlock()
+	// Skip if a sync is already running for this folder. Tracked until the
+	// body fetch below claims a slot of its own.
+	done, busy := a.trackSyncUnlessBusy(syncKey)
+	if busy {
 		log.Debug().Str("syncKey", syncKey).Msg("Skipping IDLE sync - sync already in progress")
 		return
 	}
-	a.syncMu.Unlock()
-
-	// Tracked until the body fetch below claims a slot of its own.
-	done, ok := a.trackSync()
-	if !ok {
+	if done == nil {
 		return
 	}
 	defer done()
@@ -491,9 +487,7 @@ func (a *App) reconcileInboxFlags(accountID string, attempt int) {
 	// but it may have already passed its flag step — so re-arm one short retry
 	// rather than dropping the event.
 	syncKey := accountID + ":" + folderID
-	a.syncMu.Lock()
-	_, busy := a.syncContexts[syncKey]
-	a.syncMu.Unlock()
+	done, busy := a.trackSyncUnlessBusy(syncKey)
 	if busy {
 		if attempt >= idleFlagBusyMaxRetries {
 			log.Debug().Str("syncKey", syncKey).Msg("IDLE flag re-sync still busy after retry - deferring to scheduled sync")
@@ -505,9 +499,7 @@ func (a *App) reconcileInboxFlags(accountID string, attempt int) {
 		})
 		return
 	}
-
-	done, ok := a.trackSync()
-	if !ok {
+	if done == nil {
 		return
 	}
 	defer done()
@@ -558,16 +550,12 @@ func (a *App) handleIdleExpunge(accountID string) {
 	// If a sync is already running for the inbox, its UID diff will remove the
 	// deleted rows — skip (the scheduled sync is the backstop otherwise).
 	syncKey := accountID + ":" + folderID
-	a.syncMu.Lock()
-	_, busy := a.syncContexts[syncKey]
-	a.syncMu.Unlock()
+	done, busy := a.trackSyncUnlessBusy(syncKey)
 	if busy {
 		log.Debug().Str("syncKey", syncKey).Msg("Skipping IDLE expunge reconcile - sync already in progress")
 		return
 	}
-
-	done, ok := a.trackSync()
-	if !ok {
+	if done == nil {
 		return
 	}
 	defer done()

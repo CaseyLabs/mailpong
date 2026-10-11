@@ -172,12 +172,11 @@ func TestShutdownSyncs(t *testing.T) {
 // slots and tracked syncs hang past the wait.
 func TestShutdownSyncsWaitsForTrackedWork(t *testing.T) {
 	tests := []struct {
-		name     string
-		hang     bool
-		wantDone bool
+		name string
+		hang bool
 	}{
-		{"tracked sync ends", false, true},
-		{"hung syncs are abandoned within the bound", true, false},
+		{"tracked sync ends", false},
+		{"hung syncs are abandoned within the bound", true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -213,11 +212,11 @@ func TestShutdownSyncsWaitsForTrackedWork(t *testing.T) {
 			}
 			select {
 			case <-finished:
-				if !tt.wantDone {
+				if tt.hang {
 					t.Fatal("hung sync finished unexpectedly")
 				}
 			default:
-				if tt.wantDone {
+				if !tt.hang {
 					t.Fatal("shutdownSyncs returned before the tracked sync ended")
 				}
 			}

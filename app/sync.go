@@ -494,6 +494,23 @@ func (a *App) registerIfRunningLocked(key string) (context.Context, func(), bool
 func (a *App) trackSync() (done func(), ok bool) {
 	a.syncMu.Lock()
 	defer a.syncMu.Unlock()
+	return a.trackSyncLocked()
+}
+
+// trackSyncUnlessBusy is trackSync for work that defers to a running sync of
+// key: busy reports such a sync, and then done is nil. A nil done without
+// busy means shutdown has begun.
+func (a *App) trackSyncUnlessBusy(key string) (done func(), busy bool) {
+	a.syncMu.Lock()
+	defer a.syncMu.Unlock()
+	if _, busy := a.syncContexts[key]; busy && !a.shuttingDown {
+		return nil, true
+	}
+	done, _ = a.trackSyncLocked()
+	return done, false
+}
+
+func (a *App) trackSyncLocked() (done func(), ok bool) {
 	if a.shuttingDown {
 		return nil, false
 	}

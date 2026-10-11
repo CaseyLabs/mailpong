@@ -100,25 +100,25 @@ func (a *App) syncSentIfUnwatched(accountID string) {
 	}
 	a.idleSentMu.Lock()
 	defer a.idleSentMu.Unlock()
-	if a.idleSentPending[accountID] {
-		return
+	now := time.Now()
+	next := a.idleSentNext[accountID]
+	if next.After(now) {
+		return // a sync is already scheduled
 	}
-	a.idleSentPending[accountID] = true
-	wait := max(idleSentMinInterval-time.Since(a.idleSentLast[accountID]), 0)
-	time.AfterFunc(wait, func() {
-		a.idleSentMu.Lock()
-		delete(a.idleSentPending, accountID)
-		a.idleSentLast[accountID] = time.Now()
-		a.idleSentMu.Unlock()
-		a.syncSentAfterIdle(accountID)
-	})
+	at := next.Add(idleSentMinInterval)
+	if at.Before(now) {
+		at = now
+	}
+	a.idleSentNext[accountID] = at
+	time.AfterFunc(at.Sub(now), func() { a.syncSentAfterIdle(accountID) })
 }
 
 // syncSentAfterIdle syncs the Sent folder after IDLE reports activity on it
-// (or, see syncSentIfUnwatched, on the inbox), so mail sent from another client (e.g. the Gmail web UI)
-// reaches Sent, and the chat thread, within seconds. When a sync of the Sent
-// folder is already running, it retries shortly rather than dropping the
-// activity, since that sync may have listed Sent before the message arrived.
+// (or on the inbox; see syncSentIfUnwatched), so mail sent from another
+// client (e.g. the Gmail web UI) reaches Sent, and the chat thread, within
+// seconds. When a sync of the Sent folder is already running, it retries
+// shortly rather than dropping the activity, since that sync may have listed
+// Sent before the message arrived.
 func (a *App) syncSentAfterIdle(accountID string) {
 	defer recoverPanic("app.idle", "sync Sent after IDLE")
 	log := logging.WithComponent("app.idle")
