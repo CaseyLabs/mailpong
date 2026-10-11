@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/hkdb/aerion/internal/message"
-	"github.com/hkdb/aerion/internal/sync"
+	"github.com/caseylabs/mailpong/internal/message"
+	"github.com/caseylabs/mailpong/internal/sync"
 )
 
 // ============================================================================

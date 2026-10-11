@@ -3,12 +3,12 @@ package mail
 import (
 	"fmt"
 
-	coreapi "github.com/hkdb/aerion/internal/core/api/v1"
-	"github.com/hkdb/aerion/internal/folder"
-	"github.com/hkdb/aerion/internal/message"
+	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
+	"github.com/caseylabs/mailpong/internal/folder"
+	"github.com/caseylabs/mailpong/internal/message"
 )
 
-// API implements coreapi.Mail by wrapping Aerion's existing message and folder
+// API implements coreapi.Mail by wrapping MailPong's existing message and folder
 // stores. Read methods are fully implemented in Phase 1; mutators return
 // ErrUnimplemented until a Phase 2+ consumer needs them.
 type API struct {
@@ -121,7 +121,7 @@ func (a *API) AppendMessage(accountID string, folderID string, raw []byte, flags
 }
 
 // SubscribeToMailEvents is scaffolded; needs an event-bus wiring (Phase 2+)
-// that fans Aerion's existing sync events out to extension subscribers.
+// that fans MailPong's existing sync events out to extension subscribers.
 func (a *API) SubscribeToMailEvents(types []coreapi.MailEventType) (<-chan coreapi.MailEvent, coreapi.Unsubscribe, error) {
 	return nil, func() {}, coreapi.ErrUnimplemented
 }

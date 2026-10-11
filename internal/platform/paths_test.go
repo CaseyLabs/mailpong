@@ -1,6 +1,7 @@
 package platform
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -30,8 +31,8 @@ func TestDatabasePath(t *testing.T) {
 		t.Fatalf("GetPaths() returned error: %v", err)
 	}
 	dbPath := paths.DatabasePath()
-	if !strings.HasSuffix(dbPath, "aerion.db") {
-		t.Errorf("DatabasePath() = %q, want suffix 'aerion.db'", dbPath)
+	if !strings.HasSuffix(dbPath, "mailpong.db") {
+		t.Errorf("DatabasePath() = %q, want suffix 'mailpong.db'", dbPath)
 	}
 }
 
@@ -93,6 +94,54 @@ func TestIsFlatpak(t *testing.T) {
 			got := IsFlatpak()
 			if got != tt.want {
 				t.Errorf("IsFlatpak() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestOSPathsUseMailPongNames(t *testing.T) {
+	home := t.TempDir()
+	t.Setenv("HOME", home)
+	t.Setenv("USERPROFILE", home)
+	for _, k := range []string{"XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME", "APPDATA", "LOCALAPPDATA"} {
+		t.Setenv(k, "")
+	}
+
+	tests := []struct {
+		name                string
+		fn                  func() (*Paths, error)
+		config, data, cache string
+	}{
+		{"linux", getLinuxPaths,
+			filepath.Join(home, ".config", "mailpong"),
+			filepath.Join(home, ".local", "share", "mailpong"),
+			filepath.Join(home, ".cache", "mailpong")},
+		{"darwin", getDarwinPaths,
+			filepath.Join(home, "Library", "Application Support", "MailPong"),
+			filepath.Join(home, "Library", "Application Support", "MailPong"),
+			filepath.Join(home, "Library", "Caches", "MailPong")},
+		{"windows", getWindowsPaths,
+			filepath.Join(home, "AppData", "Roaming", "MailPong"),
+			filepath.Join(home, "AppData", "Roaming", "MailPong"),
+			filepath.Join(home, "AppData", "Local", "MailPong", "Cache")},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p, err := tt.fn()
+			if err != nil {
+				t.Fatalf("paths: %v", err)
+			}
+			if p.Config != tt.config || p.Data != tt.data || p.Cache != tt.cache {
+				t.Errorf("got %+v, want config=%q data=%q cache=%q", *p, tt.config, tt.data, tt.cache)
+			}
+			for _, dir := range []string{p.Config, p.Data, p.Cache, p.DatabasePath()} {
+				rel := strings.TrimPrefix(dir, home)
+				if strings.Contains(strings.ToLower(rel), "aerion") {
+					t.Errorf("path %q contains aerion", dir)
+				}
+			}
+			if got := filepath.Base(p.DatabasePath()); got != "mailpong.db" {
+				t.Errorf("database file = %q, want mailpong.db", got)
 			}
 		})
 	}

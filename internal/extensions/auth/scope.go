@@ -1,13 +1,13 @@
 package auth
 
 import (
-	coreapi "github.com/hkdb/aerion/internal/core/api/v1"
+	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
 )
 
 // missingScopes returns the subset of requested scopes that aren't already
 // granted. Scope coverage is by exact-string match on the Resource field;
 // hierarchical scope handling (e.g., a parent scope covering child scopes) is
-// left to the OAuth provider — Aerion treats scopes as opaque strings.
+// left to the OAuth provider — MailPong treats scopes as opaque strings.
 func missingScopes(granted []string, requested []coreapi.AuthScope) []coreapi.AuthScope {
 	if len(requested) == 0 {
 		return nil
@@ -68,7 +68,7 @@ func extConfigForProvider(provider string) string {
 	}
 }
 
-// mailClientConfigForProvider returns Aerion core's mail client config id for
+// mailClientConfigForProvider returns MailPong core's mail client config id for
 // the given provider. Used by Path 1 routing (extension's manifest declares
 // some scopes should reuse mail OAuth via first_party_uses_core_for_scopes).
 func mailClientConfigForProvider(provider string) string {

@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hkdb/aerion/internal/draft"
-	"github.com/hkdb/aerion/internal/message"
+	"github.com/caseylabs/mailpong/internal/draft"
+	"github.com/caseylabs/mailpong/internal/message"
 )
 
 type mockCommand struct {

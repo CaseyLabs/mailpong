@@ -8,8 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/caseylabs/mailpong/internal/logging"
 	"github.com/emersion/go-vcard"
-	"github.com/hkdb/aerion/internal/logging"
 	"github.com/rs/zerolog"
 )
 

@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hkdb/aerion/internal/logging"
+	"github.com/caseylabs/mailpong/internal/logging"
 	"github.com/rs/zerolog"
 )
 
@@ -202,7 +202,7 @@ func (s *CallbackServer) handleRoot(w http.ResponseWriter, r *http.Request) {
 const successPageHTML = `<!DOCTYPE html>
 <html>
 <head>
-    <title>Aerion - Authentication Successful</title>
+    <title>MailPong - Authentication Successful</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -255,7 +255,7 @@ const successPageHTML = `<!DOCTYPE html>
             </svg>
         </div>
         <h1>Authentication Successful</h1>
-        <p>You can close this window and return to Aerion.</p>
+        <p>You can close this window and return to MailPong.</p>
     </div>
 </body>
 </html>`
@@ -263,7 +263,7 @@ const successPageHTML = `<!DOCTYPE html>
 const errorPageHTML = `<!DOCTYPE html>
 <html>
 <head>
-    <title>Aerion - Authentication Failed</title>
+    <title>MailPong - Authentication Failed</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -330,7 +330,7 @@ const errorPageHTML = `<!DOCTYPE html>
             </svg>
         </div>
         <h1>Authentication Failed</h1>
-        <p>Please close this window and try again in Aerion.</p>
+        <p>Please close this window and try again in MailPong.</p>
         <div class="error-details">
             <span class="error-code">%s</span>: %s
         </div>
@@ -341,7 +341,7 @@ const errorPageHTML = `<!DOCTYPE html>
 const waitingPageHTML = `<!DOCTYPE html>
 <html>
 <head>
-    <title>Aerion - OAuth Callback</title>
+    <title>MailPong - OAuth Callback</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -358,7 +358,7 @@ const waitingPageHTML = `<!DOCTYPE html>
 </head>
 <body>
     <div class="container">
-        <h1>Aerion OAuth</h1>
+        <h1>MailPong OAuth</h1>
         <p>Waiting for authentication...</p>
     </div>
 </body>

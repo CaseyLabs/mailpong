@@ -1,6 +1,6 @@
 package app
 
-import "github.com/hkdb/aerion/internal/oauth2"
+import "github.com/caseylabs/mailpong/internal/oauth2"
 
 // The pending OAuth fields are written by the callback goroutine and read
 // and cleared by bindings, which Wails runs on their own goroutines, so all

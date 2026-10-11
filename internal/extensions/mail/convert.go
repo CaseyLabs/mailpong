@@ -3,9 +3,9 @@ package mail
 import (
 	"encoding/json"
 
-	coreapi "github.com/hkdb/aerion/internal/core/api/v1"
-	"github.com/hkdb/aerion/internal/folder"
-	"github.com/hkdb/aerion/internal/message"
+	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
+	"github.com/caseylabs/mailpong/internal/folder"
+	"github.com/caseylabs/mailpong/internal/message"
 )
 
 // fromHeader converts a stored MessageHeader into the API-surface Message.

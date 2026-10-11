@@ -28,8 +28,10 @@
     }
   })
 
-  const PRIVACY_URL = 'https://github.com/hkdb/aerion/blob/main/docs/PRIVACY.md'
-  const TERMS_URL = 'https://github.com/hkdb/aerion/blob/main/docs/TERMS.md'
+  const PRIVACY_URL = 'https://github.com/caseylabs/mailpong/blob/main/docs/PRIVACY.md'
+  const AERION_URL = 'https://github.com/hkdb/aerion'
+  const AUTHOR_URL = 'https://github.com/hkdb'
+  const TERMS_URL = 'https://github.com/caseylabs/mailpong/blob/main/docs/TERMS.md'
 
   function openWebsite() {
     if (appInfo?.website) {
@@ -39,6 +41,14 @@
 
   function openPrivacyPolicy() {
     BrowserOpenURL(PRIVACY_URL)
+  }
+
+  function openAerion() {
+    BrowserOpenURL(AERION_URL)
+  }
+
+  function openAuthor() {
+    BrowserOpenURL(AUTHOR_URL)
   }
 
   function openTermsOfService() {
@@ -62,6 +72,17 @@
     <!-- Description -->
     <p class="text-center text-sm text-muted-foreground max-w-xs">
       {appInfo.description}
+    </p>
+
+    <!-- Status + origin -->
+    <p class="text-center text-xs text-muted-foreground max-w-xs">
+      {$_('settingsAbout.alpha')}
+    </p>
+    <p class="text-center text-xs text-muted-foreground max-w-xs">
+      {$_('settingsAbout.builtOn')}
+      <button onclick={openAerion} class="text-primary hover:underline">Aerion</button>
+      {$_('settingsAbout.by')}
+      <button onclick={openAuthor} class="text-primary hover:underline">@hkdb</button>
     </p>
 
     <!-- Links -->

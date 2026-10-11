@@ -11,8 +11,8 @@ import (
 
 	"github.com/emersion/go-imap/v2/imapclient"
 
-	"github.com/hkdb/aerion/internal/email"
-	"github.com/hkdb/aerion/internal/logging"
+	"github.com/caseylabs/mailpong/internal/email"
+	"github.com/caseylabs/mailpong/internal/logging"
 )
 
 // scriptedFetchClient returns a client whose server answers the first

@@ -1,11 +1,11 @@
-# Flatpak Packaging for Aerion
+# Flatpak Packaging for MailPong
 
-This directory contains files for building and distributing Aerion as a Flatpak.
+This directory contains files for building and distributing MailPong as a Flatpak.
 
 ## Files
 
-- `io.github.clabs_public_forks.Aerion-dev.yml` - Dev manifest (packages pre-built host binary, no compilation)
-- `io.github.clabs_public_forks.Aerion.metainfo.xml` - AppStream metadata
+- `io.github.caseylabs.MailPong-dev.yml` - Dev manifest (packages pre-built host binary, no compilation)
+- `io.github.caseylabs.MailPong.metainfo.xml` - AppStream metadata
 - `build-flatpak.sh` - Dev build script (uses `-dev.yml`; `--install` also installs the result)
 - `build-local.sh` - From-source local build script (uses flathub manifest, which builds its pinned release rather than this checkout)
 - `test-build.sh` - CI build test script (Docker container)
@@ -47,7 +47,7 @@ The local-checkout build also needs the host build prerequisites listed in [the 
 
 ### Build and install this checkout
 
-This builds the Linux binary on the host, packages it with the local dev manifest, installs it into your user Flatpak scope, and writes a bundle to `build/bin/Aerion-dev.flatpak`.
+This builds the Linux binary on the host, packages it with the local dev manifest, installs it into your user Flatpak scope, and writes a bundle to `build/bin/MailPong-dev.flatpak`.
 
 ```bash
 make flatpak-install
@@ -56,7 +56,7 @@ make flatpak-install
 Run the installed app with:
 
 ```bash
-flatpak run io.github.clabs_public_forks.Aerion
+flatpak run io.github.caseylabs.MailPong
 ```
 
 `make flatpak-dev` runs the same local-checkout build but only writes the bundle; it does not install it.
@@ -65,7 +65,7 @@ The dev manifest copies only the built binary, `build/linux/`, and the metainfo 
 
 ### Build the Flathub source manifest
 
-`make flatpak` uses the Flathub manifest and builds its pinned release (not this checkout) inside the Flatpak sandbox, with OAuth credentials from that release's `aerion-creds` shim. It writes a bundle under `build/bin/` but does not install it.
+`make flatpak` uses the Flathub manifest and builds its pinned release (not this checkout) inside the Flatpak sandbox, with no bundled OAuth credentials (users enter their own in Settings). It writes a bundle under `build/bin/` but does not install it.
 
 ```bash
 make flatpak
@@ -79,7 +79,7 @@ For a direct script invocation, use:
 
 ## Validation
 
-Before submitting to Flathub, validate the metainfo file:
+Validate the metainfo file:
 
 ```bash
 # Install appstream-util
@@ -87,13 +87,13 @@ sudo dnf install libappstream-glib  # Fedora
 sudo apt install appstream-util      # Ubuntu/Debian
 
 # Validate (from project root)
-appstream-util validate build/flatpak/io.github.clabs_public_forks.Aerion.metainfo.xml
+appstream-util validate build/flatpak/io.github.caseylabs.MailPong.metainfo.xml
 ```
 
 Validate the desktop file:
 
 ```bash
-desktop-file-validate build/linux/aerion.desktop
+desktop-file-validate build/linux/io.github.caseylabs.MailPong.desktop
 ```
 
 ## Submitting to Flathub
@@ -116,3 +116,11 @@ See [`flathub/README.md`](flathub/README.md) for complete Flathub submission ins
 - Centralized distribution through Flathub
 - Better integration with desktop environments
 - Shared runtime = smaller download size
+
+## Optional OAuth credentials shim
+
+The manifests bundle no OAuth credentials. A maintainer who wants Flatpak builds
+with built-in Google or Microsoft sign-in can add a `type: file` source that
+downloads a credentials binary from a release and an `install -Dm755` build
+command for it, the way earlier Aerion manifests did. Nothing here ships one
+today.

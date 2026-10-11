@@ -8,9 +8,9 @@ import (
 	"sync"
 	"time"
 
-	coreapi "github.com/hkdb/aerion/internal/core/api/v1"
-	"github.com/hkdb/aerion/internal/database"
-	"github.com/hkdb/aerion/internal/platform"
+	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
+	"github.com/caseylabs/mailpong/internal/database"
+	"github.com/caseylabs/mailpong/internal/platform"
 )
 
 // CalendarBridge is the Wails-bindable surface for the Calendar extension.
@@ -281,7 +281,7 @@ func (b *CalendarBridge) Calendar_AddLocalCalendar(sourceID, displayName, color 
 
 // Calendar_DeleteCalendar removes a local calendar and CASCADEs through
 // its events, recurrence overrides, and alarms. Only local-source
-// calendars are deletable from Aerion. Idempotent.
+// calendars are deletable from MailPong. Idempotent.
 func (b *CalendarBridge) Calendar_DeleteCalendar(calendarID string) error {
 	if !b.gateEnabled() {
 		return nil
@@ -852,7 +852,7 @@ func (b *CalendarBridge) Calendar_AddMicrosoftSource(accountID, name, accountEma
 // succeeds and the picker UI populates. Mirrors contacts'
 // Contacts_EnableWriteAccess flow shape.
 //
-// `provider` is "google" or "microsoft"; `accountID` is the existing Aerion
+// `provider` is "google" or "microsoft"; `accountID` is the existing MailPong
 // mail account; `expectedEmail` is the email that the OAuth grant must
 // match (defense against the user picking a different account in the IdP
 // window).

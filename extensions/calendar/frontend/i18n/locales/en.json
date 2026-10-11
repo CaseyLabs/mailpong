@@ -101,7 +101,7 @@
       "namePlaceholder": "e.g. Personal Nextcloud",
       "urlLabel": "Server URL",
       "urlPlaceholder": "https://cloud.example.com/remote.php/dav",
-      "urlHelp": "Enter the base URL or full calendar-home URL. Aerion will probe common paths.",
+      "urlHelp": "Enter the base URL or full calendar-home URL. MailPong will probe common paths.",
       "usernameLabel": "Username",
       "passwordLabel": "Password",
       "authMethod": "Authentication",
@@ -131,7 +131,7 @@
       "providerLabelMicrosoft": "Outlook",
       "organizerEmailLabel": "Organizer email",
       "organizerEmailPlaceholder": "you@example.com",
-      "organizerEmailPrompt": "Your server didn't publish a calendar user address. Enter the email Aerion should use as the meeting organizer for events on this source.",
+      "organizerEmailPrompt": "Your server didn't publish a calendar user address. Enter the email MailPong should use as the meeting organizer for events on this source.",
       "organizerEmailHelp": "This is the address that will appear as ORGANIZER on events you create here.",
       "organizerEmailInvalid": "Enter a valid email address."
     },
@@ -203,7 +203,7 @@
       "providerDefaultsLabel": "Defaults per account",
       "noDefaultsHint": "Add a calendar to set defaults.",
       "oauthSection": "OAuth Credentials (advanced)",
-      "oauthHelp": "Pick the Google or Microsoft OAuth client this extension uses. The default (Aerion testing for Google, Aerion - Microsoft for Microsoft) is fine for most users.",
+      "oauthHelp": "Pick the Google or Microsoft OAuth client this extension uses. The default (MailPong testing for Google, MailPong - Microsoft for Microsoft) is fine for most users.",
       "oauthGoogleLabel": "Google",
       "oauthMicrosoftLabel": "Microsoft",
       "intervalMinutes": "{n} minutes",
@@ -263,7 +263,7 @@
       "renameTitle": "Rename source",
       "renameToastSuccess": "Renamed to \"{name}\"",
       "timezoneSection": "Display timezone",
-      "timezoneHelp": "Choose which timezone Aerion uses to render event times. Auto-detect uses your system timezone."
+      "timezoneHelp": "Choose which timezone MailPong uses to render event times. Auto-detect uses your system timezone."
     },
     "localCalendar": {
       "title": "Add local calendar",

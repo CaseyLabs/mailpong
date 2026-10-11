@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hkdb/aerion/internal/cid"
+	"github.com/caseylabs/mailpong/internal/cid"
 )
 
 // backfillEmbeddedAttachments marks the stored inline parts whose

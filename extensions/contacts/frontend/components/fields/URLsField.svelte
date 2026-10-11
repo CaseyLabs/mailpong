@@ -3,8 +3,8 @@
   //
   // Microsoft's constraint is `info` (not hard cap): Graph only stores one
   // URL natively (`businessHomePage`), but the backend persists the full
-  // list via the ms_field_sidecar so the second+ URLs round-trip in Aerion.
-  // Show an info note so users know what non-Aerion clients will see.
+  // list via the ms_field_sidecar so the second+ URLs round-trip in MailPong.
+  // Show an info note so users know what non-MailPong clients will see.
 
   import { _ } from 'svelte-i18n'
   import { Input } from '$lib/components/ui/input'

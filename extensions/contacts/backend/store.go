@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hkdb/aerion/internal/extensions"
+	"github.com/caseylabs/mailpong/internal/extensions"
 )
 
 // migrations is the per-extension migration sequence for the Contacts
@@ -169,7 +169,7 @@ type MSSidecarURL struct {
 // contact that Graph itself can't store. EmailTypes is address-keyed
 // (always lowercase on write/read). URLs is the full ordered list — the
 // API layer also writes URLs[0].URL to Graph's businessHomePage so non-
-// Aerion clients see the primary URL.
+// MailPong clients see the primary URL.
 type MSSidecar struct {
 	EmailTypes map[string]string `json:"email_types"`
 	URLs       []MSSidecarURL    `json:"urls"`

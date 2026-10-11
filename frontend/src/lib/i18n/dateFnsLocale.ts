@@ -19,64 +19,9 @@ export async function loadDateFnsLocale(code: string): Promise<Locale | undefine
   if (code === 'en') return undefined
   if (localeCache.has(code)) return localeCache.get(code)
 
-  let dateFnsLocale: Locale | undefined
-
-  switch (code) {
-    case 'cs': {
-      const mod = await import('date-fns/locale/cs')
-      dateFnsLocale = mod.cs
-      break
-    }
-    case 'de': {
-      const mod = await import('date-fns/locale/de')
-      dateFnsLocale = mod.de
-      break
-    }
-    case 'fr': {
-      const mod = await import('date-fns/locale/fr')
-      dateFnsLocale = mod.fr
-      break
-    }
-    case 'it': {
-      const mod = await import('date-fns/locale/it')
-      dateFnsLocale = mod.it
-      break
-    }
-    case 'nb': {
-      const mod = await import('date-fns/locale/nb')
-      dateFnsLocale = mod.nb
-      break
-    }
-    case 'pl': {
-      const mod = await import('date-fns/locale/pl')
-      dateFnsLocale = mod.pl
-      break
-    }
-    case 'vi': {
-      const mod = await import('date-fns/locale/vi')
-      dateFnsLocale = mod.vi
-      break
-    }
-    case 'zh-CN': {
-      const mod = await import('date-fns/locale/zh-CN')
-      dateFnsLocale = mod.zhCN
-      break
-    }
-    case 'zh-HK': {
-      const mod = await import('date-fns/locale/zh-HK')
-      dateFnsLocale = mod.zhHK
-      break
-    }
-    case 'zh-TW': {
-      const mod = await import('date-fns/locale/zh-TW')
-      dateFnsLocale = mod.zhTW
-      break
-    }
-  }
-
-  if (dateFnsLocale) {
-    localeCache.set(code, dateFnsLocale)
-  }
-
-  return dateFnsLocale
+  // The UI ships English only, so there is nothing else to load. To ship a
+  // locale, import its date-fns locale here and store it in localeCache, e.g.
+  //   const mod = await import('date-fns/locale/de')
+  //   localeCache.set(code, mod.de)
+  return undefined
 }

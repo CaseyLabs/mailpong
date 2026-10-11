@@ -7,7 +7,7 @@ import (
 )
 
 // parseAttendeesFromVEVENT extracts the ATTENDEE properties from a
-// go-ical Event into the Aerion Attendee shape. Returns nil when no
+// go-ical Event into the MailPong Attendee shape. Returns nil when no
 // ATTENDEE props are present (the common case for local single-user
 // events).
 //

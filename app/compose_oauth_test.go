@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hkdb/aerion/internal/oauth2"
+	"github.com/caseylabs/mailpong/internal/oauth2"
 )
 
 func TestOAuthRefreshFailedPromptsOnlyForInvalidGrant(t *testing.T) {

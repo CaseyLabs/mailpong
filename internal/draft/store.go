@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/caseylabs/mailpong/internal/database"
+	"github.com/caseylabs/mailpong/internal/logging"
 	"github.com/google/uuid"
-	"github.com/hkdb/aerion/internal/database"
-	"github.com/hkdb/aerion/internal/logging"
 	"github.com/rs/zerolog"
 )
 

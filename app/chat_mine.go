@@ -3,9 +3,9 @@ package app
 import (
 	"strings"
 
-	"github.com/hkdb/aerion/internal/folder"
-	"github.com/hkdb/aerion/internal/logging"
-	"github.com/hkdb/aerion/internal/message"
+	"github.com/caseylabs/mailpong/internal/folder"
+	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailpong/internal/message"
 )
 
 // chatOwner recognizes my own messages for chat bubbles: any account or

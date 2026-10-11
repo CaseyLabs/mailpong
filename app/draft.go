@@ -7,17 +7,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/caseylabs/mailpong/internal/account"
+	"github.com/caseylabs/mailpong/internal/draft"
+	"github.com/caseylabs/mailpong/internal/folder"
+	"github.com/caseylabs/mailpong/internal/imap"
+	"github.com/caseylabs/mailpong/internal/keylock"
+	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailpong/internal/message"
+	"github.com/caseylabs/mailpong/internal/pgp"
+	"github.com/caseylabs/mailpong/internal/smime"
+	"github.com/caseylabs/mailpong/internal/smtp"
 	goImap "github.com/emersion/go-imap/v2"
-	"github.com/hkdb/aerion/internal/account"
-	"github.com/hkdb/aerion/internal/draft"
-	"github.com/hkdb/aerion/internal/folder"
-	"github.com/hkdb/aerion/internal/imap"
-	"github.com/hkdb/aerion/internal/keylock"
-	"github.com/hkdb/aerion/internal/logging"
-	"github.com/hkdb/aerion/internal/message"
-	"github.com/hkdb/aerion/internal/pgp"
-	"github.com/hkdb/aerion/internal/smime"
-	"github.com/hkdb/aerion/internal/smtp"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -831,7 +831,7 @@ func (a *App) GetDraft(id string) (*smtp.ComposeMessage, error) {
 		return a.draftToComposeMessage(d), nil
 	}
 
-	// No draft found - this might be a draft that was created outside Aerion
+	// No draft found - this might be a draft that was created outside MailPong
 	// (e.g., from webmail). Build a ComposeMessage from the message itself.
 	log.Debug().Str("messageID", id).Msg("No local draft found, building from message")
 	return a.messageToComposeMessage(msg), nil

@@ -1,4 +1,4 @@
-// Package smtp provides SMTP client functionality for Aerion
+// Package smtp provides SMTP client functionality for MailPong
 package smtp
 
 import (
@@ -107,9 +107,9 @@ func (m *ComposeMessage) ToRFC822() ([]byte, error) {
 	var buf bytes.Buffer
 
 	// Generate Message-ID under the sender's domain; spam filters
-	// penalize IDs without a real domain. The "aerion" fallback avoids
+	// penalize IDs without a real domain. The "mailpong" fallback avoids
 	// "localhost", which looks like a misconfigured host to those filters.
-	messageID := fmt.Sprintf("<%s@%s>", uuid.New().String(), domainFromEmail(m.From.Address, "aerion"))
+	messageID := fmt.Sprintf("<%s@%s>", uuid.New().String(), domainFromEmail(m.From.Address, "mailpong"))
 
 	// Write headers
 	writeHeader(&buf, "From", m.From.String())
@@ -131,7 +131,7 @@ func (m *ComposeMessage) ToRFC822() ([]byte, error) {
 	writeHeader(&buf, "Date", time.Now().Format(time.RFC1123Z))
 	writeHeader(&buf, "Message-ID", messageID)
 	writeHeader(&buf, "MIME-Version", "1.0")
-	writeHeader(&buf, "User-Agent", "Aerion Email Client")
+	writeHeader(&buf, "User-Agent", "MailPong")
 
 	// Threading headers
 	if m.InReplyTo != "" {

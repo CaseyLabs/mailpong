@@ -24,7 +24,7 @@ type Attachment struct {
 type MessageRef struct {
 	AccountID string `json:"accountId"`
 	FolderID  string `json:"folderId"`
-	MessageID string `json:"messageId"` // Aerion DB id (not RFC 5322 Message-ID)
+	MessageID string `json:"messageId"` // MailPong DB id (not RFC 5322 Message-ID)
 }
 
 // Flags is the set of standard IMAP flag states for a message.

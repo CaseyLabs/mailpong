@@ -100,7 +100,7 @@
   function handleDragStart(e: DragEvent) {
     if (!e.dataTransfer || chat.messageIds.length === 0) return
     const payload = JSON.stringify({ messageIds: chat.messageIds, sourceAccountId: chat.accountId })
-    e.dataTransfer.setData('application/x-aerion-messages', payload)
+    e.dataTransfer.setData('application/x-mailpong-messages', payload)
     e.dataTransfer.effectAllowed = 'move'
   }
 </script>

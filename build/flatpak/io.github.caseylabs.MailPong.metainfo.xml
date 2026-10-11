@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.caseylabs.MailPong</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>Apache-2.0</project_license>
+  <name>MailPong</name>
+  <summary>Email, reimagined as chat.</summary>
+  <description>
+    <p>
+      MailPong is a modern, lightweight desktop email client that shows your
+      conversations in a chat view, with a focus on resource efficiency and a
+      clean user experience.
+    </p>
+    <p>
+      MailPong is in alpha. Expect rough edges and keep backups of important
+      mail. It is derived from Aerion by hkdb.
+    </p>
+
+    <p>Features:</p>
+
+    <ul>
+      <li>Multiple email accounts with unified inbox</li>
+      <li>Support for Gmail, Outlook, and generic IMAP/SMTP</li>
+      <li>Conversation threading</li>
+      <li>Rich text WYSIWYG composer with TipTap editor</li>
+      <li>Contact sync (CardDAV, Google, Microsoft) for auto-completion</li>
+      <li>Dark mode and multiple color themes</li>
+      <li>Keyboard-friendly navigation with vim-style shortcuts</li>
+      <li>Detachable composer window</li>
+      <li>Basic tracking element removal from emails</li>
+      <li>PGP and S/MIME support</li>
+      <li>Contacts extension (ALPHA)</li>
+      <li>Calendar extension (ALPHA)</li>
+      <li>Custom OAuth support for generic IMAP, SMTP, CardDAV, and CalDAV</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">io.github.caseylabs.MailPong.desktop</launchable>
+
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/caseylabs/mailpong/main/docs/ss.png</image>
+      <caption>MailPong main window showing the inbox</caption>
+    </screenshot>
+  </screenshots>
+
+  <url type="homepage">https://github.com/caseylabs/mailpong</url>
+  <url type="bugtracker">https://github.com/caseylabs/mailpong/issues</url>
+  <url type="vcs-browser">https://github.com/caseylabs/mailpong</url>
+  <url type="contribute">https://github.com/caseylabs/mailpong/blob/main/CONTRIBUTING.md</url>
+
+  <developer id="io.github.caseylabs">
+    <name>MailPong Contributors</name>
+  </developer>
+
+  <categories>
+    <category>Network</category>
+    <category>Email</category>
+  </categories>
+
+  <keywords>
+    <keyword>email</keyword>
+    <keyword>mail</keyword>
+    <keyword>imap</keyword>
+    <keyword>smtp</keyword>
+    <keyword>gmail</keyword>
+    <keyword>outlook</keyword>
+  </keywords>
+
+  <content_rating type="oars-1.1" />
+
+  <provides>
+    <binary>mailpong</binary>
+  </provides>
+
+  <releases>
+    <release version="0.4.0" date="2026-10-11">
+      <description>
+        <p>First MailPong release, derived from Aerion 0.3.5.</p>
+      </description>
+    </release>
+  </releases>
+</component>

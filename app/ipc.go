@@ -6,9 +6,9 @@ import (
 	"os/exec"
 	"slices"
 
-	"github.com/hkdb/aerion/internal/folder"
-	"github.com/hkdb/aerion/internal/ipc"
-	"github.com/hkdb/aerion/internal/logging"
+	"github.com/caseylabs/mailpong/internal/folder"
+	"github.com/caseylabs/mailpong/internal/ipc"
+	"github.com/caseylabs/mailpong/internal/logging"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 

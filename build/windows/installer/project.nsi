@@ -32,6 +32,9 @@ Unicode true
 ####
 ## Include the wails tools
 ####
+; Fixed uninstall key so MailPong never collides with an Aerion install
+; (the Wails default would be "<CompanyName><ProductName>").
+!define UNINST_KEY_NAME "MailPong"
 !include "wails_tools.nsh"
 
 # The version information for this two must consist of 4 parts
@@ -88,13 +91,18 @@ Section
 
     !insertmacro wails.files
 
+    ; Apache-2.0 §4(a)/(d): ship the license and NOTICE with the app.
+    File "..\..\..\LICENSE"
+    File "..\..\..\NOTICE"
+    File "..\..\..\THIRD_PARTY_NOTICES.md"
+
     CreateShortcut "$SMPROGRAMS\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"
     CreateShortCut "$DESKTOP\${INFO_PRODUCTNAME}.lnk" "$INSTDIR\${PRODUCT_EXECUTABLE}"
 
     !insertmacro wails.associateFiles
     !insertmacro wails.associateCustomProtocols
 
-    ; Register as a Windows Mail client so Aerion appears in
+    ; Register as a Windows Mail client so MailPong appears in
     ; Settings → Default Apps → Email (alongside Outlook/Thunderbird).
     SetRegView 64
     WriteRegStr HKLM "SOFTWARE\Clients\Mail\${INFO_PRODUCTNAME}" "" "${INFO_PRODUCTNAME}"

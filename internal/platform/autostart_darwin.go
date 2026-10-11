@@ -5,17 +5,17 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/hkdb/aerion/internal/logging"
+	"github.com/caseylabs/mailpong/internal/logging"
 )
 
 const (
-	launchAgentLabel = "io.github.hkdb.Aerion"
+	launchAgentLabel = "io.github.caseylabs.MailPong"
 	launchAgentPlist = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-	<string>io.github.hkdb.Aerion</string>
+	<string>io.github.caseylabs.MailPong</string>
 	<key>ProgramArguments</key>
 	<array>
 		<string>%s</string>
@@ -103,7 +103,7 @@ func (m *darwinAutostartManager) launchAgentsDir() (string, error) {
 func (m *darwinAutostartManager) execCommand() string {
 	exe, err := os.Executable()
 	if err != nil {
-		return "aerion"
+		return "mailpong"
 	}
 	return exe
 }

@@ -6,8 +6,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/caseylabs/mailpong/internal/logging"
 	"github.com/godbus/dbus/v5"
-	"github.com/hkdb/aerion/internal/logging"
 )
 
 const (

@@ -4,9 +4,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/caseylabs/mailpong/internal/contact"
 	"github.com/emersion/go-vcard"
 	"github.com/emersion/go-webdav/carddav"
-	"github.com/hkdb/aerion/internal/contact"
 )
 
 func TestBuildVCard_RoundTripPreservesUnknownProperties(t *testing.T) {

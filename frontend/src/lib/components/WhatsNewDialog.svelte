@@ -1,6 +1,6 @@
 <script lang="ts">
   // Per-version release announcement. Shown once after the user upgrades
-  // to a new Aerion version. Only the explicit OK click records
+  // to a new MailPong version. Only the explicit OK click records
   // acknowledgement (via onAcknowledge → SetLastSeenVersion in App.svelte).
   // Closing via ESC or outside-click leaves the version unrecorded, so
   // the dialog fires again on next launch.
@@ -21,7 +21,7 @@
 
   let { open = $bindable(false), onAcknowledge }: Props = $props()
 
-  const CHANGELOG_URL = 'https://github.com/hkdb/aerion/blob/main/CHANGELOG.md'
+  const CHANGELOG_URL = 'https://github.com/caseylabs/mailpong/blob/main/CHANGELOG.md'
 
   // Open external links via the backend OpenURL: on Linux it tries the OpenURI
   // portal first, so links work inside the Flatpak sandbox (where xdg-open —
@@ -48,17 +48,15 @@
       </div>
 
       <div class="space-y-4 max-h-[60vh] overflow-y-auto text-sm">
-        <p>🚀 Welcome to Aerion v0.3.5!</p>
+        <p>🚀 Welcome to MailPong v0.4.0!</p>
 
-        <p>v0.3.5 is a temp hotfix for a launch crash caused by WebKitGTK v2.54 recently rolled out in various runtimes. For those of you who didn't get a chance to see what's new in v0.3.4, here are the highlights of the release:</p>
+        <p>MailPong is an independent desktop email client derived from Aerion by @hkdb. This first release is alpha software. Here is what's new:</p>
 
         <ul class="list-disc pl-6 space-y-1">
-          <li>⚗️ The message list's optional unread accent now has two new options: dot and glowing dot</li>
-          <li>✏️ Added Reply-To field to composer</li>
-          <li>✏️ Default CC, BCC, and Reply-To can now be set in Settings --> Composer</li>
-          <li>📖 Added English (UK) and Dutch spellcheck</li>
-          <li>🪟 Aerion now remembers your last window size which survives quit and relaunch</li>
-          <li>📩 Improved handling of rapid individual message deletes</li>
+          <li>🏓 New name, new identity: Aerion is now MailPong</li>
+          <li>🗂 MailPong keeps its own settings and data, separate from any Aerion install</li>
+          <li>🌐 The interface is English only; email content still supports every language</li>
+          <li>📖 Spellcheck dictionaries for English (US), English (UK) and English (Canada)</li>
           <li>🐛 Bug fixes and other improvements</li>
         </ul>
 
@@ -70,7 +68,7 @@
             class="text-primary hover:underline break-all focus:outline-hidden focus-visible:outline-hidden focus:ring-0"
             onclick={() => openExternal(CHANGELOG_URL)}
           >
-            https://github.com/hkdb/aerion/blob/main/CHANGELOG.md
+            https://github.com/caseylabs/mailpong/blob/main/CHANGELOG.md
           </button>
         </p>
       </div>

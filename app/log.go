@@ -1,6 +1,6 @@
 package app
 
-import "github.com/hkdb/aerion/internal/logging"
+import "github.com/caseylabs/mailpong/internal/logging"
 
 // LogFrontend emits a log message from the frontend through the Go-side
 // zerolog logger so frontend diagnostics appear in the same log stream as

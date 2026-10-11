@@ -3,7 +3,8 @@
 
 // @ts-ignore - wailsjs path
 import { GetMessageListDensity, GetMessageListSortOrder, GetThemeMode, GetShowTitleBar, GetRunBackground, GetStartHidden, GetAutostart, GetLanguage, GetComposerMode, GetMailtoMode, GetComposerFormat, GetNativeTitleBar, GetAlwaysLoadImages, GetDarkMailContent, GetDarkComposerBody, GetAccentBarUnread, GetAccentUnreadStyle, GetShowMessageListCircles, GetShowMessageListProfilePics, GetAlwaysShowMessageCheckbox, GetShowMessagePreview, GetShowViewerCircles, GetSpellcheckEnabled, GetSpellcheckLanguages, GetSpellcheckCustomWords, GetChatSendKey, GetChatAutoAdvance, GetChatShowLowGroup } from '../../../wailsjs/go/app/App'
-import { setLocale as setI18nLocale } from '$lib/i18n'
+import { setLocale as setI18nLocale, resolveLocale } from '$lib/i18n'
+import { filterSupportedDicts } from '$lib/spellcheck/locales'
 import { loadDateFnsLocale, getDateFnsLocale } from '$lib/i18n/dateFnsLocale'
 import type { Locale } from 'date-fns'
 
@@ -228,7 +229,7 @@ export function setSpellcheckCustomWords(v: string[]) {
 }
 
 export function setLanguage(lang: string) {
-  language = lang
+  language = lang ? resolveLocale(lang) : lang
   if (lang) {
     setI18nLocale(lang)
     loadDateFnsLocale(lang)
@@ -346,16 +347,16 @@ export async function loadSettings(): Promise<ThemeMode> {
     showMessagePreview = messagePreview ?? false
     showViewerCircles = viewerCircles ?? true
     spellcheckEnabled = scEnabled ?? true
-    spellcheckLanguages = scLangs ?? []
+    spellcheckLanguages = filterSupportedDicts(scLangs ?? [])
     spellcheckCustomWords = scWords ?? []
     chatSendKey = sendKey === 'ctrl-enter' ? 'ctrl-enter' : 'enter'
     chatAutoAdvance = autoAdvance === 'previous' ? 'previous' : 'next'
     chatShowLowGroup = showLowGroup ?? true
     // Apply saved language (if set, overrides system detection from initI18n)
     if (lang) {
-      language = lang
-      setI18nLocale(lang)
-      await loadDateFnsLocale(lang)
+      language = resolveLocale(lang)
+      setI18nLocale(language)
+      await loadDateFnsLocale(language)
     }
     return themeMode
   } catch (err) {

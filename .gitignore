@@ -1,8 +1,8 @@
 # Context
 context
-aerion
-aerion.exe
-aerion-creds
+mailpong
+mailpong.exe
+mailpong-creds
 IDEAS.md
 
 # Wails build artifacts
@@ -15,7 +15,7 @@ build/linux/AppDir
 .flatpak-builder/
 build-dir/
 repo/
-build/flatpak/flathub/io.github.clabs_public_forks.Aerion.yml.backup
+build/flatpak/flathub/io.github.caseylabs.MailPong.yml.backup
 
 # Frontend
 frontend/node_modules/

@@ -1,7 +1,7 @@
 /* VS Code — palette transcribed from microsoft/vscode:
    extensions/theme-defaults/themes/{dark,light}_modern.json (the current
    defaults shipped since 2023). Iconic VS Code blue (#005FB8 light /
-   #0078D4 dark) drives --primary. Aerion-specific override: --ring matches
+   #0078D4 dark) drives --primary. MailPong-specific override: --ring matches
    --primary. Avatar palette uses VS Code's terminal ANSI colors. */
 @layer base {
   /* VS Code Light Modern */

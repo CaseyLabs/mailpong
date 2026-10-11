@@ -1,13 +1,13 @@
 name: Bug Report
-description: Report a bug in this downstream fork
+description: Report a bug in MailPong
 body:
   - type: markdown
     attributes:
-      value: For vulnerabilities, follow SECURITY.md. Remove credentials and private mail data from reports.
+      value: For vulnerabilities, follow SECURITY.md. Remove credentials and private mail data from reports. If you are not sure whether the bug is in MailPong or in upstream Aerion, report it here; do not file MailPong issues with Aerion.
   - type: input
     id: version
     attributes:
-      label: Fork version or commit
+      label: MailPong version or commit
       description: Include the commit hash for custom builds.
     validations:
       required: true

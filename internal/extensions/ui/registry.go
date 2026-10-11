@@ -6,7 +6,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	coreapi "github.com/hkdb/aerion/internal/core/api/v1"
+	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
 )
 
 // Registry is the in-memory store of all extension UI registrations. Safe

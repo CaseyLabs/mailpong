@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Features Overview
 
-Aerion packs essential email features into a lightweight, efficient package. Here's what you can do.
+MailPong packs essential email features into a lightweight, efficient package. Here's what you can do.
 
 ## Email Management
 
@@ -38,7 +38,7 @@ Aerion packs essential email features into a lightweight, efficient package. Her
 
 ## Keyboard Navigation
 
-Aerion is fully keyboard-navigable with vim-style shortcuts:
+MailPong is fully keyboard-navigable with vim-style shortcuts:
 
 - Navigate between panes with `Alt+H/L`
 - Move through messages with `J/K`
@@ -52,7 +52,7 @@ Aerion is fully keyboard-navigable with vim-style shortcuts:
 - **Local Storage** - All data stays on your computer
 - **Direct Connections** - Connects directly to your email provider via IMAP/SMTP
 - **Tracking Removal** - Basic removal of tracking elements in emails
-- **No Analytics** - Aerion doesn't phone home
+- **No Analytics** - MailPong doesn't phone home
 
 ## Customization
 
@@ -79,11 +79,11 @@ Aerion is fully keyboard-navigable with vim-style shortcuts:
 
 ## What's Not Included
 
-Aerion focuses on core email functionality. These features are not currently available:
+MailPong focuses on core email functionality. These features are not currently available:
 
 - Calendar integration
 - Email filters/rules
 - Offline sending (no message queue - requires connection to send)
 - Import from other email clients
 
-Some of these are on the [roadmap](https://github.com/hkdb/aerion) for future releases.
+Some of these are on the [roadmap](https://github.com/caseylabs/mailpong) for future releases.

@@ -1,15 +1,15 @@
 name: Question
-description: What would you like to know about this fork?
+description: What would you like to know about MailPong?
 body:
   - type: textarea
     id: description
     attributes:
       label: Description
-      description: What would you like to know about this fork?
+      description: What would you like to know about MailPong?
     validations:
       required: true
   - type: textarea
     id: context
     attributes:
       label: Context
-      description: Include the fork commit, platform, examples, or alternatives when relevant. Remove credentials and private mail data.
+      description: Include the MailPong commit, platform, examples, or alternatives when relevant. Remove credentials and private mail data.

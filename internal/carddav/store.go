@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/caseylabs/mailpong/internal/contact"
+	"github.com/caseylabs/mailpong/internal/logging"
 	"github.com/google/uuid"
-	"github.com/hkdb/aerion/internal/contact"
-	"github.com/hkdb/aerion/internal/logging"
 	"github.com/rs/zerolog"
 )
 

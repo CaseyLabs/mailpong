@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/caseylabs/mailpong/internal/database"
 	"github.com/google/uuid"
-	"github.com/hkdb/aerion/internal/database"
 )
 
 // Store provides account storage operations

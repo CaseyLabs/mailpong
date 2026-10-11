@@ -10,8 +10,8 @@ import (
 	"github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-message/textproto"
 
-	imapPkg "github.com/hkdb/aerion/internal/imap"
-	"github.com/hkdb/aerion/internal/message"
+	imapPkg "github.com/caseylabs/mailpong/internal/imap"
+	"github.com/caseylabs/mailpong/internal/message"
 )
 
 // forwardingHeaderFields name the headers that show which address a message

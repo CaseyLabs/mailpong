@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hkdb/aerion/internal/imap"
+	"github.com/caseylabs/mailpong/internal/imap"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 

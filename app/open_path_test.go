@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/hkdb/aerion/internal/platform"
+	"github.com/caseylabs/mailpong/internal/platform"
 )
 
 func TestValidateOpenPath(t *testing.T) {
@@ -25,7 +25,7 @@ func TestValidateOpenPath(t *testing.T) {
 	}
 	attachment := write(filepath.Join(a.paths.AttachmentsPath(), "a.pdf"))
 	download := write(filepath.Join(home, "Downloads", "b.pdf"))
-	db := write(filepath.Join(a.paths.Data, "aerion.db"))
+	db := write(filepath.Join(a.paths.Data, "mailpong.db"))
 	outside := write(filepath.Join(t.TempDir(), "c.sh"))
 	link := filepath.Join(home, "Downloads", "innocent.pdf")
 	if err := os.Symlink(outside, link); err != nil {
@@ -43,7 +43,7 @@ func TestValidateOpenPath(t *testing.T) {
 		{"database in data dir", db, false},
 		{"outside file", outside, false},
 		{"symlink out of downloads", link, false},
-		{"dot-dot out of downloads", filepath.Join(home, "Downloads", "..", "data", "aerion.db"), false},
+		{"dot-dot out of downloads", filepath.Join(home, "Downloads", "..", "data", "mailpong.db"), false},
 		{"missing file", filepath.Join(home, "Downloads", "nope.pdf"), false},
 	}
 	for _, tt := range tests {

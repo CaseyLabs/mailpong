@@ -6,13 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hkdb/aerion/internal/account"
-	"github.com/hkdb/aerion/internal/database"
-	"github.com/hkdb/aerion/internal/draft"
-	"github.com/hkdb/aerion/internal/message"
-	"github.com/hkdb/aerion/internal/settings"
-	"github.com/hkdb/aerion/internal/smtp"
-	"github.com/hkdb/aerion/internal/undo"
+	"github.com/caseylabs/mailpong/internal/account"
+	"github.com/caseylabs/mailpong/internal/database"
+	"github.com/caseylabs/mailpong/internal/draft"
+	"github.com/caseylabs/mailpong/internal/message"
+	"github.com/caseylabs/mailpong/internal/settings"
+	"github.com/caseylabs/mailpong/internal/smtp"
+	"github.com/caseylabs/mailpong/internal/undo"
 )
 
 func TestChatTextToHTML(t *testing.T) {

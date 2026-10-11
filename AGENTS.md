@@ -1,16 +1,17 @@
 # Repository Guidelines
 
-## Fork Scope
+## Project Identity
 
-- This is a customized downstream fork of Aerion, a desktop email client (Go, Wails v2, Svelte 5, TypeScript).
-- Prioritize the owner's requirements; upstream contribution restrictions do not govern local work.
-- Keep customizations focused to ease future upstream merges.
+- MailPong is an independent desktop email client (Go, Wails v2, Svelte 5, TypeScript) derived from Aerion.
+- Branding: replace "Aerion" only where it names this app, never by blind search-and-replace. Keep it in attribution, history, `LICENSE`, `archive/`, and statements of origin ("derived from Aerion").
+- Persisted internal identifiers keep their Aerion values: the `"aerion"` contact source, the `"aerion-shipped"`/`"aerion-mail"` OAuth choice IDs, the `'aerion'` title-bar setting, `minAerionVersion`, and the `aerion:` KDF prefix. Each carries a `Legacy identifier from Aerion; persisted, do not rename.` comment. Renaming them breaks stored data.
+- Upstream Aerion fixes may be cherry-picked (`git remote add upstream https://github.com/hkdb/aerion.git` in clones that lack it); renamed paths can make that conflict.
 
 ## Layout Notes
 
 - `frontend/wailsjs/` holds generated Wails bindings; regenerate with `make generate` after binding changes, then revert unrelated churn in `frontend/wailsjs/runtime/*`. Stop any running Aerion first (`dev.sh stop`): the single-instance lock makes the generator exit without writing anything.
 - `extensions/` (contacts, calendar) contains both backend and frontend code. Check extension, core API, and kit changes against `docs/EXT_RULES.md` before committing.
-- `docs/EXTENSIONS.md` (about 170 KB), `docs/CASAT2.md`, and `docs/LANGUAGE.md` are long: grep them or read by section, never whole.
+- `docs/EXTENSIONS.md` (about 170 KB), `docs/history/AERION_CASA_TIER2.md`, and `docs/LANGUAGE.md` are long: grep them or read by section, never whole.
 
 ## Commands
 
@@ -18,11 +19,11 @@ Toolchain: Go 1.26, Node.js 24 (matches CI), Wails v2 CLI. Linux needs GTK 3 and
 
 - `cd frontend && npm ci`: install locked frontend dependencies.
 - `cd frontend && npm run build`: build frontend assets. Run before Go checks that include the root package if `frontend/dist/` is missing; rebuild when validating changed assets.
-- `make dev`: launch the desktop app with hot reload. It blocks; for agent-driven UI checks use `.claude/skills/run-aerion/dev.sh` instead.
+- `make dev`: launch the desktop app with hot reload. It blocks; for agent-driven UI checks use `.claude/skills/run-mailpong/dev.sh` instead.
 - `make build`: production build in `build/bin/`.
 - `make generate`: regenerate Wails TypeScript bindings.
 - `make test`, `make fmt`: Go tests and formatting.
-- `make lint`: golangci-lint v2 and frontend ESLint.
+- `make lint`: golangci-lint v2, frontend ESLint and the brand check (`tools/brand-check.sh`, allowlist in `tools/brand-check.allow`).
 - `cd frontend && npm run check`: Svelte/TypeScript checks.
 - OAuth testing: copy `.env.example` to `.env`; `.env.local` overrides it.
 
@@ -30,14 +31,15 @@ Toolchain: Go 1.26, Node.js 24 (matches CI), Wails v2 CLI. Linux needs GTK 3 and
 
 - Go: log with zerolog, and prefer guard clauses and switches over long `else if` chains.
 - Frontend: use Svelte 5 runes (`$state`, `$derived`), keep components under 500 lines, and preserve keyboard accessibility.
-- Localization: this fork targets English. Update English locale files only, and leave non-English locale files out of searches and reviews unless the task concerns localization. Preserve the existing i18n structure. See `docs/LANGUAGE.md` when changing localized strings.
+- Localization: the UI is English-only, with en-US, en-GB and en-CA spellcheck dictionaries; email content stays fully international (any language, charset and script). Update English locale files only, and leave non-English locale files out of searches and reviews unless the task concerns localization. Preserve the existing i18n structure. See `docs/LANGUAGE.md` when changing localized strings.
 
 ## Testing
 
 - Start with checks relevant to the change.
 - Run `make test` when a change affects multiple Go packages or shared behavior, or when focused checks leave unresolved risks.
 - Use table-driven Go tests for critical paths and edge cases.
-- There is no frontend test script. For frontend changes, run `npm run lint` and `npm run check` in `frontend/`, then verify the UI with the `run-aerion` skill. If no display is available (for example, in a cloud session), say so in the PLAN.md Progress entry and in your report.
+- There is no frontend test script. For frontend changes, run `npm run lint` and `npm run check` in `frontend/`, then verify the UI with the `run-mailpong` skill. In cloud sessions use the skill's headless path (Xvfb + Playwright); if no UI check can run at all, say so in the PLAN.md Progress entry and in your report.
+- Visual UI checks always cover the Mail view with the Accounts column expanded and collapsed (how-to: [Accounts column check](.claude/skills/run-mailpong/SKILL.md#accounts-column-check)). Report checks you couldn't perform.
 
 ## Documentation
 
@@ -58,7 +60,7 @@ Before marking a milestone done:
 
 ## Commits and PRs
 
-- Use descriptive prefixes for downstream commits: `feat:`, `fix:`, `docs:`.
+- Use descriptive prefixes for commits: `feat:`, `fix:`, `docs:`.
 - Work on a branch per feature or audit pass, not on `main`, and land it as described in Landing a Branch.
 - One commit per milestone or independent fix. Fold corrections to a commit that has not been pushed into it (`git commit --amend`) instead of adding a new commit.
 - Commit `PLAN.md` and `ISSUES.md` updates with the change they describe, not separately.
@@ -75,7 +77,9 @@ When all of a feature's milestones are done or an audit pass is complete, land t
 ## Planning Files
 
 - `PLAN.md`: guides new features. Create it when needed with Scope; Milestones, each with acceptance criteria and validation steps; and these living `##` sections: Progress (one checkbox per milestone), Surprises & Discoveries, Decision Log, and Outcomes & Retrospective. Track progress in Progress, not a separate file.
-- `ISSUES.md`: issues found that may need fixing in this or a future session.
+- `ISSUES.md`: issues found that may need fixing in this or a future session. Its `## Recurring problems` section is a tally of environment and tooling problems: one line each with the symptom, the workaround, and how many times it has occurred. Check it before debugging, and bump the count when a problem recurs.
+- Promote, don't log: when a problem recurs (second occurrence) or costs a session more than a few minutes the first time, move the fix into `AGENTS.md` or the relevant skill and delete its tally line. Don't record every error.
+- Prune: when a guidance line no longer matches reality (for example, "no display in cloud"), correct or delete it in the same task.
 - Keep task-specific progress out of `AGENTS.md`.
 - **Required:** remove completed plan and issue items once they no longer need to be referenced, so these files stay short and current.
 

@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/caseylabs/mailpong/internal/message"
 	gomessage "github.com/emersion/go-message"
-	"github.com/hkdb/aerion/internal/message"
 )
 
 // computeThreadID determines the thread ID for a message

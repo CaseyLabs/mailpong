@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hkdb/aerion/extensions/contacts"
-	coreapi "github.com/hkdb/aerion/internal/core/api/v1"
+	"github.com/caseylabs/mailpong/extensions/contacts"
+	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
 )
 
 // Extension is the Contacts extension's lifecycle handle. It's intentionally
@@ -35,7 +35,7 @@ func NewExtension() *Extension {
 func (e *Extension) Manifest() coreapi.Manifest { return e.manifest }
 
 // Register wires the Contacts extension's UI surfaces (rail tab + account-setup
-// hook). Runs once per Aerion process lifetime, at App.Startup, regardless of
+// hook). Runs once per MailPong process lifetime, at App.Startup, regardless of
 // whether the extension is currently enabled — descriptive registrations
 // persist across enable/disable cycles. The frontend filters by enabled
 // state at render time.

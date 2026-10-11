@@ -1,6 +1,6 @@
 <script lang="ts">
   // Launch-time warning shown when one or more OAuth provider credentials
-  // weren't compiled into this build of Aerion. Sign-in for the listed
+  // weren't compiled into this build of MailPong. Sign-in for the listed
   // providers will silently fail otherwise. Acknowledged via the OK button;
   // an optional "Don't show again" toggle persists the opt-out via the
   // SetOAuthWarningDisabled setting in App.svelte.
@@ -28,7 +28,7 @@
 
   let dontShowAgain = $state(false)
 
-  const INSTALL_URL = 'https://aerion.3df.io/docs/getting-started/installation/'
+  const INSTALL_URL = 'https://github.com/caseylabs/mailpong/blob/main/README.md#installation'
 
   function iconFor(present: boolean): string {
     if (present) return 'lucide:check'
@@ -80,7 +80,7 @@
       class="text-sm text-primary hover:underline break-all text-left focus:outline-hidden focus-visible:outline-hidden focus:ring-0"
       onclick={openInstallDocs}
     >
-      https://aerion.3df.io/docs/getting-started/installation/
+      https://github.com/caseylabs/mailpong/blob/main/README.md#installation
     </button>
 
     <label class="flex items-center gap-3 text-sm mt-2">

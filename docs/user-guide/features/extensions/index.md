@@ -4,20 +4,20 @@ sidebar_position: 7
 
 # Extensions
 
-Aerion includes a first-party extension system. Extensions are built into the app but **disabled by default** — if you never enable one, you won't see it.
+MailPong includes a first-party extension system. Extensions are built into the app but **disabled by default** — if you never enable one, you won't see it.
 
 ## Disabled by Default — by Design
 
 Disabling by default is a deliberate, permanent choice, not a temporary state:
 
-- Aerion stays a simple email client for those who want email and nothing else.
+- MailPong stays a simple email client for those who want email and nothing else.
 - A disabled extension loads none of its components, so there's no wasted resource consumption for features you aren't using.
 - Resource consumption scales proportionately with what you choose to enable.
 
 Each extension also stores its data in its own local database, separate from the rest of the app.
 
-:::info Requires Aerion 0.3.0+
-The extension system and its extensions are available starting in Aerion 0.3.0.
+:::info Requires MailPong 0.3.0+
+The extension system and its extensions are available starting in MailPong 0.3.0.
 :::
 
 ## Shipped Extensions
@@ -38,7 +38,7 @@ The Contacts and Calendar extensions are currently in **ALPHA**. Expect rough ed
 
 ## The Rail
 
-With no extensions enabled, Aerion looks exactly like a plain email client. Enable at least one extension and a navigation **rail** appears on the left edge of the window. The rail has a button for Mail plus one button for each enabled extension — click a button to switch between them. Disable every extension and the rail disappears again.
+With no extensions enabled, MailPong looks exactly like a plain email client. Enable at least one extension and a navigation **rail** appears on the left edge of the window. The rail has a button for Mail plus one button for each enabled extension — click a button to switch between them. Disable every extension and the rail disappears again.
 
 ## Google & Microsoft Credentials
 
@@ -46,11 +46,12 @@ Extensions that connect to Google or Microsoft use their own OAuth client creden
 
 **Google**
 
-- **Aerion - Google (Testing)** — the default. A temporary testing client for extensions. Adding the extensions' new scopes directly to Aerion core would force re-verification and disrupt core, so extensions use a separate Google testing project for now.
-- **Custom** — your own client ID and secret. See [Custom Google OAuth Credentials](/docs/getting-started/first-account/google-oauth-credentials).
-- **Aerion - Google** — the same credentials Aerion core uses.
+- **Custom** — your own client ID and secret. MailPong bundles no Google credentials. See [Custom Google OAuth Credentials](/docs/getting-started/first-account/google-oauth-credentials).
+- **MailPong - Google** — reuse the credentials you saved for Gmail in Settings → Accounts.
 
 **Microsoft**
 
-- **Aerion - Microsoft** — the default; the same credentials Aerion core uses.
-- **Custom** — your own client ID and secret.
+- **Custom** — your own client ID and secret from an Azure AD (Microsoft Entra) app registration that has a `http://localhost` redirect URI for a public client.
+- **MailPong - Microsoft** — reuse the credentials you saved for Outlook in Settings → Accounts.
+
+Options other than Custom appear only when the matching credentials exist.

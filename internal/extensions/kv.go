@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	coreapi "github.com/hkdb/aerion/internal/core/api/v1"
+	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
 )
 
 // KV returns the v1.KVStore backed by this Store's ext_kv table.

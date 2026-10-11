@@ -8,7 +8,7 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/armor"
-	"github.com/hkdb/aerion/internal/credentials"
+	"github.com/caseylabs/mailpong/internal/credentials"
 	"github.com/rs/zerolog"
 )
 

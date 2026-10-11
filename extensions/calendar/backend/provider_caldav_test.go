@@ -19,7 +19,7 @@ import (
 	"strings"
 	"testing"
 
-	coreapi "github.com/hkdb/aerion/internal/core/api/v1"
+	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
 )
 
 // fakeSecrets satisfies coreapi.Secrets with a static password. Only Get is
@@ -84,7 +84,7 @@ func TestCalDAVProvider_PushEvent_CreateSuccess(t *testing.T) {
 	p := newTestProvider("secret")
 	src := Source{ID: "src-1", Type: SourceTypeCalDAV, Username: "user", URL: srv.URL}
 	cal := Calendar{ID: "cal-1", URL: srv.URL + "/calendars/user/personal/"}
-	ev := Event{UID: "abc@aerion-caldav", ICSBlob: "BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n"}
+	ev := Event{UID: "abc@mailpong-caldav", ICSBlob: "BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n"}
 
 	result, err := p.PushEvent(t.Context(), src, cal, ev)
 	if err != nil {
@@ -102,8 +102,8 @@ func TestCalDAVProvider_PushEvent_CreateSuccess(t *testing.T) {
 	if got.ifMatch != "" {
 		t.Errorf("If-Match should be empty on create, got %q", got.ifMatch)
 	}
-	if !strings.HasSuffix(got.path, "/abc@aerion-caldav.ics") {
-		t.Errorf("path = %q, want suffix /abc@aerion-caldav.ics", got.path)
+	if !strings.HasSuffix(got.path, "/abc@mailpong-caldav.ics") {
+		t.Errorf("path = %q, want suffix /abc@mailpong-caldav.ics", got.path)
 	}
 	if !strings.HasPrefix(got.contentType, "text/calendar") {
 		t.Errorf("Content-Type = %q, want text/calendar prefix", got.contentType)
@@ -126,7 +126,7 @@ func TestCalDAVProvider_PushEvent_UpdateSuccess(t *testing.T) {
 	src := Source{ID: "src-1", Type: SourceTypeCalDAV, Username: "user", URL: srv.URL}
 	cal := Calendar{ID: "cal-1", URL: srv.URL + "/calendars/user/personal/"}
 	ev := Event{
-		UID:     "abc@aerion-caldav",
+		UID:     "abc@mailpong-caldav",
 		Href:    srv.URL + "/calendars/user/personal/abc.ics",
 		ETag:    `"old-etag"`,
 		ICSBlob: "BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n",
@@ -160,7 +160,7 @@ func TestCalDAVProvider_PushEvent_Conflict(t *testing.T) {
 	src := Source{ID: "src-1", Type: SourceTypeCalDAV, Username: "user", URL: srv.URL}
 	cal := Calendar{ID: "cal-1", URL: srv.URL + "/calendars/user/personal/"}
 	ev := Event{
-		UID:     "abc@aerion-caldav",
+		UID:     "abc@mailpong-caldav",
 		Href:    srv.URL + "/calendars/user/personal/abc.ics",
 		ETag:    `"stale-etag"`,
 		ICSBlob: "BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n",
@@ -182,7 +182,7 @@ func TestCalDAVProvider_PushEvent_ServerError(t *testing.T) {
 	p := newTestProvider("secret")
 	src := Source{ID: "src-1", Type: SourceTypeCalDAV, Username: "user", URL: srv.URL}
 	cal := Calendar{ID: "cal-1", URL: srv.URL + "/calendars/user/personal/"}
-	ev := Event{UID: "abc@aerion-caldav", ICSBlob: "BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n"}
+	ev := Event{UID: "abc@mailpong-caldav", ICSBlob: "BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n"}
 
 	_, err := p.PushEvent(t.Context(), src, cal, ev)
 	if err == nil {
@@ -208,7 +208,7 @@ func TestCalDAVProvider_DeleteRemote_Success(t *testing.T) {
 	src := Source{ID: "src-1", Type: SourceTypeCalDAV, Username: "user", URL: srv.URL}
 	cal := Calendar{ID: "cal-1", URL: srv.URL + "/calendars/user/personal/"}
 	ev := Event{
-		UID:  "abc@aerion-caldav",
+		UID:  "abc@mailpong-caldav",
 		Href: srv.URL + "/calendars/user/personal/abc.ics",
 		ETag: `"current-etag"`,
 	}
@@ -310,13 +310,13 @@ func TestCalDAVProvider_PushEvent_RelativeCalURLNextcloud(t *testing.T) {
 		// multistatus responses.
 		URL: "/remote.php/dav/calendars/user/personal/",
 	}
-	ev := Event{UID: "evt@aerion-caldav", ICSBlob: "BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n"}
+	ev := Event{UID: "evt@mailpong-caldav", ICSBlob: "BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n"}
 
 	if _, err := p.PushEvent(t.Context(), src, cal, ev); err != nil {
 		t.Fatalf("PushEvent: %v", err)
 	}
-	if got.path != "/remote.php/dav/calendars/user/personal/evt@aerion-caldav.ics" {
-		t.Errorf("path = %q, want /remote.php/dav/calendars/user/personal/evt@aerion-caldav.ics", got.path)
+	if got.path != "/remote.php/dav/calendars/user/personal/evt@mailpong-caldav.ics" {
+		t.Errorf("path = %q, want /remote.php/dav/calendars/user/personal/evt@mailpong-caldav.ics", got.path)
 	}
 }
 

@@ -1,6 +1,6 @@
 <script lang="ts">
   // AddMicrosoftCalendarDialog — minimal three-step picker for attaching an
-  // Outlook / Microsoft 365 calendar source to an existing Aerion mail
+  // Outlook / Microsoft 365 calendar source to an existing MailPong mail
   // account. Phase 2 Chunk 4 sibling of AddGoogleCalendarDialog.
   //
   // Flow mirrors the Google variant 1-for-1; the only differences are:

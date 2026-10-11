@@ -1,8 +1,8 @@
 package app
 
 import (
-	coreapi "github.com/hkdb/aerion/internal/core/api/v1"
-	"github.com/hkdb/aerion/internal/settings"
+	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
+	"github.com/caseylabs/mailpong/internal/settings"
 )
 
 // ListEnabledExtensions returns the names of all enabled first-party
@@ -84,11 +84,12 @@ func (a *App) enabledExtensionSet() (map[string]bool, error) {
 // ExtensionInfo is the row shape returned by ListExtensions — manifest fields
 // plus the current enable state. Wails-friendly (all primitive/slice types).
 type ExtensionInfo struct {
-	ID               string   `json:"id"`
-	Name             string   `json:"name"`
-	Version          string   `json:"version"`
-	Description      string   `json:"description"`
-	Author           string   `json:"author"`
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Version     string `json:"version"`
+	Description string `json:"description"`
+	Author      string `json:"author"`
+	// Legacy identifier from Aerion; persisted, do not rename.
 	MinAerionVersion string   `json:"minAerionVersion"`
 	Capabilities     []string `json:"capabilities"`
 	Enabled          bool     `json:"enabled"`

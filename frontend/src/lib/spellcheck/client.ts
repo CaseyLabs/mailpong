@@ -55,8 +55,8 @@ class SpellcheckClient {
     }
   }
 
-  // Sets the active languages from app locales (svelte-i18n codes). Non-
-  // spellcheckable locales (zh-*, vi) are dropped; if none remain, the worker
+  // Sets the active languages from app locales (svelte-i18n codes). Locales
+  // without a shipped dictionary are dropped; if none remain, the worker
   // is torn down and spellcheck goes idle.
   setLanguages(appLocales: string[]): void {
     const dicts = [...new Set(appLocales.map(appLocaleToDict).filter((d): d is string => d !== null))]

@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/hkdb/aerion/internal/account"
-	"github.com/hkdb/aerion/internal/certificate"
-	"github.com/hkdb/aerion/internal/credentials"
-	"github.com/hkdb/aerion/internal/imap"
-	"github.com/hkdb/aerion/internal/logging"
-	"github.com/hkdb/aerion/internal/oauth2"
-	"github.com/hkdb/aerion/internal/platform"
+	"github.com/caseylabs/mailpong/internal/account"
+	"github.com/caseylabs/mailpong/internal/certificate"
+	"github.com/caseylabs/mailpong/internal/credentials"
+	"github.com/caseylabs/mailpong/internal/imap"
+	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailpong/internal/oauth2"
+	"github.com/caseylabs/mailpong/internal/platform"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -257,7 +257,7 @@ func (a *App) CompleteOAuthAccountSetup(provider, email, accountName, displayNam
 
 // StartCustomOAuthFlow initiates an OAuth2 authorization flow for a user-supplied
 // ("bring your own app") provider — used when adding a generic IMAP account with OAuth.
-// Aerion ships no credentials for custom providers, so the caller passes the
+// MailPong ships no credentials for custom providers, so the caller passes the
 // authorization + token endpoints, scopes, and client credentials. Emits the same
 // oauth:started / oauth:success / oauth:error events as StartOAuthFlow, so the frontend
 // reuses its existing OAuth UI. On success, CompleteCustomOAuthAccountSetup persists the

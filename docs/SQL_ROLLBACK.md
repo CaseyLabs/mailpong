@@ -1,13 +1,13 @@
 # Database Rollback Guide
 
-This guide walks you through rolling back Aerion's database schema after an upgrade. Schema migrations in Aerion are **forward-only by design** — the running application doesn't downgrade automatically. If you upgrade Aerion to a new version that ran a migration and then want to go back to an older version, you need to manually reshape the database so the older version can read it.
+This guide walks you through rolling back MailPong's database schema after an upgrade. Schema migrations are **forward-only by design** — the running application doesn't downgrade automatically. If you upgrade MailPong to a new version that ran a migration and then want to go back to an older version, you need to manually reshape the database so the older version can read it.
 
 Each section below covers a single released-to-released schema transition with a documented rollback path. Intermediate development schemas (e.g., the v31 that existed mid-cycle but never shipped) don't get their own section — there's no real-world DB at that state to roll back from. Find the section that matches your release-to-release transition.
 
 ## When you might need this
 
-- You upgraded to a newer Aerion (e.g., 0.3.0) and want to go back to 0.2.5 for any reason.
-- Aerion shows an error like *"This database was written by a newer Aerion. Either upgrade Aerion or follow the rollback guide..."* — the schema-version gate is refusing to open a DB that's newer than your running build.
+- You upgraded to a newer version (e.g., 0.3.0) and want to go back to an older one (e.g., 0.2.5) for any reason. Version numbers up to 0.3.x are Aerion releases; MailPong continues the numbering from 0.4.0.
+- MailPong shows an error like *"This database was written by a newer MailPong. Either upgrade MailPong or follow the rollback guide..."* — the schema-version gate is refusing to open a DB that's newer than your running build.
 
 ## What you'll lose
 
@@ -15,39 +15,39 @@ Each rollback section lists the **data lost on rollback** for that migration. Th
 
 ## What you need
 
-- The Aerion DB file. Default path:
-  - Linux: `~/.local/share/aerion/aerion.db`
-  - macOS: `~/Library/Application Support/Aerion/aerion.db`
-  - Windows: `%LOCALAPPDATA%\aerion\aerion.db`
+- The MailPong DB file. Default path:
+  - Linux: `~/.local/share/mailpong/mailpong.db` (Flatpak: `~/.var/app/io.github.caseylabs.MailPong/data/mailpong/mailpong.db`)
+  - macOS: `~/Library/Application Support/MailPong/mailpong.db`
+  - Windows: `%APPDATA%\MailPong\mailpong.db`
 - `sqlite3` command-line tool installed (most Linux/macOS systems have it; Windows users may need to install from sqlite.org).
-- The matching rollback script for your migration, downloaded from the Aerion repo's `tools/db/` directory on the branch/tag corresponding to the version that introduced the migration.
+- The matching rollback script for your migration, downloaded from the MailPong repository's `tools/db/` directory on the branch/tag corresponding to the version that introduced the migration.
 
 ---
 
 ### Procedure
 
-1. **Quit Aerion completely** (use the menu Quit, or kill the process — make sure nothing is using `aerion.db`).
+1. **Quit MailPong completely** (use the menu Quit, or kill the process — make sure nothing is using `mailpong.db`).
 
 2. **Back up your DB file** as a precaution. This script makes changes that are difficult to reverse cleanly if anything goes wrong, so a real file copy is your safety net:
 
    ```bash
-   cp ~/.local/share/aerion/aerion.db ~/.local/share/aerion/aerion.db.before-rollback
+   cp ~/.local/share/mailpong/mailpong.db ~/.local/share/mailpong/mailpong.db.before-rollback
    ```
 
    (Adjust the path for your OS — see "What you need" above.)
 
-3. **Download the rollback script** from the Aerion repo. On the branch where the 0.3.0 schema lives (0.3.0 or later):
+3. **Get the rollback script** from the `tools/db/` directory of your MailPong checkout (it is also published in the original Aerion repository, where it was first released):
 
    ```bash
-   curl -O https://raw.githubusercontent.com/hkdb/aerion/main/tools/db/rollback-v39-to-v30.sql
+   curl -O https://raw.githubusercontent.com/caseylabs/mailpong/main/tools/db/rollback-v39-to-v30.sql
    ```
 
-   (Or download via your browser from `https://github.com/hkdb/aerion/blob/main/tools/db/rollback-v39-to-v30.sql`.)
+   (Or download via your browser from `https://github.com/caseylabs/mailpong/blob/main/tools/db/rollback-v39-to-v30.sql`.)
 
 4. **Run the script against your DB**:
 
    ```bash
-   sqlite3 ~/.local/share/aerion/aerion.db < rollback-v39-to-v30.sql
+   sqlite3 ~/.local/share/mailpong/mailpong.db < rollback-v39-to-v30.sql
    ```
 
    The script runs in a single transaction. If anything fails, no changes are committed and your DB is unchanged.
@@ -55,23 +55,23 @@ Each rollback section lists the **data lost on rollback** for that migration. Th
 5. **Verify the rollback** worked:
 
    ```bash
-   sqlite3 ~/.local/share/aerion/aerion.db \
+   sqlite3 ~/.local/share/mailpong/mailpong.db \
      "SELECT COUNT(*) FROM contacts; SELECT COUNT(*) FROM carddav_contacts; SELECT MAX(version) FROM migrations;"
    ```
 
    You should see your contacts counts and `30` as the max migration version.
 
-6. **Launch the older Aerion** (0.2.5 or earlier). It should start normally and your contacts autocomplete should work as before.
+6. **Launch the older version** (0.2.5 or earlier). It should start normally and your contacts autocomplete should work as before.
 
 ### If something goes wrong
 
 Restore the backup you made in step 2:
 
 ```bash
-cp ~/.local/share/aerion/aerion.db.before-rollback ~/.local/share/aerion/aerion.db
+cp ~/.local/share/mailpong/mailpong.db.before-rollback ~/.local/share/mailpong/mailpong.db
 ```
 
-You're back to the v39 state and can run Aerion 0.3.0 again.
+You're back to the v39 state and can run the newer version again.
 
 If the issue persists, open a GitHub issue with the SQL error output and the version you were rolling back from / to.
 
@@ -98,8 +98,8 @@ Migrations 31 through 39 ship together in 0.3.0 — no real-world DB will ever s
 **Data lost on rollback to v30**:
 
 - All multi-field contact data — phone numbers, addresses, URLs, instant-messaging handles, organization, job title, notes, birthday, nickname, categories. The v30 schema has no columns for these, so they're dropped.
-- The `vcard_raw` round-trip preservation column. Means that the next time CardDAV sync runs under the older Aerion, it will re-fetch and re-parse vCards from the server — only the fields the older parser knows about (email + display name) survive.
-- CardDAV contacts' synthetic local IDs are reshaped. Older Aerion identifies CardDAV contacts during sync by `href` (server-side URL path), not by local ID, so this doesn't affect sync correctness — only the row IDs change.
+- The `vcard_raw` round-trip preservation column. Means that the next time CardDAV sync runs under the older version, it will re-fetch and re-parse vCards from the server — only the fields the older parser knows about (email + display name) survive.
+- CardDAV contacts' synthetic local IDs are reshaped. The older version identifies CardDAV contacts during sync by `href` (server-side URL path), not by local ID, so this doesn't affect sync correctness — only the row IDs change.
 - Local-record UUIDs are dropped — v30 keys local contacts by email, which is the natural identity for the legacy schema.
 - **Extension secrets stored in the AES-fallback path** (i.e., entries in the `extension_secrets` table). Keyring-stored entries are NOT touched by the rollback SQL — they remain in the OS keyring but become orphaned (no DB row pointing at them). To clean them up, use your OS keyring manager (Seahorse / Keychain / Credential Manager) and remove entries starting with `ext:`. In practice the Calendar extension is the only Phase-1 consumer, so the impact is: any saved CalDAV passwords will need to be re-entered after rollback + upgrade.
 - **Per-extension OAuth grants** (the `google-contacts`, `google-calendar`, `microsoft-contacts`, `microsoft-calendar` slot tokens). The rollback deletes those `oauth_tokens` rows and drops the new fallback columns. v0.2.5 doesn't have the contacts/calendar extensions, so this only matters when you upgrade back to 0.3.0 — you'll need to re-grant calendar / contacts access from inside the relevant extension setting. Per-slot keyring entries (keys of the form `<accountID>:<configID>:access_token` / `refresh_token`) are NOT cleared by the rollback SQL; remove them from the OS keyring manager if you want a clean state. The mail OAuth grant (the `google-mail` / `microsoft-mail` row) is untouched.
@@ -113,7 +113,7 @@ Migrations 31 through 39 ship together in 0.3.0 — no real-world DB will ever s
 The v0.3.0 OAuth Credentials picker (Settings → Accounts → OAuth Credentials, plus the equivalent extension settings sections) accumulates state in three places that the rollback SQL doesn't touch. All three are inert under v0.2.5 — the older code doesn't read them — so leaving them in place is safe. They're listed here in case you want a fully clean state, or are doing a re-upgrade and want to start fresh:
 
 - The `user_oauth_clients` table (on-demand, created when the user first saves a Custom client_id+secret). The table itself stays; rows stay. v0.2.5 doesn't read it. On re-upgrade to v0.3.0, the saved values become active again.
-- The `user_oauth_slot_aliases` table (on-demand, created when the user first picks the "Aerion - <provider>" alias option). Same treatment.
+- The `user_oauth_slot_aliases` table (on-demand, created when the user first picks the "MailPong - <provider>" alias option). Same treatment.
 - Per-slot rows in the existing `settings` table with key `oauth_active_choice:<slot_id>` (introduced post-v0.3.0-build1). These encode the user's explicit picker selection independent of which credentials/alias rows happen to exist. v0.2.5 doesn't read them. On re-upgrade to v0.3.0, the marker takes effect again and the picker reflects what was last selected.
 
 Optional cleanup (run only if you want zero leftover OAuth picker state in the DB):
@@ -159,7 +159,7 @@ DELETE FROM migrations WHERE version = 52;
 
 ## Migration 53: Gmail send-as cache
 
-Migration 53 adds the `account_send_as` table, a cache of each Google account's Gmail "Send mail as" list. Older builds ignore it, so rolling back needs no SQL: leave it in place. To remove it anyway (Aerion refetches the list on demand):
+Migration 53 adds the `account_send_as` table, a cache of each Google account's Gmail "Send mail as" list. Older builds ignore it, so rolling back needs no SQL: leave it in place. To remove it anyway (MailPong refetches the list on demand):
 
 ```sql
 DROP TABLE account_send_as;

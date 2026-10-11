@@ -64,6 +64,7 @@
     const found = contactsView.contacts.find(c => c.id === id)
     if (!found) return
     const writable =
+      // The 'aerion' source id is a Legacy identifier from Aerion; persisted, do not rename.
       found.sourceId === 'aerion' || contactSourcesStore.isSourceWritable(found.sourceId)
     if (!writable) return
     pendingDelete = found

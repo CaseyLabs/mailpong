@@ -5,7 +5,7 @@ pagination_next: features/overview
 
 # First Account Setup
 
-This guide walks you through adding your first email account to Aerion.
+This guide walks you through adding your first email account to MailPong.
 
 ## Adding an Account
 
@@ -31,7 +31,7 @@ Alternatively, you can go to **Settings > Accounts > Add Account**.
     - **Request Read Receipts** - Read receipt settings for send. Default: `Never`
 9. **Click Add Account**
 
-Aerion will connect to your email server and begin synchronizing your messages. If it doesn't start syncing automatically, click on the 3 dot menu next to the account and click "Sync Now".
+MailPong will connect to your email server and begin synchronizing your messages. If it doesn't start syncing automatically, click on the 3 dot menu next to the account and click "Sync Now".
 
 ## Further Details
 
@@ -43,12 +43,12 @@ import DocCardList from '@theme/DocCardList';
 
 ## Initial Sync
 
-After adding your account, Aerion will sync your emails. This may take a long time depending on your mailbox size.
+After adding your account, MailPong will sync your emails. This may take a long time depending on your mailbox size.
 
-By default, Aerion syncs emails from the last 180 days. You can adjust this in the account settings.
+By default, MailPong syncs emails from the last 180 days. You can adjust this in the account settings.
 
 ## Adding More Accounts
 
-You can reasonably add as many email accounts as you want to Aerion. Each account can have its own color for easy identification in the unified inbox.
+You can reasonably add as many email accounts as you want to MailPong. Each account can have its own color for easy identification in the unified inbox.
 
 To add another account, click the **+ Add Account** button in the sidebar, or go to **Settings > Accounts > Add Account**.

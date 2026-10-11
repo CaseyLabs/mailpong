@@ -7,7 +7,7 @@
   // account-setup hook dispatch). When a new first-party extension lands,
   // add its case to the {#if} chain. Community extensions (v0.4+) will use
   // a different mechanism since their Svelte components aren't compiled
-  // into Aerion's binary.
+  // into MailPong's binary.
   //
   // Mount once at App.svelte level so the dialog can be opened from anywhere.
 

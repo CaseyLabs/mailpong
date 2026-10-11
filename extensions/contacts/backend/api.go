@@ -8,15 +8,15 @@ import (
 	"strings"
 	"time"
 
+	"github.com/caseylabs/mailpong/extensions/contacts/backend/imaging"
+	"github.com/caseylabs/mailpong/internal/carddav"
+	"github.com/caseylabs/mailpong/internal/contact"
+	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
+	"github.com/caseylabs/mailpong/internal/kit/davutil"
 	"github.com/google/uuid"
-	"github.com/hkdb/aerion/extensions/contacts/backend/imaging"
-	"github.com/hkdb/aerion/internal/carddav"
-	"github.com/hkdb/aerion/internal/contact"
-	coreapi "github.com/hkdb/aerion/internal/core/api/v1"
-	"github.com/hkdb/aerion/internal/kit/davutil"
 )
 
-// Source IDs for Aerion's core local contact store. CardDAV sources use their
+// Source IDs for MailPong's core local contact store. CardDAV sources use their
 // own UUIDs (one per configured source).
 //
 // The local source has two sub-categories distinguished by `contacts.kind`:

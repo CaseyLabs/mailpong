@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hkdb/aerion/internal/account"
-	"github.com/hkdb/aerion/internal/database"
+	"github.com/caseylabs/mailpong/internal/account"
+	"github.com/caseylabs/mailpong/internal/database"
 )
 
 func serve(t *testing.T, status int, body string) {

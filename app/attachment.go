@@ -9,12 +9,12 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/hkdb/aerion/internal/email"
-	"github.com/hkdb/aerion/internal/logging"
-	"github.com/hkdb/aerion/internal/message"
-	"github.com/hkdb/aerion/internal/pgp"
-	"github.com/hkdb/aerion/internal/platform"
-	"github.com/hkdb/aerion/internal/smime"
+	"github.com/caseylabs/mailpong/internal/email"
+	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailpong/internal/message"
+	"github.com/caseylabs/mailpong/internal/pgp"
+	"github.com/caseylabs/mailpong/internal/platform"
+	"github.com/caseylabs/mailpong/internal/smime"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 

@@ -8,7 +8,7 @@ import (
 // Google attendee round-trip: googleEvent JSON → ICS blob → googleEvent.
 func TestGoogleTranslate_AttendeesRoundTrip(t *testing.T) {
 	src := googleEvent{
-		ICalUID: "evt-att-google@aerion",
+		ICalUID: "evt-att-google@mailpong",
 		Status:  "confirmed",
 		Summary: "Quarterly review",
 		Start: &googleTimePoint{
@@ -74,7 +74,7 @@ func TestGoogleTranslate_AttendeesRoundTrip(t *testing.T) {
 // Microsoft attendee round-trip: graphEvent JSON → ICS blob → graphEvent.
 func TestMicrosoftTranslate_AttendeesRoundTrip(t *testing.T) {
 	src := graphEvent{
-		ICalUID: "evt-att-graph@aerion",
+		ICalUID: "evt-att-graph@mailpong",
 		Subject: "Quarterly review",
 		Start: &graphTimePoint{
 			DateTime: "2026-06-10T14:00:00.0000000",

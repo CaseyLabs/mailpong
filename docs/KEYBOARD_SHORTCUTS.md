@@ -1,6 +1,6 @@
-# Aerion Keyboard Shortcuts
+# MailPong Keyboard Shortcuts
 
-Complete reference of all keyboard shortcuts in Aerion.
+Complete reference of all keyboard shortcuts in MailPong.
 
 ## Global Shortcuts
 

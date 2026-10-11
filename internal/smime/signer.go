@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hkdb/aerion/internal/credentials"
+	"github.com/caseylabs/mailpong/internal/credentials"
 	"github.com/rs/zerolog"
 	"go.mozilla.org/pkcs7"
 )

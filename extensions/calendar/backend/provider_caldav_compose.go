@@ -28,7 +28,7 @@ import (
 	"github.com/emersion/go-webdav"
 	"github.com/google/uuid"
 
-	"github.com/hkdb/aerion/internal/kit/davutil"
+	"github.com/caseylabs/mailpong/internal/kit/davutil"
 )
 
 // composedVCalendar is the output of composeVCalendar. NewSeries is
@@ -157,7 +157,7 @@ func composeThisAndFuture(cal *ical.Calendar, payload PushInstancePayload) (comp
 	out := composedVCalendar{MasterBlob: masterBlob}
 
 	if payload.Kind == InstanceOpUpdate {
-		newUID := uuid.NewString() + "@aerion-caldav"
+		newUID := uuid.NewString() + "@mailpong-caldav"
 		newBlob, err := serializeVEVENT(newUID, payload.In)
 		if err != nil {
 			return composedVCalendar{}, fmt.Errorf("serialize new series: %w", err)

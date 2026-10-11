@@ -1,7 +1,7 @@
 /* Breeze — KDE Plasma default. Palette mapping from KDE/breeze:
    colors/BreezeLight.colors and colors/BreezeDark.colors (the canonical reference).
    Iconic Breeze blue #3DAEE9 (Selection BackgroundNormal) drives --primary in
-   both variants. Aerion-specific override: --ring matches --primary. */
+   both variants. MailPong-specific override: --ring matches --primary. */
 @layer base {
   /* Breeze Light */
   [data-theme="breeze-light"] {

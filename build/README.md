@@ -33,3 +33,14 @@ build with `make build`.
 - `info.json` - Application details used for Windows builds. The data here will be used by the Windows installer,
   as well as the application itself (right click the exe -> properties -> details)
 - `wails.exe.manifest` - The main application manifest file.
+
+## MailPong packaging identity
+
+MailPong installs next to Aerion without sharing any of its state:
+
+- macOS: bundle ID `io.github.caseylabs.MailPong`, app `MailPong.app` (Wails names the bundle after
+  the `wails.json` `name`; macOS volumes are case-insensitive by default, so `make` uses `MailPong.app`).
+- Windows: install directory `Program Files\MailPong`, uninstall key `HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\MailPong`
+  (fixed by `UNINST_KEY_NAME` in `installer/project.nsi`), installer `build/bin/mailpong-<arch>-installer.exe`.
+- Code signing (Windows Authenticode) and macOS notarization are not set up yet; macOS builds are only
+  ad-hoc signed. Both are future work.

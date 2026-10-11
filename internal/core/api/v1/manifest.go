@@ -9,11 +9,12 @@ package v1
 // import paths, no compiled-type references, no host-coupled fields. The
 // host reads the manifest before deciding whether to load an extension.
 type Manifest struct {
-	ID               string         `json:"id"`          // canonical extension id (matches settings.AllExtensionKeys)
-	Name             string         `json:"name"`        // user-facing display name
-	Version          string         `json:"version"`     // semver
-	Description      string         `json:"description"` // 1-2 sentence summary shown in Settings
-	Author           string         `json:"author"`
+	ID          string `json:"id"`          // canonical extension id (matches settings.AllExtensionKeys)
+	Name        string `json:"name"`        // user-facing display name
+	Version     string `json:"version"`     // semver
+	Description string `json:"description"` // 1-2 sentence summary shown in Settings
+	Author      string `json:"author"`
+	// Legacy identifier from Aerion; persisted, do not rename.
 	MinAerionVersion string         `json:"minAerionVersion"` // semver — host refuses to load if lower
 	Capabilities     []string       `json:"capabilities"`     // coarse capabilities; see below
 	OAuth            *ManifestOAuth `json:"oauth,omitempty"`  // OAuth routing config; nil if extension uses no OAuth
@@ -23,7 +24,7 @@ type Manifest struct {
 // the Auth Broker. For each requested scope:
 //
 //   - If the scope is listed in FirstPartyUsesCoreForScopes, the broker routes
-//     through Aerion core's mail OAuth (<provider>-mail client config). This
+//     through MailPong core's mail OAuth (<provider>-mail client config). This
 //     reuses the user's existing mail consent — no new OAuth prompt — but it's
 //     only viable when the mail OAuth grant already covers that scope (e.g.,
 //     contacts.readonly is on the mail grant for Google).
@@ -43,7 +44,7 @@ type Manifest struct {
 // is unconditionally honored.
 type ManifestOAuth struct {
 	// FirstPartyUsesCoreForScopes lists the scope strings (exact match) that
-	// should route through Aerion core's mail OAuth instead of the extension's
+	// should route through MailPong core's mail OAuth instead of the extension's
 	// own client config. See gate above.
 	FirstPartyUsesCoreForScopes []string `json:"first_party_uses_core_for_scopes,omitempty"`
 }
@@ -76,7 +77,7 @@ type Capability = string
 // directly (they're separate subprocesses), but their Register handshake
 // over IPC will mirror these two methods.
 //
-// Register is called once per Aerion process lifetime, at startup, regardless
+// Register is called once per MailPong process lifetime, at startup, regardless
 // of whether the extension is currently enabled. This matches the
 // architecture-doc rule that descriptive UI registrations (rail tab, hooks)
 // persist across enable/disable cycles. Active behaviors that depend on

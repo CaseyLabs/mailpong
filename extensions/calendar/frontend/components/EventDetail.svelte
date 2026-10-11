@@ -108,7 +108,7 @@
   // Same predicate the backend's UpdateMyAttendeeStatus uses on its side.
   //
   // Union of two sources:
-  //   - Every configured Aerion mail account's primary email.
+  //   - Every configured MailPong mail account's primary email.
   //   - Every calendar source's organizer identities (from
   //     organizerIdentities populated at source-add time).
   //

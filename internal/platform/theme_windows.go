@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hkdb/aerion/internal/logging"
+	"github.com/caseylabs/mailpong/internal/logging"
 )
 
 // WindowsThemeMonitor is a stub for Windows (frontend uses matchMedia fallback)

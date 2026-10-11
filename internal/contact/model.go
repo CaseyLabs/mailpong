@@ -7,14 +7,15 @@ import "time"
 // to a (record, email) pair in the unified schema — autocomplete is per-email.
 // Multi-field data (phones/addresses/etc.) is exposed via Record.
 type Contact struct {
-	Email       string    `json:"email"`
-	DisplayName string    `json:"display_name"`
-	Source      string    `json:"source"`         // legacy: "aerion", "carddav", "vcard"; new unified mapping: "local"→"aerion", "carddav"→"carddav"
-	Kind        string    `json:"kind,omitempty"` // "manual" | "collected" — only set on local contacts
-	AvatarURL   string    `json:"avatar_url,omitempty"`
-	SendCount   int       `json:"send_count"`
-	LastUsed    time.Time `json:"last_used"`
-	CreatedAt   time.Time `json:"created_at"`
+	Email       string `json:"email"`
+	DisplayName string `json:"display_name"`
+	// Legacy identifier from Aerion; persisted, do not rename.
+	Source    string    `json:"source"`         // legacy: "aerion", "carddav", "vcard"; new unified mapping: "local"→"aerion", "carddav"→"carddav"
+	Kind      string    `json:"kind,omitempty"` // "manual" | "collected" — only set on local contacts
+	AvatarURL string    `json:"avatar_url,omitempty"`
+	SendCount int       `json:"send_count"`
+	LastUsed  time.Time `json:"last_used"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 // LocalContact is a thin shape historically used in a couple of places. Kept

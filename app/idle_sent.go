@@ -3,8 +3,8 @@ package app
 import (
 	"time"
 
-	"github.com/hkdb/aerion/internal/folder"
-	"github.com/hkdb/aerion/internal/logging"
+	"github.com/caseylabs/mailpong/internal/folder"
+	"github.com/caseylabs/mailpong/internal/logging"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 

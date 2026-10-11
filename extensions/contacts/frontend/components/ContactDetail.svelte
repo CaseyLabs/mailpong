@@ -26,6 +26,7 @@
   // source's `writable` flag is enabled (Settings → source → "Enable write
   // access"). Google / Microsoft sources gain write capability in 2b.3
   // alongside the provider-specific write paths.
+  // The 'aerion' source id is a Legacy identifier from Aerion; persisted, do not rename.
   let isWritable = $derived(
     contact?.sourceId === 'aerion' || contactSourcesStore.isSourceWritable(contact?.sourceId),
   )

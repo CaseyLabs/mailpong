@@ -1,7 +1,7 @@
 /* Tokyo Night (Night variant) — palette per folke/tokyonight.nvim, the
    canonical reference (Night extends Storm, overriding only bg shades).
    No official shadcn-ui port exists; mapping mirrors the shadcn surface tier
-   strategy (Aerion variables share the same shadcn names). Aerion-specific
+   strategy (MailPong variables share the same shadcn names). MailPong-specific
    --ring override (Blue, matching --primary convention). */
 @layer base {
   [data-theme="tokyo-night"] {

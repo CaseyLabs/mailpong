@@ -4,11 +4,11 @@ sidebar_position: 4
 
 # Contacts
 
-Aerion can sync contacts from multiple sources to provide autocomplete when composing emails.
+MailPong can sync contacts from multiple sources to provide autocomplete when composing emails.
 
 ## Contact Sources
 
-Aerion supports three types of contact sources:
+MailPong supports three types of contact sources:
 
 ### CardDAV
 
@@ -68,7 +68,7 @@ Sync contacts from your Microsoft/Outlook account. This can be:
 3. Enter your username and password
 4. Click **Add**
 
-Aerion will discover available address books on the server. If the server presents a certificate Aerion doesn't trust (for example, a self-signed one), Aerion shows the certificate details; accept it to trust it for that host and continue.
+MailPong will discover available address books on the server. If the server presents a certificate MailPong doesn't trust (for example, a self-signed one), MailPong shows the certificate details; accept it to trust it for that host and continue.
 
 ### Google Contacts Setup
 
@@ -132,7 +132,7 @@ Autocomplete suggestions show:
 
 ## Multiple Address Books
 
-If you have multiple address books (e.g., Personal and Work on the same CardDAV server), Aerion will:
+If you have multiple address books (e.g., Personal and Work on the same CardDAV server), MailPong will:
 
 - Discover all available address books
 - Sync contacts from all of them

@@ -4,9 +4,9 @@ sidebar_position: 5
 
 # Keyboard Shortcuts
 
-Aerion is designed for efficient keyboard navigation. Use these shortcuts to manage your email without touching the mouse.
+MailPong is designed for efficient keyboard navigation. Use these shortcuts to manage your email without touching the mouse.
 
-The mail section's chat list, chat triage, and chat view keys are listed in [the fork's keyboard reference](https://github.com/clabs-public-forks/aerion/blob/main/docs/KEYBOARD_SHORTCUTS.md#chat-list). Where they differ from the tables below (for example `E` for Archive and `V` for Move in the chat list), the chat keys apply.
+The mail section's chat list, chat triage, and chat view keys are listed in [the keyboard reference](https://github.com/caseylabs/mailpong/blob/main/docs/KEYBOARD_SHORTCUTS.md#chat-list). Where they differ from the tables below (for example `E` for Archive and `V` for Move in the chat list), the chat keys apply.
 
 ## Global Shortcuts
 
@@ -197,7 +197,7 @@ OTHER
 
 ## How Focus Works
 
-Aerion has three main panes:
+MailPong has three main panes:
 
 1. **Sidebar** - Account and folder list
 2. **Message List** - Conversations in the current folder

@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/caseylabs/mailpong/internal/email"
+	"github.com/caseylabs/mailpong/internal/message"
+	"github.com/caseylabs/mailpong/internal/pgp"
+	"github.com/caseylabs/mailpong/internal/smime"
 	gomessage "github.com/emersion/go-message"
-	"github.com/hkdb/aerion/internal/email"
-	"github.com/hkdb/aerion/internal/message"
-	"github.com/hkdb/aerion/internal/pgp"
-	"github.com/hkdb/aerion/internal/smime"
 )
 
 // maxConsecutiveNextPartErrors bounds the skip-and-continue recovery in

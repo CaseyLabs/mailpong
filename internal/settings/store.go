@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/hkdb/aerion/internal/database"
-	"github.com/hkdb/aerion/internal/logging"
+	"github.com/caseylabs/mailpong/internal/database"
+	"github.com/caseylabs/mailpong/internal/logging"
 	"github.com/rs/zerolog"
 	_ "modernc.org/sqlite"
 )
@@ -44,7 +44,7 @@ const (
 	KeyLastSeenVersion            = "last_seen_version"         // for "What's new in this version" launch dialog
 	KeyOAuthWarningDisabled       = "oauth_warning_disabled"    // user toggled "Don't show again" on the missing-OAuth-creds launch warning
 	KeySpellcheckEnabled          = "spellcheck_enabled"        // composer spellcheck master toggle (defaults on)
-	KeySpellcheckLanguages        = "spellcheck_languages"      // JSON array of enabled dictionary codes, e.g. ["en","de"]
+	KeySpellcheckLanguages        = "spellcheck_languages"      // JSON array of enabled dictionary codes, e.g. ["en","en-gb"]
 	KeySpellcheckCustomWords      = "spellcheck_custom_words"   // JSON array of user-added dictionary words
 	KeyChatSendKey                = "chat_send_key"             // "enter" or "ctrl-enter": which key sends from the chat composer
 	KeyChatIncludeQuote           = "chat_include_quote"        // quote the replied-to message below chat replies (defaults on)
@@ -612,14 +612,14 @@ func (s *Store) SetTermsAccepted(accepted bool) error {
 	return s.Set(KeyTermsAccepted, value)
 }
 
-// GetLastSeenVersion returns the Aerion version that was running the last time
+// GetLastSeenVersion returns the MailPong version that was running the last time
 // the "What's new in this version" dialog was acknowledged with OK. Empty
 // string means it's never been acknowledged (e.g. fresh install).
 func (s *Store) GetLastSeenVersion() (string, error) {
 	return s.Get(KeyLastSeenVersion)
 }
 
-// SetLastSeenVersion records the current Aerion version as acknowledged so the
+// SetLastSeenVersion records the current MailPong version as acknowledged so the
 // What's New dialog doesn't fire again until the next version upgrade.
 func (s *Store) SetLastSeenVersion(version string) error {
 	return s.Set(KeyLastSeenVersion, version)
@@ -646,7 +646,7 @@ func (s *Store) SetOAuthWarningDisabled(disabled bool) error {
 	return s.Set(KeyOAuthWarningDisabled, value)
 }
 
-// GetRunBackground returns whether Aerion should keep running when the window is closed
+// GetRunBackground returns whether MailPong should keep running when the window is closed
 func (s *Store) GetRunBackground() (bool, error) {
 	value, err := s.Get(KeyRunBackground)
 	if err != nil {
@@ -655,7 +655,7 @@ func (s *Store) GetRunBackground() (bool, error) {
 	return value == "true", nil
 }
 
-// SetRunBackground sets whether Aerion should keep running when the window is closed
+// SetRunBackground sets whether MailPong should keep running when the window is closed
 func (s *Store) SetRunBackground(enabled bool) error {
 	value := "false"
 	if enabled {
@@ -664,7 +664,7 @@ func (s *Store) SetRunBackground(enabled bool) error {
 	return s.Set(KeyRunBackground, value)
 }
 
-// GetStartHidden returns whether Aerion should start with the window hidden
+// GetStartHidden returns whether MailPong should start with the window hidden
 func (s *Store) GetStartHidden() (bool, error) {
 	value, err := s.Get(KeyStartHidden)
 	if err != nil {
@@ -673,7 +673,7 @@ func (s *Store) GetStartHidden() (bool, error) {
 	return value == "true", nil
 }
 
-// SetStartHidden sets whether Aerion should start with the window hidden
+// SetStartHidden sets whether MailPong should start with the window hidden
 func (s *Store) SetStartHidden(enabled bool) error {
 	value := "false"
 	if enabled {
@@ -682,7 +682,7 @@ func (s *Store) SetStartHidden(enabled bool) error {
 	return s.Set(KeyStartHidden, value)
 }
 
-// GetAutostart returns whether Aerion should start on login
+// GetAutostart returns whether MailPong should start on login
 func (s *Store) GetAutostart() (bool, error) {
 	value, err := s.Get(KeyAutostart)
 	if err != nil {
@@ -691,7 +691,7 @@ func (s *Store) GetAutostart() (bool, error) {
 	return value == "true", nil
 }
 
-// SetAutostart sets whether Aerion should start on login
+// SetAutostart sets whether MailPong should start on login
 func (s *Store) SetAutostart(enabled bool) error {
 	value := "false"
 	if enabled {
@@ -859,7 +859,7 @@ func (s *Store) GetLanguage() (string, error) {
 	return s.Get(KeyLanguage)
 }
 
-// SetLanguage sets the language preference (locale code, e.g. "en", "zh-TW", "zh-CN")
+// SetLanguage sets the language preference (locale code; the UI ships "en" only, other saved values resolve to "en" in the frontend)
 func (s *Store) SetLanguage(language string) error {
 	return s.Set(KeyLanguage, language)
 }
@@ -961,7 +961,7 @@ func (s *Store) SetAlwaysLoadImages(enabled bool) error {
 }
 
 // GetDarkMailContent returns whether email content should be visually darkened
-// while Aerion is in dark mode. Off by default.
+// while MailPong is in dark mode. Off by default.
 func (s *Store) GetDarkMailContent() (bool, error) {
 	value, err := s.Get(KeyDarkMailContent)
 	if err != nil {
@@ -980,7 +980,7 @@ func (s *Store) SetDarkMailContent(enabled bool) error {
 }
 
 // GetDarkComposerBody returns whether the composer message body should use a
-// dark background while Aerion is in dark mode. Off by default (white body).
+// dark background while MailPong is in dark mode. Off by default (white body).
 func (s *Store) GetDarkComposerBody() (bool, error) {
 	value, err := s.Get(KeyDarkComposerBody)
 	if err != nil {

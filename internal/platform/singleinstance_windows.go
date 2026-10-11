@@ -10,12 +10,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hkdb/aerion/internal/logging"
+	"github.com/caseylabs/mailpong/internal/logging"
 )
 
 // windowsSingleInstanceLock uses a TCP socket on localhost for single-instance detection.
 // Windows doesn't support Unix sockets reliably, so we use a fixed TCP port on loopback.
-// The port number is stored in a lock file at %APPDATA%\Aerion\instance.port.
+// The port number is stored in a lock file at %APPDATA%\MailPong\instance.port.
 type windowsSingleInstanceLock struct {
 	listener net.Listener
 	lockFile string
@@ -166,7 +166,7 @@ func (l *windowsSingleInstanceLock) buildLockFilePath() (string, error) {
 		appData = filepath.Join(home, "AppData", "Roaming")
 	}
 
-	lockDir := filepath.Join(appData, "Aerion")
+	lockDir := filepath.Join(appData, "MailPong")
 	if err := os.MkdirAll(lockDir, 0700); err != nil {
 		return "", fmt.Errorf("failed to create lock directory: %w", err)
 	}

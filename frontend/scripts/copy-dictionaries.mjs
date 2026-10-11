@@ -13,9 +13,9 @@ const scriptsDir = dirname(fileURLToPath(import.meta.url))
 const frontend = dirname(scriptsDir)
 const outDir = join(frontend, 'public', 'spellcheck')
 
-// Latin-script locales Aerion ships translations for. zh-* excluded (CJK has no
-// Latin-style per-word spelling); vi omitted until a usable dictionary exists.
-const LOCALES = ['en', 'en-gb', 'cs', 'de', 'fr', 'it', 'nb', 'nl']
+// The UI is English-only; ship the en-US, en-GB and en-CA dictionaries. Keep in
+// step with SPELLCHECK_DICTS in src/lib/spellcheck/locales.ts.
+const LOCALES = ['en', 'en-gb', 'en-ca']
 
 await rm(outDir, { recursive: true, force: true })
 await mkdir(outDir, { recursive: true })

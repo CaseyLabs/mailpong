@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/hkdb/aerion/internal/logging"
+	"github.com/caseylabs/mailpong/internal/logging"
 )
 
 func TestFolderChangeSeq(t *testing.T) {

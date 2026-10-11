@@ -35,12 +35,12 @@ func TestSocketDir(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			base := t.TempDir()
-			want := filepath.Join(base, "aerion")
+			want := filepath.Join(base, "mailpong")
 			t.Setenv("XDG_RUNTIME_DIR", base)
 			if !tt.xdg {
 				t.Setenv("XDG_RUNTIME_DIR", "")
 				t.Setenv("TMPDIR", base)
-				want = filepath.Join(base, fmt.Sprintf("aerion-%d", os.Getuid()))
+				want = filepath.Join(base, fmt.Sprintf("mailpong-%d", os.Getuid()))
 			}
 			if tt.setup != nil {
 				tt.setup(t, want)

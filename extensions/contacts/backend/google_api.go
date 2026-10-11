@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/caseylabs/mailpong/internal/carddav"
+	"github.com/caseylabs/mailpong/internal/contact"
+	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
+	"github.com/caseylabs/mailpong/internal/logging"
 	"github.com/google/uuid"
-	"github.com/hkdb/aerion/internal/carddav"
-	"github.com/hkdb/aerion/internal/contact"
-	coreapi "github.com/hkdb/aerion/internal/core/api/v1"
-	"github.com/hkdb/aerion/internal/logging"
 )
 
 // google_api.go holds the Phase 2b.3 Google People API write path — the

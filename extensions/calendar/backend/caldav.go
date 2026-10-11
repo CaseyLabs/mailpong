@@ -13,7 +13,7 @@ import (
 	"github.com/emersion/go-webdav"
 	extcaldav "github.com/emersion/go-webdav/caldav"
 
-	"github.com/hkdb/aerion/internal/kit/davutil"
+	"github.com/caseylabs/mailpong/internal/kit/davutil"
 )
 
 // DiscoveredCalendar is the calendar-shaped result of CalDAV discovery,

@@ -1,7 +1,7 @@
 package app
 
 import (
-	extcontactsbe "github.com/hkdb/aerion/extensions/contacts/backend"
+	extcontactsbe "github.com/caseylabs/mailpong/extensions/contacts/backend"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 

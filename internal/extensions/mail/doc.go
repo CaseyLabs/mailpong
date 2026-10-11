@@ -1,5 +1,5 @@
 // Package mail implements the coreapi.Mail interface as a wrapper over
-// Aerion's existing core mail packages (internal/message, internal/folder).
+// MailPong's existing core mail packages (internal/message, internal/folder).
 // It exposes only the read-side surface in Phase 1; mutators are scaffolded
 // as ErrUnimplemented until a Phase 2+ consumer needs them.
 //

@@ -7,20 +7,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/caseylabs/mailpong/internal/logging"
 	"github.com/godbus/dbus/v5"
-	"github.com/hkdb/aerion/internal/logging"
 )
 
 const (
-	autostartFilename = "io.github.clabs_public_forks.Aerion.desktop"
-	// legacyAutostartFilename is the entry written under the upstream app ID.
-	legacyAutostartFilename = "io.github.hkdb.Aerion.desktop"
-	desktopEntryTmpl        = `[Desktop Entry]
+	autostartFilename = "io.github.caseylabs.MailPong.desktop"
+	desktopEntryTmpl  = `[Desktop Entry]
 Type=Application
-Name=Aerion
-Comment=Aerion Email Client
+Name=MailPong
+Comment=MailPong Email Client
 Exec=%s
-Icon=io.github.clabs_public_forks.Aerion
+Icon=io.github.caseylabs.MailPong
 Terminal=false
 Categories=Network;Email;
 X-GNOME-Autostart-enabled=true
@@ -85,7 +83,7 @@ func (m *linuxAutostartManager) portalRequestBackground(autostart bool) error {
 	}
 
 	// Generate handle token so we know the request object path in advance.
-	handleToken := fmt.Sprintf("aerion_%d", time.Now().UnixNano())
+	handleToken := fmt.Sprintf("mailpong_%d", time.Now().UnixNano())
 
 	// Compute expected request path from our unique bus name and handle token.
 	// Unique name is like ":1.42" → remove ":" and replace "." with "_" → "1_42"
@@ -117,7 +115,7 @@ func (m *linuxAutostartManager) portalRequestBackground(autostart bool) error {
 		"handle_token": dbus.MakeVariant(handleToken),
 		"reason":       dbus.MakeVariant("Start automatically on login and sync email in the background"),
 		"autostart":    dbus.MakeVariant(autostart),
-		"commandline":  dbus.MakeVariant([]string{"aerion"}),
+		"commandline":  dbus.MakeVariant([]string{"mailpong"}),
 	}
 
 	obj := conn.Object("org.freedesktop.portal.Desktop", "/org/freedesktop/portal/desktop")
@@ -183,10 +181,6 @@ func (m *linuxAutostartManager) xdgEnable() error {
 		return fmt.Errorf("failed to write autostart file: %w", err)
 	}
 
-	if err := os.Remove(filepath.Join(dir, legacyAutostartFilename)); err != nil && !os.IsNotExist(err) {
-		log.Warn().Err(err).Msg("Failed to remove legacy autostart file")
-	}
-
 	log.Info().Str("path", path).Msg("Autostart enabled")
 	return nil
 }
@@ -201,10 +195,8 @@ func (m *linuxAutostartManager) xdgDisable() error {
 	}
 
 	path := filepath.Join(dir, autostartFilename)
-	for _, name := range []string{autostartFilename, legacyAutostartFilename} {
-		if err := os.Remove(filepath.Join(dir, name)); err != nil && !os.IsNotExist(err) {
-			return fmt.Errorf("failed to remove autostart file: %w", err)
-		}
+	if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to remove autostart file: %w", err)
 	}
 
 	log.Info().Str("path", path).Msg("Autostart disabled")
@@ -218,12 +210,8 @@ func (m *linuxAutostartManager) xdgIsEnabled() bool {
 		return false
 	}
 
-	for _, name := range []string{autostartFilename, legacyAutostartFilename} {
-		if _, err := os.Stat(filepath.Join(dir, name)); err == nil {
-			return true
-		}
-	}
-	return false
+	_, err = os.Stat(filepath.Join(dir, autostartFilename))
+	return err == nil
 }
 
 // autostartDir returns the XDG autostart directory.
@@ -243,7 +231,7 @@ func (m *linuxAutostartManager) autostartDir() (string, error) {
 func (m *linuxAutostartManager) execCommand() string {
 	exe, err := os.Executable()
 	if err != nil {
-		return "aerion"
+		return "mailpong"
 	}
 	return exe
 }

@@ -3,9 +3,9 @@ package app
 import (
 	"strings"
 
-	"github.com/hkdb/aerion/internal/account"
-	"github.com/hkdb/aerion/internal/contact"
-	"github.com/hkdb/aerion/internal/logging"
+	"github.com/caseylabs/mailpong/internal/account"
+	"github.com/caseylabs/mailpong/internal/contact"
+	"github.com/caseylabs/mailpong/internal/logging"
 )
 
 // ============================================================================

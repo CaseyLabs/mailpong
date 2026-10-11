@@ -107,3 +107,9 @@ cleanup here, so it can be done once the fork is independent.
 - **D2 low** `frontend/package.json`: TypeScript is held at 6.0.x.
   TypeScript 7 is blocked by peer ranges: `typescript-eslint` requires
   `<6.1.0` and `svelte-check` requires `^5 || ^6`. Upgrade once both accept 7.
+
+## Recurring problems
+
+Format: `- symptom: workaround (count)`. Promote to AGENTS.md or a skill and delete the line when a problem recurs or proves costly.
+
+- None yet.

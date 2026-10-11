@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hkdb/aerion/internal/logging"
+	"github.com/caseylabs/mailpong/internal/logging"
 )
 
 // FTSIndexer handles background indexing of messages for full-text search

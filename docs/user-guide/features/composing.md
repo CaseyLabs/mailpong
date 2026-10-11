@@ -4,7 +4,7 @@ sidebar_position: 3
 
 # Composing Emails
 
-Aerion includes a full-featured email composer with rich text editing capabilities.
+MailPong includes a full-featured email composer with rich text editing capabilities.
 
 ## Starting a New Message
 
@@ -21,7 +21,7 @@ Aerion includes a full-featured email composer with rich text editing capabiliti
 The composer includes:
 
 - **From** - Select which account/identity to send from
-    - On a reply, Aerion picks the identity the message was sent to (To/Cc). If none matches, it checks the forwarding headers (`X-Forwarded-For`, `X-Original-To`, `Delivered-To`), so replies to mail forwarded to your account come from the original address. Your account's own address in those headers does not count, so it never overrides your default identity. The identity's Reply-To is applied automatically.
+    - On a reply, MailPong picks the identity the message was sent to (To/Cc). If none matches, it checks the forwarding headers (`X-Forwarded-For`, `X-Original-To`, `Delivered-To`), so replies to mail forwarded to your account come from the original address. Your account's own address in those headers does not count, so it never overrides your default identity. The identity's Reply-To is applied automatically.
     - On a Gmail account, if Gmail would rewrite the chosen From address (it is not a verified send-as address), the composer shows a warning naming the address Gmail will send from.
 - **To** - Primary recipients
 - **Cc/Bcc** - Click to show additional recipient fields
@@ -72,7 +72,7 @@ From the subject field, if you press tab, it will automatically focus on the bod
 
 ###   Remote Images
 
-The same remote image bar as the conversation viewer appears here to continuing blocking images when you reply or forward messages. If you load images prior to clicking reply, The bar won't be rendered and images will be automatically loaded. Image blocking is just to protect you as an Aerion user. They will all still be sent to your recipient(s) as originally composed.
+The same remote image bar as the conversation viewer appears here to continuing blocking images when you reply or forward messages. If you load images prior to clicking reply, The bar won't be rendered and images will be automatically loaded. Image blocking is just to protect you as an MailPong user. They will all still be sent to your recipient(s) as originally composed.
 
 ### Spellcheck
 
@@ -142,7 +142,7 @@ Click **Cc** or **Bcc** to show these fields:
 
 ### Auto-Save
 
-Aerion automatically saves your draft as you compose. If you close the composer or the app unexpectedly, your draft will be preserved.
+MailPong automatically saves your draft as you compose. If you close the composer or the app unexpectedly, your draft will be preserved.
 
 Drafts are saved to your email account's Drafts folder.
 
@@ -197,7 +197,7 @@ If you have multiple identities (email addresses) on one account, each can have 
 
 ## PGP & S/MIME Signing & Encryption
 
-If you have configured PGP or S/MIME properly on Aerion, an extra bar will appear below the subject line of the composer. Each configured secret key or cert is identity aware so if you choose an alias that doesn't have a matching key or cert, the bar will disappear. Once you switch back to an identity that has a matching key or cert, the bar will automatically appear again. By design, Aerion will only sign and encrypt with keys or certs that match the from e-mail address of the identity chosen.
+If you have configured PGP or S/MIME properly on MailPong, an extra bar will appear below the subject line of the composer. Each configured secret key or cert is identity aware so if you choose an alias that doesn't have a matching key or cert, the bar will disappear. Once you switch back to an identity that has a matching key or cert, the bar will automatically appear again. By design, MailPong will only sign and encrypt with keys or certs that match the from e-mail address of the identity chosen.
 
 There are shortcut keys that are associated with bringing focus to each bar:
 

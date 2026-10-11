@@ -10,7 +10,7 @@ import (
 // dialogs). Recorded per slot to decouple "what the user picked" from
 // "what credentials/alias rows happen to exist." Without this marker the
 // picker has to delete rows to make a different option take effect —
-// which means switching from Custom to "Aerion - Microsoft" silently
+// which means switching from Custom to "MailPong – Microsoft" silently
 // destroys the user's saved Custom credentials. The marker lets the
 // resolver route by choice instead, so stored values survive picker
 // switches.
@@ -21,6 +21,8 @@ import (
 // "no explicit choice recorded yet" — the resolver falls back to
 // inferring the active choice from row presence, preserving pre-marker
 // behavior for installs upgrading from v0.3.0-build1.
+//
+// The choice IDs are legacy identifier from Aerion; persisted, do not rename.
 
 const oauthActiveChoicePrefix = "oauth_active_choice:"
 

@@ -76,6 +76,7 @@
 
   // Title bar options
   const titleBarOptions = $derived([
+    // The 'aerion' value is a Legacy identifier from Aerion; persisted, do not rename.
     { value: 'aerion', label: $_('settingsGeneral.titleBarAerion'), description: $_('settingsGeneral.titleBarAerionDesc') },
     { value: 'native', label: $_('settingsGeneral.titleBarNative'), description: $_('settingsGeneral.titleBarNativeDesc') },
     { value: 'disable', label: $_('settingsGeneral.titleBarDisable'), description: $_('settingsGeneral.titleBarDisableDesc') },
@@ -229,21 +230,24 @@
       </p>
     </div>
 
-    <div class="space-y-2">
-      <Label>{$_('settingsGeneral.language')}</Label>
-      <Select.Root value={language || 'en'} onValueChange={handleLanguageChange}>
-        <Select.Trigger>
-          <Select.Value>
-            {getLanguageLabel(language || 'en')}
-          </Select.Value>
-        </Select.Trigger>
-        <Select.Content>
-          {#each supportedLocales as loc (loc.code)}
-            <Select.Item value={loc.code} label={loc.name} />
-          {/each}
-        </Select.Content>
-      </Select.Root>
-    </div>
+    <!-- Hidden while the UI ships a single language -->
+    {#if supportedLocales.length > 1}
+      <div class="space-y-2">
+        <Label>{$_('settingsGeneral.language')}</Label>
+        <Select.Root value={language || 'en'} onValueChange={handleLanguageChange}>
+          <Select.Trigger>
+            <Select.Value>
+              {getLanguageLabel(language || 'en')}
+            </Select.Value>
+          </Select.Trigger>
+          <Select.Content>
+            {#each supportedLocales as loc (loc.code)}
+              <Select.Item value={loc.code} label={loc.name} />
+            {/each}
+          </Select.Content>
+        </Select.Root>
+      </div>
+    {/if}
 
     <div class="space-y-2">
       <Label>{$_('settingsGeneral.theme')}</Label>

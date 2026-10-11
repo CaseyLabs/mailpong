@@ -3,7 +3,7 @@
 package platform
 
 import (
-	"github.com/hkdb/aerion/internal/logging"
+	"github.com/caseylabs/mailpong/internal/logging"
 )
 
 // WindowsPowerMonitor monitors power state on Windows

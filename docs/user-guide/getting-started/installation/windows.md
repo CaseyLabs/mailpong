@@ -2,51 +2,26 @@
 sidebar_position: 3
 ---
 
-# Windows 
+# Windows
 
-## Installer
+MailPong has no published releases yet, so build it from source. You need Go 1.26, Node.js 24, the [Wails v2 CLI](https://wails.io/docs/gettingstarted/installation) and, for the installer, [NSIS](https://nsis.sourceforge.io/).
 
-1. Download the latest installer:
-    - [amd64](https://github.com/hkdb/aerion/releases/latest/download/Aerion-windows-setup-amd64.exe)
-    - [arm64](https://github.com/hkdb/aerion/releases/latest/download/Aerion-windows-setup-arm64.exe)
-2. Run the installer
-3. Click on "More Info" in the SmartScreen dialog and then click "Run Anyway"
-4. Aerion should now be launchable from your start menu
+```bash
+git clone https://github.com/caseylabs/mailpong.git
+cd mailpong
+make build
+```
 
+`make build` writes `build/bin/mailpong.exe`. Move it somewhere safe, create a shortcut for your taskbar or start menu, and run it. Windows SmartScreen may warn about an unsigned app: click "More info" and then "Run anyway".
 
-## Portable
-
-1. Download the latest `.exe`:
-    - [amd64](https://github.com/hkdb/aerion/releases/latest/download/Aerion-windows-amd64.exe)
-    - [arm64](https://github.com/hkdb/aerion/releases/latest/download/Aerion-windows-arm64.exe)
-2. Move executable to a safe place of choice, create a shortcut to put on your taskbar or start menu and then run the executable
-3. Click on "More Info" in the SmartScreen dialog and then click "Run Anyway"
-4. Aerion will launch
+To build the installer, run `make build-windows-installer`. It produces `mailpong-<arch>-installer.exe` in `build/bin/`.
 
 ## WebView2 Runtime
 
-Aerion requires the Microsoft Edge WebView2 Runtime. On Windows 11 and recent Windows 10 updates, this is pre-installed. If needed, download it from [Microsoft](https://developer.microsoft.com/en-us/microsoft-edge/webview2/).
+MailPong requires the Microsoft Edge WebView2 Runtime. On Windows 11 and recent Windows 10 updates, this is pre-installed. If needed, download it from [Microsoft](https://developer.microsoft.com/en-us/microsoft-edge/webview2/).
 
-## Community Maintained Packages
+Your data is stored in `%APPDATA%\MailPong` and `%LOCALAPPDATA%\MailPong\Cache`.
 
-### Chocolatey
+## Packages from other sources
 
-https://community.chocolatey.org/packages/aerion
-
-This is an unofficial package maintained by [@Infiniti151](https://github.com/Infiniti151). For any issues, please submit a Github issue directly at the [Infiniti151/aerion-chocolatey](https://github.com/Infiniti151/aerion-chocolatey) project.
-
-Standard:
-
-This pulls down the native setup utility, handles programmatic configuration, and hooks seamlessly into Windows Apps & Features.
-
-```bash
-choco install aerion
-```
-
-Portable:
-
-This downloads the raw, uncompressed execution binary directly into your localized Chocolatey application sandbox. It keeps your Windows registry completely untouched and instantly configures a global CLI command-line shortcut shim so aerion can be called from any terminal session immediately.
-
-```bash
-choco install aerion.portable
-```
+MailPong is not packaged by Chocolatey or any other package manager. Packages named "Aerion" belong to the upstream project and do not contain MailPong.

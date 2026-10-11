@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hkdb/aerion/internal/account"
-	"github.com/hkdb/aerion/internal/gmailapi"
-	"github.com/hkdb/aerion/internal/logging"
+	"github.com/caseylabs/mailpong/internal/account"
+	"github.com/caseylabs/mailpong/internal/gmailapi"
+	"github.com/caseylabs/mailpong/internal/logging"
 )
 
 // sendAsTTL is how long a fetched Gmail send-as list stays fresh before the

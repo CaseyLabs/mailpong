@@ -165,7 +165,7 @@ func TestClientConfigForID_ActiveChoiceMatrix(t *testing.T) {
 
 // TestClientConfigForID_RoundTripPreservesOverride encodes the
 // data-preservation guarantee: a stored override survives a Custom →
-// Aerion → Custom round trip via the picker. Pre-fix, the picker
+// MailPong → Custom round trip via the picker. Pre-fix, the picker
 // destroyed the override row on switch-away; here, only the active
 // choice marker changes, so the override stays alive and is reachable
 // again when the user switches back.
@@ -203,7 +203,7 @@ func TestClientConfigForID_RoundTripPreservesOverride(t *testing.T) {
 		t.Fatalf("step 1: got %q, want ROUNDTRIP-USER", creds.ClientID)
 	}
 
-	// 2. User switches to Aerion - X. Marker flips to aerion-shipped;
+	// 2. User switches to MailPong - X. Marker flips to aerion-shipped;
 	//    override row is INTENTIONALLY left in place.
 	activeChoice = "aerion-shipped"
 	if creds, _ := ClientConfigForID(slot); creds.ClientID != "ROUNDTRIP-SHIPPED" {

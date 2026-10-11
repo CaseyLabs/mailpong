@@ -1,8 +1,9 @@
 package app
 
 import (
-	"github.com/hkdb/aerion/internal/appstate"
-	"github.com/hkdb/aerion/internal/platform"
+	"github.com/caseylabs/mailpong/internal/appstate"
+	"github.com/caseylabs/mailpong/internal/platform"
+	"github.com/caseylabs/mailpong/internal/smtp"
 )
 
 // ============================================================================
@@ -23,11 +24,13 @@ func (a *App) SaveUIState(state *appstate.UIState) error {
 // App Info API - Exposed to frontend via Wails bindings
 // ============================================================================
 
-// Version is the Aerion release version. Bump on each release; consumed by
+// Version is the MailPong release version. Bump on each release; consumed by
 // the About dialog via GetAppInfo() and by the --version CLI flag in main.go.
 // (wails.json, frontend/package.json, and metainfo.xml each carry their own
 // version strings for their respective tooling.)
-const Version = "0.3.5"
+const Version = "0.4.0"
+
+func init() { smtp.ClientVersion = Version }
 
 // AppInfo contains application metadata
 type AppInfo struct {
@@ -41,10 +44,10 @@ type AppInfo struct {
 // GetAppInfo returns application metadata for the About dialog
 func (a *App) GetAppInfo() AppInfo {
 	return AppInfo{
-		Name:        "Aerion",
+		Name:        "MailPong",
 		Version:     Version,
-		Description: "An Open Source Lightweight E-Mail Client",
-		Website:     "https://github.com/hkdb/aerion",
+		Description: "Email, reimagined as chat.",
+		Website:     "https://github.com/caseylabs/mailpong",
 		License:     "Apache 2.0",
 	}
 }
@@ -55,7 +58,7 @@ func (a *App) IsFlatpak() bool {
 }
 
 // GetPendingMailto returns and clears any pending mailto: URL data.
-// This is used when Aerion is launched with a mailto: URL argument.
+// This is used when MailPong is launched with a mailto: URL argument.
 func (a *App) GetPendingMailto() *MailtoData {
 	data := a.PendingMailto
 	a.PendingMailto = nil // Clear after reading

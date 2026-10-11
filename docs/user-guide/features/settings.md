@@ -4,7 +4,7 @@ sidebar_position: 6
 
 # Settings
 
-Configure Aerion to work the way you prefer.
+Configure MailPong to work the way you prefer.
 
 Access settings by clicking the **gear icon** at the bottom of the far-left rail, below Mail and any enabled extensions (Contacts, Calendar).
 
@@ -13,27 +13,13 @@ Access settings by clicking the **gear icon** at the bottom of the far-left rail
 
 ### Title Bar
 
-- **Aerion** (Default) - Built-in title bar matching Aerion's themes
+- **MailPong** (Default) - Built-in title bar matching MailPong's themes
 - **Native** (Requires Restart) - Use the OS native title bar and window decorations
 - **Disable** - Some users that are running tiling window managers or simply prefer a more minimalistic look and feel, the title bar can be completely disabled.
 
 ### Language
 
-Choose the language you want the UI to use. Currently, Aerion supports:
-
-- **English**
-- **Čeština**      | Thanks to [lorduskordus](https://github.com/lorduskordus)
-- **Deutsch**      | Thanks to [Gerti1972](https://github.com/Gerti1972) + [dev-inside (review)](https://github.com/dev-inside) + [StefanSchroeder (review)](https://github.com/StefanSchroeder)
-- **Français**     | Thanks to [freemans32](https://github.com/freemans32)
-- **Italiano**     | Thanks to [YacineBoussoufa](https://github.com/YacineBoussoufa)
-- **Norsk Bokmål** | Thanks to [dexblasnoot](https://github.com/dexblasnoot)
-- **Polski**       | Thanks to [aquilapl](https://github.com/aquilapl)
-- **Vietnamese**   | Thanks to [0jar](https://github.com/0jar)
-- **中文（香港)**
-- **中文 (台湾)**
-- **中文 (中国)**
-
-Other languages will be added in future releases.
+The MailPong interface is English only, so there is no language picker. Email content can be in any language, charset or script. For spellchecking in the composer, choose **English (US)**, **English (UK)** or **English (Canada)**.
 
 ### Theme
 
@@ -68,7 +54,7 @@ Choose your visual theme:
 
 ### Dark mail content
 
-Apply a dark filter to email message content when Aerion is in dark mode.
+Apply a dark filter to email message content when MailPong is in dark mode.
 
 There are two schools of preferences for dark mode. One is to have dark UI but light e-mail content and the other is to have everything in dark mode. This setting provides a way for the user to choose which school they belong to.
 
@@ -76,7 +62,7 @@ When this toggle is turned on, each message will render in dark mode and have a 
 
 ### Dark composer body
 
-Use a dark background for the composer message body when Aerion is in dark mode.
+Use a dark background for the composer message body when MailPong is in dark mode.
 
 By default, the e-mail content inside the conversation viewer will always have a white background. However, if you prefer having a dark background when using a dark theme, you can turn this setting on.
 
@@ -98,7 +84,7 @@ Show colored circles with sender initials in the message list.
 
 Enabled by default.
 
-This is where you can disable the colored contact circles on the message list of Aerion to get a more minimalistic look especially if you don't feel like you get value from the color contact circles.
+This is where you can disable the colored contact circles on the message list of MailPong to get a more minimalistic look especially if you don't feel like you get value from the color contact circles.
 
 ### Show colored circles in conversation viewer
 
@@ -143,12 +129,12 @@ Set how long a message must be viewed before marking it as read:
 
 ### Background
 
-**Run in background** - Enable this if you want Aerion to not exit but run in the background when you close the Aerion window. This setting is also a pre-requisite for the next toggle to be enabled.
-**Starts hidden on launch** - Enable this if you want Aerion to launch in the background on first launch without showing the window.
+**Run in background** - Enable this if you want MailPong to not exit but run in the background when you close the MailPong window. This setting is also a pre-requisite for the next toggle to be enabled.
+**Starts hidden on launch** - Enable this if you want MailPong to launch in the background on first launch without showing the window.
 
 ### Startup
 
-**Autostart on login** - Enable this if you want Aerion to automatically launch when you login to your system.
+**Autostart on login** - Enable this if you want MailPong to automatically launch when you login to your system.
 
 ### Tray Icon
 
@@ -186,7 +172,7 @@ Options:
 
 ### Read Receipts
 
-Configure how Aerion handles read receipt requests:
+Configure how MailPong handles read receipt requests:
 
 - **Never send** - Ignore all read receipt requests
 - **Ask** - Prompt when a sender requests a read receipt
@@ -306,9 +292,9 @@ Each identity can also have a **Reply-To** address. Replies to your messages go 
 For Gmail accounts, a **Gmail send-as addresses** section lists the addresses from Gmail's *Send mail as* list. Gmail only sends as an address it has verified; for any other it rewrites the sender to the account address. To set one up:
 
 1. In Gmail, go to **Settings → Accounts → Send mail as → Add another email address** and verify it.
-2. In Aerion, press **Refresh** in the send-as section, then **Add** next to the address (optionally importing its Gmail signature).
+2. In MailPong, press **Refresh** in the send-as section, then **Add** next to the address (optionally importing its Gmail signature).
 
-Identities show a **Verified**, **Pending**, or **Not in Gmail** badge. Aerion refreshes the list once a day in the background.
+Identities show a **Verified**, **Pending**, or **Not in Gmail** badge. MailPong refreshes the list once a day in the background.
 
 If you are using an Microsoft 365 account, there will be an additional section in this tab for you to add **shared mailboxes** here. After completely the flow, you will see the shared mailbox as a separate account on the side bar.
 
@@ -391,23 +377,23 @@ Click **Delete** to stop syncing from a contact source. Previously synced contac
 
 ### oAuth Credentials
 
-Right below all the accounts, you will see a section labled **oAuth Credentials**. This is where you can change the Client ID and Secret of what Microsoft and Google uses for Aerion in runtime.
+Right below all the accounts, you will see a section labled **oAuth Credentials**. This is where you can change the Client ID and Secret of what Microsoft and Google uses for MailPong in runtime.
 
 ## Extensions
 ---
 
-This is a 1st party extension system. It doesn't allow for community or 3rd party development of extensions yet. Whether or not the extension system will be opened up to the community or 3rd parties will depend on future demands. Currently, the extension system is meant to make it possible for Aerion to stay a lightweight e-mail only client but at the same time be able to provide features that only specific power users want such as contacts management, calendar management and more in the future.
+This is a 1st party extension system. It doesn't allow for community or 3rd party development of extensions yet. Whether or not the extension system will be opened up to the community or 3rd parties will depend on future demands. Currently, the extension system is meant to make it possible for MailPong to stay a lightweight e-mail only client but at the same time be able to provide features that only specific power users want such as contacts management, calendar management and more in the future.
 
 In this tab, you can enable **Contacts** and/or **Calendar** extensions. Each extension has its own settings dialog. To learn more, see the [Extensions](/docs/features/extensions) section.
 
 ## About Tab
 ---
 
-View information about Aerion:
+View information about MailPong:
 
-- **Version** - Current Aerion version
+- **Version** - Current MailPong version
 - **GitHub** - Link to source code and issues
-- **Privacy Policy** - How Aerion handles your data
+- **Privacy Policy** - How MailPong handles your data
 - **Terms of Use** - Usage terms
 
 ## Applying Changes
@@ -418,13 +404,13 @@ Most settings take effect immediately. Some changes (like adding accounts or con
 ## Configuration Location
 ---
 
-Aerion stores configuration in your system's standard application data location:
+MailPong stores configuration in your system's standard application data location:
 
 | Platform | Location |
 |----------|----------|
-| Linux | `~/.config/aerion/` or `$XDG_CONFIG_HOME/aerion/` |
-| macOS | `~/Library/Application Support/aerion/` |
-| Windows | `%APPDATA%\aerion\` |
+| Linux | `~/.config/mailpong/` or `$XDG_CONFIG_HOME/mailpong/` |
+| macOS | `~/Library/Application Support/MailPong/` |
+| Windows | `%APPDATA%\MailPong\` |
 
 :::warning
 Modifying configuration files directly is not recommended. Use the Settings UI instead.
@@ -433,4 +419,4 @@ Modifying configuration files directly is not recommended. Use the Settings UI i
 ## Notifications
 ---
 
-By default on Linux, Aerion uses `org.freedesktop.portal.Desktop` but if you launch Aerion from the terminal, notifications will not work. In those cases, you will want to use the `--dbus-notify` flag to launch Aerion.
+By default on Linux, MailPong uses `org.freedesktop.portal.Desktop` but if you launch MailPong from the terminal, notifications will not work. In those cases, you will want to use the `--dbus-notify` flag to launch MailPong.

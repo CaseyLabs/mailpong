@@ -11,14 +11,14 @@ import (
 	"syscall"
 )
 
-// SocketDir returns the private per-user directory for Aerion's Unix
-// sockets: $XDG_RUNTIME_DIR/aerion when set, else <tmp>/aerion-<uid>. The
+// SocketDir returns the private per-user directory for MailPong's Unix
+// sockets: $XDG_RUNTIME_DIR/mailpong when set, else <tmp>/mailpong-<uid>. The
 // directory must be a real directory owned by the current user, so another
 // user can't pre-create it to intercept the sockets; its mode is set to 0700.
 func SocketDir() (string, error) {
-	base, name := os.Getenv("XDG_RUNTIME_DIR"), "aerion"
+	base, name := os.Getenv("XDG_RUNTIME_DIR"), "mailpong"
 	if base == "" {
-		base, name = os.TempDir(), fmt.Sprintf("aerion-%d", os.Getuid())
+		base, name = os.TempDir(), fmt.Sprintf("mailpong-%d", os.Getuid())
 	}
 	dir := filepath.Join(base, name)
 	if err := os.Mkdir(dir, 0o700); err != nil && !errors.Is(err, fs.ErrExist) {

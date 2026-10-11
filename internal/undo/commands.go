@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/caseylabs/mailpong/internal/draft"
+	imapPkg "github.com/caseylabs/mailpong/internal/imap"
+	"github.com/caseylabs/mailpong/internal/message"
 	"github.com/emersion/go-imap/v2"
-	"github.com/hkdb/aerion/internal/draft"
-	imapPkg "github.com/hkdb/aerion/internal/imap"
-	"github.com/hkdb/aerion/internal/message"
 )
 
 // UndoContext provides dependencies for undo operations

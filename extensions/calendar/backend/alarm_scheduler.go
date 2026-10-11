@@ -29,7 +29,7 @@ import (
 	"sync"
 	"time"
 
-	coreapi "github.com/hkdb/aerion/internal/core/api/v1"
+	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
 )
 
 const alarmHorizon = 24 * time.Hour

@@ -1,12 +1,12 @@
 #!/bin/bash
-# Copy Aerion files to Flathub repository for submission/update
-# Usage: ./release.sh /path/to/flathub/io.github.clabs_public_forks.Aerion
+# Copy MailPong files to Flathub repository for submission/update
+# Usage: ./release.sh /path/to/flathub/io.github.caseylabs.MailPong
 
 set -e
 
 if [ -z "$1" ]; then
     echo "Usage: $0 <flathub-repo-path>"
-    echo "Example: $0 ~/flathub/io.github.clabs_public_forks.Aerion"
+    echo "Example: $0 ~/flathub/io.github.caseylabs.MailPong"
     exit 1
 fi
 
@@ -21,24 +21,23 @@ fi
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 echo "=========================================="
-echo "Aerion Flathub Release Helper"
+echo "MailPong Flathub Release Helper"
 echo "=========================================="
 echo "Source: $SCRIPT_DIR"
 echo "Target: $FLATHUB_DIR"
 echo ""
 echo "NOTE: This is a from-source build. The Flathub repo contains the manifest"
 echo "      plus vendored dependency files. The app is built from source during"
-echo "      the Flathub build process. Only the OAuth credentials shim binary"
-echo "      is downloaded as a pre-built binary."
+echo "      the Flathub build process. No OAuth credentials are bundled."
 echo ""
 echo "Copying files..."
 echo ""
 
 # Copy manifest
 echo "Copying manifest..."
-cp "${SCRIPT_DIR}/io.github.clabs_public_forks.Aerion.yml" \
-   "${FLATHUB_DIR}/io.github.clabs_public_forks.Aerion.yml"
-echo "   io.github.clabs_public_forks.Aerion.yml"
+cp "${SCRIPT_DIR}/io.github.caseylabs.MailPong.yml" \
+   "${FLATHUB_DIR}/io.github.caseylabs.MailPong.yml"
+echo "   io.github.caseylabs.MailPong.yml"
 
 # Copy Go module vendoring sources
 echo "Copying Go module sources..."

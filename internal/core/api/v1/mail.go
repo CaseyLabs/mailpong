@@ -15,7 +15,7 @@ type MailEvent struct {
 	Type      MailEventType `json:"type"`
 	AccountID string        `json:"accountId"`
 	FolderID  string        `json:"folderId"`
-	MessageID string        `json:"messageId,omitempty"` // Aerion DB id when known
+	MessageID string        `json:"messageId,omitempty"` // MailPong DB id when known
 	UID       uint32        `json:"uid,omitempty"`       // IMAP UID when known
 }
 

@@ -7,12 +7,12 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/hkdb/aerion/internal/account"
-	"github.com/hkdb/aerion/internal/draft"
-	"github.com/hkdb/aerion/internal/email"
-	"github.com/hkdb/aerion/internal/logging"
-	"github.com/hkdb/aerion/internal/settings"
-	"github.com/hkdb/aerion/internal/smtp"
+	"github.com/caseylabs/mailpong/internal/account"
+	"github.com/caseylabs/mailpong/internal/draft"
+	"github.com/caseylabs/mailpong/internal/email"
+	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailpong/internal/settings"
+	"github.com/caseylabs/mailpong/internal/smtp"
 )
 
 // ChatReply is a reply typed in the chat composer.

@@ -5,22 +5,31 @@ pagination_next: getting-started/verify
 
 # macOS
 
-1. Download the latest `zip` file:
-    - [amd64](https://github.com/hkdb/aerion/releases/latest/download/Aerion-darwin-amd64.zip)
-    - [arm64](https://github.com/hkdb/aerion/releases/latest/download/Aerion-darwin-arm64.zip)
-2. Extract the archive and open .dmg file
-3. Move `Aerion.app` to your Applications folder
-4. On first launch, you may see a security warning since the app is not signed with an Apple Developer certificate
+MailPong has no published releases yet, so build it from source. You need Go 1.26, Node.js 24, the [Wails v2 CLI](https://wails.io/docs/gettingstarted/installation) and the Xcode command line tools.
+
+1. Clone and build:
+
+```bash
+git clone https://github.com/caseylabs/mailpong.git
+cd mailpong
+make build
+```
+
+2. The result is `build/bin/MailPong.app`. Run `make install-darwin` to copy it to your Applications folder, or drag it there yourself.
+3. The app you build is not signed or notarized, so macOS may show a security warning on first launch.
 
 ## Bypassing Gatekeeper
 
 If macOS blocks the app:
 
-1. Right-click (or Control-click) on `Aerion.app`
+1. Right-click (or Control-click) on `MailPong.app`
 2. Select "Open" from the context menu
 3. Click "Open" in the dialog that appears
 
 Alternatively, run this command:
+
 ```bash
-xattr -cr /Applications/Aerion.app
+xattr -cr /Applications/MailPong.app
 ```
+
+Your data is stored in `~/Library/Application Support/MailPong` and `~/Library/Caches/MailPong`.

@@ -3,7 +3,7 @@
   "name": "Contacts",
   "version": "0.1.0",
   "description": "Browse and edit contacts from your accounts (CardDAV, Google, Microsoft). Local-contact editing in v0.3.x; provider write capability rolling out incrementally.",
-  "author": "Aerion",
+  "author": "MailPong Contributors",
   "minAerionVersion": "0.3.0",
   "capabilities": [
     "contacts.read",

@@ -43,7 +43,7 @@ RUN GOBIN=/usr/local/bin go install "github.com/wailsapp/wails/v2/cmd/wails@${WA
 # Add Flathub repository
 RUN flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
 
-# Install the runtime used by build/flatpak/io.github.clabs_public_forks.Aerion-dev.yml.
+# Install the runtime used by build/flatpak/io.github.caseylabs.MailPong-dev.yml.
 # That manifest packages the prebuilt binary, so no SDK extensions are needed.
 RUN flatpak install -y --noninteractive flathub \
     "org.gnome.Platform//${GNOME_RUNTIME}" \

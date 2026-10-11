@@ -6,14 +6,14 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hkdb/aerion/internal/crypto"
-	"github.com/hkdb/aerion/internal/keylock"
-	"github.com/hkdb/aerion/internal/logging"
+	"github.com/caseylabs/mailpong/internal/crypto"
+	"github.com/caseylabs/mailpong/internal/keylock"
+	"github.com/caseylabs/mailpong/internal/logging"
 	"github.com/rs/zerolog"
 	gokeyring "github.com/zalando/go-keyring"
 )
 
-const serviceName = "aerion"
+const serviceName = "mailpong"
 
 // Store provides credential storage with OS keyring and encrypted DB fallback
 type Store struct {
@@ -73,7 +73,7 @@ func (s *Store) setInKeyring(key, value string) error {
 
 // testKeyring checks if the OS keyring is available and functional
 func testKeyring() bool {
-	testKey := "aerion-test-keyring-check"
+	testKey := "mailpong-test-keyring-check"
 	testValue := "test"
 
 	// Try to set a test value

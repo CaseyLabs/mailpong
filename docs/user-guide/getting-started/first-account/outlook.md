@@ -5,7 +5,7 @@ pagination_next: features/overview
 
 # Outlook Setup
 
-Aerion supports Outlook.com, Hotmail, and Microsoft 365 accounts through Microsoft OAuth.
+MailPong supports Outlook.com, Hotmail, and Microsoft 365 accounts through Microsoft OAuth.
 
 ## Supported Account Types
 
@@ -15,27 +15,31 @@ Aerion supports Outlook.com, Hotmail, and Microsoft 365 accounts through Microso
 - Microsoft 365 (work/school)
 - Office 365
 
+## Before you start: bring your own credentials
+
+MailPong bundles no Microsoft OAuth credentials. Register your own application in the Azure portal (Microsoft Entra ID → App registrations), choose the account types you need, add a **Mobile and desktop applications** platform with the redirect URI `http://localhost`, and add the IMAP, SMTP and `offline_access` delegated permissions. Then open **Settings → Accounts → OAuth Credentials**, choose **Custom** under Microsoft, and save your Application (client) ID. If you cannot register an app, Outlook accounts cannot sign in with OAuth, and Microsoft does not offer app passwords for this.
+
 ## oAuth Steps
 
 1. Click **Sign in with Microsoft**
 2. A browser window will open to Microsoft's sign-in page
 3. Sign in with your Microsoft account
 4. Review the permissions and click **Accept**
-5. Return to Aerion and click **Add Account**
+5. Return to MailPong and click **Add Account**
 
 ## Permissions Requested
 
-Aerion requests the following permissions:
+MailPong requests the following permissions:
 - **Read and write access to your mail** - Required for email functionality
 - **Read your contacts** - Used for email address autocomplete
 - **Read your basic profile** - To identify your account
 
 ## Microsoft 365 / Work Accounts
 
-For work or school accounts, your organization's administrator may need to approve Aerion. If you see an "Admin approval required" message:
+For work or school accounts, your organization's administrator may need to approve MailPong. If you see an "Admin approval required" message:
 
 1. Contact your IT administrator
-2. Request approval for the Aerion application
+2. Request approval for the MailPong application
 3. Once approved, retry the sign-in process
 
 ## Important Notes
@@ -81,6 +85,6 @@ Microsoft 365 accounts with large mailboxes may take longer to sync initially. T
 
 ## Contact Sync
 
-When you authorize Outlook with OAuth, Aerion can also sync your Microsoft contacts for email autocomplete. This is configured separately in **Settings > Contacts**.
+When you authorize Outlook with OAuth, MailPong can also sync your Microsoft contacts for email autocomplete. This is configured separately in **Settings > Contacts**.
 
 See [Contacts](/docs/features/contacts) for more information.

@@ -1,8 +1,25 @@
 name: Release
 
+# Tag pushes (v*) build every platform and create a DRAFT prerelease for
+# manual review. Nothing is published automatically, and no step pushes to a
+# branch. Run it by hand (Actions > Release > Run workflow) for a dry run that
+# only uploads workflow artifacts.
 on:
   push:
     tags: 'v*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run: build everything, upload workflow artifacts only, no release'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+env:
+  # Tag name on a release, "dry-run" on a manual run. Used in artifact names.
+  VERSION: ${{ github.ref_type == 'tag' && github.ref_name || 'dry-run' }}
 
 jobs:
   build:
@@ -28,12 +45,8 @@ jobs:
             platform: windows
             arch: arm64
     runs-on: ${{ matrix.os }}
-    env:
-      GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-      GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-      MICROSOFT_CLIENT_ID: ${{ secrets.MICROSOFT_CLIENT_ID }}
-      GOOGLE_TESTING_CLIENT_ID: ${{ secrets.GOOGLE_TESTING_CLIENT_ID }}
-      GOOGLE_TESTING_CLIENT_SECRET: ${{ secrets.GOOGLE_TESTING_CLIENT_SECRET }}
+    # Release builds ship no OAuth credentials (users bring their own); the
+    # Makefile only warns when they are missing.
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -69,57 +82,42 @@ jobs:
       - name: Install frontend dependencies
         run: |
           cd frontend
-          npm install
+          npm ci
 
       - name: Build (Linux)
         if: matrix.platform == 'linux'
         run: |
           make build-linux
 
-          # Rename binary with version tag
+          # Keep the plain binary for the Flatpak job, then name the release copy
           if [ "${{ matrix.arch }}" = "amd64" ]; then
-            mv build/bin/aerion build/bin/aerion-${{ github.ref_name }}-linux-x86_64
-          elif [ "${{ matrix.arch }}" = "arm64" ]; then
-            mv build/bin/aerion build/bin/aerion-${{ github.ref_name }}-linux-aarch64
+            LINUX_ARCH=x86_64
+          else
+            LINUX_ARCH=aarch64
           fi
-
-          # Build OAuth credentials shim binary
-          if [ "${{ matrix.arch }}" = "amd64" ]; then
-            CGO_ENABLED=0 GOARCH=amd64 go build \
-              -ldflags "-X 'main.GoogleClientID=$GOOGLE_CLIENT_ID' -X 'main.GoogleClientSecret=$GOOGLE_CLIENT_SECRET' -X 'main.MicrosoftClientID=$MICROSOFT_CLIENT_ID' -X 'main.GoogleTestingClientID=$GOOGLE_TESTING_CLIENT_ID' -X 'main.GoogleTestingClientSecret=$GOOGLE_TESTING_CLIENT_SECRET'" \
-              -o build/bin/flathub-build-env-${{ github.ref_name }}-linux-x86_64 \
-              cmd/aerion-creds/main.go
-          elif [ "${{ matrix.arch }}" = "arm64" ]; then
-            CGO_ENABLED=0 GOARCH=arm64 go build \
-              -ldflags "-X 'main.GoogleClientID=$GOOGLE_CLIENT_ID' -X 'main.GoogleClientSecret=$GOOGLE_CLIENT_SECRET' -X 'main.MicrosoftClientID=$MICROSOFT_CLIENT_ID' -X 'main.GoogleTestingClientID=$GOOGLE_TESTING_CLIENT_ID' -X 'main.GoogleTestingClientSecret=$GOOGLE_TESTING_CLIENT_SECRET'" \
-              -o build/bin/flathub-build-env-${{ github.ref_name }}-linux-aarch64 \
-              cmd/aerion-creds/main.go
-          fi
+          cp build/bin/mailpong "build/bin/mailpong-${VERSION}-linux-${LINUX_ARCH}"
+          mv build/bin/mailpong "build/bin/mailpong-binary-${{ matrix.arch }}.bin"
 
           # Create distribution tarball (complete package for manual installation)
+          APP_ID=io.github.caseylabs.MailPong
           mkdir -p dist-package
-          cp build/bin/aerion-${{ github.ref_name }}-linux-* dist-package/aerion
-          cp build/linux/install.sh dist-package/
-          cp build/linux/uninstall.sh dist-package/
-          cp build/linux/aerion.desktop dist-package/io.github.clabs_public_forks.Aerion.desktop
-          # 256 at tarball root keeps AUR aerion-bin working; sized copies +
-          # scalable SVG live under icons/ so install.sh can fill hicolor
-          # (#395). Keep sizes in sync with ICON_SIZES in Makefile/install.sh.
-          cp build/linux/aerion.png dist-package/io.github.clabs_public_forks.Aerion.png
+          cp "build/bin/mailpong-${VERSION}-linux-${LINUX_ARCH}" dist-package/mailpong
+          cp build/linux/install.sh build/linux/uninstall.sh dist-package/
+          cp build/linux/${APP_ID}.desktop dist-package/
+          # 256 at tarball root; sized copies + scalable SVG live under icons/
+          # so install.sh can fill hicolor. Keep sizes in sync with ICON_SIZES
+          # in Makefile/install.sh.
+          cp build/linux/mailpong.png dist-package/${APP_ID}.png
           for sz in 32 48 64 128 256; do
             mkdir -p dist-package/icons/${sz}x${sz}
-            cp build/linux/icons/${sz}x${sz}/io.github.clabs_public_forks.Aerion.png \
-              dist-package/icons/${sz}x${sz}/
+            cp build/linux/icons/${sz}x${sz}/${APP_ID}.png dist-package/icons/${sz}x${sz}/
           done
           mkdir -p dist-package/icons/scalable
-          cp build/linux/icons/scalable/io.github.clabs_public_forks.Aerion.svg dist-package/icons/scalable/
+          cp build/linux/icons/scalable/${APP_ID}.svg dist-package/icons/scalable/
+          cp LICENSE dist-package/
+          cp NOTICE THIRD_PARTY_NOTICES.md dist-package/
 
-          if [ "${{ matrix.arch }}" = "amd64" ]; then
-            tar czf aerion-linux-amd64.tar.gz -C dist-package .
-          elif [ "${{ matrix.arch }}" = "arm64" ]; then
-            tar czf aerion-linux-arm64.tar.gz -C dist-package .
-          fi
-
+          tar czf "mailpong-linux-${{ matrix.arch }}.tar.gz" -C dist-package .
           rm -rf dist-package
 
       - name: Build (macOS)
@@ -129,8 +127,8 @@ jobs:
         run: |
           make build
           cd build/bin
-          zip -r Aerion-darwin-${{ matrix.arch }}.zip Aerion.app
-          rm -rf Aerion.app
+          zip -r MailPong-darwin-${{ matrix.arch }}.zip MailPong.app
+          rm -rf MailPong.app
 
       - name: Build (Windows)
         if: matrix.platform == 'windows'
@@ -139,92 +137,39 @@ jobs:
           GOARCH: ${{ matrix.arch }}
         run: |
           make build-windows-installer
-          Move-Item build/bin/aerion.exe build/bin/Aerion-windows-${{ matrix.arch }}.exe
-          Move-Item build/bin/aerion-${{ matrix.arch }}-installer.exe build/bin/Aerion-windows-setup-${{ matrix.arch }}.exe
+          Move-Item build/bin/mailpong.exe build/bin/MailPong-windows-${{ matrix.arch }}.exe
+          Move-Item build/bin/mailpong-${{ matrix.arch }}-installer.exe build/bin/MailPong-windows-setup-${{ matrix.arch }}.exe
 
       - uses: actions/upload-artifact@v7
         with:
-          name: aerion-${{ matrix.platform }}-${{ matrix.arch }}${{ matrix.variant && format('-{0}', matrix.variant) || '' }}
+          name: mailpong-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
-            build/bin/aerion-*
-            build/bin/Aerion-*
-            build/bin/flathub-build-env-*
-            aerion-*.tar.gz
-          retention-days: 1
-
-  publish:
-    needs: build
-    runs-on: ubuntu-latest
-    env:
-      GH_REPO: ${{ github.repository }}
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    permissions:
-      contents: write
-    outputs:
-      release-id: ${{ steps.create-release.outputs.id }}
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/download-artifact@v7
-
-      - name: Create GitHub Release
-        id: create-release
-        run: |
-          TAG_NAME=${{ github.ref_name }}
-
-          # Upload all artifacts (binaries, shim binaries, tarballs)
-          gh release upload $TAG_NAME \
-            aerion-*/build/bin/* \
-            aerion-*/*.tar.gz \
-            --clobber
-
-  update-manifest:
-    needs: publish
-    runs-on: ubuntu-24.04
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y wget
-
-      - name: Calculate hashes and update manifest
-        run: |
-          cd build/flatpak/flathub
-          chmod +x calculate-hashes.sh
-          ./calculate-hashes.sh ${{ github.ref_name }}
-
-      - name: Upload updated manifest
-        uses: actions/upload-artifact@v7
-        with:
-          name: flathub-manifest
-          path: build/flatpak/flathub/io.github.clabs_public_forks.Aerion.yml
-          retention-days: 1
+            build/bin/mailpong-*
+            build/bin/MailPong-*
+            mailpong-*.tar.gz
+          retention-days: 7
 
   build-flatpak:
-    needs: update-manifest
+    needs: build
     strategy:
       matrix:
         include:
           - os: ubuntu-24.04
             arch: x86_64
+            go_arch: amd64
           - os: ubuntu-24.04-arm
             arch: aarch64
+            go_arch: arm64
     runs-on: ${{ matrix.os }}
-    permissions:
-      contents: write
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - uses: actions/download-artifact@v7
+      - name: Download the Linux binary built by this run
+        uses: actions/download-artifact@v7
         with:
-          name: flathub-manifest
-          path: build/flatpak/flathub
+          name: mailpong-linux-${{ matrix.go_arch }}
+          path: linux-build
 
       - name: Install dependencies
         run: |
@@ -249,55 +194,61 @@ jobs:
       - name: Add Flathub repository
         run: flatpak remote-add --if-not-exists --user flathub https://flathub.org/repo/flathub.flatpakrepo
 
-      - name: Install Flatpak runtimes and SDK extensions
+      - name: Install Flatpak runtime and SDK
         run: |
           flatpak install -y --user flathub \
-            org.gnome.Platform//49 \
-            org.gnome.Sdk//49 \
-            org.freedesktop.Sdk.Extension.golang//24.08 \
-            org.freedesktop.Sdk.Extension.node24//24.08
+            org.gnome.Platform//50 \
+            org.gnome.Sdk//50
 
-      - name: Clean flatpak-builder cache
+      - name: Build Flatpak from this checkout
         run: |
+          # The checkout manifest packages the binary built above, so it works
+          # for dry runs and tags alike (no pinned tag or commit needed).
+          mkdir -p build/bin
+          cp linux-build/build/bin/mailpong-binary-${{ matrix.go_arch }}.bin build/bin/mailpong
+          chmod +x build/bin/mailpong
+
           rm -rf .flatpak-builder
-
-      - name: Build Flatpak (like Flathub would)
-        run: |
           flatpak-builder --user --force-clean --repo=repo \
             --install-deps-from=flathub \
-            build-dir build/flatpak/flathub/io.github.clabs_public_forks.Aerion.yml
+            build-dir build/flatpak/io.github.caseylabs.MailPong-dev.yml
 
-          mkdir -p build/bin
-          flatpak build-bundle repo build/bin/Aerion-${{ github.ref_name }}-${{ matrix.arch }}.flatpak io.github.clabs_public_forks.Aerion
+          flatpak build-bundle repo "build/bin/MailPong-${VERSION}-${{ matrix.arch }}.flatpak" io.github.caseylabs.MailPong
 
-      - name: Upload Flatpak to release
-        run: |
-          gh release upload ${{ github.ref_name }} \
-            build/bin/Aerion-${{ github.ref_name }}-${{ matrix.arch }}.flatpak \
-            --clobber
+      - uses: actions/upload-artifact@v7
+        with:
+          name: mailpong-flatpak-${{ matrix.arch }}
+          path: build/bin/MailPong-*.flatpak
+          retention-days: 7
 
-  commit-manifest:
-    needs: build-flatpak
-    if: ${{ !contains(github.ref_name, '-build') && !contains(github.ref_name, '-test') && !contains(github.ref_name, '-rc') }}
-    runs-on: ubuntu-24.04
+  release:
+    # Only for a real tag. Creates a DRAFT prerelease; publishing is manual.
+    if: github.ref_type == 'tag' && (github.event_name == 'push' || !inputs.dry_run)
+    needs: [build, build-flatpak]
+    runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      GH_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      TAG_NAME: ${{ github.ref_name }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
       - uses: actions/download-artifact@v7
         with:
-          name: flathub-manifest
-          path: build/flatpak/flathub
+          path: artifacts
+          pattern: mailpong-*
+          merge-multiple: true
 
-      - name: Commit updated manifest
-        if: success()
+      - name: Create draft prerelease
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin main:main
-          git checkout main
-          git add build/flatpak/flathub/io.github.clabs_public_forks.Aerion.yml
-          git commit -m "${{ github.ref_name }} - Flathub submission" || echo "No changes to commit"
-          git push origin main
+          # A re-run adds assets to the existing release instead of failing
+          if ! gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            gh release create "$TAG_NAME" \
+              --draft --prerelease --verify-tag \
+              --title "MailPong $TAG_NAME" \
+              --notes "Draft. Review the assets, then publish manually. See CHANGELOG.md."
+          fi
+
+          # Skip the internal Flatpak input binary
+          find artifacts -type f ! -name '*.bin' -print0 \
+            | xargs -0 gh release upload "$TAG_NAME" --clobber

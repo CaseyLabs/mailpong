@@ -19,7 +19,7 @@ static dispatch_queue_t monitorQueue;
 // The handler fires immediately with the current path state.
 static void startNetworkMonitor(void) {
     monitor = nw_path_monitor_create();
-    monitorQueue = dispatch_queue_create("com.aerion.networkmonitor", DISPATCH_QUEUE_SERIAL);
+    monitorQueue = dispatch_queue_create("com.mailpong.networkmonitor", DISPATCH_QUEUE_SERIAL);
 
     nw_path_monitor_set_update_handler(monitor, ^(nw_path_t path) {
         nw_path_status_t status = nw_path_get_status(path);
@@ -49,7 +49,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/hkdb/aerion/internal/logging"
+	"github.com/caseylabs/mailpong/internal/logging"
 )
 
 // DarwinNetworkMonitor monitors network connectivity on macOS using NWPathMonitor

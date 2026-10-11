@@ -12,4 +12,4 @@ body:
     id: context
     attributes:
       label: Context
-      description: Include the fork commit, platform, examples, or alternatives when relevant. Remove credentials and private mail data.
+      description: Include the MailPong commit, platform, examples, or alternatives when relevant. Remove credentials and private mail data.

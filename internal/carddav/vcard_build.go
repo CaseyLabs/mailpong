@@ -17,8 +17,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/caseylabs/mailpong/internal/contact"
 	"github.com/emersion/go-vcard"
-	"github.com/hkdb/aerion/internal/contact"
 )
 
 // BuildVCard renders a contact.Record into vCard wire bytes. When originalRaw

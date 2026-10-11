@@ -6,9 +6,9 @@ import (
 	"sort"
 	"time"
 
+	"github.com/caseylabs/mailpong/internal/message"
 	"github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-imap/v2/imapclient"
-	"github.com/hkdb/aerion/internal/message"
 )
 
 // IMAPSearchResponse wraps search results with the total count of matching UIDs.

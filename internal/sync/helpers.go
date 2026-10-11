@@ -6,10 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/caseylabs/mailpong/internal/folder"
+	imapPkg "github.com/caseylabs/mailpong/internal/imap"
+	"github.com/caseylabs/mailpong/internal/message"
 	"github.com/emersion/go-imap/v2"
-	"github.com/hkdb/aerion/internal/folder"
-	imapPkg "github.com/hkdb/aerion/internal/imap"
-	"github.com/hkdb/aerion/internal/message"
 )
 
 // applyFlagsToMessage sets boolean flag fields on a Message from IMAP flags

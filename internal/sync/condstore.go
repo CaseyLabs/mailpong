@@ -7,7 +7,7 @@ package sync
 // and the server returns only UIDs whose flags changed after <prev> — typically
 // 0-10 messages per sync instead of every UID in the mailbox.
 //
-// For Aerion users with 10k+ inboxes this turns flag sync from a multi-second
+// For MailPong users with 10k+ inboxes this turns flag sync from a multi-second
 // pre-cycle stall into a single sub-100ms round-trip.
 //
 // Files split for review/test isolation:
@@ -25,9 +25,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/caseylabs/mailpong/internal/message"
 	"github.com/emersion/go-imap/v2"
 	imapclient "github.com/emersion/go-imap/v2/imapclient"
-	"github.com/hkdb/aerion/internal/message"
 )
 
 // shouldUseCondStore returns true when the current sync cycle can use the

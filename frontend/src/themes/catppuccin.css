@@ -1,6 +1,6 @@
 /* Catppuccin — palette mappings from the official catppuccin/shadcn-ui port:
    https://github.com/catppuccin/shadcn-ui (themes/{flavor}/{flavor}-mauve.css).
-   Aerion-specific override: --ring uses mauve (matching --primary convention)
+   MailPong-specific override: --ring uses mauve (matching --primary convention)
    instead of the upstream port's text color. */
 @layer base {
   /* Catppuccin Latte — Saturated mid-lightness colors with white initials. */

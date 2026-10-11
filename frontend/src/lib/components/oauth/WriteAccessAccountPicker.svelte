@@ -5,7 +5,7 @@
   // matching the source's provider; the user picks one and the contacts
   // source's write grant attaches to that identity.
   //
-  // No "Add another account" option. Aerion's design forbids adding new
+  // No "Add another account" option. MailPong's design forbids adding new
   // accounts from inside the contacts extension — all accounts come from
   // core setup paths (Mail account add OR contacts source add). If no
   // matching identity exists, the dialog shows an empty-state message

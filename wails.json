@@ -1,17 +1,17 @@
 {
   "$schema": "https://wails.io/schemas/config.v2.json",
-  "name": "aerion",
-  "outputfilename": "aerion",
+  "name": "mailpong",
+  "outputfilename": "mailpong",
   "frontend:install": "npm install",
   "frontend:build": "npm run build",
   "frontend:dev:watcher": "npm run dev",
   "frontend:dev:serverUrl": "auto",
   "info": {
-    "companyName": "Aerion",
-    "productName": "Aerion",
-    "productVersion": "0.3.5",
-    "copyright": "Copyright 2024-2025",
-    "comments": "A modern, cross-platform email client",
+    "companyName": "MailPong Contributors",
+    "productName": "MailPong",
+    "productVersion": "0.4.0",
+    "copyright": "Copyright 2024-2025 Aerion Contributors; Copyright 2026 MailPong Contributors",
+    "comments": "Email, reimagined as chat.",
     "protocols": [
       {
         "scheme": "mailto",
@@ -20,7 +20,7 @@
     ]
   },
   "author": {
-    "name": "hkdb",
-    "email": "hkdb@3df.io"
+    "name": "MailPong Contributors",
+    "email": ""
   }
 }

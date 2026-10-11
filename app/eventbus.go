@@ -5,7 +5,7 @@ import (
 	"strings"
 	"sync"
 
-	coreapi "github.com/hkdb/aerion/internal/core/api/v1"
+	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 

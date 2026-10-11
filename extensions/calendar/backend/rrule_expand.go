@@ -161,7 +161,7 @@ func ExpandInRange(ev Event, overrides []EventOverride, from, to time.Time) ([]E
 // splitMultiValueDateLists rewrites EXDATE/RDATE properties on the master
 // VEVENT so that each property carries a single date value. RFC 5545 permits
 // a comma-separated list in one property (e.g. EXDATE:20250501T084500,
-// 20250502T084500), and Aerion's own instance-delete writes coalesce that way,
+// 20250502T084500), and MailPong's own instance-delete writes coalesce that way,
 // but go-ical's RecurrenceSet calls time.Parse on the whole value and fails on
 // the comma. Each split prop clones the original's Params so TZID / VALUE=DATE
 // semantics are preserved per value. Single-value props are left untouched.

@@ -3,7 +3,7 @@ package backend
 import (
 	"strings"
 
-	"github.com/hkdb/aerion/internal/contact"
+	"github.com/caseylabs/mailpong/internal/contact"
 	"github.com/rs/zerolog"
 )
 
@@ -35,7 +35,7 @@ func recordToMicrosoftContact(rec *contact.Record, log zerolog.Logger) *msContac
 	}
 	c := &msContact{}
 
-	// Name split. Aerion stores NGiven/NFamily separately + Fn as the display
+	// Name split. MailPong stores NGiven/NFamily separately + Fn as the display
 	// label. Send all three to Graph; if one is empty, Graph falls back to
 	// composing displayName from given+surname.
 	c.GivenName = rec.NGiven
@@ -282,7 +282,7 @@ func parseAddressbookFolderID(addressbookID string) string {
 }
 
 // microsoftBirthdayFromString emits a Graph-compatible birthday string from
-// Aerion's "YYYY-MM-DD" (or "--MM-DD" no-year shorthand). Graph requires an
+// MailPong's "YYYY-MM-DD" (or "--MM-DD" no-year shorthand). Graph requires an
 // ISO 8601 datetime; we anchor at midnight UTC. No-year shorthand emits a
 // synthetic year 1604 (the Graph "unknown year" convention used in Outlook
 // — matches what the Outlook UI emits for date-only birthdays).
@@ -318,7 +318,7 @@ func microsoftBirthdayToString(s string) string {
 
 // primaryFirst returns emails with the IsPrimary entry leading (others keep
 // source order). Used on write so element 0 of Graph's emailAddresses[] is
-// the primary email — the convention non-Aerion clients use when there's no
+// the primary email — the convention non-MailPong clients use when there's no
 // per-field primary marker (Bug M-A).
 func primaryFirst(in []contact.RecordEmail) []contact.RecordEmail {
 	if len(in) < 2 {

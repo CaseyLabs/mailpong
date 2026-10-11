@@ -8,11 +8,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hkdb/aerion/internal/carddav"
-	"github.com/hkdb/aerion/internal/contact"
-	coreapi "github.com/hkdb/aerion/internal/core/api/v1"
-	"github.com/hkdb/aerion/internal/credentials"
-	"github.com/hkdb/aerion/internal/database"
+	"github.com/caseylabs/mailpong/internal/carddav"
+	"github.com/caseylabs/mailpong/internal/contact"
+	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
+	"github.com/caseylabs/mailpong/internal/credentials"
+	"github.com/caseylabs/mailpong/internal/database"
 )
 
 // fakeCore is the minimal coreapi.Core fake the contacts tests need: it
@@ -127,7 +127,7 @@ func TestAPI_SearchContacts_LocalOnly(t *testing.T) {
 		t.Fatalf("expected name=Alice, got %q", got[0].Name)
 	}
 	if got[0].SourceID != "aerion" {
-		t.Fatalf("expected source=aerion, got %q", got[0].SourceID)
+		t.Fatalf("expected source=mailpong, got %q", got[0].SourceID)
 	}
 }
 
@@ -641,7 +641,7 @@ func TestAPI_CreateContact_Conflict(t *testing.T) {
 func TestAPI_CreateContact_UnknownSourceErrors(t *testing.T) {
 	// Post-Track-B: unknown CardDAV-shaped source UUIDs surface a "not found"
 	// error rather than ErrUnimplemented. ErrUnimplemented is reserved for
-	// known sources of types Aerion hasn't wired write paths for (Google /
+	// known sources of types MailPong hasn't wired write paths for (Google /
 	// Microsoft); see TestAPI_CreateContact_OAuthSourceUnimplemented.
 	api, _, _ := setupAPI(t)
 	_, err := api.CreateContact(coreapi.ContactCreateInput{

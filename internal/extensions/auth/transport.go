@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"strings"
 
-	coreapi "github.com/hkdb/aerion/internal/core/api/v1"
-	"github.com/hkdb/aerion/internal/credentials"
-	"github.com/hkdb/aerion/internal/oauth2"
+	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
+	"github.com/caseylabs/mailpong/internal/credentials"
+	"github.com/caseylabs/mailpong/internal/oauth2"
 )
 
 // maxBufferedBody caps how much of a request body without GetBody the

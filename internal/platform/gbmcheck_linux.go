@@ -75,10 +75,10 @@ func MonitorGBMErrors() {
 func showGBMFixDialog() {
 	ShowDialogAsync(
 		DialogIconWarning,
-		"Aerion - Display Issue Detected",
+		"MailPong - Display Issue Detected",
 		"A display rendering error was detected that may cause a blank window or crash.\n\n"+
-			"To fix this permanently, close Aerion and run:\n\n"+
-			"flatpak override --user --env=WEBKIT_DISABLE_DMABUF_RENDERER=1 io.github.clabs_public_forks.Aerion\n\n"+
-			"Then restart Aerion.",
+			"To fix this permanently, close MailPong and run:\n\n"+
+			"flatpak override --user --env=WEBKIT_DISABLE_DMABUF_RENDERER=1 io.github.caseylabs.MailPong\n\n"+
+			"Then restart MailPong.",
 	)
 }

@@ -5,13 +5,13 @@ pagination_next: features/overview
 
 # Gmail Setup
 
-Aerion supports Gmail through two authentication methods: OAuth (recommended) and App Passwords.
+MailPong supports Gmail through two authentication methods: OAuth (recommended) and App Passwords.
 
 ## OAuth Method (Recommended)
 
-OAuth is the easiest and most secure way to connect your Gmail account.
+MailPong bundles no Google OAuth credentials. Create your own first: see [Custom Google OAuth Credentials](./google-oauth-credentials.md), or use an app password below.
 
-To use your own OAuth Credentials, follow [this doc](/docs/getting-started/first-account/google-oauth-credentials).
+OAuth is the easiest and most secure way to connect your Gmail account.
 
 ### Steps
 
@@ -19,21 +19,21 @@ To use your own OAuth Credentials, follow [this doc](/docs/getting-started/first
 2. A browser window will open to Google's sign-in page
 3. Sign in to your Google account
 4. Review the permissions and click **Allow**
-5. Return to Aerion and click **Add Account**
+5. Return to MailPong and click **Add Account**
 
 ### Permissions Requested
 
-Aerion requests the following permissions:
+MailPong requests the following permissions:
 - **Read, send, and manage your email** - Required for basic email functionality
 - **View your contacts** - Used for email address autocomplete
 
 ### Security Note
 
-You may see a warning that "This app isn't verified." This is normal for open-source applications that haven't gone through Google's verification process. Aerion is safe to use - you can verify this by reviewing the [source code](https://github.com/hkdb/aerion).
+You may see a warning that "This app isn't verified." This is expected: MailPong has no bundled Google credentials, so you authorize against an OAuth client you created yourself, which Google shows as unverified until it is verified. You can verify what MailPong does by reviewing the [source code](https://github.com/caseylabs/mailpong).
 
 To proceed:
 1. Click **Advanced**
-2. Click **Go to Aerion (unsafe)**
+2. Click **Go to MailPong (unsafe)**
 3. Review permissions and click **Allow**
 
 ## App Password Method (Alternative)
@@ -53,11 +53,11 @@ You must have 2-Step Verification enabled on your Google account to use app pass
 2. Under "How you sign in to Google," click **2-Step Verification**
 3. Scroll down and click **App passwords**
 4. Select **Mail** and **Other (Custom name)**
-5. Enter "Aerion" as the name
+5. Enter "MailPong" as the name
 6. Click **Generate**
 7. Copy the 16-character password shown
 
-### Adding to Aerion
+### Adding to MailPong
 
 1. Click **+ Add Account** in the sidebar (or go to **Settings > Accounts > Add Account**)
 2. Select **Gmail** from the provider dropdown
@@ -93,6 +93,6 @@ If emails aren't appearing:
 
 ## Contact Sync
 
-When you authorize Gmail with OAuth, Aerion can also sync your Google Contacts for email autocomplete. This is configured separately in **Settings > Contacts**.
+When you authorize Gmail with OAuth, MailPong can also sync your Google Contacts for email autocomplete. This is configured separately in **Settings > Contacts**.
 
 See [Contacts](/docs/features/contacts) for more information.

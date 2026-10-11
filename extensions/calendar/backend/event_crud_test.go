@@ -14,7 +14,7 @@ import (
 )
 
 func TestSerializeVEVENT_NonRecurring(t *testing.T) {
-	uid := "test-uid@aerion-local"
+	uid := "test-uid@mailpong-local"
 	start := time.Date(2026, 6, 5, 14, 0, 0, 0, time.UTC).Unix()
 	end := time.Date(2026, 6, 5, 15, 0, 0, 0, time.UTC).Unix()
 
@@ -75,7 +75,7 @@ func TestSerializeVEVENT_AllDay(t *testing.T) {
 	t.Cleanup(func() { SetConfiguredTimezone("") })
 	start := time.Date(2026, 6, 5, 0, 0, 0, 0, loc).Unix()
 	end := time.Date(2026, 6, 6, 0, 0, 0, 0, loc).Unix()
-	blob, err := serializeVEVENT("alld@aerion", EventInput{
+	blob, err := serializeVEVENT("alld@mailpong", EventInput{
 		CalendarID:  "cal1",
 		Summary:     "Holiday",
 		DTStartUnix: start,
@@ -94,7 +94,7 @@ func TestSerializeVEVENT_AllDay(t *testing.T) {
 func TestSerializeVEVENT_Recurring(t *testing.T) {
 	start := time.Date(2026, 6, 5, 14, 0, 0, 0, time.UTC).Unix()
 	end := time.Date(2026, 6, 5, 15, 0, 0, 0, time.UTC).Unix()
-	blob, err := serializeVEVENT("rec@aerion", EventInput{
+	blob, err := serializeVEVENT("rec@mailpong", EventInput{
 		CalendarID:  "cal1",
 		Summary:     "Standup",
 		DTStartUnix: start,
@@ -115,7 +115,7 @@ func TestSerializeVEVENT_Recurring(t *testing.T) {
 func TestSerializeVEVENT_WithReminder(t *testing.T) {
 	start := time.Date(2026, 6, 5, 14, 0, 0, 0, time.UTC).Unix()
 	end := time.Date(2026, 6, 5, 15, 0, 0, 0, time.UTC).Unix()
-	blob, err := serializeVEVENT("rem@aerion", EventInput{
+	blob, err := serializeVEVENT("rem@mailpong", EventInput{
 		CalendarID:  "cal1",
 		Summary:     "Doctor",
 		DTStartUnix: start,
@@ -268,7 +268,7 @@ func TestSerializeVEVENT_CRLFContent(t *testing.T) {
 	start := time.Date(2026, 6, 5, 14, 0, 0, 0, time.UTC).Unix()
 	end := time.Date(2026, 6, 5, 15, 0, 0, 0, time.UTC).Unix()
 
-	blob, err := serializeVEVENT("crlf@aerion-local", EventInput{
+	blob, err := serializeVEVENT("crlf@mailpong-local", EventInput{
 		CalendarID:  "cal1",
 		Summary:     "Standup\r\nweekly",
 		Description: "agenda:\r\n- one\r\n- two\r\n",
@@ -291,7 +291,7 @@ func TestSerializeVEVENT_Transparency(t *testing.T) {
 	start := time.Date(2026, 6, 5, 14, 0, 0, 0, time.UTC).Unix()
 	end := time.Date(2026, 6, 5, 15, 0, 0, 0, time.UTC).Unix()
 
-	freeBlob, err := serializeVEVENT("free@aerion", EventInput{
+	freeBlob, err := serializeVEVENT("free@mailpong", EventInput{
 		CalendarID: "c", Summary: "Lunch", DTStartUnix: start, DTEndUnix: end,
 		Transparency: "free",
 	})
@@ -305,7 +305,7 @@ func TestSerializeVEVENT_Transparency(t *testing.T) {
 		t.Errorf("free round-trip = %q, want free", p.Master.Transparency)
 	}
 
-	busyBlob, err := serializeVEVENT("busy@aerion", EventInput{
+	busyBlob, err := serializeVEVENT("busy@mailpong", EventInput{
 		CalendarID: "c", Summary: "Mtg", DTStartUnix: start, DTEndUnix: end,
 		Transparency: "busy",
 	})
@@ -331,7 +331,7 @@ func TestSerializeVEVENT_Visibility(t *testing.T) {
 		{"confidential", "CLASS:CONFIDENTIAL", "confidential"},
 	}
 	for _, c := range cases {
-		blob, err := serializeVEVENT("vis@aerion", EventInput{
+		blob, err := serializeVEVENT("vis@mailpong", EventInput{
 			CalendarID: "c", Summary: "s", DTStartUnix: start, DTEndUnix: end,
 			Visibility: c.in,
 		})
@@ -358,7 +358,7 @@ func TestSerializeVEVENT_DescriptionHTML(t *testing.T) {
 	end := time.Date(2026, 6, 5, 15, 0, 0, 0, time.UTC).Unix()
 	html := "<p>Bring <strong>laptop</strong></p>"
 
-	blob, err := serializeVEVENT("html@aerion", EventInput{
+	blob, err := serializeVEVENT("html@mailpong", EventInput{
 		CalendarID: "c", Summary: "Mtg", DTStartUnix: start, DTEndUnix: end,
 		Description: "Bring laptop", DescriptionHTML: html,
 	})
@@ -375,7 +375,7 @@ func TestSerializeVEVENT_DescriptionHTML(t *testing.T) {
 		t.Errorf("extractAltDescHTML = %q, want %q", got, html)
 	}
 
-	plainBlob, err := serializeVEVENT("plain@aerion", EventInput{
+	plainBlob, err := serializeVEVENT("plain@mailpong", EventInput{
 		CalendarID: "c", Summary: "Mtg", DTStartUnix: start, DTEndUnix: end,
 		Description: "Bring laptop",
 	})

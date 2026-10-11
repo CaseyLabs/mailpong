@@ -21,7 +21,7 @@ var urlRegex = regexp.MustCompile(`https?://[^\s<>"']+`)
 // linkifyForPango wraps bare URLs in Pango <a href="..."> anchor markup so
 // zenity renders them as clickable links. Assumes the input is plain text
 // (no existing markup) and contains no Pango-special characters outside
-// URLs — true for all Aerion-internal callers as of writing. If we ever
+// URLs — true for all MailPong-internal callers as of writing. If we ever
 // need to surface user-supplied strings here, this helper would need a
 // proper Pango escape pass first.
 func linkifyForPango(text string) string {

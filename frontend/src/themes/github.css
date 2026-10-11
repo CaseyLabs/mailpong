@@ -2,7 +2,7 @@
    src/tokens/base/color/{light,dark}/{light,dark}.json5 (canonical reference).
    Primary uses GitHub's iconic green action button color (#2E9A40) — matches
    the "Sign up" / "Code" / "Create" button feel rather than the blue link
-   accent. Aerion-specific override: --ring matches --primary. */
+   accent. MailPong-specific override: --ring matches --primary. */
 @layer base {
   /* GitHub Light — canvas-subtle bg with white view cards (the iconic look). */
   [data-theme="github-light"] {
@@ -52,7 +52,7 @@
     --dark-mail-bg-l: 8;                   /* override: lower than chrome L to minimize hue-rotate brown artifact */
     --background: 213 17% 17%;             /* bgColor.default #212830 */
     --foreground: 214 18% 85%;             /* fgColor.default #D1D7E0 */
-    --card: 213 17% 17%;                   /* bgColor.default — flat, Aerion convention */
+    --card: 213 17% 17%;                   /* bgColor.default — flat, MailPong convention */
     --card-foreground: 214 18% 85%;
     --popover: 215 14% 18%;                /* bgColor.muted #262C36 — slightly elevated */
     --popover-foreground: 214 18% 85%;
@@ -93,7 +93,7 @@
     color-scheme: dark;
     --background: 220 27% 8%;              /* canvas.default / neutral.0 #0D1117 */
     --foreground: 213 73% 96%;             /* neutral.11 #F0F6FC */
-    --card: 220 27% 8%;                    /* canvas.default — flat, Aerion convention */
+    --card: 220 27% 8%;                    /* canvas.default — flat, MailPong convention */
     --card-foreground: 213 73% 96%;
     --popover: 213 25% 11%;                /* neutral.1 #151B23 — slightly elevated */
     --popover-foreground: 213 73% 96%;

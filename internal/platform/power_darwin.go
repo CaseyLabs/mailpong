@@ -3,7 +3,7 @@
 package platform
 
 import (
-	"github.com/hkdb/aerion/internal/logging"
+	"github.com/caseylabs/mailpong/internal/logging"
 )
 
 // DarwinPowerMonitor monitors power state on macOS

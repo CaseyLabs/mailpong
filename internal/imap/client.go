@@ -1,4 +1,4 @@
-// Package imap provides IMAP client functionality for Aerion
+// Package imap provides IMAP client functionality for MailPong
 package imap
 
 import (
@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/caseylabs/mailpong/internal/logging"
 	"github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-imap/v2/imapclient"
 	"github.com/emersion/go-sasl"
-	"github.com/hkdb/aerion/internal/logging"
 	"github.com/rs/zerolog"
 )
 

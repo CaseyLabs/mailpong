@@ -1,1 +1,8 @@
-blank_issues_enabled: true
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability
+    url: https://github.com/caseylabs/mailpong/security/advisories/new
+    about: Report vulnerabilities privately. Do not open a public issue.
+  - name: Is this an upstream Aerion issue?
+    url: https://github.com/hkdb/aerion/issues
+    about: MailPong is derived from Aerion. Bugs that exist only in upstream Aerion's own releases belong in Aerion's tracker; everything about MailPong belongs here.

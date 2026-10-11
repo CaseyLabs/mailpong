@@ -7,7 +7,7 @@ import (
 
 	gokeyring "github.com/zalando/go-keyring"
 
-	"github.com/hkdb/aerion/internal/database"
+	"github.com/caseylabs/mailpong/internal/database"
 )
 
 func TestFailedKeyringWriteDoesNotLeaveStaleValue(t *testing.T) {

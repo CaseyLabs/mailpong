@@ -1,5 +1,5 @@
 #!/bin/bash
-# Build Aerion Flatpak locally (no Docker) from the Flathub manifest, which
+# Build MailPong Flatpak locally (no Docker) from the Flathub manifest, which
 # compiles the release pinned in build/flatpak/flathub/, not this checkout.
 # Use build-flatpak.sh to package this checkout instead.
 
@@ -7,7 +7,7 @@ set -e
 
 cd "$(dirname "$0")/../.."
 
-echo "=== Aerion Flatpak Local Builder ==="
+echo "=== MailPong Flatpak Local Builder ==="
 echo ""
 
 # Check if flatpak-builder is installed
@@ -54,7 +54,7 @@ echo "This will take a few minutes..."
 echo ""
 
 flatpak-builder --force-clean --user --install-deps-from=flathub \
-    --repo=repo build-dir build/flatpak/flathub/io.github.clabs_public_forks.Aerion.yml
+    --repo=repo build-dir build/flatpak/flathub/io.github.caseylabs.MailPong.yml
 
 # Create bundle for distribution
 echo ""
@@ -63,9 +63,9 @@ mkdir -p build/bin
 
 # Get version from git tag, fallback to "dev" if no tag
 VERSION=$(git describe --tags --exact-match 2>/dev/null || echo "dev")
-BUNDLE_NAME="Aerion-${VERSION}.flatpak"
+BUNDLE_NAME="MailPong-${VERSION}.flatpak"
 
-flatpak build-bundle repo "build/bin/${BUNDLE_NAME}" io.github.clabs_public_forks.Aerion
+flatpak build-bundle repo "build/bin/${BUNDLE_NAME}" io.github.caseylabs.MailPong
 
 echo ""
 echo "✅ Build complete!"
@@ -76,4 +76,4 @@ echo "To install locally:"
 echo "  flatpak install --user build/bin/${BUNDLE_NAME}"
 echo ""
 echo "To run:"
-echo "  flatpak run io.github.clabs_public_forks.Aerion"
+echo "  flatpak run io.github.caseylabs.MailPong"

@@ -9,7 +9,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/hkdb/aerion/internal/logging"
+	"github.com/caseylabs/mailpong/internal/logging"
 	"golang.org/x/sys/windows"
 )
 
@@ -139,7 +139,7 @@ func (m *WindowsSleepWakeMonitor) Start(ctx context.Context) error {
 
 		m.threadID = windows.GetCurrentThreadId()
 
-		className, _ := windows.UTF16PtrFromString("AerionSleepWake")
+		className, _ := windows.UTF16PtrFromString("MailPongSleepWake")
 
 		wc := wndClassExW{
 			cbSize:        uint32(unsafe.Sizeof(wndClassExW{})),

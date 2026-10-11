@@ -6,15 +6,15 @@ import (
 	"io"
 	gosync "sync"
 
+	"github.com/caseylabs/mailpong/internal/account"
+	"github.com/caseylabs/mailpong/internal/email"
+	"github.com/caseylabs/mailpong/internal/folder"
+	imapPkg "github.com/caseylabs/mailpong/internal/imap"
+	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailpong/internal/message"
+	"github.com/caseylabs/mailpong/internal/pgp"
+	"github.com/caseylabs/mailpong/internal/smime"
 	gomessage "github.com/emersion/go-message"
-	"github.com/hkdb/aerion/internal/account"
-	"github.com/hkdb/aerion/internal/email"
-	"github.com/hkdb/aerion/internal/folder"
-	imapPkg "github.com/hkdb/aerion/internal/imap"
-	"github.com/hkdb/aerion/internal/logging"
-	"github.com/hkdb/aerion/internal/message"
-	"github.com/hkdb/aerion/internal/pgp"
-	"github.com/hkdb/aerion/internal/smime"
 	"github.com/rs/zerolog"
 )
 

@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/hkdb/aerion/internal/cid"
+	"github.com/caseylabs/mailpong/internal/cid"
 )
 
 func TestMarkEmbedded(t *testing.T) {

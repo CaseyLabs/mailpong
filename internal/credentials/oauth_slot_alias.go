@@ -8,7 +8,7 @@ import (
 )
 
 // User-pickable OAuth slot alias (Settings → OAuth Credentials → pick
-// "Aerion mail client"). When the user wants a non-default mapping for one
+// "MailPong mail client"). When the user wants a non-default mapping for one
 // of the OAuth slots (e.g., route google-contacts OAuth flows through the
 // google-mail client rather than the shipped contacts client), we store
 // the chosen target slot ID here. oauth2.ClientConfigForID consults this

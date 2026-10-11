@@ -1,23 +1,26 @@
-![Aerion logo](frontend/src/assets/images/logo-universal.png)
+![MailPong logo](frontend/src/assets/images/logo-universal.png)
 
-# Aerion Email Client (_Personal Fork_)
+# MailPong
 
-## Overview
+**Email, reimagined as chat.**
 
-- This is a personal fork of [Aerion](https://github.com/hkdb/aerion), a cross-platform email client by [hkdb](https://github.com/hkdb). 
-- The goal of this project is to turn Aerion into a Beeper-like chat app for email.
+![Status: alpha](https://img.shields.io/badge/status-alpha-orange)
 
-**Notes:**
+MailPong is like a Messenger app for your mailbox: it simplifies your inbox by turning email threads into combined chats. It is a cross-platform desktop email client built with Go, [Wails](https://wails.io) and [Svelte](https://svelte.dev/).
 
-- This fork started as a simple UI customizaton for Aerion, but has diverged greatly since.
-- This fork tracks upstream Aerion for now, but it is likely to diverge and may eventually stop tracking it.
-- This fork will eventually be renamed and moved to a new Github repo.
-- Expect these differences:
-  - Upstream release binaries do not include these changes. Build from source to use this fork.
-  - Only the English UI is maintained. Other languages may be incomplete or out of date.
-  - Report problems with fork features here, not upstream.
+MailPong is alpha software under active development. Expect rough edges, and keep backups of anything important.
 
-![Aerion chat mail view in the Nord dark theme](docs/ss.png)
+## Built on Aerion
+
+MailPong is derived from [Aerion](https://github.com/hkdb/aerion), the open-source email client created by [@hkdb](https://github.com/hkdb). MailPong is independently maintained and is not an official Aerion release; the Aerion project does not endorse or support it.
+
+- **Version numbering** continues from the Aerion code base MailPong derives from. Always read "MailPong 0.4.0" as a MailPong version, not an Aerion version.
+- **Separate data.** MailPong uses its own data directories and keyring entries and never reads Aerion's data on its own. To bring an Aerion mailbox across, see [Import from Aerion](docs/user-guide/getting-started/import-from-aerion.md).
+- **Upstream releases do not include MailPong's changes.** Report problems with MailPong here, not upstream.
+
+![MailPong chat mail view in the Nord dark theme](docs/ss.png)
+
+**Legal:** [Disclaimer](DISCLAIMER.md) · [NOTICE](NOTICE) · [Third-Party Notices](THIRD_PARTY_NOTICES.md) · [License](LICENSE) (Apache-2.0)
 
 ## Features
 
@@ -27,21 +30,25 @@
 - A Low priority split that keeps newsletters and other bulk mail out of the main list
 - Sender chats that combine all of one sender's threads into a single conversation (on by default, split per sender)
 - Pin, snooze, sender priority, and sender chats are stored on this computer and are not synced to the server
+- English interface, with US, UK and Canadian English spellcheck; email content in any language and script
 
 See [Email Management](docs/user-guide/features/email-management.md#chat-mail) for details.
 
 ## Installation
 
-Build from source with the [Build Guide](docs/BUILD.md). The [Installation Guide](docs/user-guide/getting-started/installation/index.md) covers upstream's release binaries, which do not include this fork's changes.
+There are no published releases yet. Build from source with the [Build Guide](docs/BUILD.md), or follow the [Installation Guide](docs/user-guide/getting-started/installation/index.md) for build-from-source and local Flatpak steps on each platform.
 
 ## Documentation
 
 - [User Guide](docs/user-guide/intro.md)
+- [Build Guide](docs/BUILD.md)
+- [Release process](docs/RELEASE.md)
+- [Changelog](CHANGELOG.md)
 
-## Development
+## Contributing
 
-This application is built with [Wails](https://wails.io) and [Svelte](https://svelte.dev/).
+Please see [CONTRIBUTING.md](CONTRIBUTING.md). Report vulnerabilities according to [SECURITY.md](SECURITY.md).
 
-### Contributing
+## License
 
-Please see [CONTRIBUTING.md](CONTRIBUTING.md).
+MailPong is licensed under the Apache License 2.0; see [LICENSE](LICENSE) and [NOTICE](NOTICE).

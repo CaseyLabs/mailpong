@@ -1,47 +1,49 @@
 # Terms of Use
 
-**Last Updated:** January 20, 2026
+**Last Updated:** October 11, 2026
+
+<!-- Draft for legal review (PLAN.md flags L2/L3); remove this comment once signed off. -->
 
 ## Acceptance of Terms
 
-By downloading, installing, or using Aerion ("the Application"), you agree to be bound by these Terms of Use ("Terms"). If you do not agree to these Terms, do not use the Application.
+By downloading, installing, or using MailPong ("the Application"), you agree to be bound by these Terms of Use ("Terms"). If you do not agree to these Terms, do not use the Application.
 
 ## Description of Service
 
-Aerion is an open-source desktop email client. The official Aerion website and online documentation is hosted at [https://aerion.3df.io](https://aerion.3df.io). Aerion allows you to:
+MailPong is an open-source desktop email client derived from [Aerion](https://github.com/hkdb/aerion). It is an independent project, not an official Aerion release, and is not affiliated with or endorsed by Aerion or its authors. MailPong allows you to:
 
 - Connect to email accounts via IMAP/SMTP
 - Send and receive emails
 - Manage email folders and organization
 - Sync contacts from CardDAV, Google, and Microsoft services
-- Use OAuth authentication for Gmail and Outlook
+- Use OAuth authentication for Gmail and Outlook with credentials you create yourself (MailPong ships none)
 
-Aerion is a local application that runs on your computer. We do not provide any cloud services, email hosting, or server infrastructure.
+MailPong is a local application that runs on your computer. We do not provide any cloud services, email hosting, or server infrastructure.
 
 ## Open Source License
 
-Aerion is licensed under the Apache License 2.0. You can:
+MailPong is licensed under the Apache License 2.0. It is derived from Aerion (Apache License 2.0); see NOTICE. You can:
 
 - Use the software for any purpose
 - Distribute copies of the software
 - Modify the software and distribute your modifications
 - Use the software commercially
 
-Subject to the conditions of the Apache License 2.0, including preservation of copyright notices and disclaimers. The full license text is available in the LICENSE file included with the Application and at [https://github.com/hkdb/aerion](https://github.com/hkdb/aerion).
+Subject to the conditions of the Apache License 2.0, including preservation of copyright notices and disclaimers. The full license text is available in the LICENSE file included with the Application and at [https://github.com/caseylabs/mailpong](https://github.com/caseylabs/mailpong).
 
 ## User Responsibilities
 
 You are responsible for:
 
 1. **Account Security** - Maintaining the security of your email account credentials
-2. **Device Security** - Securing the device on which Aerion is installed
+2. **Device Security** - Securing the device on which MailPong is installed
 3. **Legal Compliance** - Using the Application in compliance with applicable laws
 4. **Email Provider Terms** - Complying with your email provider's terms of service
 5. **Backup** - Maintaining backups of important data
 
 ## Acceptable Use
 
-You agree not to use Aerion to:
+You agree not to use MailPong to:
 
 - Send spam, malware, or phishing emails
 - Violate any applicable laws or regulations
@@ -61,11 +63,11 @@ To the fullest extent permitted by law, we disclaim all warranties, including bu
 - Accuracy or reliability of the Application
 - That the Application will be uninterrupted, secure, or error-free
 
-**Aerion is pre-release software currently in active development. Features may change, and bugs may exist. Use at your own risk.**
+**MailPong is alpha software currently in active development. Features may change, and bugs may exist. Use at your own risk.**
 
 ## Limitation of Liability
 
-**TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL THE DEVELOPERS, CONTRIBUTORS, OR SPONSORS OF AERION BE LIABLE FOR:**
+**TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL THE DEVELOPERS, CONTRIBUTORS, OR SPONSORS OF MAILPONG BE LIABLE FOR:**
 
 - Any indirect, incidental, special, consequential, or punitive damages
 - Loss of profits, data, use, goodwill, or other intangible losses
@@ -80,7 +82,7 @@ To the fullest extent permitted by law, we disclaim all warranties, including bu
 
 ## Indemnification
 
-You agree to indemnify, defend, and hold harmless the developers, contributors, and sponsors of Aerion from any claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys' fees) arising from:
+You agree to indemnify, defend, and hold harmless the developers, contributors, and sponsors of MailPong from any claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys' fees) arising from:
 
 - Your use of the Application
 - Your violation of these Terms
@@ -89,18 +91,18 @@ You agree to indemnify, defend, and hold harmless the developers, contributors, 
 
 ## Third-Party Services
 
-Aerion integrates with third-party services including:
+MailPong integrates with third-party services including:
 
 - Email providers (via IMAP/SMTP)
-- Google APIs
-- Microsoft APIs
+- Google APIs (using OAuth credentials you create)
+- Microsoft APIs (using OAuth credentials you create)
 - CardDAV servers
 
 Your use of these services is subject to their respective terms of service and privacy policies. We are not responsible for the availability, accuracy, or practices of these third-party services.
 
 ## Modifications to the Application
 
-As an open-source project, Aerion is continuously evolving. We may:
+As an open-source project, MailPong is continuously evolving. We may:
 
 - Add, modify, or remove features at any time
 - Release updates that change functionality
@@ -118,12 +120,12 @@ If any provision of these Terms is found to be unenforceable, the remaining prov
 
 ## Entire Agreement
 
-These Terms constitute the entire agreement between you and the developers of Aerion regarding the use of the Application, superseding any prior agreements.
+These Terms constitute the entire agreement between you and the developers of MailPong regarding the use of the Application, superseding any prior agreements.
 
 ## Contact Us
 
-If you have questions about these Terms of Use, please contact us at:
+If you have questions about these Terms of Use, please open an issue at:
 
-**Email:** aerion@3df.io
+**GitHub Issues:** [https://github.com/caseylabs/mailpong/issues](https://github.com/caseylabs/mailpong/issues)
 
-**GitHub Issues:** [https://github.com/hkdb/aerion/issues](https://github.com/hkdb/aerion/issues)
+**Security reports:** use GitHub private vulnerability reporting, as described in [SECURITY.md](../SECURITY.md).

@@ -50,7 +50,7 @@ func buildSeedMasterICS(t *testing.T, uid string, rrule string, instanceTimeUnix
 }
 
 func TestComposeVCalendar_ThisUpdate_AppendsOverride(t *testing.T) {
-	uid := "evt-x@aerion-caldav"
+	uid := "evt-x@mailpong-caldav"
 	masterStart := time.Date(2026, 6, 8, 9, 0, 0, 0, time.UTC).Unix()
 	instanceTime := time.Date(2026, 6, 15, 9, 0, 0, 0, time.UTC).Unix()
 
@@ -87,7 +87,7 @@ func TestComposeVCalendar_ThisUpdate_AppendsOverride(t *testing.T) {
 }
 
 func TestComposeVCalendar_ThisUpdate_ReplacesExistingOverride(t *testing.T) {
-	uid := "evt-x@aerion-caldav"
+	uid := "evt-x@mailpong-caldav"
 	masterStart := time.Date(2026, 6, 8, 9, 0, 0, 0, time.UTC).Unix()
 	instanceTime := time.Date(2026, 6, 15, 9, 0, 0, 0, time.UTC).Unix()
 	otherOverrideTime := time.Date(2026, 6, 22, 9, 0, 0, 0, time.UTC).Unix()
@@ -123,7 +123,7 @@ func TestComposeVCalendar_ThisUpdate_ReplacesExistingOverride(t *testing.T) {
 }
 
 func TestComposeVCalendar_ThisDelete_AddsEXDATE(t *testing.T) {
-	uid := "evt-y@aerion-caldav"
+	uid := "evt-y@mailpong-caldav"
 	masterStart := time.Date(2026, 6, 8, 9, 0, 0, 0, time.UTC).Unix()
 	instanceTime := time.Date(2026, 6, 22, 9, 0, 0, 0, time.UTC).Unix()
 
@@ -148,7 +148,7 @@ func TestComposeVCalendar_ThisDelete_AddsEXDATE(t *testing.T) {
 }
 
 func TestComposeVCalendar_ThisDelete_DropsMatchingOverride(t *testing.T) {
-	uid := "evt-z@aerion-caldav"
+	uid := "evt-z@mailpong-caldav"
 	masterStart := time.Date(2026, 6, 8, 9, 0, 0, 0, time.UTC).Unix()
 	instanceTime := time.Date(2026, 6, 15, 9, 0, 0, 0, time.UTC).Unix()
 	otherOverrideTime := time.Date(2026, 6, 22, 9, 0, 0, 0, time.UTC).Unix()
@@ -175,7 +175,7 @@ func TestComposeVCalendar_ThisDelete_DropsMatchingOverride(t *testing.T) {
 }
 
 func TestComposeVCalendar_ThisAndFutureUpdate_ClampsMasterAndCreatesNewSeries(t *testing.T) {
-	uid := "evt-tf@aerion-caldav"
+	uid := "evt-tf@mailpong-caldav"
 	masterStart := time.Date(2026, 6, 8, 9, 0, 0, 0, time.UTC).Unix()
 	splitTime := time.Date(2026, 7, 6, 9, 0, 0, 0, time.UTC).Unix()
 	pastOverrideTime := time.Date(2026, 6, 22, 9, 0, 0, 0, time.UTC).Unix()
@@ -227,7 +227,7 @@ func TestComposeVCalendar_ThisAndFutureUpdate_ClampsMasterAndCreatesNewSeries(t 
 }
 
 func TestComposeVCalendar_ThisAndFutureDelete_ClampsMasterOnly(t *testing.T) {
-	uid := "evt-tfd@aerion-caldav"
+	uid := "evt-tfd@mailpong-caldav"
 	masterStart := time.Date(2026, 6, 8, 9, 0, 0, 0, time.UTC).Unix()
 	splitTime := time.Date(2026, 7, 6, 9, 0, 0, 0, time.UTC).Unix()
 

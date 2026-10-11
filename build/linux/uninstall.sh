@@ -10,14 +10,7 @@ PURPLE='\033[0;35m'
 NC='\033[0m' # No Color
 
 echo -e "${PURPLE}
- ░▒▓██████▓▒░░▒▓████████▓▒░▒▓███████▓▒░░▒▓█▓▒░░▒▓██████▓▒░░▒▓███████▓▒░
-░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░
-░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░
-░▒▓████████▓▒░▒▓██████▓▒░ ░▒▓███████▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░
-░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░
-░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░      ░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓█▓▒░
-░▒▓█▓▒░░▒▓█▓▒░▒▓████████▓▒░▒▓█▓▒░░▒▓█▓▒░▒▓█▓▒░░▒▓██████▓▒░░▒▓█▓▒░░▒▓█▓▒░
-
+MailPong
 ${NC}
 "
 
@@ -41,9 +34,9 @@ if [[ "$(uname -s)" != "Linux" ]]; then
 fi
 
 echo ""
-print_info "Aerion Email Client - Uninstall Script"
+print_info "MailPong Email Client - Uninstall Script"
 echo ""
-echo "This script will uninstall Aerion from your system."
+echo "This script will uninstall MailPong from your system."
 echo ""
 echo "Choose installation type to uninstall:"
 echo "  1) System-wide (requires sudo, /usr/local or /usr/share)"
@@ -76,7 +69,7 @@ while true; do
 done
 
 echo ""
-print_info "Uninstalling Aerion ($INSTALL_TYPE)..."
+print_info "Uninstalling MailPong ($INSTALL_TYPE)..."
 echo ""
 
 # Function to run command with or without sudo
@@ -117,52 +110,23 @@ remove_file() {
 REMOVED_COUNT=0
 
 # Remove binary
-if remove_file "$BIN_DIR/aerion" "binary"; then
+if remove_file "$BIN_DIR/mailpong" "binary"; then
     REMOVED_COUNT=$((REMOVED_COUNT + 1))
 fi
 
 # Remove new desktop file
-if remove_file "$APPS_DIR/io.github.clabs_public_forks.Aerion.desktop" "desktop file"; then
-    REMOVED_COUNT=$((REMOVED_COUNT + 1))
-fi
-
-# Remove old desktop file if it exists
-if remove_file "$APPS_DIR/aerion.desktop" "old desktop file"; then
-    REMOVED_COUNT=$((REMOVED_COUNT + 1))
-fi
-
-# Remove backup desktop file if it exists
-if remove_file "$APPS_DIR/aerion.desktop.backup" "backup desktop file"; then
+if remove_file "$APPS_DIR/io.github.caseylabs.MailPong.desktop" "desktop file"; then
     REMOVED_COUNT=$((REMOVED_COUNT + 1))
 fi
 
 # Remove icons: every shipped hicolor size + scalable SVG (#395). Keep in
 # sync with ICON_SIZES in install.sh / Makefile.
 for sz in 32 48 64 128 256; do
-    if remove_file "$ICONS_BASE/${sz}x${sz}/apps/io.github.clabs_public_forks.Aerion.png" "${sz}px icon"; then
+    if remove_file "$ICONS_BASE/${sz}x${sz}/apps/io.github.caseylabs.MailPong.png" "${sz}px icon"; then
         REMOVED_COUNT=$((REMOVED_COUNT + 1))
     fi
 done
-if remove_file "$ICONS_BASE/scalable/apps/io.github.clabs_public_forks.Aerion.svg" "scalable icon"; then
-    REMOVED_COUNT=$((REMOVED_COUNT + 1))
-fi
-
-# Remove files installed under the upstream app ID
-LEGACY_ID="io.github.hkdb.Aerion"
-if remove_file "$APPS_DIR/$LEGACY_ID.desktop" "old app ID desktop file"; then
-    REMOVED_COUNT=$((REMOVED_COUNT + 1))
-fi
-for sz in 32 48 64 128 256; do
-    if remove_file "$ICONS_BASE/${sz}x${sz}/apps/$LEGACY_ID.png" "old app ID ${sz}px icon"; then
-        REMOVED_COUNT=$((REMOVED_COUNT + 1))
-    fi
-done
-if remove_file "$ICONS_BASE/scalable/apps/$LEGACY_ID.svg" "old app ID scalable icon"; then
-    REMOVED_COUNT=$((REMOVED_COUNT + 1))
-fi
-
-# Remove old icon name if it exists
-if remove_file "$ICONS_BASE/256x256/apps/aerion.png" "old icon"; then
+if remove_file "$ICONS_BASE/scalable/apps/io.github.caseylabs.MailPong.svg" "scalable icon"; then
     REMOVED_COUNT=$((REMOVED_COUNT + 1))
 fi
 
@@ -193,5 +157,5 @@ else
 fi
 
 echo ""
-echo "Thank you for trying Aerion!"
+echo "Thank you for trying MailPong!"
 echo ""

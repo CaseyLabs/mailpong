@@ -4,10 +4,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/hkdb/aerion/internal/account"
-	"github.com/hkdb/aerion/internal/database"
-	"github.com/hkdb/aerion/internal/draft"
-	"github.com/hkdb/aerion/internal/smtp"
+	"github.com/caseylabs/mailpong/internal/account"
+	"github.com/caseylabs/mailpong/internal/database"
+	"github.com/caseylabs/mailpong/internal/draft"
+	"github.com/caseylabs/mailpong/internal/smtp"
 )
 
 func TestDraftPersistsSenderIdentity(t *testing.T) {

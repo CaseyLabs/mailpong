@@ -15,8 +15,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/caseylabs/mailpong/internal/logging"
 	"github.com/google/uuid"
-	"github.com/hkdb/aerion/internal/logging"
 	"github.com/rs/zerolog"
 )
 
@@ -148,6 +148,7 @@ func (s *Store) searchUnified(query string, limit int) ([]*Contact, error) {
 // those callers unchanged.
 func mapSourceForLegacy(source string) string {
 	if source == "local" {
+		// Legacy identifier from Aerion; persisted, do not rename.
 		return "aerion"
 	}
 	return source
@@ -565,7 +566,7 @@ func MergeResults(sources ...[]*Contact) []*Contact {
 // "aerion" and "local" are equivalent (legacy / new naming for the same thing).
 func sourcePriority(source string) int {
 	switch source {
-	case "aerion", "local":
+	case "aerion", "local": // Legacy identifier from Aerion; persisted, do not rename.
 		return 4
 	case "vcard":
 		return 3

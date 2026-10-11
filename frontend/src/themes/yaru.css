@@ -1,7 +1,7 @@
 /* Yaru — Ubuntu's default GNOME theme. Palette transcribed from ubuntu/yaru:
    gtk/src/default/gtk-4.0/_palette.scss + _colors.scss (canonical reference).
    Iconic Ubuntu orange #E95420 ($orange) drives --primary in both variants.
-   Aerion-specific override: --ring matches --primary. */
+   MailPong-specific override: --ring matches --primary. */
 @layer base {
   /* Yaru Light — $bg_color #FAFAFA, $base_color #FFFFFF (slightly brighter view). */
   [data-theme="yaru-light"] {
@@ -63,7 +63,7 @@
     --accent-foreground: 0 0% 97%;
     --destructive: 354 80% 33%;            /* darken($red, 10%) */
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 24%;                    /* matches secondary (Aerion convention) */
+    --border: 0 0% 24%;                    /* matches secondary (MailPong convention) */
     --input: 0 0% 24%;
     --ring: 14 82% 52%;                    /* $orange */
     /* Avatar palette: same 9 Yaru colors as Light variant. */

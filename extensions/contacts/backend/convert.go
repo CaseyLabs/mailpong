@@ -1,8 +1,8 @@
 package backend
 
 import (
-	"github.com/hkdb/aerion/internal/contact"
-	coreapi "github.com/hkdb/aerion/internal/core/api/v1"
+	"github.com/caseylabs/mailpong/internal/contact"
+	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
 )
 
 // fromLocal converts a core contact.Contact into the API-surface Contact.
@@ -65,6 +65,7 @@ func fromRecord(rec *contact.Record) coreapi.Contact {
 	// it knows a specific source id.
 	out.SourceID = rec.Source
 	if rec.Source == "local" {
+		// Legacy identifier from Aerion; persisted, do not rename.
 		out.SourceID = "aerion"
 	}
 

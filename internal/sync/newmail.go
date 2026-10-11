@@ -1,8 +1,8 @@
 package sync
 
 import (
-	"github.com/hkdb/aerion/internal/account"
-	"github.com/hkdb/aerion/internal/folder"
+	"github.com/caseylabs/mailpong/internal/account"
+	"github.com/caseylabs/mailpong/internal/folder"
 )
 
 // inboxSnapshot records an inbox's highest stored UID and UIDVALIDITY before

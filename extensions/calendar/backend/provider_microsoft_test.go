@@ -18,7 +18,7 @@ import (
 	"testing"
 	"time"
 
-	coreapi "github.com/hkdb/aerion/internal/core/api/v1"
+	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
 )
 
 // fakeMSAuth — same shape as fakeAuth in provider_google_test.go but
@@ -69,7 +69,7 @@ func newTestMicrosoftProvider(serverURL string) microsoftProvider {
 
 func TestMicrosoftTranslate_NonRecurringTimedRoundTrip(t *testing.T) {
 	src := graphEvent{
-		ICalUID:  "evt-uid-1@aerion-microsoft",
+		ICalUID:  "evt-uid-1@mailpong-microsoft",
 		Subject:  "Project sync",
 		Body:     &graphBody{ContentType: "text", Content: "Weekly project status"},
 		Location: &graphLocation{DisplayName: "Room 4B"},
@@ -86,7 +86,7 @@ func TestMicrosoftTranslate_NonRecurringTimedRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("translateGraphEventToICS: %v", err)
 	}
-	if !strings.Contains(blob, "UID:evt-uid-1@aerion-microsoft") {
+	if !strings.Contains(blob, "UID:evt-uid-1@mailpong-microsoft") {
 		t.Errorf("blob missing UID:\n%s", blob)
 	}
 	if !strings.Contains(blob, "SUMMARY:Project sync") {
@@ -123,7 +123,7 @@ func TestMicrosoftTranslate_NonRecurringTimedRoundTrip(t *testing.T) {
 func TestMicrosoftTranslate_AllDay(t *testing.T) {
 	allDay := true
 	src := graphEvent{
-		ICalUID:  "alld@aerion-microsoft",
+		ICalUID:  "alld@mailpong-microsoft",
 		Subject:  "Holiday",
 		Start:    &graphTimePoint{DateTime: "2026-07-04T00:00:00.0000000", TimeZone: "UTC"},
 		End:      &graphTimePoint{DateTime: "2026-07-05T00:00:00.0000000", TimeZone: "UTC"},
@@ -150,7 +150,7 @@ func TestMicrosoftTranslate_RecurringWeeklyWithReminder(t *testing.T) {
 	reminder := 15
 	reminderOn := true
 	src := graphEvent{
-		ICalUID: "rec@aerion-microsoft",
+		ICalUID: "rec@mailpong-microsoft",
 		Subject: "Standup",
 		Start:   &graphTimePoint{DateTime: "2026-06-08T09:00:00.0000000", TimeZone: "UTC"}, // Monday
 		End:     &graphTimePoint{DateTime: "2026-06-08T09:30:00.0000000", TimeZone: "UTC"},
@@ -311,7 +311,7 @@ func equalStrings(a, b []string) bool {
 
 func TestMicrosoftTranslate_CancelledReturnsSentinel(t *testing.T) {
 	_, err := translateGraphEventToICS(graphEvent{
-		ICalUID: "x@aerion-microsoft",
+		ICalUID: "x@mailpong-microsoft",
 		Status:  &graphEventStatus{Reason: "deleted"},
 	})
 	if !errors.Is(err, errMicrosoftEventCancelled) {
@@ -383,7 +383,7 @@ func TestMicrosoftProvider_PushEvent_CreateSuccess(t *testing.T) {
 	p := newTestMicrosoftProvider(srv.URL)
 	src := Source{ID: "src-m1", Type: SourceTypeMicrosoft, AccountID: "acct-1"}
 	cal := Calendar{ID: "cal-m1", URL: "calendar-id-abc"}
-	ev := Event{UID: "evt@aerion-microsoft", ICSBlob: msMinimalICSBlob(t, "evt@aerion-microsoft")}
+	ev := Event{UID: "evt@mailpong-microsoft", ICSBlob: msMinimalICSBlob(t, "evt@mailpong-microsoft")}
 
 	result, err := p.PushEvent(t.Context(), src, cal, ev)
 	if err != nil {
@@ -436,10 +436,10 @@ func TestMicrosoftProvider_PushEvent_UpdatePATCHWithIfMatch(t *testing.T) {
 	src := Source{ID: "src-m1", Type: SourceTypeMicrosoft, AccountID: "acct-1"}
 	cal := Calendar{ID: "cal-m1", URL: "calendar-id-abc"}
 	ev := Event{
-		UID:             "evt@aerion-microsoft",
+		UID:             "evt@mailpong-microsoft",
 		ProviderEventID: "existing-id",
 		ETag:            `W/"old-etag"`, // deliberately stale — must be overwritten by GET
-		ICSBlob:         msMinimalICSBlob(t, "evt@aerion-microsoft"),
+		ICSBlob:         msMinimalICSBlob(t, "evt@mailpong-microsoft"),
 	}
 
 	result, err := p.PushEvent(t.Context(), src, cal, ev)
@@ -471,10 +471,10 @@ func TestMicrosoftProvider_PushEvent_412Conflict(t *testing.T) {
 	src := Source{ID: "src-m1", Type: SourceTypeMicrosoft, AccountID: "acct-1"}
 	cal := Calendar{ID: "cal-m1", URL: "calendar-id-abc"}
 	ev := Event{
-		UID:             "evt@aerion-microsoft",
+		UID:             "evt@mailpong-microsoft",
 		ProviderEventID: "stale-id",
 		ETag:            `W/"stale-etag"`,
-		ICSBlob:         msMinimalICSBlob(t, "evt@aerion-microsoft"),
+		ICSBlob:         msMinimalICSBlob(t, "evt@mailpong-microsoft"),
 	}
 	_, err := p.PushEvent(t.Context(), src, cal, ev)
 	if !errors.Is(err, ErrConflict) {
@@ -501,7 +501,7 @@ func TestMicrosoftProvider_PushEvent_429RetryAfterSucceeds(t *testing.T) {
 	p := newTestMicrosoftProvider(srv.URL)
 	src := Source{ID: "src-m1", Type: SourceTypeMicrosoft, AccountID: "acct-1"}
 	cal := Calendar{ID: "cal-m1", URL: "calendar-id-abc"}
-	ev := Event{UID: "evt@aerion-microsoft", ICSBlob: msMinimalICSBlob(t, "evt@aerion-microsoft")}
+	ev := Event{UID: "evt@mailpong-microsoft", ICSBlob: msMinimalICSBlob(t, "evt@mailpong-microsoft")}
 
 	result, err := p.PushEvent(t.Context(), src, cal, ev)
 	if err != nil {
@@ -629,8 +629,8 @@ func TestPlanEventSync(t *testing.T) {
 		{ICalUID: "n1", ETag: "e3"},                       // new single
 		{ICalUID: "u1", ETag: "eu"},                       // single, unchanged
 		{ICalUID: "mm", ETag: "em", Type: "seriesMaster"}, // master, unchanged etag
-		{ICalUID: ""},                                     // no UID — skip
-		{ICalUID: "s1", ETag: "e2new"},                    // duplicate — dedupe
+		{ICalUID: ""},                  // no UID — skip
+		{ICalUID: "s1", ETag: "e2new"}, // duplicate — dedupe
 	}
 	local := map[string]string{
 		"s1":   "e2old", // changed → processed

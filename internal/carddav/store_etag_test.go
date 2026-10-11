@@ -8,7 +8,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/hkdb/aerion/internal/contact"
+	"github.com/caseylabs/mailpong/internal/contact"
 )
 
 // etaglessServer accepts PUT and DELETE without returning an ETag and

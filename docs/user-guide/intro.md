@@ -5,9 +5,9 @@ slug: /intro
 
 # Introduction
 
-Aerion is an open source, lightweight email client built for people who want a modern email experience without the bloat.
+MailPong is an open source desktop email client that turns email threads into combined chats: like a Messenger app for your mailbox. It is alpha software, derived from [Aerion](https://github.com/hkdb/aerion) by [@hkdb](https://github.com/hkdb) and independently maintained. It is not an official Aerion release.
 
-## Why Aerion?
+## Why MailPong?
 
 The Linux desktop has long needed a proper email client. The existing options each have their drawbacks:
 
@@ -16,11 +16,11 @@ The Linux desktop has long needed a proper email client. The existing options ea
 - **Mailspring** - Built on Electron, which means heavy resource consumption
 - **Evolution** - Feels like it's still stuck in 1999
 
-Aerion was created to fill this gap: a standalone, lightweight email client with a modern interface that just works.
+Aerion was created to fill this gap, and MailPong builds on it with a chat-style interface: a standalone, lightweight email client that just works.
 
 ## Design Goals
 
-Aerion is built around five core principles:
+MailPong keeps Aerion's five core principles:
 
 1. **Resource Efficiency** - Minimal CPU, RAM, and battery consumption
 2. **Modern UX** - Clean, intuitive interface with dark mode support
@@ -30,23 +30,25 @@ Aerion is built around five core principles:
 
 ## Technology
 
-Aerion is built with [Wails](https://wails.io) and [Svelte](https://svelte.dev), not Electron. This means native performance with a modern web-based UI, without the memory overhead of running a full Chromium instance.
+MailPong is built with [Wails](https://wails.io) and [Svelte](https://svelte.dev), not Electron. This means native performance with a modern web-based UI, without the memory overhead of running a full Chromium instance.
 
-Aerion is CASA Tier 2 Certified by Google's preferred [authorized assessor](https://appdefensealliance.dev/casa/casa-assessors): [TAC Security](https://tacsecurity.com/)
+MailPong has not been through Google's CASA security assessment. The CASA Tier 2 certification belongs to the upstream Aerion project and does not apply to MailPong.
 
 ## Platform Support
 
-While Linux is a first-class citizen, Aerion also runs on:
+While Linux is a first-class citizen, MailPong also runs on:
 
-- **Linux** - Flatpak or Binary
+- **Linux** - Flatpak (local build) or binary
 - **macOS** - Native .app bundle
-- **Windows** - Standard installer
+- **Windows** - Executable or installer
+
+MailPong has no published releases yet; build it from source (see [Installation](./getting-started/installation/index.md)).
 
 ## Features at a Glance
 
 - Multiple email accounts with unified inbox
 - Conversation threads
-- OAuth support for Gmail and Outlook
+- OAuth support for Gmail and Outlook with your own credentials
 - CardDAV, Google, and Microsoft contact sync
 - WYSIWYG composer with detachable window
 - WYSIWYG signature editor
@@ -61,26 +63,12 @@ While Linux is a first-class citizen, Aerion also runs on:
 
 ## Open Source
 
-Aerion is licensed under Apache 2.0. You can view the source code, report issues, and contribute at [github.com/hkdb/aerion](https://github.com/hkdb/aerion).
+MailPong is licensed under Apache 2.0. You can view the source code, report issues, and contribute at [github.com/caseylabs/mailpong](https://github.com/caseylabs/mailpong). Version numbering continues from the Aerion code base: "MailPong 0.4.0" is a MailPong version.
 
 #### Sponsorship
 
-[3DF](https://3df.io) is sponsoring by way of dedicating the team's time to work on this. There's otherwise currently no sponsorship. If you like this project, please feel free to give us a star on [Github](https://github.com/hkdb/aerion) or buy us a coffee:
+MailPong has no sponsors. The upstream Aerion project is sponsored by its own team; that sponsorship doesn't extend to MailPong.
 
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/yellow_img.png)](https://www.buymeacoffee.com/3dfosi)
+#### Aerion Contributors
 
-#### Issue Contributors
-
-Aerion is largely driven by community feedback. Big thanks to the contributors who submitted issues which led to meaningful improvements we all now enjoy. This project would not be the same without them!
-
-Check out who they are at the Github [repo](https://github.com/hkdb/aerion) README.md under the **Issue Contributors** section.
-
-#### Translation Contributors
-
-Special thanks to translation contributors for making Aerion more accessible.
-
-Check out who they are at the Github [repo](https://github.com/hkdb/aerion) README.md under the **Translation Contributors** section.
-
-## Get Started
-
-Ready to try Aerion? Head to the [Installation Guide](/docs/getting-started/installation) to download and install it on your system.
+MailPong exists because of the work of the Aerion project: its author [@hkdb](https://github.com/hkdb), the issue and translation contributors listed in the [Aerion README](https://github.com/hkdb/aerion), and everyone who contributed code. See [NOTICE](https://github.com/caseylabs/mailpong/blob/main/NOTICE).

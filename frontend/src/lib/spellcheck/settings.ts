@@ -1,20 +1,19 @@
 // Applies the persisted spellcheck settings to the worker. Call on app startup
 // (after loadSettings), whenever the settings change, and on composer mount.
 // Disabled → tear the worker down (no squiggles). Enabled with an explicit
-// language set → use it; empty set → fall back to the UI language + English.
-import { get } from 'svelte/store'
-import { locale } from 'svelte-i18n'
+// language set → use it; empty set → fall back to the system language's English variant.
 import { getSpellcheckEnabled, getSpellcheckLanguages, getSpellcheckCustomWords, setSpellcheckCustomWords } from '$lib/stores/settings.svelte'
 import { AddSpellcheckCustomWord, RemoveSpellcheckCustomWord } from '$wailsjs/go/app/App.js'
 import { appLocaleToDict } from './locales'
 import { spellcheck } from './client'
 
-// The effective default dictionary set when the user hasn't chosen one: the UI
-// language (if spellcheckable) plus English. Used by both the engine and the
-// settings UI so they agree on what's "on" out of the box.
+// The effective default dictionary when the user hasn't chosen one: the system
+// language's English variant (en-CA and en-GB map to their own dictionaries,
+// everything else to en-US). Used by both the engine and the settings UI so
+// they agree on what's "on" out of the box.
 export function defaultSpellcheckLanguages(): string[] {
-  const ui = appLocaleToDict(get(locale) as string)
-  return [...new Set([ui, 'en'].filter((c): c is string => !!c))]
+  const nav = typeof navigator === 'undefined' ? '' : navigator.language
+  return [appLocaleToDict(nav) ?? 'en']
 }
 
 export function syncSpellcheckLanguages(): void {

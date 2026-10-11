@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hkdb/aerion/internal/account"
-	"github.com/hkdb/aerion/internal/certificate"
-	"github.com/hkdb/aerion/internal/logging"
-	"github.com/hkdb/aerion/internal/settings"
-	"github.com/hkdb/aerion/internal/smtp"
+	"github.com/caseylabs/mailpong/internal/account"
+	"github.com/caseylabs/mailpong/internal/certificate"
+	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailpong/internal/settings"
+	"github.com/caseylabs/mailpong/internal/smtp"
 )
 
 // ============================================================================
@@ -185,7 +185,7 @@ func (a *App) SetTermsAccepted(accepted bool) error {
 	return a.settingsStore.SetTermsAccepted(accepted)
 }
 
-// GetLastSeenVersion returns the Aerion version last acknowledged by the user
+// GetLastSeenVersion returns the MailPong version last acknowledged by the user
 // in the "What's new in this version" launch dialog. Empty = never acknowledged.
 func (a *App) GetLastSeenVersion() (string, error) {
 	return a.settingsStore.GetLastSeenVersion()
@@ -211,12 +211,12 @@ func (a *App) SetOAuthWarningDisabled(disabled bool) error {
 	return a.settingsStore.SetOAuthWarningDisabled(disabled)
 }
 
-// GetRunBackground returns whether Aerion keeps running when the window is closed
+// GetRunBackground returns whether MailPong keeps running when the window is closed
 func (a *App) GetRunBackground() (bool, error) {
 	return a.settingsStore.GetRunBackground()
 }
 
-// SetRunBackground sets whether Aerion keeps running when the window is closed.
+// SetRunBackground sets whether MailPong keeps running when the window is closed.
 // Disabling also force-disables start_hidden.
 func (a *App) SetRunBackground(enabled bool) error {
 	if err := a.settingsStore.SetRunBackground(enabled); err != nil {
@@ -228,12 +228,12 @@ func (a *App) SetRunBackground(enabled bool) error {
 	return nil
 }
 
-// GetStartHidden returns whether Aerion starts with the window hidden
+// GetStartHidden returns whether MailPong starts with the window hidden
 func (a *App) GetStartHidden() (bool, error) {
 	return a.settingsStore.GetStartHidden()
 }
 
-// SetStartHidden sets whether Aerion starts with the window hidden.
+// SetStartHidden sets whether MailPong starts with the window hidden.
 // Enabling also force-enables run_background (start hidden requires background mode).
 func (a *App) SetStartHidden(enabled bool) error {
 	if enabled {
@@ -244,12 +244,12 @@ func (a *App) SetStartHidden(enabled bool) error {
 	return a.settingsStore.SetStartHidden(enabled)
 }
 
-// GetAutostart returns whether Aerion starts on login
+// GetAutostart returns whether MailPong starts on login
 func (a *App) GetAutostart() (bool, error) {
 	return a.settingsStore.GetAutostart()
 }
 
-// SetAutostart sets whether Aerion starts on login.
+// SetAutostart sets whether MailPong starts on login.
 // Manages the XDG autostart .desktop file or Flatpak Background portal.
 func (a *App) SetAutostart(enabled bool) error {
 	// Check current value to avoid unnecessary OS-level changes
@@ -374,7 +374,7 @@ func (a *App) GetLanguage() (string, error) {
 }
 
 // SetLanguage sets the language preference
-// Valid values: "en", "zh-TW", "zh-HK", "zh-CN"
+// The UI ships "en" only; other saved values resolve to "en" in the frontend.
 func (a *App) SetLanguage(language string) error {
 	return a.settingsStore.SetLanguage(language)
 }
@@ -458,7 +458,7 @@ func (a *App) SetAlwaysLoadImages(enabled bool) error {
 }
 
 // GetDarkMailContent returns whether email content should be visually darkened
-// while Aerion is in dark mode.
+// while MailPong is in dark mode.
 func (a *App) GetDarkMailContent() (bool, error) {
 	return a.settingsStore.GetDarkMailContent()
 }
@@ -469,7 +469,7 @@ func (a *App) SetDarkMailContent(enabled bool) error {
 }
 
 // GetDarkComposerBody returns whether the composer message body should use a
-// dark background while Aerion is in dark mode.
+// dark background while MailPong is in dark mode.
 func (a *App) GetDarkComposerBody() (bool, error) {
 	return a.settingsStore.GetDarkComposerBody()
 }

@@ -2,8 +2,8 @@
 # Test Flatpak from-source build in a container matching GitHub Actions environment
 # Usage: ./test-build.sh v0.1.18
 #
-# This simulates the GA workflow: runs calculate-hashes.sh to resolve the git tag/commit
-# and shim binary hashes, then builds the Flatpak from source with vendored dependencies.
+# This simulates the GA workflow: runs calculate-hashes.sh to resolve the git tag/commit,
+# then builds the Flatpak from source with vendored dependencies.
 
 set -e
 
@@ -75,12 +75,10 @@ cd /workspace
 echo "Cleaning flatpak-builder cache..."
 rm -rf .flatpak-builder
 
-echo "Checking if shim binary release assets are available..."
-if ! wget -q --spider "https://github.com/hkdb/aerion/releases/download/${VERSION}/flathub-build-env-${VERSION}-linux-x86_64"; then
+echo "Checking that tag ${VERSION} exists..."
+if ! git ls-remote --exit-code --tags https://github.com/caseylabs/mailpong.git "refs/tags/${VERSION}" >/dev/null; then
     echo ""
-    echo "ERROR: Shim binary not found for ${VERSION}"
-    echo "   Make sure the release exists at:"
-    echo "   https://github.com/hkdb/aerion/releases/tag/${VERSION}"
+    echo "ERROR: Tag ${VERSION} not found at https://github.com/caseylabs/mailpong"
     echo ""
     exit 1
 fi
@@ -99,19 +97,19 @@ cd /workspace
 
 flatpak-builder --user --force-clean --repo=repo \
   --install-deps-from=flathub \
-  build-dir build/flatpak/flathub/io.github.clabs_public_forks.Aerion.yml
+  build-dir build/flatpak/flathub/io.github.caseylabs.MailPong.yml
 
 echo ""
 echo "Creating bundle..."
 mkdir -p build/bin
-flatpak build-bundle repo build/bin/Aerion-${VERSION}.flatpak io.github.clabs_public_forks.Aerion
+flatpak build-bundle repo build/bin/MailPong-${VERSION}.flatpak io.github.caseylabs.MailPong
 
 echo ""
 echo "=========================================="
 echo "Build successful!"
 echo "=========================================="
-echo "Output: build/bin/Aerion-${VERSION}.flatpak"
-ls -lh build/bin/Aerion-${VERSION}.flatpak
+echo "Output: build/bin/MailPong-${VERSION}.flatpak"
+ls -lh build/bin/MailPong-${VERSION}.flatpak
 INNERSCRIPT
 
 chmod +x /tmp/flatpak-build-test-inner.sh
@@ -134,5 +132,5 @@ echo "Test completed!"
 echo "=========================================="
 echo ""
 echo "If successful, the flatpak bundle is at:"
-echo "  $REPO_DIR/build/bin/Aerion-${VERSION}.flatpak"
+echo "  $REPO_DIR/build/bin/MailPong-${VERSION}.flatpak"
 echo ""

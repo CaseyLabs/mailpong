@@ -5,11 +5,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hkdb/aerion/internal/contact"
-	"github.com/hkdb/aerion/internal/credentials"
-	"github.com/hkdb/aerion/internal/keylock"
-	"github.com/hkdb/aerion/internal/kit/davutil"
-	"github.com/hkdb/aerion/internal/logging"
+	"github.com/caseylabs/mailpong/internal/contact"
+	"github.com/caseylabs/mailpong/internal/credentials"
+	"github.com/caseylabs/mailpong/internal/keylock"
+	"github.com/caseylabs/mailpong/internal/kit/davutil"
+	"github.com/caseylabs/mailpong/internal/logging"
 	"github.com/rs/zerolog"
 )
 

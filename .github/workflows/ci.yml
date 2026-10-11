@@ -47,6 +47,9 @@ jobs:
       - name: Run frontend linter
         run: cd frontend && npm run lint
 
+      - name: Run brand check
+        run: ./tools/brand-check.sh
+
   check:
     name: Type check
     runs-on: ubuntu-22.04

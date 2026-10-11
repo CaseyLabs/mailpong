@@ -4,16 +4,6 @@ import { register, init, waitLocale, locale, _ } from 'svelte-i18n'
 // locales via Vite glob auto-discovery in initI18n() — see below.
 // en must be first — it's the fallback/default.
 register('en', () => import('./locales/en.json'))
-register('cs', () => import('./locales/cs.json'))
-register('de', () => import('./locales/de.json'))
-register('fr', () => import('./locales/fr.json'))
-register('it', () => import('./locales/it.json'))
-register('nb', () => import('./locales/nb.json'))
-register('pl', () => import('./locales/pl.json'))
-register('vi', () => import('./locales/vi.json'))
-register('zh-CN', () => import('./locales/zh-CN.json'))
-register('zh-HK', () => import('./locales/zh-HK.json'))
-register('zh-TW', () => import('./locales/zh-TW.json'))
 
 // Vite-discovered extension i18n modules. Each enabled extension that ships
 // translations exports a registerExtensionI18n() function from its
@@ -28,37 +18,23 @@ const extensionI18nModules = import.meta.glob<{
 // en must be first — it's the fallback/default.
 export const supportedLocales = [
   { code: 'en', name: 'English' },
-  { code: 'cs', name: 'Čeština' },
-  { code: 'de', name: 'Deutsch' },
-  { code: 'fr', name: 'Français' },
-  { code: 'it', name: 'Italiano' },
-  { code: 'nb', name: 'Norsk Bokmål' },
-  { code: 'pl', name: 'Polski' },
-  { code: 'vi', name: 'Tiếng Việt' },
-  { code: 'zh-CN', name: '简体中文 (中国)' },
-  { code: 'zh-HK', name: '繁體中文 (香港)' },
-  { code: 'zh-TW', name: '繁體中文 (台灣)' },
 ] as const
 
 /**
- * Detect system locale from navigator.language and map to supported locales.
- * zh-HK → zh-HK, zh-TW → zh-TW, bare zh → zh-TW (fallback), en-US → en, etc.
+ * Map any locale code to one the UI ships. The UI is English-only, so this
+ * returns 'en' for everything else, including a non-English language saved in
+ * an imported Aerion database. Message lookup would fall back to 'en' anyway;
+ * resolving up front avoids an unregistered locale ever reaching svelte-i18n.
+ */
+export function resolveLocale(code: string | undefined | null): string {
+  return supportedLocales.find(l => l.code === code)?.code ?? 'en'
+}
+
+/**
+ * Detect the UI locale. The UI is English-only, so this is always 'en'.
+ * Add a case here (and a supportedLocales entry) when a locale is shipped.
  */
 export function detectSystemLocale(): string {
-  const nav = navigator.language || 'en'
-  const lower = nav.toLowerCase()
-
-  // Exact match first
-  const exact = supportedLocales.find(l => l.code.toLowerCase() === lower)
-  if (exact) return exact.code
-
-  // Language-only match (e.g., "zh" → "zh-TW", "en-US" → "en")
-  const lang = lower.split('-')[0]
-  if (lang === 'zh') return 'zh-TW' // bare "zh" defaults to Traditional Chinese (Taiwan)
-
-  const langMatch = supportedLocales.find(l => l.code.toLowerCase().split('-')[0] === lang)
-  if (langMatch) return langMatch.code
-
   return 'en'
 }
 
@@ -68,7 +44,7 @@ export function detectSystemLocale(): string {
  * @param savedLocale - Previously saved locale code from backend settings, or undefined for auto-detect
  */
 export async function initI18n(savedLocale?: string): Promise<void> {
-  const initialLocale = savedLocale || detectSystemLocale()
+  const initialLocale = resolveLocale(savedLocale || detectSystemLocale())
 
   // Register every discovered extension's locale loaders before init() so
   // their messages are merged into the active locale on first wait.
@@ -88,7 +64,7 @@ export async function initI18n(savedLocale?: string): Promise<void> {
  * Change the active locale at runtime.
  */
 export function setLocale(code: string) {
-  locale.set(code)
+  locale.set(resolveLocale(code))
 }
 
 export { _, locale }

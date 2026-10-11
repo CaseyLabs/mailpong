@@ -11,10 +11,10 @@ import (
 	"strings"
 	_ "time/tzdata" // IANA zones for Windows, which has no system tz database
 
-	"github.com/hkdb/aerion/app"
-	"github.com/hkdb/aerion/internal/appstate"
-	"github.com/hkdb/aerion/internal/platform"
-	"github.com/hkdb/aerion/internal/settings"
+	"github.com/caseylabs/mailpong/app"
+	"github.com/caseylabs/mailpong/internal/appstate"
+	"github.com/caseylabs/mailpong/internal/platform"
+	"github.com/caseylabs/mailpong/internal/settings"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -39,9 +39,9 @@ var (
 )
 
 // DebugMode returns whether debug logging is enabled
-// Can be enabled via --debug flag or AERION_DEBUG=1 environment variable
+// Can be enabled via --debug flag or MAILPONG_DEBUG=1 environment variable
 func DebugMode() bool {
-	return *debugMode || os.Getenv("AERION_DEBUG") == "1"
+	return *debugMode || os.Getenv("MAILPONG_DEBUG") == "1"
 }
 
 func main() {
@@ -148,7 +148,7 @@ func runMainMode(mailtoData *app.MailtoData, rawMailtoArg string) {
 
 	// Create application with options
 	err = wails.Run(&options.App{
-		Title:                    "Aerion",
+		Title:                    "MailPong",
 		Width:                    windowWidth,
 		Height:                   windowHeight,
 		MinWidth:                 360,
@@ -170,7 +170,7 @@ func runMainMode(mailtoData *app.MailtoData, rawMailtoArg string) {
 		},
 		Linux: &linux.Options{
 			WebviewGpuPolicy: linux.WebviewGpuPolicyOnDemand,
-			ProgramName:      "io.github.clabs_public_forks.Aerion",
+			ProgramName:      "io.github.caseylabs.MailPong",
 		},
 	})
 
@@ -263,7 +263,7 @@ func runComposerMode() {
 		},
 		Linux: &linux.Options{
 			WebviewGpuPolicy: linux.WebviewGpuPolicyOnDemand,
-			ProgramName:      "io.github.clabs_public_forks.Aerion",
+			ProgramName:      "io.github.caseylabs.MailPong",
 		},
 	})
 

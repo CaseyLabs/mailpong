@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/caseylabs/mailpong/internal/contact"
 	"github.com/emersion/go-vcard"
-	"github.com/hkdb/aerion/internal/contact"
 )
 
 // preserveOriginal is an Apple-style card with detail the Record doesn't model.

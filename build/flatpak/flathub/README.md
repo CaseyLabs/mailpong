@@ -1,158 +1,32 @@
-# Flathub Submission
+# Flathub Submission (deferred)
 
-This directory contains the assets for submitting Aerion to Flathub using **pre-built binaries** (extra-data approach) after each Github release.
+MailPong is not on Flathub, and submission is deferred until after the first
+public release. This directory holds the from-source manifest so it can be
+tested and, later, submitted.
 
-## Why Pre-Built Binaries?
+## Files
 
-Aerion uses the extra-data approach (similar to Discord, Spotify) because OAuth credentials are embedded at build time in GitHub Actions. This allows users to have Gmail/Outlook OAuth working out-of-the-box without exposing secrets to Flathub's build infrastructure.
+- `io.github.caseylabs.MailPong.yml` - From-source manifest for Flathub (vendored Go modules and npm packages, no bundled OAuth credentials)
+- `io.github.caseylabs.MailPong-source.yml` - Alternative manifest that builds the local checkout (not used for Flathub)
+- `go.mod.yml`, `modules.txt` - Vendored Go module sources
+- `node-sources.json`, `gen-node-sources.py` - Vendored npm package sources
+- `calculate-hashes.sh` - Pins the manifest to a release tag and commit
+- `release.sh` - Copies the manifest and vendored sources into a Flathub repository checkout
+- `../io.github.caseylabs.MailPong.metainfo.xml` - AppStream metadata
+- `../../linux/io.github.caseylabs.MailPong.desktop` - Desktop file
+- `../../linux/icons/` - Application icons
 
-## Prerequisites
+## Preparing a release
 
-Before submitting to Flathub:
+1. Tag the release (for example `v0.4.0`) and push the tag to `caseylabs/mailpong`.
+2. Pin the manifest: `./calculate-hashes.sh v0.4.0`. It resolves the tag's commit and
+   rewrites `tag:` and `commit:` in `io.github.caseylabs.MailPong.yml`.
+3. Regenerate `go.mod.yml`, `modules.txt` and `node-sources.json` if dependencies changed.
+4. Test: `../test-build.sh v0.4.0` (Docker) or `../build-local.sh`.
 
-1. **Create a GitHub release** with version tag (e.g., `v0.1.15`)
-2. **Ensure release includes**:
-   - `aerion-v0.1.13-linux-x86_64.tar.gz` (x86_64 binary with OAuth credentials)
-   - `aerion-v0.1.13-linux-aarch64.tar.gz` (aarch64 binary with OAuth credentials)
+## Submitting
 
-## Wait for Github Actions to build and update `build/flatpak/flathub/io.github.clabs_public_forks.Aerion.yml`
-
-Github Actions will use the provided script to calculate SHA256 hashes and automatically update the manifest:
-
-```bash
-./calculate-hashes.sh v0.1.15
-```
-
-This will:
-- Download the release tarballs from GitHub
-- Calculate SHA256 hashes and file sizes
-- Automatically update `io.github.clabs_public_forks.Aerion.yml` with new values
-- Create a backup of the original file
-- Commit the new `io.github.clabs_public_forks.Aerion.yml` with the commit message, "v0.1.15 - Flathub Submission"
-
-## Initial Flathub Submission (v0.1.14 - Ready Now!)
-
-### Step 1: Fork flathub/flathub
-
-**Go to**: https://github.com/flathub/flathub/fork
-
-**CRITICAL**: **Uncheck** "Copy the master branch only" - you need the `new-pr` branch!
-
-### Step 2: Clone and Create Submission Branch
-
-```bash
-# Clone your fork starting from new-pr branch
-git clone --branch=new-pr git@github.com:YOUR_USERNAME/flathub.git
-cd flathub
-
-# Create your submission branch
-git checkout -b add-aerion new-pr
-```
-
-### Step 3: Copy Required Files to Forked Flathub Repo(5 files total)
-
-```bash
-cd /path/to/aerion
-git pull
-cd build/flatpak/flathub
-# Double check the new extradata file
-./release.sh /path/to/forked/flathub
-```
-
-### Step 4: Commit and Push
-
-```bash
-cd /path/to/forked/flathub
-git add .
-git commit -m "Add io.github.clabs_public_forks.Aerion"
-git push origin add-aerion
-```
-
-### Step 5: Create Pull Request
-
-On GitHub, create a pull request:
-- **Base repository**: `flathub/flathub`
-- **Base branch**: `new-pr` ← **CRITICAL!**
-- **Head repository**: `YOUR_USERNAME/flathub`
-- **Compare branch**: `add-aerion`
-- **Title**: `Add io.github.clabs_public_forks.Aerion`
-
-### Step 6: Review Process
-
-Flathub reviewers will:
-- Review manifest correctness
-- Check metadata completeness
-- Request changes if needed
-
-**Common feedback**:
-- May ask to restrict `--filesystem=home` to more specific paths
-- Verify extra-data checksums match
-
-Comment `bot, build` to trigger a test build once reviewers are satisfied.
-
-### Step 7: Approval & Repository Creation
-
-After approval:
-- Flathub creates `flathub/io.github.clabs_public_forks.Aerion` repository
-- You receive write access invitation (accept within 1 week)
-- Must have 2FA enabled on GitHub
-
-## Updating on Flathub (For Future Releases)
-
-After v0.1.14 is on Flathub, for subsequent releases (v0.1.15, v0.1.16, etc.):
-
-```bash
-# 1. Create GitHub release with new binaries (GitHub Actions does this)
-
-# 2. Get updated manifest
-git pull
-
-# 3. Release to Flathub repository (using release.sh helper script)
-./release.sh /path/to/flathub/io.github.clabs_public_forks.Aerion
-# Script automatically copies: manifest, metainfo, desktop, icon, and flathub.json
-
-cd /path/to/flathub/io.github.clabs_public_forks.Aerion
-git add .
-git commit -m "Update to v0.1.15"
-git push
-
-# Flathub auto-builds and publishes (no re-review needed!)
-```
-
-## Files in This Directory
-
-- `io.github.clabs_public_forks.Aerion.yml` - Flatpak manifest using pre-built binaries (main manifest for Flathub)
-- `io.github.clabs_public_forks.Aerion-source.yml` - Alternative manifest (builds from source, not used for Flathub)
-- `calculate-hashes.sh` - Helper script that automatically updates the manifest with new release hashes
-- `release.sh` - Helper script that copies all files to the Flathub repository
-- `README.md` - This file
-
-**Files to copy from parent directory for Flathub submission:**
-- `../io.github.clabs_public_forks.Aerion.metainfo.xml` - AppStream metadata
-- `../../linux/aerion.desktop` - Desktop file (rename to `io.github.clabs_public_forks.Aerion.desktop`)
-- `../../appicon.png` - Application icon (rename to `io.github.clabs_public_forks.Aerion.png`)
-
-## OAuth Credentials
-
-With the extra-data approach, OAuth credentials are **already embedded** in the pre-built binaries. Users get working Gmail/Outlook OAuth out-of-the-box without any additional configuration.
-
-## Resources
-
-- [Flathub Submission Guide](https://docs.flathub.org/docs/for-app-authors/submission)
-- [App Requirements](https://docs.flathub.org/docs/for-app-authors/requirements)
-- [Flathub Review Guidelines](https://docs.flathub.org/docs/for-app-authors/review-guidelines)
-- [Extra Data Documentation](https://docs.flatpak.org/en/latest/flatpak-builder-command-reference.html#extra-data-sources)
-
-## Troubleshooting
-
-**Build fails with "Could not download file"**:
-- Ensure release tarballs are publicly accessible on GitHub
-- Verify URLs match exactly (case-sensitive)
-
-**SHA256 mismatch error**:
-- Re-run `./calculate-hashes.sh` with correct version
-- Ensure you're pointing to the correct GitHub release tag
-
-**Permission errors during runtime**:
-- Review `finish-args` in manifest
-- May need to justify or restrict filesystem access
+Follow the [Flathub submission guide](https://github.com/flathub/flathub/wiki/App-Submission).
+Flathub requires a verifiable app ID: `io.github.caseylabs.MailPong` is verified through the
+`caseylabs` GitHub account. After Flathub creates `flathub/io.github.caseylabs.MailPong`, copy the files with
+`./release.sh /path/to/flathub/io.github.caseylabs.MailPong` and open a pull request there.

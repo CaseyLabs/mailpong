@@ -3,8 +3,8 @@ package app
 import (
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 
-	"github.com/hkdb/aerion/internal/appstate"
-	"github.com/hkdb/aerion/internal/logging"
+	"github.com/caseylabs/mailpong/internal/appstate"
+	"github.com/caseylabs/mailpong/internal/logging"
 )
 
 // RefreshWindowConstraints removes window max size constraints. This works

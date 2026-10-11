@@ -1,4 +1,4 @@
-module github.com/hkdb/aerion
+module github.com/caseylabs/mailpong
 
 go 1.26.0
 

@@ -123,6 +123,7 @@ func deriveKey(salt []byte) []byte {
 	}
 
 	// Combine machine-specific data
+	// Legacy identifier from Aerion; persisted, do not rename. (KDF input; changing it breaks stored secrets.)
 	machineData := fmt.Sprintf("aerion:%s:%s:%d", hostname, username, os.Getuid())
 
 	// Derive key using PBKDF2

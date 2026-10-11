@@ -1,5 +1,5 @@
 // Package compose implements the coreapi.Composer interface by building a
-// mailto: URL from a ComposeRequest and delegating to Aerion's existing
+// mailto: URL from a ComposeRequest and delegating to MailPong's existing
 // composer-window opener. The launcher is passed in via interface to avoid
 // importing the app package (which would cycle).
 //

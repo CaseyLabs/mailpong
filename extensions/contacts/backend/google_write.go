@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hkdb/aerion/internal/logging"
+	"github.com/caseylabs/mailpong/internal/logging"
 	"github.com/rs/zerolog"
 )
 
@@ -74,7 +74,7 @@ func (e *ErrGoogleEtagMismatch) Error() string {
 // ----- API shapes ------------------------------------------------------------
 
 // googlePerson is the write-shape for the People API Person resource. Fields
-// that aren't currently surfaced by contact.Record are omitted; if Aerion
+// that aren't currently surfaced by contact.Record are omitted; if MailPong
 // adds them later, extend here and in google_convert.go.
 type googlePerson struct {
 	ResourceName   string                `json:"resourceName,omitempty"`

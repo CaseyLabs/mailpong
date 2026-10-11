@@ -23,7 +23,7 @@ import (
 // defaultBase is the base RoundTripper every davutil client falls back to when
 // no explicit base is supplied. It starts as http.DefaultTransport; the HOST may
 // replace it once at startup (SetDefaultBaseTransport) with a cert-aware
-// transport — e.g. one wired to Aerion's trust-on-first-use certificate store —
+// transport — e.g. one wired to MailPong's trust-on-first-use certificate store —
 // so all WebDAV clients (host + extension, Basic + bearer) verify TLS the same
 // way IMAP/SMTP do. davutil stays generic: it never imports the certificate
 // package; the host assembles the transport and installs it here.

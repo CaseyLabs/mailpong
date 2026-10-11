@@ -1,0 +1,64 @@
+# Allowed "Aerion" mentions. Format: <path glob> :: <ERE on line text> :: <reason>
+# '*' stays inside one directory, '**' crosses directories. Keep entries tight.
+# Excluded wholesale by brand-check.sh: archive/, docs/history/ (history).
+
+# --- Attribution and legal ---
+LICENSE :: . :: Apache 2.0 text and original copyright notice
+NOTICE :: . :: Required attribution to Aerion
+THIRD_PARTY_NOTICES.md :: . :: Attribution to Aerion and upstream notices
+docs/user-guide/LICENSE :: Aerion Contributors :: Original copyright line of the Apache 2.0 text
+wails.json :: Aerion Contributors :: Original copyright holder, kept next to the MailPong one
+PLAN.md :: . :: Migration plan, a history document
+ISSUES.md :: . :: Notes about the upstream relationship
+frontend/package-lock.json :: . :: Generated lock file
+docs/SQL_ROLLBACK.md :: Aerion :: Rollback scripts were released as Aerion versions
+tools/db/rollback-v*.sql :: Aerion :: Rollback scripts describe Aerion releases (0.2.x/0.3.x)
+
+# --- Statements of origin, import guide, upstream pointers ---
+README.md :: Aerion :: "Built on Aerion" origin statement and import link
+CHANGELOG.md :: Aerion :: Origin statement and link to the Aerion history
+CONTRIBUTING.md :: Aerion :: Upstream relationship and the naming rule
+AGENTS.md :: Aerion :: Project identity rules (the naming rule itself)
+SECURITY.md :: upstream Aerion :: Asks reporters whether the issue also reproduces upstream
+.github/ISSUE_TEMPLATE/*.yml :: Aerion :: Pointer to upstream Aerion for upstream bugs
+build/README.md :: Aerion :: States that MailPong installs next to Aerion
+build/flatpak/README.md :: Aerion :: History of earlier Aerion manifests
+build/windows/installer/project.nsi :: Aerion install :: Comment explaining why the uninstall key differs
+frontend/src/lib/components/WhatsNewDialog.svelte :: Aerion is now MailPong|any Aerion install :: Rename announcement
+frontend/src/lib/components/settings/AboutTab.svelte :: [Aa]erion|AERION_URL :: Attribution link to the upstream project
+docs/user-guide/** :: Aerion :: Upstream relationship, CASA note and import guide
+docs/LANGUAGE.md :: Aerion :: States the i18n machinery's origin and imported-database behaviour
+docs/EXTENSIONS.md :: [Aa]erion :: Legacy manifest field minAerionVersion, choice IDs, and design notes that are not in this repository
+frontend/src/lib/i18n/index.ts :: Aerion database :: Comment about imported Aerion databases
+frontend/src/lib/spellcheck/locales.ts :: Aerion database :: Comment about imported Aerion databases
+frontend/src/lib/components/kit/DetailOverlay.svelte :: Aerion ancestry :: Comment on code origin
+internal/database/migrations.go :: Older Aerion :: Comments about older Aerion installs in migrations
+internal/platform/autostart_linux_test.go :: io\.github\.(hkdb|clabs_public_forks)\.Aerion :: Test that seeded Aerion autostart files are left untouched
+internal/platform/paths_test.go :: aerion :: Test that no MailPong path contains the old name
+
+# --- D6 persisted internal identifiers (never rename) ---
+app/oauth_creds.go :: aerion-(shipped|mail) :: D6 OAuth choice IDs
+app/app.go :: aerion-(shipped|mail) :: D6 OAuth choice IDs
+internal/oauth2/*.go :: aerion-(shipped|mail) :: D6 OAuth choice IDs
+internal/credentials/*.go :: aerion-(shipped|mail)|[Ll]egacy identifier from Aerion :: D6 OAuth choice IDs
+frontend/src/lib/components/kit/OAuthCredsSlotEditor.svelte :: aerion-(shipped|mail)|'aerion'|statusBadgeKind|kit\.oauth\.aerion|badge|aerion\) :: D6 OAuth choice IDs and badge kind built on them
+frontend/src/lib/i18n/locales/en.json :: titleBarAerion|"aerion": :: Message keys for the D6 'aerion' title-bar setting and OAuth badge
+frontend/src/lib/components/settings/GeneralTab.svelte :: 'aerion'|titleBarAerion :: D6 'aerion' title-bar setting value and its message keys
+extensions/contacts/**/*.go :: .aerion. :: D6 'aerion' contact source
+extensions/contacts/frontend/** :: 'aerion'|"aerion" :: D6 'aerion' contact source
+internal/contact/*.go :: "aerion" :: D6 'aerion' contact source
+internal/crypto/crypto.go :: aerion: :: D6 aerion: KDF prefix
+extensions/*/manifest.json :: minAerionVersion :: D6 manifest field
+app/extension_ui.go :: MinAerionVersion|minAerionVersion :: D6 manifest field
+internal/core/api/v1/manifest.go :: MinAerionVersion :: D6 manifest field
+frontend/wailsjs/go/models.ts :: minAerionVersion :: Generated binding of the D6 manifest field
+
+# --- Cross-cutting patterns ---
+** :: Legacy identifier from Aerion; persisted, do not rename :: Required D6 marker comment next to each persisted identifier
+** :: derived from (\[)?Aerion :: Statement of origin
+** :: github\.com/hkdb/aerion :: Link to the upstream project
+** :: docs/history/AERION_ :: Path of a history document, which keeps its name
+** :: aerion\.db|\.local/share/aerion|\.config/aerion|\.cache/aerion|\\aerion\\ :: Aerion's own file locations, named only by the import guide and the rollback script
+docs/user-guide/getting-started/import-from-aerion.md :: . :: The import guide names Aerion's paths and database by design
+tools/db/rollback-v39-to-v30.sql :: . :: Historical rollback script for Aerion databases (0.3.0 to 0.2.5)
+frontend/src/lib/stores/contactSources.svelte.ts :: "aerion" local :: Comment about the D6 'aerion' contact source
