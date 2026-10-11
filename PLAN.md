@@ -101,7 +101,7 @@ Changes:
 - `app/background.go` IDLE loop:
   - Route events of any type whose `Folder` is not INBOX to `syncSentAfterIdle`, debounced per account with `idleFlagResyncDebounce`.
   - These events must not reach the inbox handlers for new mail, expunge or flags. That way they raise no notifications and start no inbox syncs.
-  - Remove the inferred `scheduleSentSyncAfterIdle` calls and the throttle state: `idleSentLast`, `idleSentPending` and `idleSentMinInterval`.
+  - Remove the inferred `scheduleSentSyncAfterIdle` calls. Keep the `idleSentMinInterval` throttle (`idleSentNext`) only for `syncSentIfUnwatched`, the fallback while Sent IDLE is not running (see Decision Log).
   - When a sync of the folder is already running, keep retrying, as a short re-debounce.
 - Our own sends echo back through Sent IDLE, so each send runs one extra incremental sync next to the one in `compose.go`. This is acceptable.
 - Update docs that describe IDLE scope or Sent sync latency (grep `docs/` and `README.md`).
