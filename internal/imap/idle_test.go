@@ -108,6 +108,33 @@ func TestIdleManagerStopFolder(t *testing.T) {
 	}
 }
 
+func TestIdleManagerStartAfterStopOrClose(t *testing.T) {
+	tests := []struct {
+		name  string
+		close bool
+		want  []string
+	}{
+		{"Stop allows a restart", false, []string{"INBOX", "Sent"}},
+		{"Close is final", true, nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := newTestIdleManager(t)
+			m.StartAccount("a1", "Acc", "INBOX", "Sent")
+			if tt.close {
+				m.Close()
+			} else {
+				m.Stop()
+			}
+			m.Start(context.Background())
+			m.StartAccount("a1", "Acc", "INBOX", "Sent")
+			if got := m.watched("a1"); !slices.Equal(got, tt.want) {
+				t.Fatalf("watched = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestIdleManagerRunning(t *testing.T) {
 	m := newTestIdleManager(t)
 	m.StartAccount("a1", "Acc", "INBOX", "Sent")

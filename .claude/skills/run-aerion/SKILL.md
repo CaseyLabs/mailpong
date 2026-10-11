@@ -21,6 +21,10 @@ The toolchain is installed. Run `cd frontend && npm ci` first if
 .claude/skills/run-aerion/dev.sh wait    # polls http://localhost:34115 for HTTP 200 (first build takes ~1 min); fails early if make dev exits
 ```
 
+The Go backend logs only fatal errors unless debug mode is on. To read sync,
+IDLE or shutdown lines in the log, start with `AERION_DEBUG=1 .claude/skills/run-aerion/dev.sh start`.
+The log has ANSI colors, so strip them (`sed 's/\x1b\[[0-9;]*m//g'`) before grepping.
+
 `make dev` also opens a native Aerion window on the user's desktop. Ignore it and
 drive the browser tab:
 

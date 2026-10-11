@@ -162,9 +162,9 @@ Validation:
 
 ## Progress
 
-- [x] 1. M10: stop syncs before the pool and DB close (manual quit-during-sync log check still open; needs a running app)
-- [x] 2. M7: hand split sender-chat state to a thread (in-app pin check still open; needs a running app)
-- [x] 3. M6: IDLE on the Sent folder (real-account check still open; needs a running app and Google OAuth credentials in .env.local)
+- [x] 1. M10: stop syncs before the pool and DB close (quit-during-sync check passed 2026-10-10 after the `IdleManager.Close` fix)
+- [x] 2. M7: hand split sender-chat state to a thread (in-app pin check passed 2026-10-10)
+- [x] 3. M6: IDLE on the Sent folder (real-account check passed 2026-10-10)
 - [x] 4. M8 timing
 - [x] 5. M9 running-app checks (done on fake data; real-mail leftovers in ISSUES M9)
 
@@ -173,7 +173,10 @@ Validation:
 - 2026-10-10: M10 review found syncs orphaned by an earlier `CancelAllSyncs` are not awaited by `shutdownSyncs`; logged as ISSUES M11. Declined: `SyncFolder` returning nil on shutdown (the Complete loops already stop on `syncCancelled`).
 - 2026-10-10: M7 undo of a split restores the sender chat's state but does not take it back from the thread it moved to; accepted.
 
-- 2026-10-10: Running-app checks (M10, M7, M6, and milestone 4) are blocked: the dev app has no Google OAuth client ID, so the only account cannot sign in. Owner chose to skip setting up `.env.local` for now.
+- 2026-10-10: Real-account checks (`.env.local` restored from a backup), debug log via `AERION_DEBUG=1`:
+  - M6: Sent IDLE ran next to INBOX (one extra connection). A message sent from the Gmail web UI raised Sent EXISTS at 17:55:55 and was stored at 17:55:58; it was the newest Sent-scope chat. No inbox sync or notification ran.
+  - M7: pinning `sender:noreply@uber.com` and splitting it moved the pin to Uber's newest inbox thread only. Restored by undo plus an unpin.
+  - M10: the first quit during `SyncAllComplete` stopped the folder loop cleanly, but `restartIDLE` (end of `SyncAllComplete`) and `ensureSentIdle` restarted IDLE after `Shutdown` had stopped it, and both connections read the closed DB. Fixed with `IdleManager.Close`, which makes `Start` and `StartAccount` no-ops; `Shutdown` calls it instead of `Stop` (sleep and network loss still use `Stop`). Rerun: no IDLE start and no `database is closed` after the quit.
 - 2026-10-10: M9 ran on fake data (page-level binding fakes, writes blocked). Row heights, built-in and Adwaita light themes, solid/neutral selection on pane focus, signed/encrypted/bad-signature banners (S/MIME and PGP), the combine switch and the narrow list-only layout all passed; no defects. Resize had no effect, so the narrow layout was checked in a 700px same-origin iframe (mode `narrow`).
 
 ## Decision Log
@@ -190,4 +193,5 @@ Validation:
 
 - M7: `StaleChatKeys` and the in-app split (`splitSenderChat`) hand state to `NewestInboxThreadKey` (newest thread the sender started); `MoveChatLink` already kept the target's link.
 - M10: `Pool.Close` and `shutdownSyncs` land; `Close` also runs inside `shutdownSyncs` so retries fail fast, and a dial finishing after `Close` is force-closed.
-- M9: no defects found on fake data; real-mail leftovers stay in ISSUES M9, with the real-account checks for M10, M7 and M6 (need Google OAuth credentials in `.env.local`).
+- M9: no defects found on fake data; real-mail leftovers stay in ISSUES M9.
+- Real-account checks for M10, M7 and M6 passed; the M10 check found and fixed IDLE restarting during shutdown.

@@ -491,6 +491,7 @@ type IdleManager struct {
 	// Control
 	ctx    context.Context
 	cancel context.CancelFunc
+	closed bool // set by Close; Start and StartAccount do nothing after it
 }
 
 // NewIdleManager creates a new IDLE manager
@@ -515,6 +516,9 @@ func (m *IdleManager) SetConnectivityCheck(check func() bool) {
 func (m *IdleManager) Start(ctx context.Context) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if m.closed {
+		return
+	}
 	m.ctx, m.cancel = context.WithCancel(ctx)
 	m.log.Info().Msg("IDLE manager started")
 }
@@ -537,6 +541,17 @@ func (m *IdleManager) Stop() {
 	m.log.Info().Msg("IDLE manager stopped")
 }
 
+// Close stops all IDLE connections for good: unlike Stop (sleep, network
+// loss), later Start and StartAccount calls do nothing. Shutdown uses it so a
+// sync still finishing (restartIDLE, ensureSentIdle) can't start connections
+// that then read the closed database.
+func (m *IdleManager) Close() {
+	m.mu.Lock()
+	m.closed = true
+	m.mu.Unlock()
+	m.Stop()
+}
+
 // Events returns the channel for receiving mail events
 func (m *IdleManager) Events() <-chan MailEvent {
 	return m.events
@@ -552,6 +567,9 @@ func (m *IdleManager) StartAccount(accountID, accountName string, folders ...str
 
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	if m.closed {
+		return
+	}
 
 	for _, folder := range folders {
 		key := idleKey{accountID, folder}

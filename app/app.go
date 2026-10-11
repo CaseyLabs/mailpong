@@ -1044,9 +1044,9 @@ func (a *App) Shutdown(ctx context.Context) {
 		log.Info().Msg("Email sync scheduler stopped")
 	}
 
-	// Stop IDLE manager
+	// Stop IDLE manager for good, so syncs still finishing can't restart it
 	if a.idleManager != nil {
-		a.idleManager.Stop()
+		a.idleManager.Close()
 		log.Info().Msg("IDLE manager stopped")
 	}
 
