@@ -7,7 +7,6 @@
   import { _ } from '$lib/i18n'
   import { GetIdentities, OpenURL } from '../../../../wailsjs/go/app/App'
   import { ConfirmDialog } from '$lib/components/ui/confirm-dialog'
-  import ComposeButton from '$lib/components/common/ComposeButton.svelte'
   import { toasts } from '$lib/stores/toast'
   import { setFocusedPane } from '$lib/stores/keyboard.svelte'
   import { accountStore } from '$lib/stores/accounts.svelte'
@@ -292,9 +291,6 @@
 
 <div class="flex flex-col h-full {isFlashing ? 'pane-focus-flash' : ''}">
   {#if !threadId || (!thread.conversation && !thread.loading && !thread.error)}
-    {#if onCompose}
-      <div class="flex items-center px-4 py-3 border-b border-border"><ComposeButton onclick={onCompose} /></div>
-    {/if}
     <div class="flex flex-col items-center justify-center flex-1 text-muted-foreground">
       <Icon icon="mdi:chat-outline" class="w-16 h-16 mb-4" />
       <p class="text-lg">{$_('chat.selectChat')}</p>

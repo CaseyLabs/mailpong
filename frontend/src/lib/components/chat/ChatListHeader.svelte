@@ -1,6 +1,6 @@
 <script lang="ts">
   // ChatListHeader — scope menu (all inboxes, an account inbox, or the folder
-  // sidebar), sync/compose buttons, search field, and filter chips.
+  // sidebar), sync and compose buttons, search field, and filter chips.
   import Icon from '@iconify/svelte'
   import { DropdownMenu } from 'bits-ui'
   import { _ } from '$lib/i18n'
@@ -26,7 +26,7 @@
     onFilter: (filter: ChatFilter) => void
     onQuery: (query: string) => void
     onSync: () => void
-    onCompose?: () => void
+    onCompose: () => void
   }
 
   let {
@@ -35,6 +35,10 @@
   }: Props = $props()
 
   let searchInputRef = $state<HTMLInputElement | null>(null)
+  // Icon-only Compose in a narrow list, so the scope name keeps room.
+  const COMPACT_WIDTH = 340
+  let topRowWidth = $state(0)
+  const compactCompose = $derived(topRowWidth > 0 && topRowWidth < COMPACT_WIDTH)
 
   export function focusSearch() {
     searchInputRef?.focus()
@@ -77,7 +81,7 @@
 </script>
 
 <div class="flex flex-col gap-2 px-3 pt-3 pb-2 border-b border-border">
-  <div class="flex items-center gap-1 min-w-0">
+  <div class="flex items-center gap-1 min-w-0" bind:clientWidth={topRowWidth}>
     <ResponsiveSidebarToggle />
     <DropdownMenu.Root>
       <DropdownMenu.Trigger
@@ -123,9 +127,6 @@
     </DropdownMenu.Root>
 
     <div class="flex-1"></div>
-    {#if onCompose}
-      <div class="mr-1"><ComposeButton onclick={onCompose} /></div>
-    {/if}
     <button
       class="p-2 rounded-md hover:bg-muted transition-colors {ring}"
       title={syncBusy ? `${$_('sidebar.syncing')} ${$_('sidebar.clickToCancel')}` : $_('sidebar.syncAllAccounts')}
@@ -134,6 +135,7 @@
     >
       <Icon icon="mdi:refresh" class="w-5 h-5 text-muted-foreground {syncBusy ? 'animate-spin' : ''}" />
     </button>
+    <div class="ml-1 shrink-0"><ComposeButton compact={compactCompose} onclick={onCompose} /></div>
   </div>
 
   <div class="flex items-center gap-1 bg-muted rounded-md px-2 focus-within:ring-2 focus-within:ring-ring">
@@ -159,12 +161,17 @@
     {/if}
   </div>
 
-  <div class="flex items-center gap-1.5 overflow-x-auto" role="group" aria-label={$_('chat.filters')}>
+  <!-- Wraps rather than scrolls, so a narrow list shows every pill without a scrollbar. -->
+  <div class="flex flex-wrap items-center gap-1.5" role="group" aria-label={$_('chat.filters')}>
     {#each filters as f (f.value)}
+      {@const active = filter === f.value}
+      {@const unavailable = isSearch && !searchSupports(f.value)}
+      <!-- No pointer-events-none when disabled, so the tooltip still shows on hover. -->
       <button
-        disabled={isSearch && !searchSupports(f.value)}
-        class="px-2.5 py-0.5 rounded-full text-xs whitespace-nowrap transition-colors {filter === f.value ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:bg-muted/70'} {ring} disabled:opacity-50 disabled:pointer-events-none"
-        aria-pressed={filter === f.value}
+        disabled={unavailable}
+        title={unavailable ? $_('chat.filterUnavailableInSearch') : undefined}
+        class="px-2.5 py-0.5 rounded-full text-xs whitespace-nowrap transition-colors {active ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground enabled:hover:bg-primary/20 enabled:hover:text-foreground'} disabled:opacity-50 disabled:cursor-not-allowed {ring}"
+        aria-pressed={active}
         onclick={() => onFilter(f.value)}
       >
         {f.label}

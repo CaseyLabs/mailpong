@@ -36,7 +36,7 @@
     onConversationSelect?: (threadId: string, folderId: string, accountId: string) => void
     onReply?: (mode: 'reply' | 'reply-all' | 'forward', messageId: string) => void
     onRowActionComplete?: () => void
-    onCompose?: () => void
+    onCompose: () => void
     onUnifiedInboxSelect: () => void
     onFolderSelect: (accountId: string, folderId: string, folderPath: string, folderName: string, folderType: string) => void
   }
@@ -262,7 +262,6 @@
       onPin: () => void pinChat(c, !c.isPinned, reloadAfterUndo),
       onSnooze: (until) => void snooze(c, until),
       onUnsnooze: () => void unsnoozeChat(c, reloadAfterUndo),
-      onMarkUnread: () => void markChatUnread(c.messageIds),
       onToggleSenderLow: () => toggleSenderLow(c),
       onToggleSenderChat: () => void toggleSenderChat(c),
     }
@@ -391,6 +390,7 @@
       {myEmails}
       onSelect={() => open(c)}
       actions={rowActions(c)}
+      onFocusList={focusList}
       onActionComplete={handleActionComplete}
       {onReply}
     />

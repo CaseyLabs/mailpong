@@ -101,6 +101,7 @@
     "filterUnread": "Unread",
     "filterLow": "Low priority",
     "filterSnoozed": "Snoozed",
+    "filterUnavailableInSearch": "Not available while searching",
     "listLabel": "Chats",
     "pinned": "Pinned",
     "chats": "Chats",
@@ -170,7 +171,6 @@
     "snoozePickTitle": "Snooze until",
     "snoozePickDescription": "The chat comes back to the list at this time.",
     "snoozeInPast": "Pick a time in the future",
-    "markUnread": "Mark unread",
     "markedUnreadToast": "Marked as unread",
     "moveSenderToLow": "Move sender to Low priority",
     "moveSenderToPriority": "Move sender to Priority",
@@ -186,7 +186,6 @@
     "markAllLowRead": "Mark all low priority as read",
     "chatsArchivedToast": "{count, plural, one {# chat} other {# chats}} archived",
     "chatsMarkedReadToast": "{count, plural, one {# chat} other {# chats}} marked as read",
-    "chatActions": "Chat actions",
     "inboxZero": "Inbox zero",
     "inboxZeroHint": "Nothing left to process. Nice work."
   },

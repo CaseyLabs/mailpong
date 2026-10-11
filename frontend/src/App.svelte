@@ -1656,7 +1656,7 @@
         onConversationSelect={handleConversationSelect}
         onReply={handleReply}
         onRowActionComplete={() => viewerRef?.refreshFlags()}
-        onCompose={viewerIsOverlay ? handleCompose : undefined}
+        onCompose={handleCompose}
         onUnifiedInboxSelect={handleUnifiedInboxSelect}
         onFolderSelect={handleFolderSelect}
         isFocused={getFocusedPane() === 'messageList'}
@@ -1689,7 +1689,7 @@
         folderType={selectedFolderType}
         accountId={selectedConversationAccountId}
         onReply={handleReply}
-        onCompose={handleCompose}
+        onCompose={viewerIsOverlay ? handleCompose : undefined}
         onComposeToAddress={handleComposeToAddress}
         onEditDraft={handleEditDraft}
         onExpandDraft={handleExpandChatDraft}

@@ -22,7 +22,6 @@ export interface ChatRowActions {
   onPin: () => void
   onSnooze: (until: Date) => void
   onUnsnooze: () => void
-  onMarkUnread: () => void
   onToggleSenderLow: () => void
   onToggleSenderChat: () => void
 }

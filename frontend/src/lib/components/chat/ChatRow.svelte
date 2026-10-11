@@ -1,9 +1,8 @@
 <script lang="ts">
   // ChatRow — one chat in the chat list: people first (avatar + names), then
-  // subject, then the latest line unless Settings hides previews. Hovered or
-  // selected rows show triage actions (Archive, Pin, Snooze, Unread);
-  // right-click opens the shared message context menu for the whole thread,
-  // with the triage actions on top.
+  // subject, then the latest line unless Settings hides previews. Right-click
+  // opens the shared message context menu for the whole thread, with the
+  // triage actions (Archive, Pin, Snooze, sender moves) on top.
   import { tick } from 'svelte'
   import Icon from '@iconify/svelte'
   import { _ } from '$lib/i18n'
@@ -31,26 +30,32 @@
     onActionComplete?: (autoSelectNext?: boolean) => void
     onReply?: (mode: 'reply' | 'reply-all' | 'forward', messageId: string) => void
     actions: ChatRowActions
+    onFocusList: () => void
   }
 
-  let { chat, id, selected, folderType, showAccount, myEmails, onSelect, onActionComplete, onReply, actions }: Props = $props()
+  let { chat, id, selected, folderType, showAccount, myEmails, onSelect, onActionComplete, onReply, actions, onFocusList }: Props = $props()
 
   let contextMenuRef: MessageContextMenu | null = null
   let snoozeMenu = $state<ChatSnoozeMenu | null>(null)
-  let hovered = $state(false)
-  let snoozeActive = $state(false)
-  // Stay rendered while the snooze menu or date dialog is open.
-  const showActions = $derived(hovered || selected || snoozeActive)
+  // The snooze menu mounts on request (context menu or H key) and unmounts
+  // once it and its date dialog have closed.
+  let snoozeMounted = $state(false)
   // Secondary text and avatar rings on the solid selection of a focused list.
   const selMuted = $derived(selected ? 'group-data-[focused]/list:text-selection-foreground/80' : '')
   const selRing = $derived(selected ? 'group-data-[focused]/list:ring-selection' : '')
 
-  // The actions (and so the snooze menu) render on hover or selection;
-  // count as hovered so a context-menu or keyboard request can open it.
   export async function openSnooze() {
-    hovered = true
+    snoozeMounted = true
     await tick()
     snoozeMenu?.open()
+  }
+
+  // Unmounting removes the trigger the menu hands focus back to, so return
+  // focus to the list instead of leaving it on the page body.
+  async function handleSnoozeClose() {
+    snoozeMounted = false
+    await tick()
+    if (document.activeElement === document.body) onFocusList()
   }
 
   export function isFolderPickerOpen(): boolean {
@@ -100,12 +105,6 @@
     e.dataTransfer.effectAllowed = 'move'
   }
 </script>
-
-{#snippet action(icon: string, label: string, onclick: () => void)}
-  <button class="p-1 rounded hover:bg-muted" tabindex="-1" title={label} aria-label={label} {onclick}>
-    <Icon {icon} class="w-4 h-4 text-muted-foreground" />
-  </button>
-{/snippet}
 
 {#snippet extraItems()}
   <ContextMenuItem onSelect={actions.onArchive}><Icon icon="mdi:archive-outline" class="mr-2 h-4 w-4" />{$_('viewer.archive')}</ContextMenuItem>
@@ -174,8 +173,6 @@
     onclick={onSelect}
     onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect() } }}
     ondragstart={handleDragStart}
-    onpointerenter={() => (hovered = true)}
-    onpointerleave={() => (hovered = false)}
   >
     <!-- Avatar: one person, or two stacked for a group -->
     <div class="relative shrink-0 w-11 h-11" aria-hidden="true">
@@ -222,30 +219,17 @@
       {/if}
     </div>
 
-    {#if showActions}
-      <!-- Hover actions; keyboard users have the E/P/H/Shift+U shortcuts. -->
-      <div
-        class="absolute right-2 top-1.5 flex items-center gap-0.5 rounded-md border border-border bg-background/95 shadow-sm"
-        role="toolbar"
-        tabindex="-1"
-        aria-label={$_('chat.chatActions')}
-        onclick={(e) => e.stopPropagation()}
-        onkeydown={(e) => e.stopPropagation()}
-      >
-        {@render action('mdi:archive-outline', $_('viewer.archive'), actions.onArchive)}
-        {@render action(chat.isPinned ? 'mdi:pin-off-outline' : 'mdi:pin-outline', chat.isPinned ? $_('chat.unpin') : $_('chat.pin'), actions.onPin)}
+    {#if snoozeMounted}
+      <!-- Hidden anchor so the snooze menu opens at the row's top-right. -->
+      <div class="absolute right-2 top-1.5" aria-hidden="true">
         <ChatSnoozeMenu
           bind:this={snoozeMenu}
-          onActiveChange={(a) => (snoozeActive = a)}
+          hiddenTrigger
+          onClose={handleSnoozeClose}
           snoozedUntil={chat.snoozedUntil}
           onSnooze={actions.onSnooze}
           onUnsnooze={actions.onUnsnooze}
-          triggerClass="p-1 rounded hover:bg-muted"
-          iconClass="w-4 h-4"
         />
-        {#if !hasUnread}
-          {@render action('mdi:email-mark-as-unread', $_('chat.markUnread'), actions.onMarkUnread)}
-        {/if}
       </div>
     {/if}
   </div>

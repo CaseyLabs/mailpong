@@ -104,7 +104,7 @@ These act on the selected chat (the open one after `J`/`K` or a click) from the 
 | `/` | Focus chat search |
 | `Escape` | In the reply box or open chat: back to the chat list |
 
-Hovering a chat row shows Archive, Pin, Snooze and Mark unread buttons; its right-click menu adds Archive, Pin, Snooze, Unsnooze and the sender priority switch to the usual message actions.
+A chat row's right-click menu adds Archive, Pin, Snooze, Unsnooze and the sender priority switch to the usual message actions.
 
 ### Chat View
 

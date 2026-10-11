@@ -40,6 +40,7 @@
     isSpam: boolean
     showBackButton: boolean
     onBack?: () => void
+    // Set only when the chat covers the list, which otherwise holds Compose.
     onCompose?: () => void
     onArchive: () => void
     onReplyChat: (replyAll: boolean) => void
