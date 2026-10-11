@@ -520,7 +520,7 @@ func (s *Store) Reorder(ids []string) error {
 // GetIdentities retrieves all identities for an account
 func (s *Store) GetIdentities(accountID string) ([]*Identity, error) {
 	rows, err := s.db.Query(`
-		SELECT id, account_id, email, name, is_default, signature_html, signature_text,
+		SELECT id, account_id, email, name, reply_to, is_default, signature_html, signature_text,
 			signature_enabled, signature_for_new, signature_for_reply, signature_for_forward,
 			signature_placement, signature_separator, order_index, created_at, updated_at
 		FROM identities WHERE account_id = ? ORDER BY order_index
@@ -536,7 +536,7 @@ func (s *Store) GetIdentities(accountID string) ([]*Identity, error) {
 		var sigHTML, sigText, placement sql.NullString
 		var updatedAt sql.NullTime
 		err := rows.Scan(
-			&identity.ID, &identity.AccountID, &identity.Email, &identity.Name,
+			&identity.ID, &identity.AccountID, &identity.Email, &identity.Name, &identity.ReplyTo,
 			&identity.IsDefault, &sigHTML, &sigText,
 			&identity.SignatureEnabled, &identity.SignatureForNew, &identity.SignatureForReply, &identity.SignatureForForward,
 			&placement, &identity.SignatureSeparator, &identity.OrderIndex, &identity.CreatedAt, &updatedAt,
@@ -567,12 +567,12 @@ func (s *Store) GetIdentity(id string) (*Identity, error) {
 	var sigHTML, sigText, placement sql.NullString
 	var updatedAt sql.NullTime
 	err := s.db.QueryRow(`
-		SELECT id, account_id, email, name, is_default, signature_html, signature_text,
+		SELECT id, account_id, email, name, reply_to, is_default, signature_html, signature_text,
 			signature_enabled, signature_for_new, signature_for_reply, signature_for_forward,
 			signature_placement, signature_separator, order_index, created_at, updated_at
 		FROM identities WHERE id = ?
 	`, id).Scan(
-		&identity.ID, &identity.AccountID, &identity.Email, &identity.Name,
+		&identity.ID, &identity.AccountID, &identity.Email, &identity.Name, &identity.ReplyTo,
 		&identity.IsDefault, &sigHTML, &sigText,
 		&identity.SignatureEnabled, &identity.SignatureForNew, &identity.SignatureForReply, &identity.SignatureForForward,
 		&placement, &identity.SignatureSeparator, &identity.OrderIndex, &identity.CreatedAt, &updatedAt,
@@ -615,6 +615,7 @@ func (s *Store) CreateIdentity(accountID string, config *IdentityConfig) (*Ident
 		AccountID:           accountID,
 		Email:               config.Email,
 		Name:                config.Name,
+		ReplyTo:             config.ReplyTo,
 		IsDefault:           false, // New identities are not default
 		SignatureHTML:       config.SignatureHTML,
 		SignatureText:       config.SignatureText,
@@ -631,12 +632,12 @@ func (s *Store) CreateIdentity(accountID string, config *IdentityConfig) (*Ident
 
 	_, err := s.db.Exec(`
 		INSERT INTO identities (
-			id, account_id, email, name, is_default, signature_html, signature_text,
+			id, account_id, email, name, reply_to, is_default, signature_html, signature_text,
 			signature_enabled, signature_for_new, signature_for_reply, signature_for_forward,
 			signature_placement, signature_separator, order_index, created_at, updated_at
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`,
-		identity.ID, identity.AccountID, identity.Email, identity.Name, identity.IsDefault,
+		identity.ID, identity.AccountID, identity.Email, identity.Name, identity.ReplyTo, identity.IsDefault,
 		nullableString(identity.SignatureHTML), nullableString(identity.SignatureText),
 		identity.SignatureEnabled, identity.SignatureForNew, identity.SignatureForReply, identity.SignatureForForward,
 		identity.SignaturePlacement, identity.SignatureSeparator, identity.OrderIndex, identity.CreatedAt, identity.UpdatedAt,
@@ -663,12 +664,12 @@ func (s *Store) UpdateIdentity(id string, config *IdentityConfig) (*Identity, er
 	now := time.Now()
 	_, err = s.db.Exec(`
 		UPDATE identities SET
-			email = ?, name = ?, signature_html = ?, signature_text = ?,
+			email = ?, name = ?, reply_to = ?, signature_html = ?, signature_text = ?,
 			signature_enabled = ?, signature_for_new = ?, signature_for_reply = ?, signature_for_forward = ?,
 			signature_placement = ?, signature_separator = ?, updated_at = ?
 		WHERE id = ?
 	`,
-		config.Email, config.Name, nullableString(config.SignatureHTML), nullableString(config.SignatureText),
+		config.Email, config.Name, config.ReplyTo, nullableString(config.SignatureHTML), nullableString(config.SignatureText),
 		config.SignatureEnabled, config.SignatureForNew, config.SignatureForReply, config.SignatureForForward,
 		config.SignaturePlacement, config.SignatureSeparator, now, id,
 	)
@@ -678,6 +679,7 @@ func (s *Store) UpdateIdentity(id string, config *IdentityConfig) (*Identity, er
 
 	existing.Email = config.Email
 	existing.Name = config.Name
+	existing.ReplyTo = config.ReplyTo
 	existing.SignatureHTML = config.SignatureHTML
 	existing.SignatureText = config.SignatureText
 	existing.SignatureEnabled = config.SignatureEnabled

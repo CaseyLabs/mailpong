@@ -488,7 +488,7 @@ func (a *App) isGmailAccount(accountID string) bool {
 	if err != nil || acc == nil {
 		return false
 	}
-	return acc.IMAPHost == "imap.gmail.com"
+	return acc.IsGmail()
 }
 
 func (a *App) moveMessagesToIMAP(messages []*message.Message, sourceFolderID string, destFolder *folder.Folder) error {

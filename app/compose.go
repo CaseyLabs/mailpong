@@ -21,6 +21,7 @@ import (
 	"github.com/hkdb/aerion/internal/draft"
 	"github.com/hkdb/aerion/internal/email"
 	"github.com/hkdb/aerion/internal/folder"
+	"github.com/hkdb/aerion/internal/gmailapi"
 	"github.com/hkdb/aerion/internal/imap"
 	"github.com/hkdb/aerion/internal/logging"
 	"github.com/hkdb/aerion/internal/message"
@@ -28,6 +29,7 @@ import (
 	"github.com/hkdb/aerion/internal/pgp"
 	"github.com/hkdb/aerion/internal/smime"
 	"github.com/hkdb/aerion/internal/smtp"
+	syncpkg "github.com/hkdb/aerion/internal/sync"
 	"github.com/rs/zerolog"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -56,6 +58,7 @@ type composeOps struct {
 	pgpSigner      *pgp.Signer
 	pgpEncryptor   *pgp.Encryptor
 	draftOps       *draftOps // for draft cleanup on send
+	sendAsStore    *gmailapi.Store
 }
 
 // getValidOAuthToken returns a valid OAuth token, refreshing if needed.
@@ -693,7 +696,9 @@ func (a *App) PrepareReply(messageID, mode string) (*smtp.ComposeMessage, error)
 	// Prefer the identity the original message was addressed to (To/Cc/Bcc), so the
 	// reply goes out from the alias that received the mail (#325); then the default
 	// identity; then the first.
-	fromIdentity := selectReplyFromIdentity(identities, msg)
+	fromIdentity := selectReplyFromIdentity(identities, msg, func() []string {
+		return resolveForwarding(a.ctx, identities, msg, a.accountStore, a.messageStore, a.folderStore, a.imapPool)
+	})
 	if fromIdentity == nil {
 		acc, _ := a.accountStore.Get(msg.AccountID)
 		if acc != nil {
@@ -1020,17 +1025,21 @@ func (a *App) ReadFileAsAttachment(filePath string) (*ComposerAttachment, error)
 // selectReplyFromIdentity picks the From identity for a reply/forward: prefer the
 // identity the original message was addressed to (To/Cc/Bcc) so the reply goes out
 // from the alias that received the mail (#325); then the default identity; then the
-// first. Returns nil only when there are no identities.
-func selectReplyFromIdentity(identities []*account.Identity, msg *message.Message) *account.Identity {
-	var recipients []smtp.Address
-	recipients = append(recipients, parseAddressList(msg.ToList)...)
-	recipients = append(recipients, parseAddressList(msg.CcList)...)
-	recipients = append(recipients, parseAddressList(msg.BccList)...)
-	for _, id := range identities {
-		for _, r := range recipients {
-			if strings.EqualFold(strings.TrimSpace(id.Email), strings.TrimSpace(r.Address)) {
-				return id
-			}
+// first. A To/Cc/Bcc match beats a forwarding-header match (forwarded: the
+// Delivered-To, X-Original-To, and X-Forwarded-For addresses), which beats the
+// default. forwarded is called only when no To/Cc/Bcc address matches, and may
+// be nil. Returns nil only when there are no identities.
+func selectReplyFromIdentity(identities []*account.Identity, msg *message.Message, forwarded func() []string) *account.Identity {
+	if id := addressedIdentity(identities, msg); id != nil {
+		return id
+	}
+	var fwd []string
+	if forwarded != nil {
+		fwd = forwarded()
+	}
+	for _, f := range fwd {
+		if id := identityByEmail(identities, f); id != nil {
+			return id
 		}
 	}
 	for _, id := range identities {
@@ -1042,6 +1051,68 @@ func selectReplyFromIdentity(identities []*account.Identity, msg *message.Messag
 		return identities[0]
 	}
 	return nil
+}
+
+// addressedIdentity returns the first identity listed in the message's
+// To/Cc/Bcc, or nil.
+func addressedIdentity(identities []*account.Identity, msg *message.Message) *account.Identity {
+	var recipients []smtp.Address
+	recipients = append(recipients, parseAddressList(msg.ToList)...)
+	recipients = append(recipients, parseAddressList(msg.CcList)...)
+	recipients = append(recipients, parseAddressList(msg.BccList)...)
+	for _, id := range identities {
+		for _, r := range recipients {
+			if strings.EqualFold(strings.TrimSpace(id.Email), strings.TrimSpace(r.Address)) {
+				return id
+			}
+		}
+	}
+	return nil
+}
+
+// forwardingFetchTimeout bounds the on-demand header fetch so a slow or
+// offline server cannot stall opening a reply.
+const forwardingFetchTimeout = 8 * time.Second
+
+// resolveForwarding returns the forwarding-header addresses of msg for reply
+// identity selection in both composers. With fewer than two identities they
+// cannot change the choice, so the on-demand header fetch is skipped. The
+// account's own address is dropped: Delivered-To nearly always carries it, and
+// it must not override the default identity. Failures return nil: the reply
+// falls back to the default identity.
+func resolveForwarding(ctx context.Context, identities []*account.Identity, msg *message.Message, accounts *account.Store, store *message.Store, folders *folder.Store, pool *imap.Pool) []string {
+	if len(identities) < 2 {
+		return nil
+	}
+	f, err := folders.Get(msg.FolderID)
+	if err != nil || f == nil {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(ctx, forwardingFetchTimeout)
+	defer cancel()
+	addrs, err := syncpkg.ResolveForwardingAddresses(ctx, store, pool, f.Path, msg)
+	if err != nil {
+		log := logging.WithComponent("app")
+		log.Debug().Err(err).Str("messageID", msg.ID).Msg("Forwarding headers unavailable for reply identity")
+		return nil
+	}
+	acc, err := accounts.Get(msg.AccountID)
+	if err != nil || acc == nil {
+		return addrs
+	}
+	return withoutAddress(addrs, acc.Email)
+}
+
+// withoutAddress returns addrs minus every case-insensitive match of drop.
+func withoutAddress(addrs []string, drop string) []string {
+	drop = strings.TrimSpace(drop)
+	out := make([]string, 0, len(addrs))
+	for _, a := range addrs {
+		if !strings.EqualFold(strings.TrimSpace(a), drop) {
+			out = append(out, a)
+		}
+	}
+	return out
 }
 
 // parseAddressList parses a JSON array of addresses or comma-separated string

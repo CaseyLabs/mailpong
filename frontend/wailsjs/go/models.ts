@@ -177,6 +177,7 @@ export namespace account {
 	    accountId: string;
 	    email: string;
 	    name: string;
+	    replyTo?: string;
 	    isDefault: boolean;
 	    signatureHtml?: string;
 	    signatureText?: string;
@@ -202,6 +203,7 @@ export namespace account {
 	        this.accountId = source["accountId"];
 	        this.email = source["email"];
 	        this.name = source["name"];
+	        this.replyTo = source["replyTo"];
 	        this.isDefault = source["isDefault"];
 	        this.signatureHtml = source["signatureHtml"];
 	        this.signatureText = source["signatureText"];
@@ -237,6 +239,7 @@ export namespace account {
 	export class IdentityConfig {
 	    email: string;
 	    name: string;
+	    replyTo?: string;
 	    signatureHtml?: string;
 	    signatureText?: string;
 	    signatureEnabled: boolean;
@@ -254,6 +257,7 @@ export namespace account {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.email = source["email"];
 	        this.name = source["name"];
+	        this.replyTo = source["replyTo"];
 	        this.signatureHtml = source["signatureHtml"];
 	        this.signatureText = source["signatureText"];
 	        this.signatureEnabled = source["signatureEnabled"];
@@ -820,6 +824,60 @@ export namespace app {
 	        this.smimeEncrypted = source["smimeEncrypted"];
 	        this.inlineAttachments = source["inlineAttachments"];
 	        this.attachments = this.convertValues(source["attachments"], DecryptedAttachment);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class SendAsAlias {
+	    email: string;
+	    displayName: string;
+	    replyTo: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SendAsAlias(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.email = source["email"];
+	        this.displayName = source["displayName"];
+	        this.replyTo = source["replyTo"];
+	    }
+	}
+	export class SendAsStatus {
+	    supported: boolean;
+	    accountEmail: string;
+	    fetched: boolean;
+	    identities: Record<string, string>;
+	    available: SendAsAlias[];
+	
+	    static createFrom(source: any = {}) {
+	        return new SendAsStatus(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.supported = source["supported"];
+	        this.accountEmail = source["accountEmail"];
+	        this.fetched = source["fetched"];
+	        this.identities = source["identities"];
+	        this.available = this.convertValues(source["available"], SendAsAlias);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

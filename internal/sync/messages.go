@@ -223,7 +223,7 @@ func (e *Engine) SyncMessages(ctx context.Context, accountID, folderID string, s
 	// still exist but are invisible in other IMAP mailbox views.
 	isGmail := false
 	if acc, accErr := e.accountStore.Get(accountID); accErr == nil && acc != nil {
-		isGmail = acc.IMAPHost == "imap.gmail.com"
+		isGmail = acc.IsGmail()
 	}
 
 	// Delete removed messages
@@ -856,7 +856,7 @@ fetchLoop:
 			references = e.extractReferences(headerBytes)
 			m.ReadReceiptTo = e.extractDispositionNotificationTo(headerBytes)
 		}
-		m.IsBulk = bulkFlag(headerBytes, m.FromEmail)
+		applyHeaderFlags(m, headerBytes)
 
 		// Store references as JSON array
 		if len(references) > 0 {

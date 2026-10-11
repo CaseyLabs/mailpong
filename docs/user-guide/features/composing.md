@@ -21,6 +21,8 @@ Aerion includes a full-featured email composer with rich text editing capabiliti
 The composer includes:
 
 - **From** - Select which account/identity to send from
+    - On a reply, Aerion picks the identity the message was sent to (To/Cc). If none matches, it checks the forwarding headers (`X-Forwarded-For`, `X-Original-To`, `Delivered-To`), so replies to mail forwarded to your account come from the original address. Your account's own address in those headers does not count, so it never overrides your default identity. The identity's Reply-To is applied automatically.
+    - On a Gmail account, if Gmail would rewrite the chosen From address (it is not a verified send-as address), the composer shows a warning naming the address Gmail will send from.
 - **To** - Primary recipients
 - **Cc/Bcc** - Click to show additional recipient fields
 - **Subject** - Email subject line

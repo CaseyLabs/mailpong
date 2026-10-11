@@ -9,6 +9,8 @@ import (
 	"github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-imap/v2/imapclient"
 	"github.com/emersion/go-message/textproto"
+
+	"github.com/hkdb/aerion/internal/message"
 )
 
 // bulkHeaderFields are the headers classifyBulk reads; the backfill fetches
@@ -51,17 +53,41 @@ func isNoReplySender(email string) bool {
 	return strings.HasPrefix(squashed, "noreply") || strings.HasPrefix(squashed, "donotreply")
 }
 
-// bulkFlag classifies raw header bytes; nil when there are no headers to read.
-func bulkFlag(rawHeader []byte, fromEmail string) *bool {
+// readRawHeader parses raw header bytes; false when there are no headers to
+// read.
+func readRawHeader(rawHeader []byte) (textproto.Header, bool) {
 	if len(rawHeader) == 0 {
-		return nil
+		return textproto.Header{}, false
 	}
 	h, err := textproto.ReadHeader(bufio.NewReader(bytes.NewReader(rawHeader)))
 	if err != nil && h.Len() == 0 {
+		return textproto.Header{}, false
+	}
+	return h, true
+}
+
+// bulkFlag classifies raw header bytes; nil when there are no headers to read.
+func bulkFlag(rawHeader []byte, fromEmail string) *bool {
+	h, ok := readRawHeader(rawHeader)
+	if !ok {
 		return nil
 	}
 	bulk := classifyBulk(h, fromEmail)
 	return &bulk
+}
+
+// applyHeaderFlags sets the header-derived IsBulk and DeliveredTo of m,
+// parsing rawHeader once; both stay nil when there are no headers to read.
+func applyHeaderFlags(m *message.Message, rawHeader []byte) {
+	m.IsBulk, m.DeliveredTo = nil, nil
+	h, ok := readRawHeader(rawHeader)
+	if !ok {
+		return
+	}
+	bulk := classifyBulk(h, m.FromEmail)
+	m.IsBulk = &bulk
+	delivered := encodeAddrs(headerForwardingAddresses(h))
+	m.DeliveredTo = &delivered
 }
 
 // backfillBulkFlags classifies messages in the selected mailbox whose is_bulk

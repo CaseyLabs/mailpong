@@ -1466,4 +1466,37 @@ var migrations = []Migration{
 			ALTER TABLE sender_chat ADD COLUMN combined INTEGER NOT NULL DEFAULT 1;
 		`,
 	},
+	{
+		Version: 51,
+		SQL: `
+			-- Optional Reply-To address per identity; empty falls back to the
+			-- account's default Reply-To.
+			ALTER TABLE identities ADD COLUMN reply_to TEXT NOT NULL DEFAULT '';
+		`,
+	},
+	{
+		Version: 52,
+		SQL: `
+			-- JSON list of the Delivered-To, X-Original-To, and X-Forwarded-For
+			-- addresses; NULL means the headers were not fetched yet.
+			ALTER TABLE messages ADD COLUMN delivered_to TEXT;
+		`,
+	},
+	{
+		Version: 53,
+		SQL: `
+			-- Latest Gmail "Send mail as" list per Google OAuth account.
+			CREATE TABLE IF NOT EXISTS account_send_as (
+				account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+				email TEXT NOT NULL,
+				display_name TEXT NOT NULL DEFAULT '',
+				reply_to TEXT NOT NULL DEFAULT '',
+				signature TEXT NOT NULL DEFAULT '',
+				verification_status TEXT NOT NULL DEFAULT '',
+				is_primary INTEGER NOT NULL DEFAULT 0,
+				fetched_at DATETIME NOT NULL,
+				PRIMARY KEY (account_id, email)
+			);
+		`,
+	},
 }

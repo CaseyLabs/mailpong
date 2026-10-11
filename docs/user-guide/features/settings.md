@@ -301,6 +301,15 @@ Manage sending identities for this account:
 
 You can have multiple identities per account (e.g., for aliases).
 
+Each identity can also have a **Reply-To** address. Replies to your messages go there instead of the account default. Leave it empty to use the default.
+
+For Gmail accounts, a **Gmail send-as addresses** section lists the addresses from Gmail's *Send mail as* list. Gmail only sends as an address it has verified; for any other it rewrites the sender to the account address. To set one up:
+
+1. In Gmail, go to **Settings → Accounts → Send mail as → Add another email address** and verify it.
+2. In Aerion, press **Refresh** in the send-as section, then **Add** next to the address (optionally importing its Gmail signature).
+
+Identities show a **Verified**, **Pending**, or **Not in Gmail** badge. Aerion refreshes the list once a day in the background.
+
 If you are using an Microsoft 365 account, there will be an additional section in this tab for you to add **shared mailboxes** here. After completely the flow, you will see the shared mailbox as a separate account on the side bar.
 
 #### Server Tab

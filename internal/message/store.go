@@ -618,8 +618,8 @@ func (s *Store) Upsert(m *Message) error {
 			subject, from_name, from_email, to_list, cc_list, bcc_list, reply_to, date,
 			snippet, is_read, is_starred, is_answered, is_forwarded, is_draft, is_deleted,
 			size, has_attachments, body_text, body_html, body_fetched,
-			read_receipt_to, read_receipt_handled, received_at, is_bulk
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			read_receipt_to, read_receipt_handled, received_at, is_bulk, delivered_to
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(folder_id, uid) DO UPDATE SET
 			id=excluded.id, account_id=excluded.account_id,
 			message_id=excluded.message_id, in_reply_to=excluded.in_reply_to,
@@ -635,7 +635,8 @@ func (s *Store) Upsert(m *Message) error {
 			body_fetched=excluded.body_fetched,
 			read_receipt_to=excluded.read_receipt_to, read_receipt_handled=excluded.read_receipt_handled,
 			received_at=excluded.received_at,
-			is_bulk=COALESCE(excluded.is_bulk, messages.is_bulk)
+			is_bulk=COALESCE(excluded.is_bulk, messages.is_bulk),
+			delivered_to=COALESCE(excluded.delivered_to, messages.delivered_to)
 	`
 
 	_, err := s.db.Exec(query,
@@ -648,7 +649,7 @@ func (s *Store) Upsert(m *Message) error {
 		m.Size, m.HasAttachments,
 		nullString(m.BodyText), nullString(m.BodyHTML), m.BodyFetched,
 		nullString(m.ReadReceiptTo), m.ReadReceiptHandled,
-		m.ReceivedAt, m.IsBulk,
+		m.ReceivedAt, m.IsBulk, m.DeliveredTo,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to upsert message: %w", err)
@@ -2665,4 +2666,25 @@ func highlightMatches(text, query string) string {
 	})
 
 	return highlighted
+}
+
+// GetDeliveredTo returns the stored forwarding-header JSON list for a message;
+// nil means the headers were not fetched yet.
+func (s *Store) GetDeliveredTo(id string) (*string, error) {
+	var v sql.NullString
+	if err := s.db.QueryRow(`SELECT delivered_to FROM messages WHERE id = ?`, id).Scan(&v); err != nil {
+		return nil, fmt.Errorf("failed to get delivered_to: %w", err)
+	}
+	if !v.Valid {
+		return nil, nil
+	}
+	return &v.String, nil
+}
+
+// SetDeliveredTo stores the forwarding-header JSON list for a message.
+func (s *Store) SetDeliveredTo(id, list string) error {
+	if _, err := s.db.Exec(`UPDATE messages SET delivered_to = ? WHERE id = ?`, list, id); err != nil {
+		return fmt.Errorf("failed to set delivered_to: %w", err)
+	}
+	return nil
 }

@@ -2,6 +2,8 @@
 package account
 
 import (
+	"net/mail"
+	"strings"
 	"time"
 )
 
@@ -133,6 +135,11 @@ func (a *Account) EffectiveSMTPAuthMechanism() AuthMechanism {
 	return a.SMTPAuthMechanism
 }
 
+// IsGmail reports whether the account uses Gmail's IMAP server.
+func (a *Account) IsGmail() bool {
+	return a.IMAPHost == "imap.gmail.com"
+}
+
 // GetFolderMapping returns the mapped folder path for a folder type, or empty string if not mapped
 func (a *Account) GetFolderMapping(folderType string) string {
 	switch folderType {
@@ -160,6 +167,7 @@ type Identity struct {
 	AccountID     string `json:"accountId"`
 	Email         string `json:"email"`
 	Name          string `json:"name"`
+	ReplyTo       string `json:"replyTo,omitempty"` // Optional Reply-To address for messages sent as this identity
 	IsDefault     bool   `json:"isDefault"`
 	SignatureHTML string `json:"signatureHtml,omitempty"`
 	SignatureText string `json:"signatureText,omitempty"`
@@ -181,6 +189,7 @@ type Identity struct {
 type IdentityConfig struct {
 	Email               string `json:"email"`
 	Name                string `json:"name"`
+	ReplyTo             string `json:"replyTo,omitempty"`
 	SignatureHTML       string `json:"signatureHtml,omitempty"`
 	SignatureText       string `json:"signatureText,omitempty"`
 	SignatureEnabled    bool   `json:"signatureEnabled"`
@@ -198,6 +207,10 @@ func (c *IdentityConfig) Validate() error {
 	}
 	if c.Name == "" {
 		return ErrDisplayNameRequired
+	}
+	c.ReplyTo = strings.TrimSpace(c.ReplyTo)
+	if c.ReplyTo != "" && !IsPlainAddress(c.ReplyTo) {
+		return ErrInvalidReplyTo
 	}
 	// Set defaults for placement
 	if c.SignaturePlacement == "" {
@@ -322,4 +335,11 @@ func (c *AccountConfig) Validate() error {
 		c.ReadReceiptRequestPolicy = "never"
 	}
 	return nil
+}
+
+// IsPlainAddress reports whether s is a bare email address, with no display
+// name or angle brackets.
+func IsPlainAddress(s string) bool {
+	addr, err := mail.ParseAddress(s)
+	return err == nil && addr.Address == s
 }

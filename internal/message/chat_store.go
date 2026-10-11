@@ -126,6 +126,26 @@ func keysJSON(keys []string) string {
 const myAddresses = `SELECT id AS account_id, LOWER(email) AS email FROM accounts
 	UNION SELECT account_id, LOWER(email) FROM identities`
 
+// MyAddresses returns every account's own addresses (myAddresses), lowercased
+// and deduplicated.
+func (s *Store) MyAddresses() ([]string, error) {
+	rows, err := s.db.Query(`SELECT DISTINCT email FROM (` + myAddresses + `)`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list own addresses: %w", err)
+	}
+	defer rows.Close()
+
+	var emails []string
+	for rows.Next() {
+		var email string
+		if err := rows.Scan(&email); err != nil {
+			return nil, fmt.Errorf("failed to scan own address: %w", err)
+		}
+		emails = append(emails, email)
+	}
+	return emails, rows.Err()
+}
+
 // combineSendersDefault is the chat_combine_senders setting
 // (settings.KeyChatCombineSenders) as 0 or 1; unset means on.
 const combineSendersDefault = `COALESCE((SELECT value <> 'false' FROM settings WHERE key = 'chat_combine_senders'), 1)`

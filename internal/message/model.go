@@ -80,6 +80,10 @@ type Message struct {
 	// Upserts keep the stored value when this is nil.
 	IsBulk *bool `json:"-"`
 
+	// JSON list of Delivered-To, X-Original-To, and X-Forwarded-For addresses;
+	// nil = headers not fetched. Upserts keep the stored value when nil.
+	DeliveredTo *string `json:"-"`
+
 	// Chat view text; computed on read by the conversation binding, never persisted
 	Chat *ChatText `json:"chat,omitempty"`
 	// Mine marks my own message (account address or Sent folder); computed

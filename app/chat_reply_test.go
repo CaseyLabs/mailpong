@@ -591,3 +591,32 @@ func TestSplitSenderChatRollback(t *testing.T) {
 		t.Errorf("undo stack size = %d, want 0", n)
 	}
 }
+
+func TestApplyIdentityReplyTo(t *testing.T) {
+	existing := &smtp.Address{Address: "kept@example.com"}
+	tests := []struct {
+		name string
+		msg  *smtp.ComposeMessage
+		id   *account.Identity
+		def  string
+		want string
+	}{
+		{"identity reply-to applied", &smtp.ComposeMessage{}, &account.Identity{ReplyTo: "r@example.com"}, "d@example.com", "r@example.com"},
+		{"existing kept", &smtp.ComposeMessage{ReplyTo: existing}, &account.Identity{ReplyTo: "r@example.com"}, "", "kept@example.com"},
+		{"account default used", &smtp.ComposeMessage{}, &account.Identity{}, " d@example.com; e@example.com", "d@example.com"},
+		{"identity without reply-to", &smtp.ComposeMessage{}, &account.Identity{}, "", ""},
+		{"no identity", &smtp.ComposeMessage{}, nil, "", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			applyIdentityReplyTo(tt.msg, tt.id, tt.def)
+			got := ""
+			if tt.msg.ReplyTo != nil {
+				got = tt.msg.ReplyTo.Address
+			}
+			if got != tt.want {
+				t.Errorf("ReplyTo = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}

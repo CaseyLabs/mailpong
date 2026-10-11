@@ -78,6 +78,10 @@ export function GetSMIMESignPolicy(arg1) {
   return window['go']['app']['ComposerApp']['GetSMIMESignPolicy'](arg1);
 }
 
+export function GetSendAsStatus(arg1) {
+  return window['go']['app']['ComposerApp']['GetSendAsStatus'](arg1);
+}
+
 export function GetShowTitleBar() {
   return window['go']['app']['ComposerApp']['GetShowTitleBar']();
 }

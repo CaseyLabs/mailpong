@@ -17,6 +17,7 @@ import (
 	"github.com/hkdb/aerion/internal/draft"
 	"github.com/hkdb/aerion/internal/email"
 	"github.com/hkdb/aerion/internal/folder"
+	"github.com/hkdb/aerion/internal/gmailapi"
 	"github.com/hkdb/aerion/internal/imap"
 	"github.com/hkdb/aerion/internal/ipc"
 	"github.com/hkdb/aerion/internal/logging"
@@ -235,6 +236,7 @@ func (c *ComposerApp) Startup(ctx context.Context) {
 		pgpSigner:      c.pgpSigner,
 		pgpEncryptor:   c.pgpEncryptor,
 		draftOps:       &c.draftOps,
+		sendAsStore:    gmailapi.NewStore(c.db.DB),
 	}
 
 	// Connect to main window's IPC server
@@ -887,7 +889,9 @@ func (c *ComposerApp) buildReplyMessage(msg *message.Message, mode string) *smtp
 	// Prefer the identity the original message was addressed to (#325), then the
 	// default identity, then the first.
 	identities, _ := c.accountStore.GetIdentities(c.config.AccountID)
-	fromIdentity := selectReplyFromIdentity(identities, msg)
+	fromIdentity := selectReplyFromIdentity(identities, msg, func() []string {
+		return resolveForwarding(c.ctx, identities, msg, c.accountStore, c.messageStore, c.folderStore, c.imapPool)
+	})
 
 	from := smtp.Address{}
 	if fromIdentity != nil {

@@ -48,6 +48,8 @@ export function GetSMIMEEncryptPolicy(arg1:string):Promise<string>;
 
 export function GetSMIMESignPolicy(arg1:string):Promise<string>;
 
+export function GetSendAsStatus(arg1:string):Promise<app.SendAsStatus>;
+
 export function GetShowTitleBar():Promise<boolean>;
 
 export function GetSystemTheme():Promise<string>;

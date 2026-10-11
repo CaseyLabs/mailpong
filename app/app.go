@@ -27,6 +27,7 @@ import (
 	extmail "github.com/hkdb/aerion/internal/extensions/mail"
 	extui "github.com/hkdb/aerion/internal/extensions/ui"
 	"github.com/hkdb/aerion/internal/folder"
+	"github.com/hkdb/aerion/internal/gmailapi"
 	"github.com/hkdb/aerion/internal/imap"
 	"github.com/hkdb/aerion/internal/ipc"
 	"github.com/hkdb/aerion/internal/kit/davutil"
@@ -758,7 +759,19 @@ func (a *App) Startup(ctx context.Context) {
 		pgpSigner:      a.pgpSigner,
 		pgpEncryptor:   a.pgpEncryptor,
 		draftOps:       &a.draftOps,
+		sendAsStore:    gmailapi.NewStore(a.db.DB),
 	}
+
+	// Refresh stale Gmail send-as lists in the background (at most daily).
+	go func() {
+		defer recoverPanic("app", "send-as refresh")
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(10 * time.Second):
+		}
+		a.composeOps.refreshStaleSendAs(ctx)
+	}()
 
 	// Initialize Google Contacts client for OAuth account contact search
 	a.googleContactsClient = contact.NewGoogleContactsClient()

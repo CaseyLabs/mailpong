@@ -132,7 +132,7 @@ func (e *Engine) recoverFailedHeaderBatch(ctx context.Context, client *imapclien
 			}
 			m.ReadReceiptTo = e.extractDispositionNotificationTo(headerBytes)
 		}
-		m.IsBulk = bulkFlag(headerBytes, m.FromEmail)
+		applyHeaderFlags(m, headerBytes)
 
 		if err := e.messageStore.Upsert(m); err != nil {
 			e.log.Warn().Err(err).Uint32("uid", m.UID).Msg("Failed to save recovered message header")

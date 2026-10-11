@@ -379,6 +379,8 @@ export function GetSearchCount(arg1:string,arg2:string,arg3:string,arg4:string):
 
 export function GetSearchCountUnifiedInbox(arg1:string,arg2:string):Promise<number>;
 
+export function GetSendAsStatus(arg1:string):Promise<app.SendAsStatus>;
+
 export function GetSenderChat(arg1:string,arg2:string,arg3:string):Promise<message.Conversation>;
 
 export function GetShowMessageListCircles():Promise<boolean>;
@@ -440,6 +442,8 @@ export function ImportRecipientPGPKey(arg1:string,arg2:string):Promise<void>;
 export function ImportSMIMECertificateFromPath(arg1:string,arg2:string,arg3:string):Promise<smime.ImportResult>;
 
 export function ImportSMIMECertificateFromPathBER(arg1:string,arg2:string,arg3:string):Promise<smime.ImportResult>;
+
+export function ImportSendAs(arg1:string,arg2:Array<string>,arg3:boolean):Promise<Array<account.Identity>>;
 
 export function InitiateShutdown():Promise<void>;
 
@@ -548,6 +552,8 @@ export function ReadFileAsAttachment(arg1:string):Promise<app.ComposerAttachment
 export function ReauthorizeAccount(arg1:string):Promise<void>;
 
 export function RebuildFTSIndex(arg1:string):Promise<void>;
+
+export function RefreshSendAs(arg1:string):Promise<app.SendAsStatus>;
 
 export function RefreshWindowConstraints():Promise<void>;
 

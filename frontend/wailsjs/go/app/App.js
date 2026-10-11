@@ -722,6 +722,10 @@ export function GetSearchCountUnifiedInbox(arg1, arg2) {
   return window['go']['app']['App']['GetSearchCountUnifiedInbox'](arg1, arg2);
 }
 
+export function GetSendAsStatus(arg1) {
+  return window['go']['app']['App']['GetSendAsStatus'](arg1);
+}
+
 export function GetSenderChat(arg1, arg2, arg3) {
   return window['go']['app']['App']['GetSenderChat'](arg1, arg2, arg3);
 }
@@ -844,6 +848,10 @@ export function ImportSMIMECertificateFromPath(arg1, arg2, arg3) {
 
 export function ImportSMIMECertificateFromPathBER(arg1, arg2, arg3) {
   return window['go']['app']['App']['ImportSMIMECertificateFromPathBER'](arg1, arg2, arg3);
+}
+
+export function ImportSendAs(arg1, arg2, arg3) {
+  return window['go']['app']['App']['ImportSendAs'](arg1, arg2, arg3);
 }
 
 export function InitiateShutdown() {
@@ -1060,6 +1068,10 @@ export function ReauthorizeAccount(arg1) {
 
 export function RebuildFTSIndex(arg1) {
   return window['go']['app']['App']['RebuildFTSIndex'](arg1);
+}
+
+export function RefreshSendAs(arg1) {
+  return window['go']['app']['App']['RefreshSendAs'](arg1);
 }
 
 export function RefreshWindowConstraints() {

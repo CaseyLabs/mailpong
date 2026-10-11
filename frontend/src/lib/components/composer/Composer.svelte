@@ -53,6 +53,7 @@
   import Switch from '$lib/components/ui/switch/Switch.svelte'
   import { ThreeOptionDialog } from '$lib/components/ui/confirm-dialog'
   import { addToast } from '$lib/stores/toast'
+  import SendAsWarning from './SendAsWarning.svelte'
   import { getComposerFormat, getDarkComposerBody } from '$lib/stores/settings.svelte'
   import { getIsDarkActive } from '$lib/stores/theme.svelte'
   import { isDialogGuardActive } from '$lib/stores/dialogGuard'
@@ -123,6 +124,9 @@
   let showReplyTo = $state(false)
   // Reply-To is a single *Address in ComposeMessage — the first chip wins
   let replyToRecipients = $state<smtp.Address[]>([])
+  // The Reply-To address prefilled from the identity or account default, so a
+  // From change can swap it without touching a value the user edited.
+  let prefilledReplyTo = ''
   let sending = $state(false)
   let poppingOut = $state(false)  // Pop-out in progress
   let editorElement = $state<HTMLElement | null>(null)
@@ -842,12 +846,15 @@
         console.error('Failed to load default BCC:', err)
       }
       try {
-        const defaultReplyTo = await api.getDefaultAddress('replyto', activeAccountId)
-        const first = defaultReplyTo.split(/[,;]/).map(s => s.trim()).filter(Boolean)[0]
+        const first = await defaultReplyToFor(identities.find(i => i.id === selectedIdentityId))
         if (first && replyToRecipients.length === 0) {
           replyToRecipients = [new smtp.Address({ name: '', address: first })]
+          prefilledReplyTo = first
           showReplyTo = true
           prefilled = true
+        } else if (first && replyToRecipients.length === 1 && replyToRecipients[0].address === first) {
+          // Restored from a draft: still the identity's default, so a From change may swap it
+          prefilledReplyTo = first
         }
       } catch (err) {
         console.error('Failed to load default Reply-To:', err)
@@ -1007,6 +1014,34 @@
     }
   }
 
+  // The Reply-To an identity implies: its own, else its account's default
+  async function defaultReplyToFor(identity: account.Identity | undefined): Promise<string> {
+    if (identity?.replyTo) return identity.replyTo
+    const accountDefault = await api.getDefaultAddress('replyto', identity?.accountId || activeAccountId)
+    return accountDefault.split(/[,;]/).map(s => s.trim()).filter(Boolean)[0] || ''
+  }
+
+  // Swap the prefilled Reply-To for the new identity's; a user-edited value stays
+  let replyToSwapSeq = 0
+  async function swapPrefilledReplyTo(identity: account.Identity) {
+    const seq = ++replyToSwapSeq
+    // Clearing a prefilled value is an edit too, so empty counts only when nothing was prefilled
+    const untouched = () => replyToRecipients.length === 0
+      ? prefilledReplyTo === ''
+      : replyToRecipients.length === 1 && replyToRecipients[0].address === prefilledReplyTo
+    if (!untouched()) return
+    try {
+      const next = await defaultReplyToFor(identity)
+      // A later From change or a user edit while the lookup ran wins
+      if (seq !== replyToSwapSeq || !untouched()) return
+      replyToRecipients = next ? [new smtp.Address({ name: '', address: next })] : []
+      prefilledReplyTo = next
+      if (next) showReplyTo = true
+    } catch (err) {
+      console.error('Failed to load default Reply-To:', err)
+    }
+  }
+
   // Handle identity change from the From dropdown
   function handleIdentityChange(newIdentityId: string) {
     if (newIdentityId === selectedIdentityId) return
@@ -1015,6 +1050,7 @@
     const oldAccountId = activeAccountId
     selectedIdentityId = newIdentityId
 
+    if (newIdentity) swapPrefilledReplyTo(newIdentity)
     if (!editor || !newIdentity) return
 
     // If account changed, reload read receipt policy and migrate draft
@@ -2002,6 +2038,12 @@
         </div>
       {/if}
     </div>
+
+    <SendAsWarning
+      {api}
+      accountId={activeAccountId}
+      identityId={selectedIdentityId}
+    />
 
     <!-- Reply-To (single address; revealed via the From-row link) -->
     {#if showReplyTo}

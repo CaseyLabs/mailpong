@@ -3,14 +3,15 @@
   import Icon from '@iconify/svelte'
   import { Button } from '$lib/components/ui/button'
   import IdentityEditor from './IdentityEditor.svelte'
+  import SendAsSection from './SendAsSection.svelte'
   import AccountDialog from '../AccountDialog.svelte'
   import { addToast } from '$lib/stores/toast'
   import { accountStore } from '$lib/stores/accounts.svelte'
   import { _ } from '$lib/i18n'
   // @ts-ignore - wailsjs path
-  import { account } from '../../../../../wailsjs/go/models'
+  import { account, app } from '../../../../../wailsjs/go/models'
   // @ts-ignore - wailsjs path
-  import { GetIdentities, CreateIdentity, UpdateIdentity, DeleteIdentity, SetDefaultIdentity, AddMicrosoftSharedMailbox, GetMicrosoftSharedMailboxes, RemoveAccount } from '../../../../../wailsjs/go/app/App'
+  import { GetIdentities, GetSendAsStatus, CreateIdentity, UpdateIdentity, DeleteIdentity, SetDefaultIdentity, AddMicrosoftSharedMailbox, GetMicrosoftSharedMailboxes, RemoveAccount } from '../../../../../wailsjs/go/app/App'
   import { Input } from '$lib/components/ui/input'
   import { Label } from '$lib/components/ui/label'
   import * as Dialog from '$lib/components/ui/dialog'
@@ -30,6 +31,8 @@
   let showEditor = $state(false)
   let editingIdentity = $state<account.Identity | null>(null)
   let deletingId = $state<string | null>(null)
+  // Gmail send-as state; null until loaded. Only shown when supported.
+  let sendAs = $state<app.SendAsStatus | null>(null)
 
   // Shared mailbox state
   let sharedMailboxes = $state<account.Account[]>([])
@@ -53,6 +56,21 @@
       await loadSharedMailboxes()
     }
   })
+
+  async function loadSendAs() {
+    try {
+      const st = await GetSendAsStatus(accountId)
+      sendAs = st?.supported ? st : null
+    } catch (err) {
+      console.error('Failed to load send-as status:', err)
+    }
+  }
+
+  const sendAsBadges: Record<string, { label: string; title: string; cls: string }> = {
+    verified: { label: 'identity.sendAsVerified', title: 'identity.sendAsVerifiedTitle', cls: 'bg-green-500/10 text-green-600 dark:text-green-400' },
+    pending: { label: 'identity.sendAsPending', title: 'identity.sendAsPendingTitle', cls: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
+    'not-configured': { label: 'identity.sendAsNotConfigured', title: 'identity.sendAsNotConfiguredTitle', cls: 'bg-amber-500/10 text-amber-600 dark:text-amber-400' },
+  }
 
   async function loadSharedMailboxes() {
     sharedMailboxLoading = true
@@ -100,7 +118,8 @@
   async function loadIdentities() {
     loading = true
     try {
-      identities = await GetIdentities(accountId)
+      const [loaded] = await Promise.all([GetIdentities(accountId), loadSendAs()])
+      identities = loaded
     } catch (err) {
       console.error('Failed to load identities:', err)
       addToast({
@@ -235,6 +254,7 @@
   {:else}
     <div class="space-y-2">
       {#each identities as identity (identity.id)}
+        {@const badge = sendAs ? sendAsBadges[sendAs.identities?.[identity.id]] : undefined}
         <div class="flex items-center gap-3 p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors group">
           <!-- Default radio button -->
           <button
@@ -257,6 +277,9 @@
               <span class="font-medium text-sm truncate">{identity.email}</span>
               {#if identity.isDefault}
                 <span class="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">{$_('identity.default')}</span>
+              {/if}
+              {#if badge}
+                <span class="text-xs px-1.5 py-0.5 rounded {badge.cls}" title={$_(badge.title)}>{$_(badge.label)}</span>
               {/if}
             </div>
             <div class="text-xs text-muted-foreground truncate">
@@ -303,6 +326,10 @@
     {$_('identity.defaultHelp')}
   </p>
 </div>
+
+{#if sendAs}
+  <SendAsSection {accountId} status={sendAs} onStatus={(st) => (sendAs = st)} onImported={loadIdentities} />
+{/if}
 
 {#if isMicrosoft}
   <!-- Shared Mailboxes (Microsoft 365 only) -->

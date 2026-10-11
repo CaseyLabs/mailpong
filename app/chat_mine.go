@@ -8,8 +8,8 @@ import (
 	"github.com/hkdb/aerion/internal/message"
 )
 
-// chatOwner recognizes my own messages for chat bubbles: any account address
-// as sender, or any message in a Sent folder (covers identities and aliases
+// chatOwner recognizes my own messages for chat bubbles: any account or
+// identity address as sender, or any message in a Sent folder (covers aliases
 // sent from that account).
 type chatOwner struct {
 	emails        map[string]struct{}
@@ -22,6 +22,12 @@ func (o chatOwner) mine(m *message.Message) bool {
 	}
 	_, ok := o.emails[strings.ToLower(strings.TrimSpace(m.FromEmail))]
 	return ok
+}
+
+func (o chatOwner) add(email string) {
+	if email = strings.ToLower(strings.TrimSpace(email)); email != "" {
+		o.emails[email] = struct{}{}
+	}
 }
 
 // loadChatOwner gathers every account's address and Sent folders. Errors
@@ -39,19 +45,16 @@ func (a *App) loadChatOwner() chatOwner {
 	return o
 }
 
-// loadChatOwnerEmails returns an owner holding every account's address.
+// loadChatOwnerEmails returns an owner holding every account and identity address.
 func (a *App) loadChatOwnerEmails() chatOwner {
 	o := chatOwner{emails: map[string]struct{}{}, sentFolderIDs: map[string]struct{}{}}
-	accounts, err := a.accountStore.List()
+	emails, err := a.messageStore.MyAddresses()
 	if err != nil {
 		log := logging.WithComponent("app")
-		log.Warn().Err(err).Msg("Chat ownership: failed to list accounts")
-		return o
+		log.Warn().Err(err).Msg("Chat ownership: failed to list own addresses")
 	}
-	for _, acc := range accounts {
-		if acc.Email != "" {
-			o.emails[strings.ToLower(strings.TrimSpace(acc.Email))] = struct{}{}
-		}
+	for _, e := range emails {
+		o.add(e)
 	}
 	return o
 }

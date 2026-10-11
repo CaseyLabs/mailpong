@@ -11,6 +11,7 @@ import (
 	"github.com/hkdb/aerion/internal/draft"
 	"github.com/hkdb/aerion/internal/email"
 	"github.com/hkdb/aerion/internal/logging"
+	"github.com/hkdb/aerion/internal/settings"
 	"github.com/hkdb/aerion/internal/smtp"
 )
 
@@ -175,9 +176,34 @@ func (a *App) buildChatReply(r ChatReply) (*smtp.ComposeMessage, error) {
 		return nil, fmt.Errorf("failed to get identities: %w", err)
 	}
 	includeQuote, _ := a.settingsStore.GetChatIncludeQuote()
-	assembleChatReply(msg, normalizeChatText(r.Text), chatSignatureFor(identityByEmail(identities, msg.From.Address)), includeQuote)
+	from := identityByEmail(identities, msg.From.Address)
+	assembleChatReply(msg, normalizeChatText(r.Text), chatSignatureFor(from), includeQuote)
+	accountReplyTo, _ := a.settingsStore.GetDefaultAddress(settings.DefaultAddressReplyTo, r.AccountID)
+	applyIdentityReplyTo(msg, from, accountReplyTo)
 	msg.Attachments = append(msg.Attachments, r.Attachments...)
 	return msg, nil
+}
+
+// applyIdentityReplyTo sets msg's Reply-To from the identity it is sent as,
+// else the first address of the account default list, unless one is already set.
+func applyIdentityReplyTo(msg *smtp.ComposeMessage, id *account.Identity, accountDefault string) {
+	if msg.ReplyTo != nil {
+		return
+	}
+	addr := ""
+	if id != nil {
+		addr = id.ReplyTo
+	}
+	if addr == "" {
+		fields := strings.FieldsFunc(accountDefault, func(r rune) bool { return r == ',' || r == ';' })
+		if len(fields) > 0 {
+			addr = strings.TrimSpace(fields[0])
+		}
+	}
+	if addr == "" {
+		return
+	}
+	msg.ReplyTo = &smtp.Address{Address: addr}
 }
 
 // chatSignature is an identity's reply signature, ready to append.

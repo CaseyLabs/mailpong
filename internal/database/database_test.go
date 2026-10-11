@@ -216,6 +216,14 @@ func TestMigrationV32_LocalRecordIDsRewrittenToUUIDs(t *testing.T) {
 	if _, err := db.Exec(`ALTER TABLE sender_chat DROP COLUMN combined`); err != nil {
 		t.Fatalf("drop sender_chat.combined for re-migrate: %v", err)
 	}
+	// And v51's reply_to on identities.
+	if _, err := db.Exec(`ALTER TABLE identities DROP COLUMN reply_to`); err != nil {
+		t.Fatalf("drop identities.reply_to for re-migrate: %v", err)
+	}
+	// And v52's delivered_to on messages.
+	if _, err := db.Exec(`ALTER TABLE messages DROP COLUMN delivered_to`); err != nil {
+		t.Fatalf("drop messages.delivered_to for re-migrate: %v", err)
+	}
 
 	// Re-run migrations — migration 32 should rewrite the seeded local- id.
 	if err := db.Migrate(); err != nil {
@@ -387,6 +395,14 @@ func TestMigrationV33_CleansExistingOrphans(t *testing.T) {
 	// And v50's combined on sender_chat.
 	if _, err := db.Exec(`ALTER TABLE sender_chat DROP COLUMN combined`); err != nil {
 		t.Fatalf("drop sender_chat.combined for re-migrate: %v", err)
+	}
+	// And v51's reply_to on identities.
+	if _, err := db.Exec(`ALTER TABLE identities DROP COLUMN reply_to`); err != nil {
+		t.Fatalf("drop identities.reply_to for re-migrate: %v", err)
+	}
+	// And v52's delivered_to on messages.
+	if _, err := db.Exec(`ALTER TABLE messages DROP COLUMN delivered_to`); err != nil {
+		t.Fatalf("drop messages.delivered_to for re-migrate: %v", err)
 	}
 
 	// Seed: orphan state row whose addressbook doesn't exist. Pre-migration,
@@ -585,6 +601,8 @@ func TestMigrationV46_ChatTriage(t *testing.T) {
 		`ALTER TABLE messages DROP COLUMN is_bulk`,
 		`ALTER TABLE attachments DROP COLUMN embedded`,
 		`ALTER TABLE sender_chat DROP COLUMN combined`,
+		`ALTER TABLE identities DROP COLUMN reply_to`,
+		`ALTER TABLE messages DROP COLUMN delivered_to`,
 		`DELETE FROM migrations WHERE version >= 46`,
 		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username)
 			VALUES ('acct-1', 'Test', 'user@example.com', 'imap.example.com', 'smtp.example.com', 'user@example.com')`,
@@ -649,6 +667,8 @@ func TestMigrationV48_SenderChat(t *testing.T) {
 
 	for _, stmt := range []string{
 		`DROP TABLE sender_chat`,
+		`ALTER TABLE identities DROP COLUMN reply_to`,
+		`ALTER TABLE messages DROP COLUMN delivered_to`,
 		`ALTER TABLE attachments DROP COLUMN embedded`,
 		`DELETE FROM migrations WHERE version >= 48`,
 		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username)
@@ -701,6 +721,8 @@ func TestMigrationV49_EmbeddedAttachments(t *testing.T) {
 	for _, stmt := range []string{
 		`ALTER TABLE attachments DROP COLUMN embedded`,
 		`ALTER TABLE sender_chat DROP COLUMN combined`,
+		`ALTER TABLE identities DROP COLUMN reply_to`,
+		`ALTER TABLE messages DROP COLUMN delivered_to`,
 		`DELETE FROM migrations WHERE version >= 49`,
 		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username)
 			VALUES ('acct-1', 'Test', 'user@example.com', 'imap.example.com', 'smtp.example.com', 'user@example.com')`,
@@ -786,6 +808,8 @@ func TestMigrationV50_SenderChatCombined(t *testing.T) {
 
 	for _, stmt := range []string{
 		`ALTER TABLE sender_chat DROP COLUMN combined`,
+		`ALTER TABLE identities DROP COLUMN reply_to`,
+		`ALTER TABLE messages DROP COLUMN delivered_to`,
 		`DELETE FROM migrations WHERE version >= 50`,
 		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username)
 			VALUES ('acct-1', 'Test', 'user@example.com', 'imap.example.com', 'smtp.example.com', 'user@example.com')`,
@@ -811,5 +835,70 @@ func TestMigrationV50_SenderChatCombined(t *testing.T) {
 		if got != want {
 			t.Errorf("sender %s combined = %d, want %d", email, got, want)
 		}
+	}
+}
+
+// TestMigrationV51_IdentityReplyTo upgrades a v50 database: existing
+// identities get an empty Reply-To.
+func TestMigrationV51_IdentityReplyTo(t *testing.T) {
+	db := openTestDB(t)
+
+	for _, stmt := range []string{
+		`ALTER TABLE identities DROP COLUMN reply_to`,
+		`ALTER TABLE messages DROP COLUMN delivered_to`,
+		`DELETE FROM migrations WHERE version >= 51`,
+		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username)
+			VALUES ('acct-1', 'Test', 'user@example.com', 'imap.example.com', 'smtp.example.com', 'user@example.com')`,
+		`INSERT INTO identities (id, account_id, email, name, is_default, order_index, created_at)
+			VALUES ('id-1', 'acct-1', 'user@example.com', 'User', 1, 0, CURRENT_TIMESTAMP)`,
+	} {
+		if _, err := db.Exec(stmt); err != nil {
+			t.Fatalf("prepare v50 state (%s): %v", stmt, err)
+		}
+	}
+
+	if err := db.Migrate(); err != nil {
+		t.Fatalf("migrate to v51: %v", err)
+	}
+
+	var got string
+	if err := db.QueryRow(`SELECT reply_to FROM identities WHERE id = 'id-1'`).Scan(&got); err != nil {
+		t.Fatalf("read reply_to: %v", err)
+	}
+	if got != "" {
+		t.Errorf("migrated identity reply_to = %q, want empty", got)
+	}
+}
+
+// TestMigrationV52_DeliveredTo verifies existing messages migrate with a NULL
+// delivered_to ("not fetched").
+func TestMigrationV52_DeliveredTo(t *testing.T) {
+	db := openTestDB(t)
+
+	for _, stmt := range []string{
+		`ALTER TABLE messages DROP COLUMN delivered_to`,
+		`DELETE FROM migrations WHERE version >= 52`,
+		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username)
+			VALUES ('acct-1', 'Test', 'user@example.com', 'imap.example.com', 'smtp.example.com', 'user@example.com')`,
+		`INSERT INTO folders (id, account_id, name, path, folder_type)
+			VALUES ('f-1', 'acct-1', 'INBOX', 'INBOX', 'inbox')`,
+		`INSERT INTO messages (id, account_id, folder_id, uid, subject, from_name, from_email, date, received_at)
+			VALUES ('m-1', 'acct-1', 'f-1', 1, 's', 'n', 'a@x.com', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+	} {
+		if _, err := db.Exec(stmt); err != nil {
+			t.Fatalf("prepare v51 state (%s): %v", stmt, err)
+		}
+	}
+
+	if err := db.Migrate(); err != nil {
+		t.Fatalf("migrate to v52: %v", err)
+	}
+
+	var got *string
+	if err := db.QueryRow(`SELECT delivered_to FROM messages WHERE id = 'm-1'`).Scan(&got); err != nil {
+		t.Fatalf("read delivered_to: %v", err)
+	}
+	if got != nil {
+		t.Errorf("migrated message delivered_to = %q, want NULL", *got)
 	}
 }

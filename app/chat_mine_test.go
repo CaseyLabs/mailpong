@@ -1,8 +1,11 @@
 package app
 
 import (
+	"path/filepath"
 	"testing"
 
+	"github.com/hkdb/aerion/internal/account"
+	"github.com/hkdb/aerion/internal/database"
 	"github.com/hkdb/aerion/internal/message"
 )
 
@@ -63,5 +66,40 @@ func TestAttachChatFields(t *testing.T) {
 				t.Errorf("Chat set = %v, want %v", got, tt.wantChat)
 			}
 		})
+	}
+}
+
+func TestLoadChatOwnerEmailsIncludesIdentities(t *testing.T) {
+	db, err := database.Open(filepath.Join(t.TempDir(), "test.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Migrate(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { db.Close() })
+
+	accounts := account.NewStore(db)
+	acc, err := accounts.Create(&account.AccountConfig{
+		Name: "Personal", DisplayName: "Sean", Email: "me@gmail.example",
+		IMAPHost: "imap.example.com", IMAPPort: 993, IMAPSecurity: account.SecurityTLS,
+		SMTPHost: "smtp.example.com", SMTPPort: 587, SMTPSecurity: account.SecurityStartTLS,
+		AuthType: account.AuthPassword, Username: "me@gmail.example",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := accounts.CreateIdentity(acc.ID, &account.IdentityConfig{Email: "Sean@Alias.Example", Name: "Sean"}); err != nil {
+		t.Fatal(err)
+	}
+
+	owner := (&App{messageStore: message.NewStore(db)}).loadChatOwnerEmails()
+	for _, from := range []string{"me@gmail.example", "sean@alias.example"} {
+		if !owner.mine(&message.Message{FolderID: "inbox", FromEmail: from}) {
+			t.Errorf("%s in inbox should be mine", from)
+		}
+	}
+	if owner.mine(&message.Message{FolderID: "inbox", FromEmail: "bob@example.com"}) {
+		t.Error("bob should not be mine")
 	}
 }

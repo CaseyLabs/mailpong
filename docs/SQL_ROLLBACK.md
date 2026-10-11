@@ -132,3 +132,36 @@ Per-slot keyring entries (keyed as `oauth_user_client:<configID>`) are NOT clear
 - Send-count and last-used autocomplete metadata (per-email).
 - CardDAV addressbook membership, href, and ETag (for re-sync identity).
 
+
+---
+
+## Migration 51: per-identity Reply-To
+
+Migration 51 adds `identities.reply_to` (TEXT, default `''`). Older builds ignore the column, so rolling back needs no SQL: leave it in place. To remove it anyway (this also deletes the Reply-To values):
+
+```sql
+ALTER TABLE identities DROP COLUMN reply_to;
+DELETE FROM migrations WHERE version = 51;
+```
+
+---
+
+## Migration 52: forwarding headers
+
+Migration 52 adds `messages.delivered_to` (TEXT, nullable): a JSON list of the Delivered-To, X-Original-To, and X-Forwarded-For addresses, NULL until fetched. Older builds ignore the column, so rolling back needs no SQL: leave it in place. To remove it anyway:
+
+```sql
+ALTER TABLE messages DROP COLUMN delivered_to;
+DELETE FROM migrations WHERE version = 52;
+```
+
+---
+
+## Migration 53: Gmail send-as cache
+
+Migration 53 adds the `account_send_as` table, a cache of each Google account's Gmail "Send mail as" list. Older builds ignore it, so rolling back needs no SQL: leave it in place. To remove it anyway (Aerion refetches the list on demand):
+
+```sql
+DROP TABLE account_send_as;
+DELETE FROM migrations WHERE version = 53;
+```

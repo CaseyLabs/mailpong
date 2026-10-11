@@ -33,6 +33,7 @@
   // Form state
   let email = $state('')
   let name = $state('')
+  let replyTo = $state('')
   let signatureHtml = $state('')
   let signatureText = $state('')
   let signatureEnabled = $state(true)
@@ -52,6 +53,7 @@
         // Editing existing identity
         email = identity.email || ''
         name = identity.name || ''
+        replyTo = identity.replyTo || ''
         signatureHtml = identity.signatureHtml || ''
         signatureText = identity.signatureText || ''
         signatureEnabled = identity.signatureEnabled ?? true
@@ -64,6 +66,7 @@
         // New identity - reset to defaults
         email = ''
         name = ''
+        replyTo = ''
         signatureHtml = ''
         signatureText = ''
         signatureEnabled = true
@@ -86,6 +89,10 @@
       errors.email = $_('identity.invalidEmailFormat')
     }
 
+    if (replyTo.trim() && !/^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(replyTo.trim())) {
+      errors.replyTo = $_('identity.invalidEmailFormat')
+    }
+
     if (!name.trim()) {
       errors.name = $_('identity.displayNameRequired')
     }
@@ -101,6 +108,7 @@
       const config = new account.IdentityConfig({
         email: email.trim(),
         name: name.trim(),
+        replyTo: replyTo.trim(),
         signatureHtml,
         signatureText,
         signatureEnabled,
@@ -204,6 +212,21 @@
           </p>
           {#if errors.name}
             <p class="text-sm text-destructive">{errors.name}</p>
+          {/if}
+        </div>
+
+        <div class="space-y-2">
+          <Label for="replyTo">{$_('identity.replyToLabel')}</Label>
+          <Input
+            id="replyTo"
+            type="email"
+            placeholder="you@example.com"
+            bind:value={replyTo}
+            class={errors.replyTo ? 'border-destructive' : ''}
+          />
+          <p class="text-xs text-muted-foreground">{$_('identity.replyToHelp')}</p>
+          {#if errors.replyTo}
+            <p class="text-sm text-destructive">{errors.replyTo}</p>
           {/if}
         </div>
       </div>

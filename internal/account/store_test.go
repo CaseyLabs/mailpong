@@ -171,6 +171,20 @@ func TestIdentityConfigValidate(t *testing.T) {
 			config:  &IdentityConfig{Email: "test@example.com", Name: ""},
 			wantErr: ErrDisplayNameRequired,
 		},
+		{
+			name:   "valid reply-to",
+			config: &IdentityConfig{Email: "test@example.com", Name: "Test User", ReplyTo: "reply@example.com"},
+		},
+		{
+			name:    "invalid reply-to",
+			config:  &IdentityConfig{Email: "test@example.com", Name: "Test User", ReplyTo: "not an address"},
+			wantErr: ErrInvalidReplyTo,
+		},
+		{
+			name:    "reply-to with display name",
+			config:  &IdentityConfig{Email: "test@example.com", Name: "Test User", ReplyTo: "Boss <boss@example.com>"},
+			wantErr: ErrInvalidReplyTo,
+		},
 	}
 
 	for _, tt := range tests {
@@ -359,5 +373,37 @@ func TestStoreDelete(t *testing.T) {
 	}
 	if !errors.Is(err, ErrAccountNotFound) {
 		t.Errorf("Get() after Delete() error = %v, want ErrAccountNotFound", err)
+	}
+}
+
+func TestIdentityReplyToRoundTrip(t *testing.T) {
+	db := openTestDB(t)
+	store := NewStore(db)
+
+	acct, err := store.Create(validAccountConfig())
+	if err != nil {
+		t.Fatalf("Create() error = %v", err)
+	}
+
+	ident, err := store.CreateIdentity(acct.ID, &IdentityConfig{Email: "alias@example.com", Name: "Alias", ReplyTo: "reply@example.com"})
+	if err != nil {
+		t.Fatalf("CreateIdentity() error = %v", err)
+	}
+	got, err := store.GetIdentity(ident.ID)
+	if err != nil || got.ReplyTo != "reply@example.com" {
+		t.Fatalf("GetIdentity() = %+v, %v; want ReplyTo reply@example.com", got, err)
+	}
+
+	if _, err := store.UpdateIdentity(ident.ID, &IdentityConfig{Email: "alias@example.com", Name: "Alias"}); err != nil {
+		t.Fatalf("UpdateIdentity() error = %v", err)
+	}
+	list, err := store.GetIdentities(acct.ID)
+	if err != nil {
+		t.Fatalf("GetIdentities() error = %v", err)
+	}
+	for _, i := range list {
+		if i.ReplyTo != "" {
+			t.Errorf("identity %s ReplyTo = %q, want empty", i.Email, i.ReplyTo)
+		}
 	}
 }

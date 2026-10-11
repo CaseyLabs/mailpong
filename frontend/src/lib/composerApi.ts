@@ -26,6 +26,9 @@ export interface ComposerApi {
   /** Get identities for an account */
   getIdentities: (accountId: string) => Promise<account.Identity[]>
 
+  /** Cached Gmail send-as state of an account's identities (no network call) */
+  getSendAsStatus: (accountId: string) => Promise<app.SendAsStatus>
+
   /** Get the account's default address list for a kind ('bcc' | 'replyto'); "" when disabled */
   getDefaultAddress: (kind: string, accountId: string) => Promise<string>
 
@@ -138,6 +141,11 @@ export function createMainWindowApi(): ComposerApi {
     getIdentities: async (accountId: string) => {
       const { GetIdentities } = await import('../../wailsjs/go/app/App.js')
       return GetIdentities(accountId)
+    },
+
+    getSendAsStatus: async (accountId: string) => {
+      const { GetSendAsStatus } = await import('../../wailsjs/go/app/App.js')
+      return GetSendAsStatus(accountId)
     },
 
     saveDraft: async (accountId: string, message: smtp.ComposeMessage, draftId: string) => {
@@ -292,6 +300,11 @@ export function createComposerWindowApi(_accountId: string): ComposerApi {
     getIdentities: async (accountId: string) => {
       const { GetIdentities } = await import('../../wailsjs/go/app/ComposerApp.js')
       return GetIdentities(accountId)
+    },
+
+    getSendAsStatus: async (accountId: string) => {
+      const { GetSendAsStatus } = await import('../../wailsjs/go/app/ComposerApp.js')
+      return GetSendAsStatus(accountId)
     },
 
     saveDraft: async (accountId: string, message: smtp.ComposeMessage, draftId: string) => {
