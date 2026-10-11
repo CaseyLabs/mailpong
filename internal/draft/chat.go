@@ -115,7 +115,7 @@ func (s *Store) restoreChatLink(accountID, threadKey string, link ChatLink) erro
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { _ = tx.Rollback() }()
 	current, err := scanChatLink(tx.QueryRow(chatLinkSelect+` WHERE draft_id = ?`, link.DraftID))
 	if err != nil {
 		return err
