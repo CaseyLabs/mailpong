@@ -27,6 +27,9 @@ export interface UIState {
   // Kit pane widths keyed '<rail id>.<pane>' ('contacts.sidebar', ...). Mail
   // uses sidebarWidth/listWidth. Missing entry -> pane default.
   paneWidths: Record<string, number>
+  // Chat list groups ('pinned', 'chats', 'low') -> expanded. Missing entry ->
+  // the group's default (see isChatGroupExpanded).
+  chatGroupsExpanded: Record<string, boolean>
 }
 
 // Pane width constraints
@@ -54,6 +57,7 @@ const defaultState: UIState = {
   activeExtension: 'mail',
   collapsedSidebars: {},
   paneWidths: {},
+  chatGroupsExpanded: {},
 }
 
 // Current state (in-memory cache)
@@ -75,6 +79,9 @@ let collapsedSidebarsState = $state<Record<string, boolean>>({})
 
 // Reactive mirror of paneWidths, read by kit panes while they render.
 let paneWidthsState = $state<Record<string, number>>({})
+
+// Reactive mirror of chatGroupsExpanded, read by the chat list.
+let chatGroupsExpandedState = $state<Record<string, boolean>>({})
 
 // Clamp a value within bounds
 export function clamp(value: number, min: number, max: number): number {
@@ -106,10 +113,12 @@ export async function loadUIState(): Promise<UIState> {
         activeExtension: state.activeExtension || 'mail',
         collapsedSidebars: state.collapsedSidebars || {},
         paneWidths: state.paneWidths || {},
+        chatGroupsExpanded: state.chatGroupsExpanded || {},
       }
       activeExtensionState = currentState.activeExtension
       collapsedSidebarsState = currentState.collapsedSidebars
       paneWidthsState = currentState.paneWidths
+      chatGroupsExpandedState = currentState.chatGroupsExpanded
     }
   } catch (err) {
     console.error('Failed to load UI state:', err)
@@ -160,6 +169,7 @@ export function saveUIState(updates: Partial<UIState>): void {
         activeExtension: currentState.activeExtension,
         collapsedSidebars: currentState.collapsedSidebars,
         paneWidths: currentState.paneWidths,
+        chatGroupsExpanded: currentState.chatGroupsExpanded,
       }
       await SaveUIState(backendState)
     } catch (err) {
@@ -260,4 +270,17 @@ function setSidebarCollapsed(view: string, collapsed: boolean): void {
 
 export function toggleSidebarCollapsed(view: string = activeExtensionState): void {
   setSidebarCollapsed(view, !isSidebarCollapsed(view))
+}
+
+// Chat list group expand/collapse helpers. Missing entry -> expanded, except
+// the Low priority group, which starts collapsed.
+export type ChatGroup = 'pinned' | 'chats' | 'low'
+
+export function isChatGroupExpanded(group: ChatGroup): boolean {
+  return chatGroupsExpandedState[group] ?? group !== 'low'
+}
+
+export function toggleChatGroupExpanded(group: ChatGroup): void {
+  chatGroupsExpandedState = { ...chatGroupsExpandedState, [group]: !isChatGroupExpanded(group) }
+  saveUIState({ chatGroupsExpanded: chatGroupsExpandedState })
 }

@@ -895,6 +895,7 @@ export namespace appstate {
 	    activeExtension?: string;
 	    collapsedSidebars?: Record<string, boolean>;
 	    paneWidths?: Record<string, number>;
+	    chatGroupsExpanded?: Record<string, boolean>;
 	
 	    static createFrom(source: any = {}) {
 	        return new UIState(source);
@@ -917,6 +918,7 @@ export namespace appstate {
 	        this.activeExtension = source["activeExtension"];
 	        this.collapsedSidebars = source["collapsedSidebars"];
 	        this.paneWidths = source["paneWidths"];
+	        this.chatGroupsExpanded = source["chatGroupsExpanded"];
 	    }
 	}
 

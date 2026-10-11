@@ -35,4 +35,8 @@ type UIState struct {
 	// "<rail id>.<pane>" (e.g. "contacts.sidebar", "contacts.list"). Mail uses
 	// SidebarWidth/ListWidth above. Missing entry -> pane default.
 	PaneWidths map[string]int `json:"paneWidths,omitempty"`
+
+	// Chat list group expand/collapse: "pinned", "chats" or "low" -> expanded.
+	// Missing entry -> the group's default (Low collapsed, the rest expanded).
+	ChatGroupsExpanded map[string]bool `json:"chatGroupsExpanded,omitempty"`
 }

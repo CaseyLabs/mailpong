@@ -1,7 +1,8 @@
 <script lang="ts">
   // ChatList — the mail section's list pane: chats for the current scope
   // (unified inbox, an account inbox, or any folder), grouped into Pinned,
-  // Chats and a collapsed Low priority group, with paged loading.
+  // Chats and Low priority (each collapsible and remembered across sessions;
+  // Low starts collapsed), with paged loading.
   //
   // Exposes the same ref API App.svelte uses on MessageList (selection,
   // open, delete, move, sync) so keyboard shortcuts keep working, plus the
@@ -19,6 +20,7 @@
   import { getLayoutMode, hideViewer, showSidebar, isSidebarHidden, toggleActiveSidebar } from '$lib/stores/layout.svelte'
   import { setFocusedPane } from '$lib/stores/keyboard.svelte'
   import { getChatAutoAdvance, getChatShowLowGroup } from '$lib/stores/settings.svelte'
+  import { type ChatGroup, isChatGroupExpanded, toggleChatGroupExpanded } from '$lib/stores/uiState.svelte'
   import { SyncFolder, CancelFolderSync } from '../../../../wailsjs/go/app/App'
   import { canToggleSenderChat, rowPeople } from './chatFormat'
   import { archiveChat, deleteMessagesPermanently, markChatUnread, type ChatRowActions, pinChat, setSenderChat, setSenderLow, snoozeChat, trashMessages, unsnoozeChat } from './chatTriage'
@@ -91,9 +93,14 @@
   })
   const { pinned, main, low } = $derived(groups)
   const showLowGroup = $derived(grouped && chatList.lowCount > 0)
+  // Chats gets a header (and so can collapse) only beside another group.
+  const chatsHeader = $derived(pinned.length > 0 || showLowGroup)
+  const pinnedOpen = $derived(isChatGroupExpanded('pinned'))
+  const chatsOpen = $derived(!chatsHeader || isChatGroupExpanded('chats'))
+  const lowOpen = $derived(isChatGroupExpanded('low'))
 
   // Keyboard navigation order: what's on screen, top to bottom.
-  const visible = $derived([...pinned, ...main, ...(chatList.lowExpanded ? low : [])])
+  const visible = $derived([...(pinnedOpen ? pinned : []), ...(chatsOpen ? main : []), ...(lowOpen ? low : [])])
 
   // Load the next page when the list is scrolled near its end, and keep
   // loading while it doesn't fill the view (e.g. a page of mostly collapsed
@@ -104,13 +111,15 @@
   }
 
   function maybeLoadMore() {
+    // With every group collapsed, more rows wouldn't show, so don't page.
+    if (!pinnedOpen && !chatsOpen && !lowOpen) return
     if (chatList.hasMore && !chatList.loading && nearEnd()) void chatList.loadMore()
   }
 
   $effect(() => {
     void chatList.items.length
     void chatList.loading
-    void chatList.lowExpanded
+    void visible.length
     maybeLoadMore()
   })
 
@@ -388,12 +397,20 @@
   {/each}
 {/snippet}
 
-{#snippet group(label: string, items: ChatItem[], showLabel = true)}
+{#snippet group(label: string, items: ChatItem[], id?: ChatGroup)}
+  {@const open = !id || isChatGroupExpanded(id)}
   <div role="group" aria-label={label}>
-    {#if showLabel}
-      <div class="px-4 pt-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground" aria-hidden="true">{label}</div>
+    {#if id}
+      <button
+        class="flex items-center gap-1 w-full px-4 pt-3 pb-1 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground"
+        aria-expanded={open}
+        onclick={() => toggleChatGroupExpanded(id)}
+      >
+        <Icon icon={open ? 'mdi:chevron-down' : 'mdi:chevron-right'} class="w-3.5 h-3.5 shrink-0" />
+        {label}
+      </button>
     {/if}
-    {@render rows(items)}
+    {#if open}{@render rows(items)}{/if}
   </div>
 {/snippet}
 
@@ -451,15 +468,15 @@
         {/if}
       </div>
     {:else}
-      {#if pinned.length > 0}{@render group($_('chat.pinned'), pinned)}{/if}
+      {#if pinned.length > 0}{@render group($_('chat.pinned'), pinned, 'pinned')}{/if}
       {#if grouped}
-        {#if main.length > 0}{@render group($_('chat.chats'), main, pinned.length > 0)}{/if}
+        {#if main.length > 0}{@render group($_('chat.chats'), main, chatsHeader ? 'chats' : undefined)}{/if}
       {:else}
         {@render rows(main)}
       {/if}
       {#if showLowGroup}
         <ChatLowGroupHeader onArchived={reloadAfterUndo} />
-        {#if chatList.lowExpanded}{@render group($_('chat.filterLow'), low, false)}{/if}
+        {#if lowOpen}{@render group($_('chat.filterLow'), low)}{/if}
       {/if}
     {/if}
     {#if chatList.loading && chatList.items.length > 0}

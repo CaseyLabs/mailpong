@@ -244,7 +244,7 @@ On by default. All the threads a sender starts show as one chat; threads started
 
 ### Show Low Priority Group
 
-On by default. The All filter lists newsletters and bulk mail in a collapsed Low priority group. When off, they appear only under the Low priority filter, and a pinned low-priority chat appears only under Low priority too.
+On by default. The All filter lists newsletters and bulk mail in a Low priority group, collapsed until you expand it. When off, they appear only under the Low priority filter, and a pinned low-priority chat appears only under Low priority too.
 
 ### Notify Only for Priority Mail
 

@@ -1,11 +1,12 @@
 <script lang="ts">
-  // ChatLowGroupHeader — the collapsed Low priority group's toggle, with
+  // ChatLowGroupHeader — the Low priority group's collapse toggle, with
   // "Archive all" (undoable) and "Mark all read" for every low chat in scope,
   // loaded or not.
   import Icon from '@iconify/svelte'
   import { _ } from '$lib/i18n'
   import { chatList, type ChatItem } from '$lib/stores/chat.svelte'
   import { toasts } from '$lib/stores/toast'
+  import { isChatGroupExpanded, toggleChatGroupExpanded } from '$lib/stores/uiState.svelte'
   import { archiveChats, markChatsRead } from './chatTriage'
 
   interface Props {
@@ -16,6 +17,7 @@
   let { onArchived }: Props = $props()
 
   let busy = $state(false)
+  const expanded = $derived(isChatGroupExpanded('low'))
 
   async function withLowChats(action: (chats: ChatItem[]) => Promise<unknown>) {
     if (busy) return
@@ -46,10 +48,10 @@
 <div class="flex items-center w-[calc(100%-0.75rem)] mx-1.5 mt-2 rounded-lg text-sm text-muted-foreground hover:bg-muted/60">
   <button
     class="flex flex-1 min-w-0 items-center gap-1.5 px-3 py-2 text-left"
-    aria-expanded={chatList.lowExpanded}
-    onclick={() => { chatList.lowExpanded = !chatList.lowExpanded }}
+    aria-expanded={expanded}
+    onclick={() => toggleChatGroupExpanded('low')}
   >
-    <Icon icon={chatList.lowExpanded ? 'mdi:chevron-down' : 'mdi:chevron-right'} class="w-4 h-4 shrink-0" />
+    <Icon icon={expanded ? 'mdi:chevron-down' : 'mdi:chevron-right'} class="w-4 h-4 shrink-0" />
     <Icon icon="mdi:newspaper-variant-outline" class="w-4 h-4 shrink-0" />
     <span class="truncate">{$_('chat.lowPriorityGroup', { values: { count: chatList.lowCount } })}</span>
   </button>

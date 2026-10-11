@@ -75,6 +75,7 @@ func defaultUIState() *UIState {
 		CollapsedFolders:     make(map[string]bool),
 		CollapsedSidebars:    make(map[string]bool),
 		PaneWidths:           make(map[string]int),
+		ChatGroupsExpanded:   make(map[string]bool),
 	}
 }
 
@@ -107,6 +108,9 @@ func (s *Store) GetUIState() (*UIState, error) {
 	}
 	if state.PaneWidths == nil {
 		state.PaneWidths = make(map[string]int)
+	}
+	if state.ChatGroupsExpanded == nil {
+		state.ChatGroupsExpanded = make(map[string]bool)
 	}
 
 	return &state, nil

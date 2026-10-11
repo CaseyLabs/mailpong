@@ -162,7 +162,6 @@ class ChatListStore {
   lowCount = $state(0)
   loading = $state(false)
   error = $state<string | null>(null)
-  lowExpanded = $state(false)
   // Settings → Chat: when off, All loads only priority chats (no Low group).
   showLowGroup = $state(true)
 
