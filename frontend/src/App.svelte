@@ -7,7 +7,7 @@
   import Sidebar from './lib/components/sidebar/Sidebar.svelte'
   import PaneResizeHandle from '$lib/components/kit/PaneResizeHandle.svelte'
   import ChatList from './lib/components/chat/ChatList.svelte'
-  import { flushChatComposers } from '$lib/components/chat/chatComposer.svelte'
+  import { flushChatComposers } from '$lib/components/chat/chatComposerState.svelte'
   import ChatView from './lib/components/chat/ChatView.svelte'
   import Composer from './lib/components/composer/Composer.svelte'
   import ToastContainer from './lib/components/ui/toast/ToastContainer.svelte'

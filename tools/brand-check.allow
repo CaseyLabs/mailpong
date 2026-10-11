@@ -17,6 +17,7 @@ tools/db/rollback-v*.sql :: Aerion :: Rollback scripts describe Aerion releases 
 # --- Statements of origin, import guide, upstream pointers ---
 README.md :: Aerion :: "Built on Aerion" origin statement and import link
 CHANGELOG.md :: Aerion :: Origin statement and link to the Aerion history
+docs/RELEASE_NOTES_v0.4.0.md :: Aerion :: Draft release notes: origin statement, separation from Aerion and import link
 CONTRIBUTING.md :: Aerion :: Upstream relationship and the naming rule
 AGENTS.md :: Aerion :: Project identity rules (the naming rule itself)
 SECURITY.md :: upstream Aerion :: Asks reporters whether the issue also reproduces upstream

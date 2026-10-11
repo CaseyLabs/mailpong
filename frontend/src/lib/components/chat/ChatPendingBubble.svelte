@@ -3,7 +3,7 @@
   // the synced thread holds it. Failed sends offer Retry and Edit.
   import Icon from '@iconify/svelte'
   import { _ } from '$lib/i18n'
-  import type { PendingSend } from './chatComposer.svelte'
+  import type { PendingSend } from './chatComposerState.svelte'
 
   interface Props {
     pending: PendingSend

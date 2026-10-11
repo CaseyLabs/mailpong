@@ -63,7 +63,7 @@ all: build
 
 # Write OAuth credentials from .env into a gitignored Go source file
 credentials:
-	@go run build/gencreds.go
+	@GOOS= GOARCH= go run build/gencreds.go
 
 # Build production binary
 build: credentials

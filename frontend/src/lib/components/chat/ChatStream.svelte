@@ -5,7 +5,7 @@
   import ChatDaySeparator from './ChatDaySeparator.svelte'
   import ChatPendingBubble from './ChatPendingBubble.svelte'
   import type { ChatThread } from './chatThread.svelte'
-  import type { ChatComposer } from './chatComposer.svelte'
+  import type { ChatComposer } from './chatComposerState.svelte'
   import type { ReplyMode, ThreadItem } from './chatFormat'
 
   interface Props {

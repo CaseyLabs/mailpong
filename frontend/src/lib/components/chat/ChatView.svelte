@@ -16,7 +16,7 @@
   import ChatStream from './ChatStream.svelte'
   import ChatComposer from './ChatComposer.svelte'
   import { ChatThread } from './chatThread.svelte'
-  import { ChatComposer as ComposerState } from './chatComposer.svelte'
+  import { ChatComposer as ComposerState } from './chatComposerState.svelte'
   import { baseSubject, buildThreadItems, displaySubject, myAddresses, replyAlias, replyRecipients, replyTarget, threadPeople, type ReplyMode } from './chatFormat'
   import { ChatScroll } from './chatScroll.svelte'
   import { ChatActions } from './chatActions.svelte'

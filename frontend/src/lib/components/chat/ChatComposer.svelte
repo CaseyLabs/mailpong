@@ -8,7 +8,7 @@
   import { _ } from '$lib/i18n'
   import { toasts } from '$lib/stores/toast'
   import { getChatSendKey } from '$lib/stores/settings.svelte'
-  import type { ChatComposer } from './chatComposer.svelte'
+  import type { ChatComposer } from './chatComposerState.svelte'
   import { displayName } from './chatFormat'
 
   interface Props {
