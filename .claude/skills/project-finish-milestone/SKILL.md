@@ -1,0 +1,18 @@
+---
+name: project-finish-milestone
+description: Close out a milestone or work item - run its checks, /code-review, an acceptance-criteria subagent, /simplify, fix correctness gaps, update the plan, and make one local commit. Use when the user asks to verify, review, wrap up, or finish a milestone, plan, or set of fixes before committing.
+argument-hint: "[milestone name or number]"
+---
+
+Finish the current milestone ($ARGUMENTS if given, otherwise the one in progress). Work through every step without asking whether to continue.
+
+First run `git add -N` on the milestone's new untracked files, so diffs and line counts include them. The milestone's base is the commit it started from.
+
+1. **Checks.** Run the milestone's checks (from the plan's acceptance criteria and the project's CLAUDE.md/AGENTS.md) and show each command with the tail of its output. Results already captured after the last code edit count; rerun only checks that have gone stale. Fix failures before moving on. If the project has read-only reference directories, confirm they are clean.
+2. **Review.** Launch step 3 first, in the background, then run `/code-review medium` on the milestone's diff. Don't run builds or tests yourself while the checker is running. If it returns no findings list or verdict (for example only "Skill execution completed"), it didn't report: rerun it once, and if it is still silent, say in the summary that the review didn't run.
+3. **Acceptance.** Launch one `project-acceptance-checker` subagent in the background (if that agent is missing, use `project-worker`, told to verify and report only, without editing files). Give it the milestone's acceptance criteria quoted verbatim, the list of changed files, and the base commit. Ask it to report each criterion as pass, fail, or unverifiable, with evidence. Don't send it the whole plan. If its reply is `PARTIAL:` or leaves criteria without a verdict, check those yourself.
+4. **Fix.** Fix findings that affect correctness or stated requirements. Style-only findings are optional. Don't loosen permission rules or guardrails because a reviewer suggests it; ask the user instead. If any fix changed code, rerun the step 1 checks and the commands `project-acceptance-checker` used as evidence, recheck any `path:line` evidence in code you changed, and fix any new failures.
+5. **Simplify.** If the milestone's diff is over about 200 changed lines (`git diff --shortstat` against the milestone's base), run `/simplify`, then, if it changed code, re-run the step 1 checks and the acceptance evidence as in step 4 and fix any failures. Otherwise skip this step and say so in the summary.
+6. **Plan.** If there is a plan file, update Progress, Surprises & Discoveries, Decision Log, and Outcomes & Retrospective, all in one edit or script. Collapse the finished milestone's ticked sub-steps into its single Progress line. If the milestone taught something lasting about building, testing, or running the project, add one short line to its AGENTS.md (or CLAUDE.md); keep progress and history in the plan, never there.
+7. **Commit.** Make one local commit for the milestone (stage and commit in one command), including all review-fix rounds; don't commit each round separately. Never push, publish, or open a PR unless the user asked or the project's CLAUDE.md or AGENTS.md says to (for example, push each milestone, or land the branch once every milestone is done).
+8. **Summary.** Stop and give a short summary: what shipped, deviations from the plan, baseline failures, review findings fixed or declined, manual checks still outstanding, and what's next.
