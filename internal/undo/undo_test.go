@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hkdb/aerion/internal/draft"
 	"github.com/hkdb/aerion/internal/message"
 )
 
@@ -218,12 +219,12 @@ func TestChatStateCommandUndo(t *testing.T) {
 
 type fakeSenderChatStore struct {
 	choices map[string]*bool
-	states  map[string]message.ChatState
+	states  map[string]SenderChatSnapshot
 }
 
-func (f *fakeSenderChatStore) RestoreSenderChat(accountID, email string, choice *bool, state message.ChatState) error {
+func (f *fakeSenderChatStore) RestoreSenderChat(accountID, email string, choice *bool, snapshot SenderChatSnapshot) error {
 	f.choices[accountID+"/"+email] = choice
-	f.states[accountID+"/"+email] = state
+	f.states[accountID+"/"+email] = snapshot
 	return nil
 }
 
@@ -233,20 +234,23 @@ func TestSenderChatCommandUndo(t *testing.T) {
 	tests := []struct {
 		name     string
 		previous *bool
-		state    message.ChatState
+		snapshot SenderChatSnapshot
 	}{
-		{"undo combine", &split, message.ChatState{}},
-		{"undo split restores pin", &combined, message.ChatState{PinnedAt: &now}},
-		{"undo split restores default", nil, message.ChatState{PinnedAt: &now}},
+		{"undo combine", &split, nil},
+		{"undo split restores pin and link", &combined, SenderChatSnapshot{
+			{Key: "sender:a@x", State: message.ChatState{PinnedAt: &now}, Link: &draft.ChatLink{DraftID: "d", MessageID: "m"}},
+			{Key: "t-1"},
+		}},
+		{"undo split restores default", nil, SenderChatSnapshot{{Key: "sender:a@x", State: message.ChatState{PinnedAt: &now}}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			store := &fakeSenderChatStore{
 				choices: map[string]*bool{"acct/a@x": &split},
-				states:  map[string]message.ChatState{},
+				states:  map[string]SenderChatSnapshot{},
 			}
 			stack := NewStack(10, time.Minute)
-			stack.Push(NewSenderChatCommand(store, "acct", "a@x", tt.previous, tt.state, tt.name))
+			stack.Push(NewSenderChatCommand(store, "acct", "a@x", tt.previous, tt.snapshot, tt.name))
 
 			cmd := stack.Pop()
 			if cmd == nil || cmd.Description() != tt.name {
@@ -258,8 +262,8 @@ func TestSenderChatCommandUndo(t *testing.T) {
 			if got := store.choices["acct/a@x"]; got != tt.previous {
 				t.Errorf("choice after undo = %v, want %v", got, tt.previous)
 			}
-			if got := store.states["acct/a@x"]; !reflect.DeepEqual(got, tt.state) {
-				t.Errorf("state after undo = %+v, want %+v", got, tt.state)
+			if got := store.states["acct/a@x"]; !reflect.DeepEqual(got, tt.snapshot) {
+				t.Errorf("snapshot after undo = %+v, want %+v", got, tt.snapshot)
 			}
 		})
 	}

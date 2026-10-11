@@ -3,6 +3,7 @@ package app
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/hkdb/aerion/internal/logging"
@@ -108,10 +109,11 @@ func (a *App) SetSenderCategory(accountID, email, category string) error {
 // SetSenderChat combines (or splits again) the threads a sender starts into
 // one sender chat, and reports whether that changed anything: a sender that
 // already combines (or is already split) is left alone, with no undo entry.
-// Splitting hands the sender chat's pin/snooze state and chat draft link to
-// the newest inbox thread the sender started, or drops them when there is
-// none (the draft is kept). Undoable; undo does not take the state back from
-// that thread.
+// Splitting hands the sender chat's pin/snooze state to the newest inbox
+// thread the sender started and its chat draft link to the thread of the
+// message being replied to (see splitSenderChat); with no such thread they
+// are dropped (the draft is kept). Undoable; undo returns every key the split
+// touched to its state and link from before.
 func (a *App) SetSenderChat(accountID, email string, combined bool) (bool, error) {
 	email = message.NormalizeSenderEmail(email)
 	if email == "" {
@@ -137,20 +139,15 @@ func (a *App) SetSenderChat(accountID, email string, combined bool) (bool, error
 	if err != nil {
 		return false, err
 	}
-	var state message.ChatState
-	if previous {
-		if state, err = a.messageStore.GetChatState(accountID, message.SenderChatKey(email)); err != nil {
-			return false, err
-		}
-	}
-	if err := a.applySenderChat(accountID, email, &combined, choice, message.ChatState{}); err != nil {
+	snapshot, err := a.applySenderChat(accountID, email, &combined, choice, nil)
+	if err != nil {
 		return false, err
 	}
 	description := "Combine sender chat"
 	if !combined {
 		description = "Split sender chat"
 	}
-	a.undoStack.Push(undo.NewSenderChatCommand(senderChatRestorer{a}, accountID, email, choice, state, description))
+	a.undoStack.Push(undo.NewSenderChatCommand(senderChatRestorer{a}, accountID, email, choice, snapshot, description))
 	return true, nil
 }
 
@@ -163,66 +160,162 @@ func (a *App) writeSenderChoice(accountID, email string, choice *bool) error {
 }
 
 // applySenderChat records choice (nil follows the default). If the sender
-// then combines, state is written to the sender chat; otherwise its state and
-// draft link move to the sender's newest inbox thread (see splitSenderChat).
-// If a later write fails, rollback is recorded so the
-// chat keeps its previous form.
-func (a *App) applySenderChat(accountID, email string, choice, rollback *bool, state message.ChatState) error {
+// then combines, restore (a split's snapshot, if any) is written back;
+// otherwise the sender chat's state and draft link are split off (see
+// splitSenderChat). It returns the snapshot of the keys it changed, taken
+// before it changed them. If a write fails, that snapshot is restored and
+// rollback is recorded, so the choice, state and links keep their previous
+// form.
+func (a *App) applySenderChat(accountID, email string, choice, rollback *bool, restore undo.SenderChatSnapshot) (undo.SenderChatSnapshot, error) {
 	if err := a.writeSenderChoice(accountID, email, choice); err != nil {
-		return err
+		return nil, err
 	}
-	key := message.SenderChatKey(email)
 	combined, err := a.messageStore.IsSenderChat(accountID, email)
-	if err == nil && !combined {
-		state = message.ChatState{}
-		err = a.splitSenderChat(accountID, email)
+	if err != nil {
+		return nil, errors.Join(err, a.writeSenderChoice(accountID, email, rollback))
 	}
-	if err == nil {
-		err = a.restoreChatState(accountID, key, state)
+	var snapshot undo.SenderChatSnapshot
+	if combined {
+		snapshot, err = a.restoreSenderSnapshot(accountID, restore)
+	} else {
+		snapshot, err = a.splitSenderChat(accountID, email)
 	}
-	if err == nil {
-		return nil
+	if err != nil {
+		err = errors.Join(err, a.restoreChatKeys(accountID, snapshot), a.writeSenderChoice(accountID, email, rollback))
+		snapshot = nil
 	}
-	if rbErr := a.writeSenderChoice(accountID, email, rollback); rbErr != nil {
-		return errors.Join(err, rbErr)
-	}
-	// A partial split may have moved state to a thread that the rolled-back
-	// sender chat hides again; move it back.
-	if _, mvErr := a.moveStaleChatState(); mvErr != nil {
-		err = errors.Join(err, mvErr)
-	}
+	a.armSnoozeTimer(time.Second)
 	a.emitChatsChanged(accountID)
-	return err
+	return snapshot, err
 }
 
-// splitSenderChat moves a split sender chat's pin/snooze state and chat draft
-// link to the newest inbox thread the sender started, where state already
-// there wins. With no such thread they are dropped.
-func (a *App) splitSenderChat(accountID, email string) error {
+// splitSenderChat moves a split sender chat's pin/snooze state to the newest
+// inbox thread the sender started, where state already there wins, and its
+// chat draft link to the sender's thread that contains the message being
+// replied to (the newest thread when that message is gone or in no thread the
+// sender started), where a link already there wins. With no such thread they
+// are dropped. It returns the state and links of the sender chat and both
+// target threads from before the move, sender chat first, also when the
+// move fails part-way.
+func (a *App) splitSenderChat(accountID, email string) (undo.SenderChatSnapshot, error) {
 	key := message.SenderChatKey(email)
-	to, err := a.messageStore.NewestInboxThreadKey(accountID, email)
+	newest, err := a.messageStore.NewestInboxThreadKey(accountID, email)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	move := message.ChatKeyMove{AccountID: accountID, From: key, To: to}
+	state, err := a.messageStore.GetChatState(accountID, key)
+	if err != nil {
+		return nil, err
+	}
+	link, err := a.draftStore.GetChatLink(accountID, key)
+	if err != nil {
+		return nil, err
+	}
+	if state == (message.ChatState{}) && link == nil {
+		return undo.SenderChatSnapshot{{Key: key}}, nil // nothing to move
+	}
+	linkTo := newest
+	if link != nil && link.MessageID != "" {
+		replyKey, err := a.messageStore.StartedInboxThreadKey(accountID, email, link.MessageID)
+		if err != nil {
+			return nil, err
+		}
+		if replyKey != "" {
+			linkTo = replyKey
+		}
+	}
+	snapshot, err := a.snapshotChatKeys(accountID, key, newest, linkTo)
+	if err != nil {
+		return nil, err
+	}
+	move := message.ChatKeyMove{AccountID: accountID, From: key, To: newest}
 	if err := a.messageStore.MoveChatState(move); err != nil {
-		return err
+		return snapshot, err
 	}
-	return a.draftStore.MoveChatLink(accountID, key, to)
+	return snapshot, a.draftStore.MoveChatLink(accountID, key, linkTo)
+}
+
+// snapshotChatKeys records the pin/snooze state and chat draft link of each
+// distinct non-empty key.
+func (a *App) snapshotChatKeys(accountID string, keys ...string) (undo.SenderChatSnapshot, error) {
+	var snapshot undo.SenderChatSnapshot
+	for _, key := range keys {
+		if key == "" || slices.ContainsFunc(snapshot, func(k undo.ChatKeySnapshot) bool { return k.Key == key }) {
+			continue
+		}
+		state, err := a.messageStore.GetChatState(accountID, key)
+		if err != nil {
+			return nil, err
+		}
+		link, err := a.draftStore.GetChatLink(accountID, key)
+		if err != nil {
+			return nil, err
+		}
+		snapshot = append(snapshot, undo.ChatKeySnapshot{Key: key, State: state, Link: link})
+	}
+	return snapshot, nil
+}
+
+// restoreChatKeys writes each snapshot entry's state back and returns each
+// snapshotted link to its key (see draft.Store.RestoreChatLink), trying every
+// entry even after a failure. Links of drafts not in the snapshot stay put.
+func (a *App) restoreChatKeys(accountID string, snapshot undo.SenderChatSnapshot) error {
+	var errs []error
+	for _, k := range snapshot {
+		errs = append(errs, a.messageStore.SetChatState(accountID, k.Key, k.State))
+		if k.Link != nil {
+			errs = append(errs, a.draftStore.RestoreChatLink(accountID, k.Key, *k.Link))
+		}
+	}
+	return errors.Join(errs...)
+}
+
+// restoreSenderSnapshot undoes a split from its snapshot (sender chat first):
+// the sender chat gets its state back, and each target thread gives back only
+// the pin and snooze the split moved onto it, keeping later changes. It
+// returns the snapshot of the same keys from before, also when the restore
+// fails part-way.
+func (a *App) restoreSenderSnapshot(accountID string, restore undo.SenderChatSnapshot) (undo.SenderChatSnapshot, error) {
+	keys := make([]string, len(restore))
+	for i, k := range restore {
+		keys[i] = k.Key
+	}
+	before, err := a.snapshotChatKeys(accountID, keys...)
+	if err != nil || len(restore) == 0 {
+		return before, err
+	}
+	moved := restore[0].State
+	target := slices.Clone(restore)
+	for i := 1; i < len(target); i++ {
+		cur, st := before[i].State, &target[i].State
+		if !sameTime(cur.PinnedAt, moved.PinnedAt) {
+			st.PinnedAt = cur.PinnedAt
+		}
+		if !sameTime(cur.SnoozedUntil, moved.SnoozedUntil) {
+			st.SnoozedUntil, st.SnoozedAt = cur.SnoozedUntil, cur.SnoozedAt
+		}
+	}
+	return before, a.restoreChatKeys(accountID, target)
+}
+
+// sameTime reports whether a and b are both set to the same instant.
+func sameTime(a, b *time.Time) bool {
+	return a != nil && b != nil && a.Equal(*b)
 }
 
 // senderChatRestorer adapts App to undo.SenderChatRestorer without adding a
 // frontend binding.
 type senderChatRestorer struct{ a *App }
 
-func (r senderChatRestorer) RestoreSenderChat(accountID, email string, choice *bool, state message.ChatState) error {
+func (r senderChatRestorer) RestoreSenderChat(accountID, email string, choice *bool, snapshot undo.SenderChatSnapshot) error {
 	r.a.chatStateMu.Lock()
 	defer r.a.chatStateMu.Unlock()
 	current, err := r.a.messageStore.SenderChatChoice(accountID, email)
 	if err != nil {
 		return err
 	}
-	return r.a.applySenderChat(accountID, email, choice, current, state)
+	_, err = r.a.applySenderChat(accountID, email, choice, current, snapshot)
+	return err
 }
 
 // chatStateRestorer adapts App to undo.ChatStateRestorer without adding a
@@ -267,6 +360,9 @@ func (a *App) changeChatState(accountID, threadKey, description string, change f
 // emitChatsChanged tells the chat list that pin, snooze, or sender
 // categories changed for an account.
 func (a *App) emitChatsChanged(accountID string) {
+	if a.ctx == nil { // before startup, and in tests
+		return
+	}
 	wailsRuntime.EventsEmit(a.ctx, "chats:changed", map[string]interface{}{
 		"accountId": accountID,
 	})

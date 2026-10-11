@@ -3,6 +3,8 @@ package message
 import (
 	"fmt"
 	"reflect"
+	"slices"
+	"strings"
 	"testing"
 	"time"
 )
@@ -81,9 +83,10 @@ func TestListChatsSections(t *testing.T) {
 
 	// Pin C; snooze A for an hour; B's snooze already ended.
 	states := map[string]ChatState{
-		"c@x": {PinnedAt: ptr(now)},
-		"a@x": {SnoozedUntil: ptr(now.Add(time.Hour)), SnoozedAt: ptr(now)},
-		"b1":  {SnoozedUntil: ptr(now.Add(-time.Minute)), SnoozedAt: ptr(now.Add(-time.Hour))},
+		SenderChatPrefix + "carol@example.com": {SnoozedUntil: ptr(now.Add(3 * time.Hour)), SnoozedAt: ptr(now.Add(-time.Hour))},
+		"c@x":                                  {PinnedAt: ptr(now)},
+		"a@x":                                  {SnoozedUntil: ptr(now.Add(time.Hour)), SnoozedAt: ptr(now)},
+		"b1":                                   {SnoozedUntil: ptr(now.Add(-time.Minute)), SnoozedAt: ptr(now.Add(-time.Hour))},
 	}
 	for key, st := range states {
 		if err := s.SetChatState(accountID, key, st); err != nil {
@@ -530,5 +533,122 @@ func TestSearchChatsSentRecipients(t *testing.T) {
 				t.Errorf("recipients = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+// chatLine summarizes a chat for comparing ListChats with the one-query list.
+func chatLine(account, key string, count, unread int, low, pinned bool, ids []string) string {
+	ids = slices.Sorted(slices.Values(ids))
+	return fmt.Sprint(account, "|", key, "|", count, "|", unread, "|", low, "|", pinned, "|", ids)
+}
+
+// listChatsOneQuery is ListChats before it ran in two passes: one grouped
+// query computing every aggregate before LIMIT. It returns a chatLine per
+// chat.
+func listChatsOneQuery(t *testing.T, s *Store, scope, section string, now time.Time, offset, limit int) []string {
+	t.Helper()
+	senderChats, err := s.hasSenderChats()
+	if err != nil {
+		t.Fatal(err)
+	}
+	from, args, err := chatBaseQuery(scope, section, chatListColumns, now, senderChats)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rows, err := s.db.Query(`SELECT g.thread_key, g.account_id, g.message_count, g.unread_count, g.is_low, cs.pinned_at IS NOT NULL,
+		g.message_ids`+from+chatOrder(section)+" LIMIT ? OFFSET ?", append(args, limit, offset)...)
+	if err != nil {
+		t.Fatalf("one-query list: %v", err)
+	}
+	defer rows.Close()
+	var lines []string
+	for rows.Next() {
+		var key, account, ids string
+		var count, unread int
+		var low, pinned bool
+		if err := rows.Scan(&key, &account, &count, &unread, &low, &pinned, &ids); err != nil {
+			t.Fatalf("scan one-query list: %v", err)
+		}
+		lines = append(lines, chatLine(account, key, count, unread, low, pinned, strings.Split(ids, ",")))
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatal(err)
+	}
+	return lines
+}
+
+// TestListChatsMatchesOneQuery checks the two-pass ListChats against the
+// one-query list on a mixed fixture with pins and snoozes, for every section,
+// scope, combine setting and page.
+func TestListChatsMatchesOneQuery(t *testing.T) {
+	s, accountID, inboxID, now := chatFixture(t)
+	if _, err := s.db.Exec(`DELETE FROM sender_chat`); err != nil {
+		t.Fatal(err)
+	}
+	// More mail: alice and carol start several threads, so sender chats merge
+	// threads; a human reply lifts a bulk thread; one unthreaded message;
+	// one thread key that threadKeysMatch cannot find.
+	extra := []struct {
+		id, thread, from string
+		age              time.Duration
+		read             bool
+	}{
+		{"a3", "<a2@x>", "alice@example.com", 90 * time.Minute, false},
+		{"a4", "<a2@x>", "bob@example.com", 80 * time.Minute, true},
+		{"a5", "<a3@x>", "alice@example.com", 8 * time.Hour, true},
+		{"c2", "<c2@x>", "carol@example.com", 9 * time.Hour, false},
+		{"c3", "", "carol@example.com", 10 * time.Hour, true},
+		{"b2", "<b2@x>", "news@shop.example", 11 * time.Hour, false},
+		{"t1", "<t1@x>", "test@example.com", 12 * time.Hour, true},
+		// A broken Message-ID: its thread key drops the inner brackets.
+		{"w1", "w<1>@x", "walt@example.com", 13 * time.Hour, false},
+	}
+	for i, m := range extra {
+		err := s.Create(&Message{
+			ID: m.id, AccountID: accountID, FolderID: inboxID, UID: uint32(100 + i),
+			ThreadID: m.thread, Subject: m.id, FromEmail: m.from,
+			Date: now.Add(-m.age), ReceivedAt: now.Add(-m.age), IsRead: m.read,
+		})
+		if err != nil {
+			t.Fatalf("seed %s: %v", m.id, err)
+		}
+	}
+
+	states := map[string]ChatState{
+		"c@x":                                  {PinnedAt: ptr(now)},
+		SenderChatPrefix + "alice@example.com": {PinnedAt: ptr(now.Add(-time.Hour))},
+		"a@x":                                  {SnoozedUntil: ptr(now.Add(time.Hour)), SnoozedAt: ptr(now)},
+		"c2@x":                                 {SnoozedUntil: ptr(now.Add(2 * time.Hour)), SnoozedAt: ptr(now.Add(-time.Hour))},
+		"b1":                                   {SnoozedUntil: ptr(now.Add(-time.Minute)), SnoozedAt: ptr(now.Add(-time.Hour))},
+	}
+	for key, st := range states {
+		if err := s.SetChatState(accountID, key, st); err != nil {
+			t.Fatalf("SetChatState(%s): %v", key, err)
+		}
+	}
+
+	sections := []string{ChatSectionAll, ChatSectionUnread, ChatSectionPriority, ChatSectionLow, ChatSectionSnoozed}
+	for _, combine := range []string{"true", "false"} {
+		if _, err := s.db.Exec(`INSERT OR REPLACE INTO settings (key, value) VALUES ('chat_combine_senders', ?)`, combine); err != nil {
+			t.Fatal(err)
+		}
+		for _, scope := range []string{"", inboxID, "sent-1"} {
+			for _, section := range sections {
+				for _, page := range [][2]int{{0, 50}, {0, 2}, {2, 2}, {1, 1}} {
+					name := fmt.Sprintf("combine=%s/%q/%s/%d+%d", combine, scope, section, page[0], page[1])
+					chats, err := s.ListChats(scope, section, now, page[0], page[1])
+					if err != nil {
+						t.Fatalf("%s: ListChats: %v", name, err)
+					}
+					var got []string
+					for _, c := range chats {
+						got = append(got, chatLine(c.AccountID, c.ThreadKey, c.MessageCount, c.UnreadCount, c.IsLowPriority, c.IsPinned, c.MessageIDs))
+					}
+					if want := listChatsOneQuery(t, s, scope, section, now, page[0], page[1]); !reflect.DeepEqual(got, want) {
+						t.Errorf("%s:\n got %v\nwant %v", name, got, want)
+					}
+				}
+			}
+		}
 	}
 }

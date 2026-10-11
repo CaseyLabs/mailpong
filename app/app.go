@@ -311,12 +311,13 @@ type App struct {
 	ftsIndexer *message.FTSIndexer
 
 	// Sync management - tracks active syncs per account for cancel-and-restart
-	syncContexts    map[string]*syncSlot // keyed by "accountID:folderID"
-	syncLastRequest map[string]time.Time // last sync request time for debounce
-	shuttingDown    bool                 // set by shutdownSyncs; no sync may start after it
-	syncCancelled   bool                 // set by CancelAllSyncs to stop SyncAllComplete loop
-	wakeSyncing     bool                 // guards syncAfterWake against concurrent calls
-	syncMu          goSync.Mutex         // protects sync maps
+	syncContexts    map[string]*syncSlot   // keyed by "accountID:folderID"
+	syncLastRequest map[string]time.Time   // last sync request time for debounce
+	cancelledSlots  map[*syncSlot]struct{} // cancelled, not yet released; shutdownSyncs waits for them
+	shuttingDown    bool                   // set by shutdownSyncs; no sync may start after it
+	syncCancelled   bool                   // set by CancelAllSyncs to stop SyncAllComplete loop
+	wakeSyncing     bool                   // guards syncAfterWake against concurrent calls
+	syncMu          goSync.Mutex           // protects sync maps
 
 	// Suppresses the IDLE echo of our own flag writes: when Aerion STOREs a flag
 	// change it stamps the account here, so the incoming IDLE FETCH echo of that

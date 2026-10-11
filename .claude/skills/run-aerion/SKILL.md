@@ -95,7 +95,10 @@ When finished, put back anything you changed (see Gotchas), close the tab, then:
   medium up to 1024px, otherwise full. The owner allows resizing the Chrome
   window yourself. `resize_window` has had no effect under the user's window
   manager, so try it, check `innerWidth`, and if it didn't change, try another
-  way (for example a new window opened at the size you need). Ask the user to
+  way. A same-origin `<iframe>` of the dev URL at the width you need (replace
+  the page body with it from `javascript_tool`) gets its own viewport, so the
+  app switches layout mode there and `iframe.contentWindow.go` has the bindings;
+  restore saved UI state afterwards. Ask the user to
   resize the window holding Claude's tab group only as a last resort (it may
   be minimized or behind other windows). To test a narrow layout
   without a resize, set a narrower width on the pane's element from

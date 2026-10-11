@@ -404,8 +404,20 @@ func (a *App) SyncAllComplete() error {
 // syncSlot is one registered folder sync. Its pointer is the ownership token
 // release checks, so a replaced sync never removes its successor's entry.
 type syncSlot struct {
+	key    string // "accountID:folderID"
 	cancel context.CancelFunc
 	done   chan struct{} // closed by the slot's release
+}
+
+// cancelSlotLocked cancels slot and records it in cancelledSlots until its
+// release, so shutdownSyncs still waits for it once it leaves syncContexts.
+// Every cancel of a registered slot goes through here. The caller holds syncMu.
+func (a *App) cancelSlotLocked(slot *syncSlot) {
+	slot.cancel()
+	if a.cancelledSlots == nil {
+		a.cancelledSlots = make(map[*syncSlot]struct{})
+	}
+	a.cancelledSlots[slot] = struct{}{}
 }
 
 // slotReleaseWait caps how long SyncFolder waits for a cancelled sync to
@@ -432,10 +444,10 @@ func (a *App) beginFolderSync(key string) (ctx context.Context, release func(), 
 // caller holds syncMu.
 func (a *App) registerFolderSyncLocked(key string) (context.Context, func()) {
 	if old, exists := a.syncContexts[key]; exists {
-		old.cancel()
+		a.cancelSlotLocked(old)
 	}
 	ctx, cancel := context.WithCancel(a.ctx)
-	slot := &syncSlot{cancel: cancel, done: make(chan struct{})}
+	slot := &syncSlot{key: key, cancel: cancel, done: make(chan struct{})}
 	a.syncContexts[key] = slot
 	release := gosync.OnceFunc(func() {
 		cancel()
@@ -444,6 +456,7 @@ func (a *App) registerFolderSyncLocked(key string) (context.Context, func()) {
 		if a.syncContexts[key] == slot {
 			delete(a.syncContexts, key)
 		}
+		delete(a.cancelledSlots, slot)
 		close(slot.done)
 	})
 	return ctx, release
@@ -462,7 +475,7 @@ func (a *App) replaceFolderSyncLocked(key string, maxWait time.Duration) (ctx co
 	defer timeout.Stop()
 	// Re-check after each wait: another sync may have claimed the slot.
 	for old, exists := a.syncContexts[key]; exists; old, exists = a.syncContexts[key] {
-		old.cancel()
+		a.cancelSlotLocked(old)
 		a.syncMu.Unlock()
 		select {
 		case <-old.done:
@@ -535,9 +548,14 @@ func (a *App) shutdownSyncs(wait time.Duration) {
 
 	a.syncMu.Lock()
 	a.shuttingDown = true
-	pending := make(map[string]chan struct{}, len(a.syncContexts))
-	for key, slot := range a.syncContexts {
-		pending[key] = slot.done
+	pending := make([]*syncSlot, 0, len(a.syncContexts)+len(a.cancelledSlots))
+	for _, slot := range a.syncContexts {
+		pending = append(pending, slot)
+	}
+	for slot := range a.cancelledSlots {
+		if a.syncContexts[slot.key] != slot { // not listed above
+			pending = append(pending, slot)
+		}
 	}
 	a.syncMu.Unlock()
 
@@ -551,14 +569,14 @@ func (a *App) shutdownSyncs(wait time.Duration) {
 	// A context, not time.After: its Done stays closed for every wait below.
 	waitCtx, cancel := context.WithTimeout(context.Background(), wait)
 	defer cancel()
-	for key, done := range pending {
+	for _, slot := range pending {
 		select {
-		case <-done:
+		case <-slot.done:
 		case <-waitCtx.Done():
 			select {
-			case <-done:
+			case <-slot.done:
 			default:
-				log.Warn().Str("syncKey", key).Msg("Sync did not stop before shutdown")
+				log.Warn().Str("syncKey", slot.key).Msg("Sync did not stop before shutdown")
 			}
 		}
 	}
@@ -594,7 +612,7 @@ func (a *App) CancelFolderSync(accountID, folderID string) {
 	syncKey := accountID + ":" + folderID
 	if slot, exists := a.syncContexts[syncKey]; exists {
 		log.Info().Str("syncKey", syncKey).Msg("Cancelling folder sync")
-		slot.cancel()
+		a.cancelSlotLocked(slot)
 		delete(a.syncContexts, syncKey)
 	}
 }
@@ -610,7 +628,7 @@ func (a *App) CancelAccountSync(accountID string) {
 	for key, slot := range a.syncContexts {
 		if strings.HasPrefix(key, prefix) {
 			log.Info().Str("syncKey", key).Msg("Cancelling folder sync")
-			slot.cancel()
+			a.cancelSlotLocked(slot)
 			delete(a.syncContexts, key)
 		}
 	}
@@ -630,7 +648,7 @@ func (a *App) CancelAllSyncs() {
 
 	for syncKey, slot := range a.syncContexts {
 		log.Info().Str("syncKey", syncKey).Msg("Cancelling sync")
-		slot.cancel()
+		a.cancelSlotLocked(slot)
 	}
 	a.syncContexts = make(map[string]*syncSlot)
 

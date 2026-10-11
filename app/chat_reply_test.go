@@ -142,6 +142,14 @@ func TestNormalizeChatText(t *testing.T) {
 // account and Carol.
 func newChatReplyTestApp(t *testing.T) *App {
 	t.Helper()
+	a, _ := newChatReplyTestAppDB(t)
+	return a
+}
+
+// newChatReplyTestAppDB is newChatReplyTestApp that also returns the
+// database, for tests that break it on purpose.
+func newChatReplyTestAppDB(t *testing.T) (*App, *database.DB) {
+	t.Helper()
 	db, err := database.Open(filepath.Join(t.TempDir(), "test.db"))
 	if err != nil {
 		t.Fatal(err)
@@ -180,7 +188,7 @@ func newChatReplyTestApp(t *testing.T) *App {
 	}); err != nil {
 		t.Fatal(err)
 	}
-	return a
+	return a, db
 }
 
 func TestBuildChatReply(t *testing.T) {
@@ -333,53 +341,253 @@ func TestSetSenderChatUnchanged(t *testing.T) {
 	}
 }
 
-// Splitting a sender chat hands its pin and draft link to the
-// newest inbox thread the sender started; a sender with none loses them.
-func TestSplitSenderChat(t *testing.T) {
-	a := newChatReplyTestApp(t)
-	if err := a.messageStore.Create(&message.Message{
-		ID: "m-2", AccountID: "acct-1", FolderID: "f-1", UID: 2, Subject: "Dinner",
-		FromEmail: "bob@example.com", Date: time.Date(2026, 10, 2, 12, 0, 0, 0, time.UTC),
-	}); err != nil {
-		t.Fatal(err)
+// splitFixture adds to the chat reply app a second thread from bob (newer
+// than m-1), a thread from carol, and bob's sender chat with a pin and a chat
+// draft link replying to replyID. It returns the pin time and the link.
+func splitFixture(t *testing.T, a *App, email, replyID string) (time.Time, draft.ChatLink) {
+	t.Helper()
+	for _, m := range []*message.Message{
+		{ID: "m-2", UID: 2, Subject: "Dinner", FromEmail: "bob@example.com", Date: time.Date(2026, 10, 2, 12, 0, 0, 0, time.UTC)},
+		{ID: "m-3", UID: 3, Subject: "Hello", FromEmail: "carol@example.com", Date: time.Date(2026, 10, 3, 12, 0, 0, 0, time.UTC)},
+	} {
+		m.AccountID, m.FolderID = "acct-1", "f-1"
+		if err := a.messageStore.Create(m); err != nil {
+			t.Fatal(err)
+		}
 	}
 	pinned := time.Date(2026, 10, 3, 0, 0, 0, 0, time.UTC)
-	tests := []struct{ name, email, wantKey string }{
-		{"newest inbox thread", "bob@example.com", "m-2"},
-		{"no inbox mail", "ghost@example.com", ""},
+	key := message.SenderChatKey(email)
+	if err := a.messageStore.SetChatState("acct-1", key, message.ChatState{PinnedAt: &pinned}); err != nil {
+		t.Fatal(err)
+	}
+	d := &draft.Draft{AccountID: "acct-1", Subject: "Hi"}
+	if err := a.draftStore.Create(d); err != nil {
+		t.Fatal(err)
+	}
+	link := draft.ChatLink{DraftID: d.ID, MessageID: replyID, TextLen: 3}
+	if err := a.draftStore.SetChatLink("acct-1", key, link); err != nil {
+		t.Fatal(err)
+	}
+	return pinned, link
+}
+
+// checkChatKey fails unless key holds exactly the given pin and link.
+func checkChatKey(t *testing.T, a *App, key string, pinned *time.Time, link *draft.ChatLink) {
+	t.Helper()
+	st, err := a.messageStore.GetChatState("acct-1", key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if (st.PinnedAt == nil) != (pinned == nil) || (pinned != nil && !st.PinnedAt.Equal(*pinned)) {
+		t.Errorf("%s pin = %v, want %v", key, st.PinnedAt, pinned)
+	}
+	got, err := a.draftStore.GetChatLink("acct-1", key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if (got == nil) != (link == nil) || (link != nil && *got != *link) {
+		t.Errorf("%s link = %+v, want %+v", key, got, link)
+	}
+}
+
+// Splitting a sender chat gives its pin to the newest inbox thread the sender
+// started and its chat draft link to the thread of the reply target, falling
+// back to the newest thread; a sender with no thread loses both.
+func TestSplitSenderChat(t *testing.T) {
+	tests := []struct {
+		name, email, replyID string
+		pinKey, linkKey      string // "" = dropped
+	}{
+		{"reply target in newest thread", "bob@example.com", "m-2", "m-2", "m-2"},
+		{"reply target in older thread", "bob@example.com", "m-1", "m-2", "m-1"},
+		{"reply target deleted", "bob@example.com", "m-gone", "m-2", "m-2"},
+		{"reply target in another sender's thread", "bob@example.com", "m-3", "m-2", "m-2"},
+		{"no inbox mail", "ghost@example.com", "m-1", "", ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			key := message.SenderChatKey(tt.email)
-			if err := a.messageStore.SetChatState("acct-1", key, message.ChatState{PinnedAt: &pinned}); err != nil {
+			a := newChatReplyTestApp(t)
+			pinned, link := splitFixture(t, a, tt.email, tt.replyID)
+			if _, err := a.splitSenderChat("acct-1", tt.email); err != nil {
 				t.Fatal(err)
 			}
-			d := &draft.Draft{AccountID: "acct-1", Subject: "Hi"}
-			if err := a.draftStore.Create(d); err != nil {
-				t.Fatal(err)
-			}
-			link := draft.ChatLink{DraftID: d.ID, MessageID: "m-1"}
-			if err := a.draftStore.SetChatLink("acct-1", key, link); err != nil {
-				t.Fatal(err)
-			}
-			if err := a.splitSenderChat("acct-1", tt.email); err != nil {
-				t.Fatal(err)
-			}
-			if st, err := a.messageStore.GetChatState("acct-1", key); err != nil || st.PinnedAt != nil {
-				t.Errorf("sender chat state = %+v, %v; want empty", st, err)
-			}
-			if got, err := a.draftStore.GetChatLink("acct-1", key); err != nil || got != nil {
-				t.Errorf("sender chat link = %+v, %v; want none", got, err)
-			}
-			if tt.wantKey == "" {
-				return
-			}
-			if st, err := a.messageStore.GetChatState("acct-1", tt.wantKey); err != nil || st.PinnedAt == nil || !st.PinnedAt.Equal(pinned) {
-				t.Errorf("thread state = %+v, %v; want pinned", st, err)
-			}
-			if got, err := a.draftStore.GetChatLink("acct-1", tt.wantKey); err != nil || got == nil || *got != link {
-				t.Errorf("thread link = %+v, %v; want %+v", got, err, link)
+			checkChatKey(t, a, message.SenderChatKey(tt.email), nil, nil)
+			for _, key := range []string{"m-1", "m-2"} {
+				var p *time.Time
+				var l *draft.ChatLink
+				if key == tt.pinKey {
+					p = &pinned
+				}
+				if key == tt.linkKey {
+					l = &link
+				}
+				checkChatKey(t, a, key, p, l)
 			}
 		})
+	}
+}
+
+// Undoing a split returns the sender chat and both target threads to their
+// state and link from before, including state already on a target thread.
+func TestSplitSenderChatUndo(t *testing.T) {
+	a := newChatReplyTestApp(t)
+	a.undoStack = undo.NewStack(10, time.Minute)
+	pinned, link := splitFixture(t, a, "bob@example.com", "m-1")
+	snoozed := time.Date(2026, 10, 9, 0, 0, 0, 0, time.UTC)
+	if err := a.messageStore.SetChatState("acct-1", "m-1", message.ChatState{SnoozedUntil: &snoozed, SnoozedAt: &pinned}); err != nil {
+		t.Fatal(err)
+	}
+	other := draft.Draft{AccountID: "acct-1", Subject: "Other"}
+	if err := a.draftStore.Create(&other); err != nil {
+		t.Fatal(err)
+	}
+	otherLink := draft.ChatLink{DraftID: other.ID, MessageID: "m-2"}
+	if err := a.draftStore.SetChatLink("acct-1", "m-2", otherLink); err != nil {
+		t.Fatal(err)
+	}
+	// Combined by default; the sender chat holds the pin and link.
+	splitBob(t, a)
+	checkChatKey(t, a, "m-1", nil, &link) // the reply target's thread
+	checkChatKey(t, a, "m-2", &pinned, &otherLink)
+	undoLast(t, a)
+	if on, err := a.messageStore.IsSenderChat("acct-1", "bob@example.com"); err != nil || !on {
+		t.Errorf("IsSenderChat after undo = %v, %v; want true", on, err)
+	}
+	checkChatKey(t, a, message.SenderChatKey("bob@example.com"), &pinned, &link)
+	checkChatKey(t, a, "m-2", nil, &otherLink)
+	st, err := a.messageStore.GetChatState("acct-1", "m-1")
+	if err != nil || st.SnoozedUntil == nil || !st.SnoozedUntil.Equal(snoozed) || st.PinnedAt != nil {
+		t.Errorf("m-1 state after undo = %+v, %v; want only its snooze", st, err)
+	}
+	checkChatKey(t, a, "m-1", nil, nil)
+}
+
+// splitBob splits bob's sender chat, which is combined by default.
+func splitBob(t *testing.T, a *App) {
+	t.Helper()
+	if changed, err := a.SetSenderChat("acct-1", "bob@example.com", false); err != nil || !changed {
+		t.Fatalf("SetSenderChat split = %v, %v", changed, err)
+	}
+}
+
+// undoLast undoes the newest undo stack entry.
+func undoLast(t *testing.T, a *App) {
+	t.Helper()
+	cmd := a.undoStack.Pop()
+	if cmd == nil {
+		t.Fatal("no undo entry")
+	}
+	if err := cmd.Undo(); err != nil {
+		t.Fatalf("Undo: %v", err)
+	}
+}
+
+// Undoing a split takes back only what the split moved: changes made to the
+// target threads or the moved draft since then survive the undo.
+func TestSplitSenderChatUndoAfterChanges(t *testing.T) {
+	later := time.Date(2026, 10, 12, 0, 0, 0, 0, time.UTC)
+	tests := []struct {
+		name  string
+		after func(t *testing.T, a *App, pinned time.Time, link draft.ChatLink)
+		check func(t *testing.T, a *App, pinned time.Time, link draft.ChatLink)
+	}{
+		{
+			"draft sent",
+			func(t *testing.T, a *App, _ time.Time, link draft.ChatLink) {
+				if err := a.draftStore.Delete(link.DraftID); err != nil {
+					t.Fatal(err)
+				}
+			},
+			func(t *testing.T, a *App, pinned time.Time, _ draft.ChatLink) {
+				checkChatKey(t, a, message.SenderChatKey("bob@example.com"), &pinned, nil)
+				checkChatKey(t, a, "m-1", nil, nil)
+			},
+		},
+		{
+			"typed more",
+			func(t *testing.T, a *App, _ time.Time, link draft.ChatLink) {
+				link.TextLen = 40
+				if err := a.draftStore.SetChatLink("acct-1", "m-1", link); err != nil {
+					t.Fatal(err)
+				}
+			},
+			func(t *testing.T, a *App, pinned time.Time, link draft.ChatLink) {
+				link.TextLen = 40
+				checkChatKey(t, a, message.SenderChatKey("bob@example.com"), &pinned, &link)
+				checkChatKey(t, a, "m-1", nil, nil)
+			},
+		},
+		{
+			"new draft on newest thread",
+			func(t *testing.T, a *App, _ time.Time, _ draft.ChatLink) {
+				d := &draft.Draft{AccountID: "acct-1", Subject: "New"}
+				if err := a.draftStore.Create(d); err != nil {
+					t.Fatal(err)
+				}
+				if err := a.draftStore.SetChatLink("acct-1", "m-2", draft.ChatLink{DraftID: d.ID, MessageID: "m-2"}); err != nil {
+					t.Fatal(err)
+				}
+			},
+			func(t *testing.T, a *App, pinned time.Time, link draft.ChatLink) {
+				checkChatKey(t, a, message.SenderChatKey("bob@example.com"), &pinned, &link)
+				if got, err := a.draftStore.GetChatLink("acct-1", "m-2"); err != nil || got == nil {
+					t.Errorf("m-2 link = %+v, %v; want the new draft's", got, err)
+				}
+			},
+		},
+		{
+			"snoozed newest thread",
+			func(t *testing.T, a *App, pinned time.Time, _ draft.ChatLink) {
+				st := message.ChatState{PinnedAt: &pinned, SnoozedUntil: &later, SnoozedAt: &pinned}
+				if err := a.messageStore.SetChatState("acct-1", "m-2", st); err != nil {
+					t.Fatal(err)
+				}
+			},
+			func(t *testing.T, a *App, pinned time.Time, link draft.ChatLink) {
+				checkChatKey(t, a, message.SenderChatKey("bob@example.com"), &pinned, &link)
+				st, err := a.messageStore.GetChatState("acct-1", "m-2")
+				if err != nil || st.PinnedAt != nil || st.SnoozedUntil == nil || !st.SnoozedUntil.Equal(later) {
+					t.Errorf("m-2 state = %+v, %v; want only the later snooze", st, err)
+				}
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := newChatReplyTestApp(t)
+			a.undoStack = undo.NewStack(10, time.Minute)
+			pinned, link := splitFixture(t, a, "bob@example.com", "m-1")
+			splitBob(t, a)
+			tt.after(t, a, pinned, link)
+			undoLast(t, a)
+			tt.check(t, a, pinned, link)
+		})
+	}
+}
+
+// When the link move fails after the pin moved, the choice, pin and link all
+// match their state before the split.
+func TestSplitSenderChatRollback(t *testing.T) {
+	a, db := newChatReplyTestAppDB(t)
+	a.undoStack = undo.NewStack(10, time.Minute)
+	pinned, link := splitFixture(t, a, "bob@example.com", "m-1")
+	if _, err := db.Exec(`CREATE TRIGGER fail_link_move BEFORE UPDATE ON chat_drafts
+		BEGIN SELECT RAISE(FAIL, 'injected'); END`); err != nil {
+		t.Fatal(err)
+	}
+	if changed, err := a.SetSenderChat("acct-1", "bob@example.com", false); err == nil || changed {
+		t.Fatalf("SetSenderChat = %v, %v; want error", changed, err)
+	}
+	if choice, err := a.messageStore.SenderChatChoice("acct-1", "bob@example.com"); err != nil || choice != nil {
+		t.Errorf("choice = %v, %v; want default", choice, err)
+	}
+	if on, err := a.messageStore.IsSenderChat("acct-1", "bob@example.com"); err != nil || !on {
+		t.Errorf("IsSenderChat = %v, %v; want true", on, err)
+	}
+	checkChatKey(t, a, message.SenderChatKey("bob@example.com"), &pinned, &link)
+	checkChatKey(t, a, "m-1", nil, nil)
+	checkChatKey(t, a, "m-2", nil, nil)
+	if n := a.undoStack.Size(); n != 0 {
+		t.Errorf("undo stack size = %d, want 0", n)
 	}
 }

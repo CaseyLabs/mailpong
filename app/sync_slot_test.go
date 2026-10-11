@@ -226,3 +226,85 @@ func TestShutdownSyncsWaitsForTrackedWork(t *testing.T) {
 		})
 	}
 }
+
+// TestShutdownSyncsWaitsForCancelledSlots checks that a slot cancelled just
+// before shutdown, through any cancel path, is still waited for; that a stuck
+// one is abandoned within the bound; and that release empties cancelledSlots.
+func TestShutdownSyncsWaitsForCancelledSlots(t *testing.T) {
+	cancels := []struct {
+		name   string
+		cancel func(a *App)
+	}{
+		{"CancelFolderSync", func(a *App) { a.CancelFolderSync("acc", "inbox") }},
+		{"CancelAccountSync", func(a *App) { a.CancelAccountSync("acc") }},
+		{"CancelAllSyncs", func(a *App) { a.CancelAllSyncs() }},
+		{"replaced by a new sync", func(a *App) {
+			a.syncMu.Lock()
+			_, release, ok := a.replaceFolderSyncLocked("acc:inbox", time.Millisecond)
+			a.syncMu.Unlock()
+			if ok {
+				release() // the replacement ends at once; only the old slot is under test
+			}
+		}},
+	}
+	for _, c := range cancels {
+		for _, hang := range []bool{false, true} {
+			name := c.name + "/releases"
+			if hang {
+				name = c.name + "/stuck"
+			}
+			t.Run(name, func(t *testing.T) {
+				a := &App{ctx: context.Background(), syncContexts: make(map[string]*syncSlot)}
+				ctx, release, ok := a.beginFolderSync("acc:inbox")
+				if !ok {
+					t.Fatal("beginFolderSync: want ok")
+				}
+				c.cancel(a)
+				a.syncMu.Lock()
+				tracked := len(a.cancelledSlots)
+				a.syncMu.Unlock()
+				if tracked != 1 {
+					t.Fatalf("cancelledSlots = %d after cancel, want 1", tracked)
+				}
+
+				released := make(chan struct{})
+				stop := make(chan struct{})
+				defer close(stop)
+				go func() {
+					<-ctx.Done()
+					if hang {
+						<-stop
+					} else {
+						time.Sleep(20 * time.Millisecond)
+					}
+					release()
+					close(released)
+				}()
+
+				start := time.Now()
+				a.shutdownSyncs(200 * time.Millisecond)
+				if elapsed := time.Since(start); elapsed > 2*time.Second {
+					t.Fatalf("shutdownSyncs took %v, want it bounded", elapsed)
+				}
+				select {
+				case <-released:
+					if hang {
+						t.Fatal("stuck sync released unexpectedly")
+					}
+				default:
+					if !hang {
+						t.Fatal("shutdownSyncs returned before the cancelled slot released")
+					}
+				}
+				if !hang {
+					a.syncMu.Lock()
+					left := len(a.cancelledSlots)
+					a.syncMu.Unlock()
+					if left != 0 {
+						t.Fatalf("cancelledSlots = %d after release, want 0", left)
+					}
+				}
+			})
+		}
+	}
+}

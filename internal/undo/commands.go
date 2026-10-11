@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emersion/go-imap/v2"
+	"github.com/hkdb/aerion/internal/draft"
 	imapPkg "github.com/hkdb/aerion/internal/imap"
 	"github.com/hkdb/aerion/internal/message"
 )
@@ -204,11 +205,23 @@ func (c *ChatStateCommand) Undo() error {
 	return c.restorer.RestoreChatState(c.accountID, c.threadKey, c.previous)
 }
 
+// ChatKeySnapshot is a chat key's pin/snooze state and chat draft link at one
+// moment; a nil Link means the key had none.
+type ChatKeySnapshot struct {
+	Key   string
+	State message.ChatState
+	Link  *draft.ChatLink
+}
+
+// SenderChatSnapshot records the keys a sender chat split touched (the sender
+// chat and the threads that received its state), as they were before.
+type SenderChatSnapshot []ChatKeySnapshot
+
 // SenderChatRestorer writes a sender's combine choice back (nil follows the
-// default), along with the sender chat's pin/snooze state when the sender
-// combines again.
+// default), along with the state and links in snapshot: the keys a split
+// touched, returned to how they were before it.
 type SenderChatRestorer interface {
-	RestoreSenderChat(accountID, email string, choice *bool, state message.ChatState) error
+	RestoreSenderChat(accountID, email string, choice *bool, snapshot SenderChatSnapshot) error
 }
 
 // SenderChatCommand undoes combining a sender's threads into one chat, or
@@ -219,26 +232,26 @@ type SenderChatCommand struct {
 	accountID string
 	email     string
 	choice    *bool
-	state     message.ChatState
+	snapshot  SenderChatSnapshot
 }
 
 // NewSenderChatCommand creates a SenderChatCommand that restores the
-// previous choice and, for a combined sender, its chat state.
-func NewSenderChatCommand(restorer SenderChatRestorer, accountID, email string, choice *bool, state message.ChatState, description string) *SenderChatCommand {
+// previous choice and, for a split, the snapshot taken before it.
+func NewSenderChatCommand(restorer SenderChatRestorer, accountID, email string, choice *bool, snapshot SenderChatSnapshot, description string) *SenderChatCommand {
 	return &SenderChatCommand{
 		BaseCommand: NewBaseCommand(description),
 		restorer:    restorer,
 		accountID:   accountID,
 		email:       email,
 		choice:      choice,
-		state:       state,
+		snapshot:    snapshot,
 	}
 }
 
 // Execute performs the action (already done at creation time)
 func (c *SenderChatCommand) Execute() error { return nil }
 
-// Undo restores the choice and state from before the change
+// Undo restores the choice, state and links from before the change
 func (c *SenderChatCommand) Undo() error {
-	return c.restorer.RestoreSenderChat(c.accountID, c.email, c.choice, c.state)
+	return c.restorer.RestoreSenderChat(c.accountID, c.email, c.choice, c.snapshot)
 }

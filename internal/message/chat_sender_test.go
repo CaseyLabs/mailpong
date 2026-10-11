@@ -427,6 +427,44 @@ func TestNewestInboxThreadKeys(t *testing.T) {
 	}
 }
 
+// TestStartedInboxThreadKey checks that a message maps to its thread's key
+// only when the sender started that thread in the inbox of that account.
+func TestStartedInboxThreadKey(t *testing.T) {
+	s, accountID, inboxID, now := senderChatFixture(t)
+	for i, m := range []*Message{
+		// Thread IDs with stray brackets normalize to b@x, as threadKeyExpr does.
+		{ID: "split-b1", FolderID: inboxID, ThreadID: "<<b@x>>", FromEmail: lms},
+		// A reply filed outside the inbox still belongs to lms's thread.
+		{ID: "split-t3", FolderID: "sent-1", ThreadID: "<t@x>", FromEmail: "me@example.com"},
+	} {
+		m.AccountID, m.UID, m.Subject = accountID, uint32(300+i), m.ID
+		m.Date, m.ReceivedAt = now, now
+		if err := s.Create(m); err != nil {
+			t.Fatal(err)
+		}
+	}
+	tests := []struct {
+		name, account, email, messageID, want string
+	}{
+		{"sender's own message", accountID, lms, "t1", "t@x"},
+		{"someone else's reply in sender's thread", accountID, lms, "t2", "t@x"},
+		{"reply outside the inbox", accountID, lms, "split-t3", "t@x"},
+		{"sender's reply in another starter's thread", accountID, lms, "o2", ""},
+		{"starter matched case-insensitively", accountID, "NoReply@LMS.example", "n1", "n1"},
+		{"bracketed thread id", accountID, lms, "split-b1", "b@x"},
+		{"other account", "acct-2", lms, "t1", ""},
+		{"message gone", accountID, lms, "missing", ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := s.StartedInboxThreadKey(tt.account, tt.email, tt.messageID)
+			if err != nil || got != tt.want {
+				t.Errorf("StartedInboxThreadKey = %q, %v; want %q", got, err, tt.want)
+			}
+		})
+	}
+}
+
 // TestSenderChatSplitHandOff checks that a split sender's state moves to the
 // thread of the sender's newest inbox thread it started, keeps state already there, and
 // is dropped when the sender has no inbox mail.

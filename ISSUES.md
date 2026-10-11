@@ -39,34 +39,33 @@ has not yet been confirmed against the code.
 
 ### Mail sync
 
-- **M11 low** `app/sync.go` `shutdownSyncs`: it waits only for slots still in
-  `syncContexts`. `CancelAllSyncs` replaces that map, so a sync cancelled just
-  before quit (network change, wake) is not awaited and can still touch the DB
-  as it closes. The closed pool stops its connections. Fix: keep cancelled
-  slots' `done` channels until released. IDLE handlers and `SyncFolders` are
-  awaited through `trackSync`; draft, undo and action goroutines are not,
-  only cut off by `Pool.Close`.
+- **M13 low** `app/sync.go` `beginFolderSync`, `trackSyncUnlessBusy`: a
+  slot cancelled by `CancelFolderSync`, `CancelAccountSync` or
+  `CancelAllSyncs` leaves `syncContexts` before it releases, so a new sync of
+  the same folder can start while the cancelled one still runs. Fix idea: treat
+  a key with an unreleased slot in `cancelledSlots` as busy.
 
 ### Chat list
 
-- **M12 low** `app/chat.go` `splitSenderChat`: the chat draft link moves to
-  the newest thread the sender started, but its `MessageID` (the reply
-  target) can sit in another thread of the old sender chat, so the reply
-  threads under that message. Undoing a split restores the sender chat's
-  pin and snooze but leaves the pin and link on the thread. A failing
-  `MoveChatLink` after `MoveChatState` rolls the choice back with the pin
-  already moved.
-- **M12 low** chat list timing at 50k inbox messages (benchmark
-  `BenchmarkChatQueries`): `ListChats` takes about 320 ms with combining off
-  and 380 ms on, `CountChats` 110 ms off and 250 ms on. The grouped query
-  with JSON aggregates over the whole inbox dominates; the sender-chat window
-  pass adds about 60 and 140 ms. Fix by paging before aggregating, or by
-  caching thread starters.
+- **M12 low** chat list timing at 50k inbox messages with combining on
+  (`BenchmarkChatQueries`): `ListChats` takes about 300 ms and `CountChats`
+  230 ms. The sender-chat window pass in `chatKeyRows` (about 140 ms) and the
+  grouping (about 90 ms) run over the whole inbox. Fix by caching thread
+  starters in a table kept current by triggers on `messages`; the target is
+  at most 188 ms (half the 376 ms baseline). Smaller levers, either
+  combining setting: `chatGroups` joins `messages` and `folders` again
+  although the key rows already read them, so the first pass and
+  `CountChats` could carry the few columns they need instead; and each reload
+  in `frontend/src/lib/stores/chat.svelte.ts` runs `GetChats`, `GetChatCount`
+  and the Low count as separate full passes, which a `COUNT(*) OVER ()` in
+  `chatPage` and one filtered count could merge.
 
-- **M9 low, unverified** chat UI: checked on fake data only (2026-10-10), all
-  passing. Still unchecked with real mail: hover on real rows, and opening a
-  chat in the narrow layout (the list-only layout was seen at 700px, but the
-  reading pane opening was not, to avoid marking real mail read).
+- **M14 low** `app/chat.go` `moveStaleChatState`: splits from a changed
+  combine default (`app/settings.go`) or the startup reconcile still move a
+  sender chat's draft link to the newest thread, not to the thread holding its
+  reply target as `splitSenderChat` does. Fix idea: give `ChatKeyMove` a
+  `LinkTo` worked out in `StaleChatKeys`, and have `splitSenderChat` use the
+  same planner.
 
 ### Upstream independence
 

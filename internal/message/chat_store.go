@@ -207,6 +207,10 @@ const snoozeActiveExpr = `(cs.snoozed_until IS NOT NULL AND cs.snoozed_until > ?
 // parseAggregatedToListJSON; it needs the folders join as f.
 const recipientsJSONExpr = `json_group_array(json(CASE WHEN f.folder_type = 'sent' AND json_valid(m.to_list) THEN m.to_list ELSE '[]' END))`
 
+// senderThreadKeysExpr lists a sender chat's thread keys as JSON; it is NULL
+// for a thread chat, whose key is its one thread key.
+var senderThreadKeysExpr = `CASE WHEN ` + isSenderKey("ck.chat_key") + ` THEN json_group_array(DISTINCT ck.thread_key) END`
+
 // chatListColumns are the per-chat columns ListChats scans.
 var chatListColumns = `
 				MIN(COALESCE(m.thread_id, m.id)) AS conv_thread_id,
@@ -228,31 +232,103 @@ var chatListColumns = `
 				MIN(` + isLowExpr + `) AS is_low,
 				MAX(REPLACE(SUBSTR(m.received_at, 1, 19), 'T', ' ')) AS latest_received,
 				` + recipientsJSONExpr + ` AS recipients_json,
-				CASE WHEN ` + isSenderKey("ck.chat_key") + ` THEN json_group_array(DISTINCT ck.thread_key) END AS thread_keys,
+				` + senderThreadKeysExpr + ` AS thread_keys,
 				CASE WHEN ` + isSenderKey("ck.chat_key") + ` THEN MAX(m.date || char(31) || COALESCE(m.subject, '')) END AS latest_subject
 `
 
-// chatCountColumns are the columns chatBaseQuery's GROUP BY and section
-// filters need; counting skips the JSON aggregates.
-var chatCountColumns = `
+// chatGroupColumns are the columns chatBaseQuery's GROUP BY and section
+// filters need, plus extra; counting and paging skip the JSON aggregates. The
+// unread and priority counts are computed only for the sections that filter
+// on them.
+func chatGroupColumns(section, extra string) string {
+	cols := `
 				ck.chat_key AS thread_key,
 				a.id AS account_id,
-				SUM(CASE WHEN m.is_read = 0 THEN 1 ELSE 0 END) AS unread_count,
-				MIN(` + isLowExpr + `) AS is_low,
-				MAX(REPLACE(SUBSTR(m.received_at, 1, 19), 'T', ' ')) AS latest_received
-`
+				MAX(REPLACE(SUBSTR(m.received_at, 1, 19), 'T', ' ')) AS latest_received`
+	switch section {
+	case ChatSectionUnread:
+		cols += `,
+				SUM(CASE WHEN m.is_read = 0 THEN 1 ELSE 0 END) AS unread_count`
+	case ChatSectionPriority, ChatSectionLow:
+		cols += `,
+				MIN(` + isLowExpr + `) AS is_low`
+	}
+	return cols + extra + "\n"
+}
 
-// chatBaseQuery builds the grouped chat query for a scope (a folder ID, or
-// "" for every enabled account's inbox) and section, selecting columns from
-// each chat group; callers add ordering and paging or wrap it in a count.
+// chatFolderCond is the folder condition and args for a chat scope.
+func chatFolderCond(scope string) (string, []any) {
+	if scope == "" {
+		return "f.folder_type = 'inbox'", nil
+	}
+	return "f.id = ?", []any{scope}
+}
+
+// chatPageColumns are the columns chatPage needs to sort and filter. With
+// sender chats on, a sender chat also lists its thread keys, which let the
+// second pass read only those threads; without, it skips that aggregate.
+func chatPageColumns(section string, senderChats bool) string {
+	threadKeys := "NULL"
+	if senderChats {
+		threadKeys = senderThreadKeysExpr
+	}
+	return chatGroupColumns(section, `,
+				MAX(m.date) AS latest_date,
+				`+threadKeys+` AS thread_keys`)
+}
+
+// chatOrder is the ListChats sort order for a section: pinned chats first,
+// then newest; the snoozed section sorts by wake time.
+func chatOrder(section string) string {
+	if section == ChatSectionSnoozed {
+		return " ORDER BY cs.snoozed_until ASC"
+	}
+	return " ORDER BY (cs.pinned_at IS NOT NULL) DESC, g.latest_date DESC"
+}
+
+// chatPage runs the first pass of ListChats: it sorts the chats of a scope and
+// section and returns the (account ID, chat key) pairs of the requested page
+// and the thread keys of their messages.
+func chatPage(tx *sql.Tx, scope, section string, now time.Time, offset, limit int, senderChats bool) ([][2]string, []string, error) {
+	from, args, err := chatBaseQuery(scope, section, chatPageColumns(section, senderChats), now, senderChats)
+	if err != nil {
+		return nil, nil, err
+	}
+	query := "SELECT g.thread_key, g.account_id, g.thread_keys" + from + chatOrder(section) + " LIMIT ? OFFSET ?"
+	rows, err := tx.Query(query, append(args, limit, offset)...)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to query chat page: %w", err)
+	}
+	defer rows.Close()
+	var page [][2]string
+	var threads []string
+	for rows.Next() {
+		var key, account string
+		var threadKeys sql.NullString
+		if err := rows.Scan(&key, &account, &threadKeys); err != nil {
+			return nil, nil, fmt.Errorf("failed to scan chat page: %w", err)
+		}
+		page = append(page, [2]string{account, key})
+		if !threadKeys.Valid {
+			threads = append(threads, key)
+			continue
+		}
+		var keys []string
+		if err := json.Unmarshal([]byte(threadKeys.String), &keys); err != nil {
+			return nil, nil, fmt.Errorf("failed to parse chat thread keys: %w", err)
+		}
+		threads = append(threads, keys...)
+	}
+	return page, threads, rows.Err()
+}
+
+// chatBaseQuery builds the FROM and WHERE clauses of the grouped chat query
+// for a scope (a folder ID, or "" for every enabled account's inbox) and
+// section, with columns from each chat group as g and its state as cs;
+// callers add the SELECT list, and ordering and paging.
 // senderChats selects chatKeyRows over threadKeyRows.
 func chatBaseQuery(scope, section, columns string, now time.Time, senderChats bool) (string, []any, error) {
-	folderCond := "f.folder_type = 'inbox'"
-	var args []any
-	if scope != "" {
-		folderCond = "f.id = ?"
-		args = append(args, scope)
-	}
+	folderCond, args := chatFolderCond(scope)
 
 	var where string
 	switch section {
@@ -271,27 +347,48 @@ func chatBaseQuery(scope, section, columns string, now time.Time, senderChats bo
 	}
 	args = append(args, now.Unix())
 
+	// A chat is low priority only when every message in scope is, so one
+	// human reply in a newsletter thread lifts it into Chats.
+	from := `
+		FROM (` + chatGroups(folderCond, columns, "", senderChats) + `) g` + chatStateJoin + `
+		WHERE ` + where
+	return from, args, nil
+}
+
+// chatStateSelect and chatStateJoin add a chat's pinned and snoozed state to
+// its group g.
+const (
+	chatStateSelect = "SELECT g.*, cs.pinned_at, cs.snoozed_until"
+	chatStateJoin   = `
+		LEFT JOIN conversation_state cs ON cs.account_id = g.account_id AND cs.thread_key = g.thread_key`
+)
+
+// chatGroups selects columns from each chat group of the folders matching
+// folderCond. A non-empty ckWhere narrows the (account_id, chat_key) pairs
+// before messages are joined, so aggregates run only for those chats.
+func chatGroups(folderCond, columns, ckWhere string, senderChats bool) string {
 	keyRows := threadKeyRows
 	if senderChats {
 		keyRows = chatKeyRows
 	}
-
-	// A chat is low priority only when every message in scope is, so one
-	// human reply in a newsletter thread lifts it into Chats.
-	query := `
-		SELECT g.*, cs.pinned_at, cs.snoozed_until
-		FROM (
+	rows := keyRows(folderCond)
+	if ckWhere != "" {
+		rows = `SELECT * FROM (` + rows + `) WHERE ` + ckWhere
+	}
+	// Only isLowExpr reads the sender override (sc); the join costs about
+	// 10 ms at 50k messages, so it is left out when unused.
+	var categoryJoin string
+	if strings.Contains(columns, isLowExpr) {
+		categoryJoin = `
+			LEFT JOIN sender_category sc ON sc.account_id = a.id AND sc.email = LOWER(m.from_email)`
+	}
+	return `
 			SELECT ` + columns + `
-			FROM (` + keyRows(folderCond) + `) ck
+			FROM (` + rows + `) ck
 			INNER JOIN messages m ON m.id = ck.mid
 			INNER JOIN folders f ON m.folder_id = f.id
-			INNER JOIN accounts a ON f.account_id = a.id AND a.enabled = 1
-			LEFT JOIN sender_category sc ON sc.account_id = a.id AND sc.email = LOWER(m.from_email)
-			GROUP BY ck.chat_key, a.id
-		) g
-		LEFT JOIN conversation_state cs ON cs.account_id = g.account_id AND cs.thread_key = g.thread_key
-		WHERE ` + where
-	return query, args, nil
+			INNER JOIN accounts a ON f.account_id = a.id AND a.enabled = 1` + categoryJoin + `
+			GROUP BY ck.chat_key, a.id`
 }
 
 // ListChats returns a page of chats for a scope (folder ID, or "" for the
@@ -302,24 +399,60 @@ func (s *Store) ListChats(scope, section string, now time.Time, offset, limit in
 	if err != nil {
 		return nil, err
 	}
-	query, args, err := chatBaseQuery(scope, section, chatListColumns, now, senderChats)
+	// One transaction keeps both passes on the same snapshot, so a sync
+	// write between them cannot change the page's threads.
+	tx, err := s.db.Begin()
+	if err != nil {
+		return nil, fmt.Errorf("failed to begin chat list: %w", err)
+	}
+	defer tx.Rollback() //nolint:errcheck // read-only; nothing to undo
+	page, threads, err := chatPage(tx, scope, section, now, offset, limit, senderChats)
+	if err != nil || len(page) == 0 {
+		return nil, err
+	}
+	byRef, err := chatPageDetails(tx, scope, section, page, threads, senderChats)
 	if err != nil {
 		return nil, err
 	}
-	order := " ORDER BY (cs.pinned_at IS NOT NULL) DESC, g.latest_date DESC"
-	if section == ChatSectionSnoozed {
-		order = " ORDER BY cs.snoozed_until ASC"
+	if len(byRef) < len(page) {
+		// threadKeysMatch misses keys that threadKeyExpr altered, such as
+		// a Message-ID with stray angle brackets; read the scope instead.
+		if byRef, err = chatPageDetails(tx, scope, section, page, nil, senderChats); err != nil {
+			return nil, err
+		}
 	}
-	query += order + " LIMIT ? OFFSET ?"
-	args = append(args, limit, offset)
 
-	rows, err := s.db.Query(query, args...)
+	chats := make([]*Chat, 0, len(page))
+	for _, ref := range page {
+		if c := byRef[chatRef{ref[0], ref[1]}]; c != nil {
+			chats = append(chats, c)
+		}
+	}
+	if err := s.fillLastFromMe(chats); err != nil {
+		return nil, err
+	}
+	return chats, nil
+}
+
+// chatPageDetails runs the second pass of ListChats: the JSON aggregates for
+// the page's chats, by account and chat key. Non-nil threads restricts the
+// read to those threads, which uses the thread index.
+func chatPageDetails(tx *sql.Tx, scope, section string, page [][2]string, threads []string, senderChats bool) (map[chatRef]*Chat, error) {
+	folderCond, args := chatFolderCond(scope)
+	if threads != nil {
+		folderCond += " AND " + threadKeysMatch("m.")
+		args = append(args, threadKeysArgs(threads)...)
+	}
+	pairs, _ := json.Marshal(page) // string pairs always encode
+	query := chatStateSelect + `
+		FROM (` + chatGroups(folderCond, chatListColumns, `(account_id, chat_key) IN (SELECT json_extract(value, '$[0]'), json_extract(value, '$[1]') FROM json_each(?))`, senderChats) + `) g` + chatStateJoin
+	rows, err := tx.Query(query, append(args, string(pairs))...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query chats: %w", err)
 	}
 	defer rows.Close()
 
-	var chats []*Chat
+	byRef := make(map[chatRef]*Chat, len(page))
 	for rows.Next() {
 		c := &Chat{}
 		var snippet, latestDate, messageIDs, participantsJSON, latestReceived, recipientsJSON, threadKeys, latestSubject sql.NullString
@@ -364,16 +497,12 @@ func (s *Store) ListChats(scope, section string, now time.Time, offset, limit in
 			t := time.Unix(snoozedUntil.Int64, 0).UTC()
 			c.SnoozedUntil = &t
 		}
-		chats = append(chats, c)
+		byRef[chatRef{c.AccountID, c.ThreadKey}] = c
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("failed to iterate chats: %w", err)
 	}
-
-	if err := s.fillLastFromMe(chats); err != nil {
-		return nil, err
-	}
-	return chats, nil
+	return byRef, nil
 }
 
 // ChatSearchResult is a folder search result with the chat row's chat key
@@ -636,12 +765,12 @@ func (s *Store) CountChats(scope, section string, now time.Time) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	query, args, err := chatBaseQuery(scope, section, chatCountColumns, now, senderChats)
+	from, args, err := chatBaseQuery(scope, section, chatGroupColumns(section, ""), now, senderChats)
 	if err != nil {
 		return 0, err
 	}
 	var n int
-	if err := s.db.QueryRow("SELECT COUNT(*) FROM ("+query+")", args...).Scan(&n); err != nil {
+	if err := s.db.QueryRow("SELECT COUNT(*)"+from, args...).Scan(&n); err != nil {
 		return 0, fmt.Errorf("failed to count chats: %w", err)
 	}
 	return n, nil
@@ -969,6 +1098,40 @@ func (s *Store) NewestInboxThreadKey(accountID, email string) (string, error) {
 		return "", err
 	}
 	return keys[email], nil
+}
+
+// StartedInboxThreadKey returns the key of messageID's thread when the sender
+// started that thread in the inbox (as NewestInboxThreadKey matches
+// starters), or "" when the message is gone or its thread is not one of the
+// sender's.
+func (s *Store) StartedInboxThreadKey(accountID, email, messageID string) (string, error) {
+	var key string
+	err := s.db.QueryRow(`SELECT `+threadKeyExpr("m.")+` FROM messages m WHERE m.id = ? AND m.account_id = ?`,
+		messageID, accountID).Scan(&key)
+	if err == sql.ErrNoRows {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("failed to find thread of message: %w", err)
+	}
+	// Only the thread's inbox messages decide who started it.
+	var starter string
+	err = s.db.QueryRow(`
+		SELECT COALESCE(LOWER(m.from_email), '')
+		FROM messages m INNER JOIN folders f ON m.folder_id = f.id
+		WHERE f.folder_type = 'inbox' AND f.account_id = ? AND `+threadKeyExpr("m.")+` = ?
+		ORDER BY m.date, m.id LIMIT 1`,
+		accountID, key).Scan(&starter)
+	if err == sql.ErrNoRows {
+		return "", nil
+	}
+	if err != nil {
+		return "", fmt.Errorf("failed to find thread starter: %w", err)
+	}
+	if starter != NormalizeSenderEmail(email) {
+		return "", nil
+	}
+	return key, nil
 }
 
 // newestInboxThreadKeys is NewestInboxThreadKey for several senders of one

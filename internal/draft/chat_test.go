@@ -129,3 +129,50 @@ func TestMoveChatLink(t *testing.T) {
 		}
 	}
 }
+
+// RestoreChatLink moves a draft's link back from wherever it sits, keeping
+// its current typed length, leaves other drafts' links alone, and adds no
+// link for a deleted draft.
+func TestRestoreChatLink(t *testing.T) {
+	db := openTestDB(t)
+	accountID := insertTestAccount(t, db)
+	store := NewStore(db)
+	newDraft := func() string {
+		d := &Draft{AccountID: accountID, Subject: "chat"}
+		if err := store.Create(d); err != nil {
+			t.Fatal(err)
+		}
+		return d.ID
+	}
+	const sender = "sender:bob@example.com"
+	moved, other, gone := newDraft(), newDraft(), newDraft()
+	for key, link := range map[string]ChatLink{
+		"a@x": {DraftID: moved, MessageID: "m-1", TextLen: 40}, // typed on after a move
+		"b@x": {DraftID: other, MessageID: "m-2"},
+	} {
+		if err := store.SetChatLink(accountID, key, link); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := store.Delete(gone); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.RestoreChatLink(accountID, sender, ChatLink{DraftID: moved, MessageID: "m-1", TextLen: 3}); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.RestoreChatLink(accountID, "c@x", ChatLink{DraftID: gone, MessageID: "m-3"}); err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]*ChatLink{
+		sender: {DraftID: moved, MessageID: "m-1", TextLen: 40},
+		"a@x":  nil,
+		"b@x":  {DraftID: other, MessageID: "m-2"},
+		"c@x":  nil,
+	}
+	for key, w := range want {
+		got, err := store.GetChatLink(accountID, key)
+		if err != nil || (got == nil) != (w == nil) || (w != nil && *got != *w) {
+			t.Errorf("link on %s = %+v, %v; want %+v", key, got, err, w)
+		}
+	}
+}
