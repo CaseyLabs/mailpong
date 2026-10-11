@@ -931,12 +931,18 @@ func (s *Store) StaleChatKeys() ([]ChatKeyMove, error) {
 		return nil, fmt.Errorf("failed to iterate chat state keys: %w", err)
 	}
 
-	for i, m := range moves {
-		to, err := s.NewestInboxThreadKey(m.AccountID, strings.TrimPrefix(m.From, SenderChatPrefix))
-		if err != nil {
+	senders := map[string][]string{}
+	for _, m := range moves {
+		senders[m.AccountID] = append(senders[m.AccountID], strings.TrimPrefix(m.From, SenderChatPrefix))
+	}
+	newest := map[string]map[string]string{}
+	for accountID, emails := range senders {
+		if newest[accountID], err = s.newestInboxThreadKeys(accountID, emails); err != nil {
 			return nil, err
 		}
-		moves[i].To = to
+	}
+	for i, m := range moves {
+		moves[i].To = newest[m.AccountID][strings.TrimPrefix(m.From, SenderChatPrefix)]
 	}
 
 	chatKeys, err := s.inboxChatKeys(threads)
@@ -958,28 +964,53 @@ func (s *Store) StaleChatKeys() ([]ChatKeyMove, error) {
 // started none. Starters are matched as chatKeyRows does, so the thread shows
 // as its own chat once the sender is split.
 func (s *Store) NewestInboxThreadKey(accountID, email string) (string, error) {
-	key := threadKeyExpr("m.")
-	var threadKey string
-	err := s.db.QueryRow(`
-		SELECT k.thread_key
-		FROM (
-			SELECT `+key+` AS thread_key, m.date,
-				FIRST_VALUE(COALESCE(LOWER(m.from_email), '')) OVER (PARTITION BY `+key+` ORDER BY m.date, m.id) AS starter
-			FROM messages m
-			INNER JOIN folders f ON m.folder_id = f.id
-			WHERE f.folder_type = 'inbox' AND f.account_id = ?
-		) k
-		WHERE k.starter = ?
-		GROUP BY k.thread_key
-		ORDER BY MAX(k.date) DESC, k.thread_key DESC
-		LIMIT 1`, accountID, email).Scan(&threadKey)
-	if err == sql.ErrNoRows {
-		return "", nil
-	}
+	keys, err := s.newestInboxThreadKeys(accountID, []string{email})
 	if err != nil {
-		return "", fmt.Errorf("failed to find newest inbox thread: %w", err)
+		return "", err
 	}
-	return threadKey, nil
+	return keys[email], nil
+}
+
+// newestInboxThreadKeys is NewestInboxThreadKey for several senders of one
+// account in a single pass over its inbox, keyed by sender. Senders who
+// started no thread are absent.
+func (s *Store) newestInboxThreadKeys(accountID string, emails []string) (map[string]string, error) {
+	key := threadKeyExpr("m.")
+	args := []any{accountID}
+	for _, e := range emails {
+		args = append(args, e)
+	}
+	rows, err := s.db.Query(`
+		SELECT starter, thread_key FROM (
+			SELECT k.starter, k.thread_key,
+				ROW_NUMBER() OVER (PARTITION BY k.starter ORDER BY MAX(k.date) DESC, k.thread_key DESC) AS rn
+			FROM (
+				SELECT `+key+` AS thread_key, m.date,
+					FIRST_VALUE(COALESCE(LOWER(m.from_email), '')) OVER (PARTITION BY `+key+` ORDER BY m.date, m.id) AS starter
+				FROM messages m
+				INNER JOIN folders f ON m.folder_id = f.id
+				WHERE f.folder_type = 'inbox' AND f.account_id = ?
+			) k
+			WHERE k.starter IN (?`+strings.Repeat(", ?", len(emails)-1)+`)
+			GROUP BY k.starter, k.thread_key
+		)
+		WHERE rn = 1`, args...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find newest inbox threads: %w", err)
+	}
+	defer rows.Close()
+	keys := make(map[string]string, len(emails))
+	for rows.Next() {
+		var starter, threadKey string
+		if err := rows.Scan(&starter, &threadKey); err != nil {
+			return nil, fmt.Errorf("failed to scan newest inbox thread: %w", err)
+		}
+		keys[starter] = threadKey
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("failed to iterate newest inbox threads: %w", err)
+	}
+	return keys, nil
 }
 
 // MoveChatState moves m.From's pin/snooze state into m.To, or drops it when

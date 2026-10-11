@@ -43,8 +43,9 @@ has not yet been confirmed against the code.
   `syncContexts`. `CancelAllSyncs` replaces that map, so a sync cancelled just
   before quit (network change, wake) is not awaited and can still touch the DB
   as it closes. The closed pool stops its connections. Fix: keep cancelled
-  slots' `done` channels until released. Draft, undo and action goroutines are
-  likewise not awaited, only cut off by `Pool.Close`.
+  slots' `done` channels until released. IDLE handlers and `SyncFolders` are
+  awaited through `trackSync`; draft, undo and action goroutines are not,
+  only cut off by `Pool.Close`.
 
 ### Chat list
 

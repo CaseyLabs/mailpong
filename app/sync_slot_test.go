@@ -166,3 +166,64 @@ func TestShutdownSyncs(t *testing.T) {
 		})
 	}
 }
+
+// TestShutdownSyncsWaitsForTrackedWork checks that shutdown waits for syncs
+// registered with trackSync, refuses new ones, and stays bounded when several
+// slots and tracked syncs hang past the wait.
+func TestShutdownSyncsWaitsForTrackedWork(t *testing.T) {
+	tests := []struct {
+		name     string
+		hang     bool
+		wantDone bool
+	}{
+		{"tracked sync ends", false, true},
+		{"hung syncs are abandoned within the bound", true, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := &App{ctx: context.Background(), syncContexts: make(map[string]*syncSlot)}
+			stop := make(chan struct{})
+			defer close(stop)
+			if tt.hang {
+				// Two stuck slots: the wait must not stall on the second.
+				for _, key := range []string{"acc:a", "acc:b"} {
+					_, release, _ := a.beginFolderSync(key)
+					go func() { <-stop; release() }()
+				}
+			}
+			done, ok := a.trackSync()
+			if !ok {
+				t.Fatal("trackSync before shutdown: want ok")
+			}
+			finished := make(chan struct{})
+			go func() {
+				if tt.hang {
+					<-stop
+				} else {
+					time.Sleep(20 * time.Millisecond)
+				}
+				done()
+				close(finished)
+			}()
+
+			start := time.Now()
+			a.shutdownSyncs(200 * time.Millisecond)
+			if elapsed := time.Since(start); elapsed > 2*time.Second {
+				t.Fatalf("shutdownSyncs took %v, want it bounded", elapsed)
+			}
+			select {
+			case <-finished:
+				if !tt.wantDone {
+					t.Fatal("hung sync finished unexpectedly")
+				}
+			default:
+				if tt.wantDone {
+					t.Fatal("shutdownSyncs returned before the tracked sync ended")
+				}
+			}
+			if _, ok := a.trackSync(); ok {
+				t.Fatal("trackSync after shutdown: want !ok")
+			}
+		})
+	}
+}

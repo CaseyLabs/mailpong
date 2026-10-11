@@ -628,6 +628,19 @@ func (m *IdleManager) Watched(accountID string) []string {
 	return folders
 }
 
+// Running reports whether an account folder's IDLE connection is running.
+func (m *IdleManager) Running(accountID, folder string) bool {
+	m.mu.Lock()
+	conn := m.connections[idleKey{accountID, folder}]
+	m.mu.Unlock()
+	if conn == nil {
+		return false
+	}
+	conn.mu.Lock()
+	defer conn.mu.Unlock()
+	return conn.running
+}
+
 // RestartAccount restarts IDLE for an account on the given folders
 func (m *IdleManager) RestartAccount(accountID, accountName string, folders ...string) {
 	m.StopAccount(accountID)

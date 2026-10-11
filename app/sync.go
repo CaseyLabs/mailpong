@@ -488,9 +488,31 @@ func (a *App) registerIfRunningLocked(key string) (context.Context, func(), bool
 	return ctx, release, true
 }
 
+// trackSync registers a sync that runs without a slot, so shutdownSyncs
+// waits for it; done must be called when it ends. ok is false once shutdown
+// has begun, and the sync must not run.
+func (a *App) trackSync() (done func(), ok bool) {
+	a.syncMu.Lock()
+	defer a.syncMu.Unlock()
+	if a.shuttingDown {
+		return nil, false
+	}
+	a.syncWork.Add(1)
+	return a.syncWork.Done, true
+}
+
+// isShuttingDown reports whether shutdownSyncs has begun.
+func (a *App) isShuttingDown() bool {
+	a.syncMu.Lock()
+	defer a.syncMu.Unlock()
+	return a.shuttingDown
+}
+
 // shutdownSyncs stops every running folder sync before the IMAP pool and the
 // database close. It refuses new syncs, cancels the running ones, and waits up
-// to wait for their slots to release, logging any that don't.
+// to wait for their slots to release and for tracked syncs (trackSync) to
+// end, logging any that don't. Tracked syncs run on a.ctx, so the pool
+// closing is what stops them.
 func (a *App) shutdownSyncs(wait time.Duration) {
 	log := logging.WithComponent("app")
 
@@ -509,17 +531,30 @@ func (a *App) shutdownSyncs(wait time.Duration) {
 		a.imapPool.Close()
 	}
 
-	deadline := time.After(wait)
+	// A context, not time.After: its Done stays closed for every wait below.
+	waitCtx, cancel := context.WithTimeout(context.Background(), wait)
+	defer cancel()
 	for key, done := range pending {
 		select {
 		case <-done:
-		case <-deadline:
+		case <-waitCtx.Done():
 			select {
 			case <-done:
 			default:
 				log.Warn().Str("syncKey", key).Msg("Sync did not stop before shutdown")
 			}
 		}
+	}
+
+	tracked := make(chan struct{})
+	go func() {
+		a.syncWork.Wait()
+		close(tracked)
+	}()
+	select {
+	case <-tracked:
+	case <-waitCtx.Done():
+		log.Warn().Msg("Syncs without a slot did not stop before shutdown")
 	}
 }
 

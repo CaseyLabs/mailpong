@@ -627,16 +627,32 @@ func (a *App) syncSentFolder(accountID string) error {
 		return nil
 	}
 
+	// Take the Sent slot, replacing a running Sent sync (one IDLE may have
+	// started on this send's APPEND), so the two don't sync the folder at once.
+	a.syncMu.Lock()
+	ctx, release, ok := a.replaceFolderSyncLocked(accountID+":"+sentFolder.ID, slotReleaseWait)
+	a.syncMu.Unlock()
+	if !ok {
+		return nil
+	}
+	defer release()
+
 	syncPeriodDays := a.syncPeriodDays(accountID)
 
 	// Sync progress feedback rides on the syncEngine's sync:progress callback (see app.go:438)
-	if err := a.syncEngine.SyncMessages(a.ctx, accountID, sentFolder.ID, syncPeriodDays, false); err != nil {
+	if err := a.syncEngine.SyncMessages(ctx, accountID, sentFolder.ID, syncPeriodDays, false); err != nil && ctx.Err() == nil {
 		log.Warn().Err(err).Str("folderID", sentFolder.ID).Msg("Failed to sync Sent folder")
 	}
 
 	// Also fetch bodies
-	if err := a.syncEngine.FetchBodiesInBackground(a.ctx, accountID, sentFolder.ID, syncPeriodDays); err != nil {
+	if err := a.syncEngine.FetchBodiesInBackground(ctx, accountID, sentFolder.ID, syncPeriodDays); err != nil && ctx.Err() == nil {
 		log.Warn().Err(err).Str("folderID", sentFolder.ID).Msg("Failed to fetch bodies for Sent folder")
+	}
+
+	// Cancelled means a manual sync replaced this one; it emits its own
+	// completion.
+	if ctx.Err() != nil {
+		return nil
 	}
 
 	// Emit synced event

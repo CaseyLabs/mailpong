@@ -186,6 +186,11 @@ func (a *App) applySenderChat(accountID, email string, choice, rollback *bool, s
 	if rbErr := a.writeSenderChoice(accountID, email, rollback); rbErr != nil {
 		return errors.Join(err, rbErr)
 	}
+	// A partial split may have moved state to a thread that the rolled-back
+	// sender chat hides again; move it back.
+	if _, mvErr := a.moveStaleChatState(); mvErr != nil {
+		err = errors.Join(err, mvErr)
+	}
 	a.emitChatsChanged(accountID)
 	return err
 }

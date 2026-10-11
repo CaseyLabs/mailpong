@@ -26,6 +26,18 @@ import (
 func (a *App) initBackgroundSync(ctx context.Context) {
 	log := logging.WithComponent("app")
 
+	// Initialize the IDLE manager for real-time push notifications. Before
+	// the scheduler starts: its sync completions call ensureSentIdle.
+	idleConfig := imap.DefaultIdleConfig()
+	a.idleManager = imap.NewIdleManager(idleConfig, a.getIMAPCredentials)
+
+	// Wire up network connectivity check so IDLE skips reconnects when offline
+	if a.networkMonitor != nil {
+		a.idleManager.SetConnectivityCheck(a.networkMonitor.IsConnected)
+	}
+
+	a.idleManager.Start(ctx)
+
 	// Initialize the sync scheduler for periodic polling
 	a.syncScheduler = sync.NewScheduler(a.syncEngine, a.accountStore, a.folderStore)
 
@@ -48,17 +60,22 @@ func (a *App) initBackgroundSync(ctx context.Context) {
 			"accountId": accountID,
 			"folderId":  folderID,
 		})
+		folderObj, ferr := a.folderStore.Get(folderID)
+		if ferr != nil || folderObj == nil {
+			return
+		}
 		// The scheduled sync syncs the folder list first; add the Sent IDLE
-		// connection once it has found Sent.
-		a.ensureSentIdle(accountID)
+		// connection once it has found Sent. Once per account sync: every
+		// scheduled account sync includes the inbox.
+		if folderObj.Type == folder.TypeInbox {
+			a.ensureSentIdle(accountID)
+		}
 		// Mirror the unread count to the sidebar so badges refresh after a
 		// scheduled sync (the manual SyncFolder path emits this at
 		// app/sync.go:110; the scheduler path was missing it).
-		if folderObj, ferr := a.folderStore.Get(folderID); ferr == nil && folderObj != nil {
-			wailsRuntime.EventsEmit(a.ctx, "folders:countsChanged", map[string]int{
-				folderID: folderObj.UnreadCount,
-			})
-		}
+		wailsRuntime.EventsEmit(a.ctx, "folders:countsChanged", map[string]int{
+			folderID: folderObj.UnreadCount,
+		})
 	})
 
 	// Wire up network connectivity check so scheduler skips ticks when offline
@@ -73,17 +90,6 @@ func (a *App) initBackgroundSync(ctx context.Context) {
 	// Start the polling scheduler
 	a.syncScheduler.Start(ctx)
 	log.Info().Msg("Email sync scheduler started")
-
-	// Initialize the IDLE manager for real-time push notifications
-	idleConfig := imap.DefaultIdleConfig()
-	a.idleManager = imap.NewIdleManager(idleConfig, a.getIMAPCredentials)
-
-	// Wire up network connectivity check so IDLE skips reconnects when offline
-	if a.networkMonitor != nil {
-		a.idleManager.SetConnectivityCheck(a.networkMonitor.IsConnected)
-	}
-
-	a.idleManager.Start(ctx)
 
 	// Start IDLE for all enabled accounts if online.
 	// If offline, processNetworkEvents will start them when connectivity is restored.
@@ -269,6 +275,14 @@ func (a *App) handleIdleNewMail(event imap.MailEvent) {
 		return
 	}
 	a.syncMu.Unlock()
+
+	// Tracked until the body fetch below claims a slot of its own.
+	done, ok := a.trackSync()
+	if !ok {
+		return
+	}
+	defer done()
+	a.syncSentIfUnwatched(event.AccountID)
 
 	// Use the scheduler's blocking sync to get new mail info
 	newMailInfo, err := a.syncScheduler.SyncAccountInboxBlocking(event.AccountID)
@@ -492,6 +506,12 @@ func (a *App) reconcileInboxFlags(accountID string, attempt int) {
 		return
 	}
 
+	done, ok := a.trackSync()
+	if !ok {
+		return
+	}
+	defer done()
+
 	log.Debug().Str("accountID", accountID).Msg("Flags changed via IDLE, reconciling inbox flags (fast path)")
 	ctx, cancel := context.WithTimeout(a.ctx, 2*time.Minute)
 	defer cancel()
@@ -509,6 +529,7 @@ func (a *App) reconcileInboxFlags(accountID string, attempt int) {
 		log.Warn().Err(syncErr).Str("accountID", accountID).Msg("IDLE flag re-sync failed")
 		return
 	}
+	a.syncSentIfUnwatched(accountID)
 
 	// Update the sidebar unread badge.
 	if updated, ferr := a.folderStore.Get(folderID); ferr == nil && updated != nil {
@@ -544,6 +565,12 @@ func (a *App) handleIdleExpunge(accountID string) {
 		log.Debug().Str("syncKey", syncKey).Msg("Skipping IDLE expunge reconcile - sync already in progress")
 		return
 	}
+
+	done, ok := a.trackSync()
+	if !ok {
+		return
+	}
+	defer done()
 
 	log.Debug().Str("accountID", accountID).Msg("Messages expunged via IDLE, reconciling inbox deletions (lightweight)")
 	_, syncErr := a.syncScheduler.SyncAccountInboxBlocking(accountID)

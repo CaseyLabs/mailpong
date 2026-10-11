@@ -412,6 +412,21 @@ func TestSenderChatStaleKeys(t *testing.T) {
 	}
 }
 
+// TestNewestInboxThreadKeys checks the batched lookup: one entry per sender
+// who started an inbox thread, holding the newest one (alice started o@x and
+// the newer a@x), and none for a sender who only replied or never wrote.
+func TestNewestInboxThreadKeys(t *testing.T) {
+	s, accountID, _, _ := senderChatFixture(t)
+	got, err := s.newestInboxThreadKeys(accountID, []string{lms, "alice@example.com", "carol@example.com", "nobody@example.com"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := map[string]string{lms: "t@x", "alice@example.com": "a@x"}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("newestInboxThreadKeys = %v, want %v", got, want)
+	}
+}
+
 // TestSenderChatSplitHandOff checks that a split sender's state moves to the
 // thread of the sender's newest inbox thread it started, keeps state already there, and
 // is dropped when the sender has no inbox mail.

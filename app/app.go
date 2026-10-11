@@ -325,8 +325,21 @@ type App struct {
 	ownFlagChangeAt map[string]time.Time // accountID -> last own flag STORE time
 	ownExpungeAt    map[string]time.Time // accountID -> last own move/delete IMAP op time
 
+	// syncWork counts syncs that run outside a sync slot (folder lists, IDLE
+	// inbox syncs); shutdownSyncs waits for it. Add only via trackSync.
+	syncWork goSync.WaitGroup
+
 	// accountIDs with a Sent-after-IDLE retry already scheduled (idle_sent.go)
 	idleSentRetry goSync.Map
+	// Throttles the Sent sync that inbox IDLE activity starts when the Sent
+	// IDLE connection isn't running (idle_sent.go).
+	idleSentMu      goSync.Mutex
+	idleSentLast    map[string]time.Time // accountID -> last fallback Sent sync
+	idleSentPending map[string]bool      // accountID -> a fallback Sent sync is scheduled
+
+	// idleAccountMu serializes starting an account's IDLE connections with
+	// stopping them on disable or removal, so a start can't follow the stop.
+	idleAccountMu goSync.Mutex
 
 	// Draft IMAP sync goroutine tracking — cancel in-flight syncDraftToIMAP
 	draftSyncContexts map[string]context.CancelFunc // keyed by draft ID
@@ -760,6 +773,17 @@ func (a *App) Startup(ctx context.Context) {
 	// can use it to skip operations when offline.
 	a.initNetworkMonitor(ctx)
 
+	// Initialize sync context tracking for cancel-and-restart. Before
+	// background sync, whose scheduler and IDLE handlers use these maps.
+	a.syncContexts = make(map[string]*syncSlot)
+	a.syncLastRequest = make(map[string]time.Time)
+	a.ownFlagChangeAt = make(map[string]time.Time)
+	a.ownExpungeAt = make(map[string]time.Time)
+	a.draftSyncContexts = make(map[string]context.CancelFunc)
+	a.draftSyncDone = make(map[string]chan struct{})
+	a.idleSentLast = make(map[string]time.Time)
+	a.idleSentPending = make(map[string]bool)
+
 	// Initialize and start background email sync (polling + IDLE)
 	a.initBackgroundSync(ctx)
 
@@ -768,14 +792,6 @@ func (a *App) Startup(ctx context.Context) {
 
 	// Initialize FTS indexer for full-text search
 	a.ftsIndexer = message.NewFTSIndexer(db.DB)
-
-	// Initialize sync context tracking for cancel-and-restart
-	a.syncContexts = make(map[string]*syncSlot)
-	a.syncLastRequest = make(map[string]time.Time)
-	a.ownFlagChangeAt = make(map[string]time.Time)
-	a.ownExpungeAt = make(map[string]time.Time)
-	a.draftSyncContexts = make(map[string]context.CancelFunc)
-	a.draftSyncDone = make(map[string]chan struct{})
 
 	// IMPORTANT: backend-ready signal. The frontend's main.ts waits for the
 	// "app:ready" event (with IsReady() as a one-shot fallback) and will NOT

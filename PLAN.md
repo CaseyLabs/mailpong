@@ -179,10 +179,10 @@ Validation:
 ## Decision Log
 
 - 2026-10-10: M7 target is the newest inbox thread the sender started (not the thread of their newest message): a thread another sender started maps into that sender's chat, so the state would not show or would move again at startup.
-- 2026-10-10: M10 compose.go Sent body fetch runs on `a.ctx` without a slot; `ErrPoolClosed` is enough to stop it, because the fetch must get a pool connection and any held one is force-closed by `Close`. No slot added.
+- 2026-10-10: M10 compose.go `syncSentFolder` now takes the Sent folder's slot (review fix): without one it raced the IDLE-triggered Sent sync and was not cancelled at shutdown. Slotless IDLE handlers and `SyncFolders` register with `trackSync`, which `shutdownSyncs` waits on within the same bound.
 - 2026-10-10: M10 `replaceFolderSyncLocked` now returns `ok`; false means shutdown has begun and `SyncFolder` returns nil.
 - 2026-10-10: Leave S6 (revocation checks) open by owner decision.
-- 2026-10-10: For M6, use a second IDLE connection on Sent rather than a shorter Sent poll. It costs one extra connection per account, and it retires the 30 s throttle.
+- 2026-10-10: For M6, use a second IDLE connection on Sent rather than a shorter Sent poll. It costs one extra connection per account. Inbox activity still syncs Sent, throttled to once per 30 s, only while the Sent IDLE connection is not running (IDLE unsupported or reconnecting).
 
 - 2026-10-10: M8 timing (50k inbox messages, 16-core Ryzen, `go test -bench ChatQueries`): `ListChats` 382 ms combined / 319 ms split; `CountChats` 253 ms / 109 ms; `ListNewMail` (50 ids) 15 ms / 0.4 ms. Combining adds about 60 ms to the list, 140 ms to the count and 15 ms to new-mail lookups. No index or cache added: the window sort is an expression partition no index can serve, the baseline grouped query already costs over 300 ms, and a thread-starter cache is a schema change out of scope here. Filed as ISSUES M12.
 

@@ -107,3 +107,18 @@ func TestIdleManagerStopFolder(t *testing.T) {
 		t.Fatalf("watched = %v", got)
 	}
 }
+
+func TestIdleManagerRunning(t *testing.T) {
+	m := newTestIdleManager(t)
+	m.StartAccount("a1", "Acc", "INBOX", "Sent")
+	if !m.Running("a1", "Sent") {
+		t.Fatal("Sent not running after StartAccount")
+	}
+	if m.Running("a1", "Drafts") || m.Running("a2", "Sent") {
+		t.Fatal("unwatched folder reported running")
+	}
+	m.StopAccount("a1")
+	if m.Running("a1", "Sent") {
+		t.Fatal("Sent still running after StopAccount")
+	}
+}

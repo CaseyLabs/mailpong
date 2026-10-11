@@ -282,16 +282,13 @@ func (a *App) RemoveAccount(id string) error {
 		}
 	}
 
-	// Stop IDLE for this account
-	if a.idleManager != nil {
-		a.idleManager.StopAccount(id)
-	}
-
-	// Close any IMAP connections for this account
-	a.imapPool.CloseAccount(id)
-
-	// Delete from database (cascades to folders, messages, etc.)
-	if err := a.accountStore.Delete(id); err != nil {
+	// Stop IDLE, close the account's IMAP connections, and delete it from the
+	// database (cascades to folders, messages, etc.)
+	err := a.stopAccountIdle(id, func() error {
+		a.imapPool.CloseAccount(id)
+		return a.accountStore.Delete(id)
+	})
+	if err != nil {
 		log.Error().Err(err).Str("account_id", id).Msg("Failed to delete account")
 		return err
 	}
@@ -310,22 +307,15 @@ func (a *App) RemoveAccount(id string) error {
 
 // SetAccountEnabled enables or disables an account
 func (a *App) SetAccountEnabled(id string, enabled bool) error {
-	err := a.accountStore.SetEnabled(id, enabled)
-	if err != nil {
+	if !enabled {
+		return a.stopAccountIdle(id, func() error {
+			return a.accountStore.SetEnabled(id, false)
+		})
+	}
+	if err := a.accountStore.SetEnabled(id, true); err != nil {
 		return err
 	}
-
-	// Update IDLE manager
-	if a.idleManager != nil {
-		if enabled {
-			// Start IDLE for the account
-			a.startAccountIdle(id)
-		} else {
-			// Stop IDLE for the account
-			a.idleManager.StopAccount(id)
-		}
-	}
-
+	a.startAccountIdle(id)
 	return nil
 }
 
