@@ -24,8 +24,6 @@
 
   let { composer, subject = '', from = '', disabled = false, onEscape, onExpand }: Props = $props()
 
-  const MAX_HEIGHT_PX = 200
-
   let textarea = $state<HTMLTextAreaElement | null>(null)
   const ctrlSends = $derived(getChatSendKey() === 'ctrl-enter')
   const sendHint = $derived(ctrlSends ? $_('chat.sendHintCtrl') : $_('chat.sendHintEnter'))
@@ -51,14 +49,14 @@
     return key(choices.reply) === key(choices.all)
   })
 
-  // Grow with the text up to MAX_HEIGHT_PX, then scroll.
+  // Grow with the text up to the textarea's CSS max-height, then scroll.
   $effect(() => {
     void composer.text
     if (!textarea) return
     textarea.style.height = 'auto'
     // border-box sizing: scrollHeight excludes the border, so add it back.
     const border = textarea.offsetHeight - textarea.clientHeight
-    textarea.style.height = `${Math.min(textarea.scrollHeight + border, MAX_HEIGHT_PX)}px`
+    textarea.style.height = `${textarea.scrollHeight + border}px`
   })
 
   export function focus() {
@@ -98,7 +96,7 @@
   <span class="shrink-0" aria-hidden="true">|</span>
 {/snippet}
 
-<div class="mx-auto w-full max-w-[52rem] border-t border-divider px-3 py-2 bg-background">
+<div class="mx-auto w-full max-w-chat-column border-t border-divider px-3 py-2 bg-background">
   <div class="flex items-baseline gap-1.5 mb-1.5 px-1 text-xs text-muted-foreground min-w-0">
     {#if choices}
       <span class="shrink-0">{$_('chat.replyTo')}</span>
@@ -157,7 +155,7 @@
 
     <textarea
       bind:this={textarea}
-      class="flex-1 min-w-0 resize-none bg-transparent px-1.5 py-1.5 text-sm leading-5 focus:outline-none scrollbar-thin"
+      class="flex-1 min-w-0 max-h-[40vh] resize-none bg-transparent px-1.5 py-1.5 text-sm leading-5 focus:outline-none scrollbar-thin"
       rows="1"
       placeholder={$_('chat.typeReply')}
       aria-label={$_('viewer.reply')}

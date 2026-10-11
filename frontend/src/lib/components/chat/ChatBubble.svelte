@@ -64,6 +64,8 @@
     if (encrypted || showOriginal || !msg.chat) return 'full'
     return msg.chat.isRich ? 'card' : 'bubble'
   })
+  // Email cards and full bodies use the wider stream; the rest the chat column.
+  const wide = $derived(mode === 'card' || mode === 'full')
   // Attachment-only mail: no empty colored bubble above the attachment list.
   const bare = $derived(mode === 'bubble' && msg.hasAttachments && !msg.chat?.hasQuoted && !msg.chat?.text.trim())
 
@@ -156,7 +158,7 @@
   {onReply}
 >
   <div
-    class="group flex gap-2 px-4 {item.groupStart ? (mode === 'full' && !item.newDay && !item.subject ? 'mt-3 pt-3 border-t border-border' : 'mt-3') : 'mt-0.5'} {item.mine ? 'flex-row-reverse' : ''}"
+    class="group flex gap-2 {wide ? 'px-4' : 'mx-auto w-full max-w-chat-column px-4'} {item.groupStart ? (mode === 'full' && !item.newDay && !item.subject ? 'mt-3 pt-3 border-t border-border' : 'mt-3') : 'mt-0.5'} {item.mine ? 'flex-row-reverse' : ''}"
     data-message-id={msg.id}
     tabindex="-1"
     role="article"
@@ -173,7 +175,7 @@
       </div>
     {/if}
 
-    <div class="flex flex-col min-w-0 {mode === 'bubble' ? 'max-w-[min(75%,36rem)]' : 'flex-1 max-w-[min(100%,52rem)]'} {item.mine ? 'items-end' : 'items-start'}">
+    <div class="flex flex-col min-w-0 {mode === 'bubble' ? 'max-w-[min(75%,36rem)]' : 'flex-1'} {item.mine ? 'items-end' : 'items-start'}">
       {#if item.groupStart || badges.length > 0}
         <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-1 mb-0.5 text-xs text-muted-foreground" title={item.groupStart ? recipientsTitle : undefined}>
           {#if item.groupStart}

@@ -15,6 +15,7 @@ import { senderEmailOf } from '$lib/stores/chat.svelte'
 import { toasts } from '$lib/stores/toast'
 import { _ } from '$lib/i18n'
 import { get } from 'svelte/store'
+import { nearBottom } from './chatScroll.svelte'
 
 export interface DecryptedAttachment {
   filename: string
@@ -256,7 +257,7 @@ export class ChatThread {
       if (updated.messages.length === current.length && updated.messages.at(-1)?.id === current.at(-1)?.id) return
 
       const scroller = this.hooks.scroller()
-      const atBottom = !!scroller && scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 40
+      const atBottom = !!scroller && nearBottom(scroller)
       const scrollTop = scroller?.scrollTop ?? 0
       this.conversation = updated
       this.afterMessagesChanged(tid, true)

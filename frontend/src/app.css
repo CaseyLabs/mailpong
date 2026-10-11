@@ -39,6 +39,13 @@
   --color-accent: hsl(var(--accent));
   --color-accent-foreground: hsl(var(--accent-foreground));
 
+  /* Chat: bubbles, pending sends, day separators and the composer sit in
+     chat-column, centred in the wider chat-stream that email cards and full
+     email bodies use, so a 600px HTML email fits without horizontal
+     scrolling (it needs about 45.5rem with the avatar and paddings). */
+  --container-chat-column: 40rem;
+  --container-chat-stream: 46rem;
+
   --color-popover: hsl(var(--popover));
   --color-popover-foreground: hsl(var(--popover-foreground));
 
