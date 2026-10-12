@@ -1,46 +1,48 @@
 # Shared AI guidance and remaining dependency work
 
 ## Scope
-Make project guidance and all five project skills usable by Claude Code and Codex CLI without maintaining separate copies. Address AI1–AI4 in ISSUES.md. Keep shared policy in AGENTS.md, portable workflows in .agents/skills/, and only host-specific adaptations in Claude files. Preserve existing UI verification safeguards and the repository's commit and landing workflow.
+Make project guidance and all five project skills portable between Claude Code and Codex CLI. Keep shared policy in AGENTS.md and skill implementations in .agents/skills/. Use thin Claude discovery wrappers: no symlinks, setup step, duplicate scripts, or duplicate workflow bodies. Address AI1–AI5 in ISSUES.md while reducing loaded context and preserving accuracy, UI safeguards, and the repository's commit/landing policy.
 
-The migration does not change application behavior, account settings, permissions, or installed dependencies. D2 remains separate and blocked until stable frontend tools support TypeScript 7.
+This task revises the plan only; G1–G3 implementation remains pending. Application behavior, permissions, installed dependencies, and personal CLI configuration are out of scope. D2 remains separately blocked.
 
 ## Milestones
 
 ### G1 — Consolidate shared policy (AI3, AI4)
 
-- Keep AGENTS.md authoritative and retain CLAUDE.md's `@AGENTS.md` import. Move shared working-style preferences, attribution policy, and the rule against concurrent builds/tests in one checkout into AGENTS.md where not already covered.
-- Remove duplicated shared rules from .claude/rules/. Preserve the extension path scope in an explicit AGENTS.md instruction to consult docs/EXT_RULES.md; keep long references loaded only when relevant.
-- Keep Claude-specific tool, model, and delegation choices in small adapters. Express shared questions, background processes, review, and handoff requirements without assuming a particular host's tool names.
-- Reconcile project-ship's merge-only-on-request rule and project-finish-milestone's conditional simplification with AGENTS.md. Skills defer to project policy; runtime permissions and explicit user instructions still take precedence.
+- Keep AGENTS.md authoritative and CLAUDE.md's `@AGENTS.md` import. Consolidate shared working preferences, attribution policy, and serialized builds/tests; remove redundant .claude/rules/ content. Preserve the extension/core/kit path triggers and the instruction to consult docs/EXT_RULES.md only for relevant changes.
+- Keep root guidance short: mandatory constraints, non-obvious commands, routing, and checkpoint requirements. Put occasional procedures in skills/references. Ordinary links are pointers, not automatic imports; shared files must explicitly say when to read a reference. Do not use Claude `@` imports inside shared guidance or rely on matching nested-instruction loading across hosts.
+- Small host-specific sections may remain in shared files, clearly conditional on the host and available capabilities. Keep lengthy browser/tool instructions in optional references. Permission settings, model IDs, custom-agent definitions, and tool schemas are host-specific configuration, not portable policy. Do not assume Markdown grants tools or permissions.
+- Resolve all skill conflicts with project policy: ship's merge-only-on-request, finish's conditional simplification, and handoff's never-push rule. Preserve runtime/user precedence. Make plan-mode behavior respect the active host and explicit request; remove the next-milestone instruction to disregard plan mode.
 
-Acceptance: both tools receive the same shared project policy; no shared rule depends on Claude-only discovery; the merge and simplification conflicts are removed without weakening existing safeguards.
+Acceptance: both hosts receive one shared project policy; no mandatory rule depends on Claude-only discovery; conflicting workflow rules are removed; optional references load only when relevant.
 
-Validation: review the before/after rule inventory, inspect CLAUDE.md's import and all remaining .claude/rules/ files, search for duplicate or conflicting workflow instructions, and run `git diff --check`.
+Validation: inventory before/after rules, check CLAUDE.md import and remaining Claude rules, search for conflicting directives, record bytes/words of always-loaded project files, and run `git diff --check`. Count imported content once but include remaining unscoped rules. Aim below the current baseline without deleting safeguards; explain any increase.
 
-### G2 — Share and port the five skills (AI1, AI2)
+### G2 — Share and port five skills (AI1, AI2)
 
-- Move run-mailven, project-next-milestone, project-finish-milestone, project-handoff, and project-ship, including their scripts and resources, to .agents/skills/. Add a relative symlink for each skill under .claude/skills/ pointing to `../../.agents/skills/<name>`.
-- Keep skill names and clear trigger descriptions. Replace Claude dynamic command injection and reliance on `$ARGUMENTS` or `${CLAUDE_SKILL_DIR}` with explicit script calls and instructions for taking parameters from the user's request, with documented defaults.
-- Replace mandatory slash commands and named Claude subagents in shared steps with capability-based instructions. Keep reusable acceptance-checker and worker briefs in shared references; Claude agent definitions retain only host-specific metadata and instructions to read those briefs. Codex can give the same briefs to its available agents. Preserve the documented direct-review fallback when independent review is unavailable.
-- Keep run-mailven's shell and Playwright path portable. Move Claude browser-tool details into an optional reference; do not assume those tools exist in Codex. Detect actual executable/module/display availability, retaining explicit path overrides and existing environment hints where useful.
-- Preserve fake-data/write-blocking safeguards, UI-state restoration, process cleanup, and Mail checks with the Accounts column expanded and collapsed. Update executable paths in AGENTS.md, skills, scripts, and relevant developer documentation. Verify resource lookup works through canonical and symlink paths.
+- Move run-mailven, project-next-milestone, project-finish-milestone, project-handoff, and project-ship implementations and resources to .agents/skills/<name>/. Keep one tiny .claude/skills/<name>/SKILL.md wrapper per skill: discovery frontmatter and an explicit instruction to read/follow the canonical SKILL.md, passing the user's request. Do not use `@path` as a skill-body import or assume a Markdown link loads the target. No duplicated workflow bodies or resources.
+- Keep shared frontmatter to name/description plus standard fields only when needed. Keep descriptions concise and specific. Claude wrappers may carry necessary Claude-only metadata; Codex-only invocation metadata belongs in agents/openai.yaml only if needed. Tool names in allowed-tools and host-specific invocation controls are not interchangeable. Validate wrapper names, descriptions, and target paths against the canonical skills to catch drift.
+- Replace dynamic command injection, `$ARGUMENTS`, `${CLAUDE_SKILL_DIR}`, mandatory slash commands, and named Claude subagents in shared workflows with explicit script calls, request-derived parameters/defaults, and capability-based steps. Keep reusable worker/reviewer briefs in shared references and thin .claude/agents adapters. Preserve independent review and its documented direct-review fallback; do not duplicate native agent configurations without a demonstrated need.
+- Define path bases: scripts resolve resources from their own location; repository operations resolve the active checkout, including worktrees; user plan paths resolve from a documented working directory. Never bake in a user's checkout path. Shell-quote paths and arguments. A skill wrapper does not change shell cwd.
+- Split run-mailven's optional browser, screenshot, composer, and troubleshooting detail into references with clear read triggers. Keep prerequisites, real-account/write safeguards, state restoration, cleanup, and Accounts expanded/collapsed checks in the core workflow. Detect executable/module/display availability; keep explicit overrides and environment hints without treating Claude-specific variables as universal environment detection.
+- Update paths in project guidance and developer documentation. Preserve the plan-outline helper and selective plan reads. Require Scope, the current milestone, relevant decisions, and Progress to be sufficient for correct continuation; select an actionable milestone, reporting blocked items rather than blindly implementing the first unchecked item.
 
-Acceptance: each skill has one maintained implementation and is discoverable from both hosts' standard project locations; shared steps need no Claude preprocessing; existing scripts and UI safeguards remain usable.
+Acceptance: both native skill directories expose all five skills with one maintained implementation each, no symlinks/setup, and no Claude preprocessing required by the shared body. Claude wrappers explicitly load canonical instructions. Scripts and UI safeguards remain usable.
 
-Validation: check all five symlink targets and SKILL.md manifests, search for stale paths and unadapted host-specific syntax, and syntax-check changed scripts with the appropriate interpreter. Run plan-outline.sh against a temporary fixture with and without an explicit plan path. Check portable helper/resource resolution from both paths. Run `git diff --check`.
+Validation: validate manifests/wrapper targets and metadata consistency; search for stale paths and host-only syntax in shared executable instructions; syntax-check changed scripts. Exercise plan-outline with default, explicit, missing, and space-containing paths. Check helper/resource lookup from repo root, a subdirectory, and a disposable worktree. Record core skill sizes and references loaded for representative tasks; target a materially smaller run-mailven core than its current 18,551 bytes. Run `git diff --check`.
 
-### G3 — Verify both hosts and document maintenance
+### G3 — Verify discovery, context, and cross-host handoff (AI5)
 
-- In fresh Claude Code and Codex CLI sessions, verify shared policy loading and discovery of all five skills. Record installed CLI versions, exact prompts/commands, results, and any unavailable checks in Progress.
-- Check explicit selection (`/skill-name` in Claude; `$skill-name` or the skill selector in Codex) and representative natural-language selection. Use read-only smoke tasks or a disposable Git fixture for milestone, finish, handoff, and ship workflows; do not push, publish, or alter real milestones just to test selection.
-- Exercise run-mailven's portable start/wait/check/stop workflow, including fake-data UI checks with the Accounts column expanded and collapsed. Verify cleanup and report any native-window checks that cannot run. Follow the current run-mailven safeguards for the real account-backed dev server.
-- Document canonical edit locations, relative links, skill invocation, and host-specific adapters in CONTRIBUTING.md. Document the symlink requirement for clones, including Windows Git configuration; do not introduce manually maintained fallback copies.
-- Remove AI1–AI4 from ISSUES.md only when their acceptance evidence is complete. Prune completed plan detail when it no longer needs to be referenced, preserving D2 until resolved.
+- Use fresh installed Claude Code and Codex CLI sessions without special launch flags, personal skill installations, or symlink support. Record versions, cwd, prompts/commands, source paths, results, and unavailable checks in Progress. Verify root and subdirectory starts, shared policy loading, all five skill registrations, and the absence of duplicate registrations. Distinguish documented behavior from observed behavior and user/global configuration effects.
+- Check explicit selection (`/skill-name` in Claude; `$skill-name` or `/skills` in Codex) plus representative natural-language triggers and non-triggers. Verify Claude actually reads the canonical SKILL.md and needed references before acting. Use read-only smoke tasks or disposable Git fixtures; do not push, publish, or advance real milestones merely to test selection.
+- Make PLAN.md the shared continuation record, not native session history or private auto-memory. Checkpoint before committing: active milestone/sub-step, branch/base revision, changed or uncommitted files, exact validation commands/results and the revision they cover, blockers, user decisions, and the next action. Avoid a self-referential commit hash in the commit that records it; the handoff can report the resulting hash separately. Persist enough state before compaction or a tool switch, including when work is unverified and cannot be committed.
+- Test Claude-to-Codex and Codex-to-Claude continuation in a disposable fixture using only tracked guidance, the checkpoint, and working-tree inspection. Confirm the receiving host identifies the next action, honors constraints, and does not repeat valid checks. Use a plain-language handoff prompt; slash-command syntax may be an optional host-specific convenience.
+- Exercise run-mailven start/wait/check/stop with fake-data Mail checks in both Accounts states; verify cleanup/state restoration and report native-window limitations. Follow existing safeguards for the real account-backed dev server.
+- Document canonical edits, wrappers, path bases, invocation, and conditional host guidance in CONTRIBUTING.md. Compare available context diagnostics (Claude `/context`, Codex's available diagnostics) on equivalent fresh tasks. Bytes/words are reproducible proxies, not measured tokens or proof of savings; record accuracy and extra file reads as well as context size.
 
-Acceptance: both installed hosts load the shared policy and discover the five skills; representative invocations follow portable workflows; run-mailven passes the affected smoke checks; maintenance instructions identify one source for each shared rule and skill. Any unavailable host check remains explicitly incomplete.
+Acceptance: both installed hosts discover and follow shared skills with no setup; bidirectional continuation works from repository state; context is reduced without lost rules; UI smoke checks pass. Unavailable checks remain explicitly incomplete.
 
-Validation: inspect fresh-session evidence and helper/UI results; confirm no duplicate skill registrations or broken links; review documentation and run `git diff --check`. Application builds and tests are required only if implementation changes create a relevant risk. Follow AGENTS.md's independent acceptance review, simplification, commit, and landing requirements for each migration milestone.
+Validation: inspect session evidence, wrapper-target reads, checkpoint continuation, context measurements, and helper/UI results; run `git diff --check`. Application builds/tests are required only for relevant implementation risks. Follow AGENTS.md's milestone review, simplification, commit, and landing policy. Remove AI1–AI5 only with acceptance evidence; prune completed plan detail while preserving D2.
 
 ### D2 — Upgrade TypeScript when supported
 
@@ -50,23 +52,22 @@ Validation: recheck stable versions and peer ranges with the commands in CONTRIB
 
 ## Progress
 - [ ] G1 — shared policy and workflow conflicts; ready to implement.
-- [ ] G2 — portable skills and shared discovery; follows G1.
-- [ ] G3 — fresh-session verification and maintenance documentation; follows G2.
-- [ ] D2 — blocked upstream as of 2026-10-12. `npm view` reports typescript-eslint 8.71.1 requires `<6.1.0`; svelte-check 4.7.6 accepts only 5/6. No supported upgrade is available.
+- [ ] G2 — canonical skills with thin Claude wrappers; follows G1.
+- [ ] G3 — discovery, context, UI, and bidirectional handoff verification; follows G2.
+- [ ] D2 — blocked upstream as of the earlier 2026-10-12 dependency review. `npm view` reported typescript-eslint 8.71.1 requires `<6.1.0`; svelte-check 4.7.6 accepts only 5/6. Not rechecked in this AI-guidance review.
 
 ## Surprises & Discoveries
-- The 2026-10-12 review found that CLAUDE.md already imports AGENTS.md, but all five project skills live only in .claude/skills/. The local audit found no repository skills in Codex's .agents/skills/ discovery location.
-- Installed versions at review: Codex CLI 0.162.1 and Claude Code 2.1.294. Documentation supports symlinked skill folders in both hosts; actual discovery and execution still need fresh-session verification after migration.
-- Shared skill files alone do not make Claude interpolation, slash commands, custom-agent metadata, or browser tools portable.
-- The latest lint/check tools still exclude the published TypeScript 7.0.2 release.
+- Verified locally on 2026-10-12: Codex CLI 0.162.1; Claude Code 2.1.294. Current guidance: Codex discovers repository .agents/skills/; Claude discovers .claude/skills/. Sharing the Agent Skills format does not imply shared discovery paths or preprocessing.
+- Current Claude documentation supports native AGENTS.md with conditional fallback and user settings, but explicitly supports retaining CLAUDE.md's import. Codex's startup instruction chain runs from repository root to cwd; Claude also has on-demand subdirectory loading. Neither guarantees that arbitrary linked files are automatically read.
+- Baseline: AGENTS.md 8,067 bytes, CLAUDE.md 274 bytes, run-mailven SKILL.md 18,551 bytes. Other unscoped rules and skill metadata also affect context. No fresh-session behavior or token savings has been verified by this review.
 
 ## Decision Log
-- Use .agents/skills/ as the canonical location and per-skill relative links in .claude/skills/. Keep CLAUDE.md's import for compatibility rather than relying on version-dependent direct AGENTS.md discovery.
-- Keep required behavior in AGENTS.md and detailed procedures in skills. Discovery makes a skill available; its description guides optional selection, so mandatory checks must not rely solely on implicit skill activation.
-- Share workflow content and review briefs; retain small host-specific adapters for capabilities and metadata that do not have a common format. Do not create parallel copies of skills or policies.
-- This task writes the migration plan only. G1–G3 implementation and runtime verification remain pending.
-- Official references checked on 2026-10-12: [Codex instructions](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [Codex skills](https://learn.chatgpt.com/docs/build-skills), [Claude instructions](https://code.claude.com/docs/en/memory), and [Claude skills](https://code.claude.com/docs/en/skills). Recheck relevant behavior if installed versions or documentation change during implementation.
+- User chose no symlinks or setup, allowing thin per-tool wrappers. Use .agents/skills/ as canonical implementations and .claude/skills/ only for Claude discovery wrappers. Accept minimal duplicated discovery metadata; validate it rather than copying workflow content. Do not add a second Codex wrapper tree.
+- Keep CLAUDE.md's import for compatibility. Required behavior stays in shared policy; skill discovery/implicit matching alone cannot enforce mandatory checks. Use conditional host-specific text in shared files where small and optional references where lengthy.
+- A Claude plugin loaded via `claude --plugin-dir ./.agents` could share the same directory without wrappers, but requires special loading and namespaced commands. Rejected for this project's zero-setup preference; symlinks and generated full copies are also rejected.
+- Treat PLAN.md as the portable handoff contract; native resume/compaction/auto-memory are host-specific conveniences. Keep checkpoint state concise and prune obsolete history.
+- Official sources checked 2026-10-12: [Codex instructions](https://learn.chatgpt.com/docs/agent-configuration/agents-md), [Codex skills](https://learn.chatgpt.com/docs/build-skills), [Codex configuration](https://learn.chatgpt.com/docs/config-file/config-reference), [Claude instructions](https://code.claude.com/docs/en/memory), [Claude skills](https://code.claude.com/docs/en/skills), [Claude plugin paths](https://code.claude.com/docs/en/plugins-reference), [Claude best practices](https://code.claude.com/docs/en/best-practices), and [OpenAI skill/context guidance](https://developers.openai.com/blog/rethinking-skills-and-prompts-for-gpt-6-astra). Recheck relevant behavior when versions change; validate installed hosts in G3.
 - Keep TypeScript ~6.0.3 until both tools support 7.
 
 ## Outcomes & Retrospective
-The AI-guidance review is complete and findings AI1–AI4 are recorded in ISSUES.md. Migration has not started. Record outcomes and remaining limitations as G1–G3 finish; the dependency upgrade remains blocked separately.
+The plan now reflects the user's zero-setup/no-symlink preference and adds explicit context and cross-host continuation acceptance checks. Only PLAN.md and ISSUES.md changed in this review; migration, host smoke sessions, and UI verification remain pending G1–G3.
