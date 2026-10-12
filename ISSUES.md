@@ -70,14 +70,6 @@ has not yet been confirmed against the code.
   shows the account label (or nothing) while the reply goes out from the
   alias. Fix with a binding that returns the resolved identity.
 
-### Upstream independence
-
-This fork may eventually stop tracking upstream Aerion. Until then, some code
-is kept or left untouched only to keep upstream merges clean. Record each such
-cleanup here, so it can be done once the fork is independent.
-
-None open.
-
 ### Packaging
 
 - **P1 low** `internal/oauth2/config.go:62`: the Flatpak shim path
