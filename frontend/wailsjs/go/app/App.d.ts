@@ -231,6 +231,8 @@ export function GetAccounts():Promise<Array<account.Account>>;
 
 export function GetAllAccountIdentities():Promise<Array<app.AccountIdentityGroup>>;
 
+export function GetAllTrustedCertificates():Promise<Array<certificate.CertificateInfo>>;
+
 export function GetAlwaysLoadImages():Promise<boolean>;
 
 export function GetAlwaysShowMessageCheckbox():Promise<boolean>;
@@ -382,6 +384,8 @@ export function GetSearchCountUnifiedInbox(arg1:string,arg2:string):Promise<numb
 export function GetSendAsStatus(arg1:string):Promise<app.SendAsStatus>;
 
 export function GetSenderChat(arg1:string,arg2:string,arg3:string):Promise<message.Conversation>;
+
+export function GetServerCertificateFailure(arg1:string):Promise<app.ServerCertificateCheck>;
 
 export function GetShowMessageListCircles():Promise<boolean>;
 
@@ -574,6 +578,8 @@ export function RemovePGPKeyServer(arg1:number):Promise<void>;
 export function RemoveSpellcheckCustomWord(arg1:string):Promise<void>;
 
 export function RemoveTrustedCertificate(arg1:string):Promise<void>;
+
+export function RemoveTrustedCertificateForHost(arg1:string,arg2:string):Promise<void>;
 
 export function ReorderAccounts(arg1:Array<string>):Promise<void>;
 

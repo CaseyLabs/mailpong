@@ -299,7 +299,7 @@
       discoveryError = $_('contactSource.noAddressbooksFound')
     } catch (err) {
       console.error('Discovery failed:', err)
-      retry = await certPrompt.offerTrust(url, err)
+      retry = await certPrompt.offerTrust(err)
       if (!retry) discoveryError = $_('contactSource.discoveryFailed')
     } finally {
       discovering = false

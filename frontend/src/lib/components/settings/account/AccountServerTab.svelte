@@ -12,7 +12,7 @@
   // @ts-ignore - wailsjs path
   import { account, certificate, app } from '../../../../../wailsjs/go/models'
   // @ts-ignore - wailsjs path
-  import { GetAccountFoldersForMapping, GetAutoDetectedFolders, GetTrustedCertificates, RemoveTrustedCertificate, GetFolders, SubscribeFolder, UnsubscribeFolder, SubscribeAllFolders } from '../../../../../wailsjs/go/app/App'
+  import { GetAccountFoldersForMapping, GetAutoDetectedFolders, GetAllTrustedCertificates, RemoveTrustedCertificateForHost, GetFolders, SubscribeFolder, UnsubscribeFolder, SubscribeAllFolders } from '../../../../../wailsjs/go/app/App'
   // @ts-ignore - wailsjs path
   import { folder } from '../../../../../wailsjs/go/models'
   import { Button } from '$lib/components/ui/button'
@@ -231,6 +231,7 @@
   let loadingCerts = $state(false)
   let trustedCerts = $state<certificate.CertificateInfo[]>([])
   let confirmRemoveFingerprint = $state<string | null>(null)
+  let confirmRemoveHost = $state('')
   let showRemoveConfirm = $state(false)
 
   // Read receipt request policy options
@@ -296,8 +297,7 @@
   async function loadTrustedCerts() {
     loadingCerts = true
     try {
-      const hosts = [imapHost, smtpHost].filter(h => h)
-      const result = await GetTrustedCertificates(hosts)
+      const result = await GetAllTrustedCertificates()
       trustedCerts = result || []
     } catch (err) {
       console.error('Failed to load trusted certificates:', err)
@@ -307,16 +307,17 @@
     }
   }
 
-  function handleRemoveCert(fingerprint: string) {
+  function handleRemoveCert(host: string, fingerprint: string) {
     confirmRemoveFingerprint = fingerprint
+    confirmRemoveHost = host
     showRemoveConfirm = true
   }
 
   async function confirmRemoveCert() {
     if (!confirmRemoveFingerprint) return
     try {
-      await RemoveTrustedCertificate(confirmRemoveFingerprint)
-      trustedCerts = trustedCerts.filter(c => c.fingerprint !== confirmRemoveFingerprint)
+      await RemoveTrustedCertificateForHost(confirmRemoveHost, confirmRemoveFingerprint)
+      trustedCerts = trustedCerts.filter(c => c.host !== confirmRemoveHost || c.fingerprint !== confirmRemoveFingerprint)
     } catch (err) {
       console.error('Failed to remove certificate:', err)
     }
@@ -845,7 +846,7 @@
           </p>
         {:else}
           <div class="space-y-3">
-            {#each trustedCerts as cert (cert.fingerprint)}
+            {#each trustedCerts as cert (`${cert.host}:${cert.fingerprint}`)}
               <div class="flex items-start justify-between gap-3 rounded-lg border bg-muted/30 p-3">
                 <div class="space-y-1 min-w-0">
                   <div class="flex items-center gap-2">
@@ -853,6 +854,7 @@
                     <span class="text-sm font-medium truncate">{cert.subject}</span>
                   </div>
                   <div class="text-xs text-muted-foreground space-y-0.5 pl-6">
+                    <p>{cert.host}</p>
                     <p>{$_('account.certFingerprint')} <span class="font-mono">{formatFingerprint(cert.fingerprint)}</span></p>
                     <p>{$_('account.certExpires')} {formatCertDate(cert.notAfter)}</p>
                   </div>
@@ -861,7 +863,7 @@
                   variant="ghost"
                   size="sm"
                   class="shrink-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onclick={() => handleRemoveCert(cert.fingerprint)}
+                  onclick={() => handleRemoveCert(cert.host ?? '', cert.fingerprint)}
                 >
                   {$_('common.remove')}
                 </Button>

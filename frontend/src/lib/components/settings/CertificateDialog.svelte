@@ -76,6 +76,12 @@
         <!-- Certificate Details -->
         <div class="px-6 pb-4 space-y-3">
           <div class="rounded-lg border bg-muted/30 p-4 space-y-2.5 text-sm">
+            {#if cert.host}
+              <div class="grid grid-cols-[100px_1fr] gap-1">
+                <span class="text-muted-foreground">{$_('certificate.host')}</span>
+                <span class="font-mono text-xs break-all">{cert.host}</span>
+              </div>
+            {/if}
             <div class="grid grid-cols-[100px_1fr] gap-1">
               <span class="text-muted-foreground">{$_('certificate.subject')}</span>
               <span class="font-mono text-xs break-all">{cert.subject}</span>

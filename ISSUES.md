@@ -13,18 +13,6 @@ has not yet been confirmed against the code.
   owner decision: OCSP or CRL fetches on every view tell the CA what is
   being read. (The signing-time half of S6 is fixed.)
 
-### Calendar
-
-- **C17 low** DAV certificate follow-ups: the setup dialogs now offer the
-  certificate-accept prompt, but a certificate that changes on an existing
-  CardDAV/CalDAV source's background sync only fails the sync (mail sync
-  prompts), and certificates accepted permanently for DAV hosts don't show in
-  the account Security tab's trusted-certificate list, which lists mail hosts
-  only. Deeper fix: stamp the host on `certificate.Error` in
-  `certificate.Transport` and return it structurally from the DAV bindings,
-  replacing the frontend's error-string regex and the second `Probe` request
-  (which also misses certificates only discovery redirects reach).
-
 ### Dependencies
 
 - **D2 low** `frontend/package.json`: TypeScript is held at 6.0.x.

@@ -5,7 +5,7 @@
   // CertificateDialog and pins trust to the exact host that presented the
   // certificate (which may be a redirect target, not the URL's host).
   import CertificateDialog from '$lib/components/settings/CertificateDialog.svelte'
-  import { AcceptCertificate, CheckServerCertificate } from '$wailsjs/go/app/App'
+  import { AcceptCertificate, GetServerCertificateFailure } from '$wailsjs/go/app/App'
   import type { certificate } from '$wailsjs/go/models'
 
   let open = $state(false)
@@ -18,12 +18,11 @@
    * caller should retry; false when the error was not a certificate problem,
    * no untrusted certificate was found, or the user declined.
    */
-  export async function offerTrust(serverURL: string, err: unknown): Promise<boolean> {
+  export async function offerTrust(err: unknown): Promise<boolean> {
     const msg = err instanceof Error ? err.message : String(err)
-    if (!/certificate|x509|tls/i.test(msg)) return false
     let check
     try {
-      check = await CheckServerCertificate(serverURL)
+      check = await GetServerCertificateFailure(msg)
     } catch (e) {
       console.error('Server certificate check failed:', e)
       return false

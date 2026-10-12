@@ -2,7 +2,9 @@ package backend
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"github.com/caseylabs/mailven/internal/kit/errorutil"
 	"strings"
 	"sync"
 	"time"
@@ -220,10 +222,11 @@ func (s *Syncer) SyncSource(ctx context.Context, sourceID string) error {
 	})
 
 	if err := s.syncSourceInner(ctx, sourceID); err != nil {
-		_ = s.store.UpdateSourceSyncStatus(sourceID, err.Error())
+		_ = s.store.UpdateSourceSyncStatus(sourceID, errorutil.Message(err))
 		_ = s.events.Publish("calendar:source-error", map[string]any{
-			"sourceId": sourceID,
-			"message":  err.Error(),
+			"sourceId":           sourceID,
+			"message":            errorutil.Message(err),
+			"certificateFailure": err.Error(),
 		})
 		return err
 	}
@@ -260,7 +263,7 @@ func (s *Syncer) syncSourceInner(ctx context.Context, sourceID string) error {
 	// success when some calendars failed (issue #278). One bad calendar still
 	// doesn't block the rest — successful ones commit their events inside
 	// SyncCalendar regardless.
-	var failed []string
+	var failed []error
 
 	for i, cal := range calendars {
 		if ctx.Err() != nil {
@@ -284,7 +287,7 @@ func (s *Syncer) syncSourceInner(ctx context.Context, sourceID string) error {
 			// collect it. No per-calendar event here — it would duplicate the
 			// aggregated calendar:source-error SyncSource emits.
 			s.log.Warn(fmt.Sprintf("calendar sync failed: source=%s calendar=%q: %v", src.Name, cal.DisplayName, err))
-			failed = append(failed, fmt.Sprintf("%s: %v", cal.DisplayName, err))
+			failed = append(failed, fmt.Errorf("%s: %w", cal.DisplayName, err))
 		}
 	}
 
@@ -309,7 +312,7 @@ func (s *Syncer) syncSourceInner(ctx context.Context, sourceID string) error {
 	// Surface partial failure as a source-level error (issue #278) so SyncSource
 	// records last_error instead of stamping a false clean last_synced_at.
 	if len(failed) > 0 {
-		return fmt.Errorf("%d of %d calendars failed: %s", len(failed), len(calendars), strings.Join(failed, "; "))
+		return fmt.Errorf("%d of %d calendars failed: %w", len(failed), len(calendars), errors.Join(failed...))
 	}
 
 	return nil

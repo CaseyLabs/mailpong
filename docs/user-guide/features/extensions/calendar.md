@@ -33,3 +33,5 @@ Edits made while offline are saved locally and sent when you're back online. If 
 ## Known Issues
 
 - All providers (CalDAV, Google, and Microsoft) rely on the server to send and parse invites. If your provider isn't set up to handle invites server-side, invitations may appear somewhat broken.
+
+Untrusted CalDAV certificates prompt during setup and background sync, showing the exact failing host. Accept for the session or permanently. Permanent pins are listed under an account's Server → Trusted Certificates settings.

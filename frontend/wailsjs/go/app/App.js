@@ -426,6 +426,10 @@ export function GetAllAccountIdentities() {
   return window['go']['app']['App']['GetAllAccountIdentities']();
 }
 
+export function GetAllTrustedCertificates() {
+  return window['go']['app']['App']['GetAllTrustedCertificates']();
+}
+
 export function GetAlwaysLoadImages() {
   return window['go']['app']['App']['GetAlwaysLoadImages']();
 }
@@ -728,6 +732,10 @@ export function GetSendAsStatus(arg1) {
 
 export function GetSenderChat(arg1, arg2, arg3) {
   return window['go']['app']['App']['GetSenderChat'](arg1, arg2, arg3);
+}
+
+export function GetServerCertificateFailure(arg1) {
+  return window['go']['app']['App']['GetServerCertificateFailure'](arg1);
 }
 
 export function GetShowMessageListCircles() {
@@ -1112,6 +1120,10 @@ export function RemoveSpellcheckCustomWord(arg1) {
 
 export function RemoveTrustedCertificate(arg1) {
   return window['go']['app']['App']['RemoveTrustedCertificate'](arg1);
+}
+
+export function RemoveTrustedCertificateForHost(arg1, arg2) {
+  return window['go']['app']['App']['RemoveTrustedCertificateForHost'](arg1, arg2);
 }
 
 export function ReorderAccounts(arg1) {

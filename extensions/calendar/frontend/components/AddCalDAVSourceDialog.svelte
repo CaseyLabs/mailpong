@@ -223,8 +223,8 @@
         return
       }
       // Untrusted (e.g. self-signed) certificate: offer to trust it, then retry.
-      retry = await certPrompt.offerTrust(urlInput.trim(), err)
-      if (!retry) setConnectionError(msg)
+      retry = await certPrompt.offerTrust(err)
+      if (!retry) setConnectionError(msg.split(' [certificate-check:')[0])
     } finally {
       submitting = false
     }

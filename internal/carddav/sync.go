@@ -1,7 +1,9 @@
 package carddav
 
 import (
+	"errors"
 	"fmt"
+	"github.com/caseylabs/mailven/internal/kit/errorutil"
 	"strings"
 	"time"
 
@@ -25,8 +27,8 @@ func retryDBOperation(operation func() error, maxRetries int, baseDelay time.Dur
 			return nil
 		}
 		// Check if it's a SQLITE_BUSY error (retryable)
-		if !strings.Contains(err.Error(), "database is locked") &&
-			!strings.Contains(err.Error(), "SQLITE_BUSY") {
+		if !strings.Contains(errorutil.Message(err), "database is locked") &&
+			!strings.Contains(errorutil.Message(err), "SQLITE_BUSY") {
 			return err // Non-retryable error, return immediately
 		}
 		// Exponential backoff: 100ms, 200ms, 400ms, 800ms, 1600ms
@@ -49,6 +51,7 @@ type Syncer struct {
 	getSourceToken  AccessTokenGetter // Gets OAuth token from standalone contact source
 	googleSyncer    *contact.GoogleContactsSyncer
 	microsoftSyncer *contact.MicrosoftContactsSyncer
+	onSyncError     func(sourceID string, err error)
 	onSyncComplete  func(sourceID string) // optional: fired after a source syncs successfully
 	log             zerolog.Logger
 
@@ -84,6 +87,9 @@ func (s *Syncer) SetSyncCompleteHandler(fn func(sourceID string)) {
 	s.onSyncComplete = fn
 }
 
+// SetSyncErrorHandler reports background failures without changing source ownership.
+func (s *Syncer) SetSyncErrorHandler(fn func(string, error)) { s.onSyncError = fn }
+
 // SyncSource syncs contacts for a source based on its type (CardDAV, Google, Microsoft)
 // Syncs of the same source run one at a time, whichever path started them.
 func (s *Syncer) SyncSource(sourceID string) error {
@@ -118,6 +124,9 @@ func (s *Syncer) SyncSource(sourceID string) error {
 		return fmt.Errorf("unknown source type: %s", source.Type)
 	}
 	if syncErr != nil {
+		if s.onSyncError != nil {
+			s.onSyncError(sourceID, syncErr)
+		}
 		return syncErr
 	}
 	if s.onSyncComplete != nil {
@@ -151,7 +160,7 @@ func (s *Syncer) cardDAVClient(source *Source) (*Client, error) {
 func (s *Syncer) syncCardDAV(source *Source) error {
 	client, err := s.cardDAVClient(source)
 	if err != nil {
-		syncErr := fmt.Sprintf("failed to connect: %v", err)
+		syncErr := fmt.Sprintf("failed to connect: %v", errorutil.Message(err))
 		s.store.UpdateSourceSyncStatus(source.ID, syncErr)
 		return fmt.Errorf("failed to create client: %w", err)
 	}
@@ -159,7 +168,7 @@ func (s *Syncer) syncCardDAV(source *Source) error {
 	// Get enabled addressbooks
 	addressbooks, err := s.store.ListEnabledAddressbooks(source.ID)
 	if err != nil {
-		syncErr := fmt.Sprintf("failed to list addressbooks: %v", err)
+		syncErr := fmt.Sprintf("failed to list addressbooks: %v", errorutil.Message(err))
 		s.store.UpdateSourceSyncStatus(source.ID, syncErr)
 		return fmt.Errorf("failed to list addressbooks: %w", err)
 	}
@@ -171,19 +180,19 @@ func (s *Syncer) syncCardDAV(source *Source) error {
 	}
 
 	// Sync each addressbook
-	var syncErrors []string
+	var syncErrors []error
 	for _, ab := range addressbooks {
 		if err := s.syncAddressbook(client, ab); err != nil {
 			s.log.Error().Err(err).Str("addressbook", ab.Name).Msg("Failed to sync addressbook")
-			syncErrors = append(syncErrors, fmt.Sprintf("%s: %v", ab.Name, err))
+			syncErrors = append(syncErrors, fmt.Errorf("%s: %w", ab.Name, err))
 		}
 	}
 
 	// Update source sync status
 	if len(syncErrors) > 0 {
-		syncErr := fmt.Sprintf("sync errors: %v", syncErrors)
-		s.store.UpdateSourceSyncStatus(source.ID, syncErr)
-		return fmt.Errorf("sync completed with errors: %v", syncErrors)
+		syncErr := fmt.Errorf("sync completed with errors: %w", errors.Join(syncErrors...))
+		s.store.UpdateSourceSyncStatus(source.ID, errorutil.Message(syncErr))
+		return syncErr
 	}
 
 	s.store.UpdateSourceSyncStatus(source.ID, "")
@@ -196,7 +205,7 @@ func (s *Syncer) syncGoogle(source *Source) error {
 	// Get OAuth access token
 	accessToken, err := s.getOAuthToken(source)
 	if err != nil {
-		syncErr := fmt.Sprintf("failed to get OAuth token: %v", err)
+		syncErr := fmt.Sprintf("failed to get OAuth token: %v", errorutil.Message(err))
 		s.store.UpdateSourceSyncStatus(source.ID, syncErr)
 		return fmt.Errorf("failed to get OAuth token: %w", err)
 	}
@@ -204,7 +213,7 @@ func (s *Syncer) syncGoogle(source *Source) error {
 	// Get or create the virtual addressbook to retrieve sync token
 	ab, err := s.getOrCreateOAuthAddressbook(source)
 	if err != nil {
-		syncErr := fmt.Sprintf("failed to get addressbook: %v", err)
+		syncErr := fmt.Sprintf("failed to get addressbook: %v", errorutil.Message(err))
 		s.store.UpdateSourceSyncStatus(source.ID, syncErr)
 		return fmt.Errorf("failed to get addressbook: %w", err)
 	}
@@ -212,14 +221,14 @@ func (s *Syncer) syncGoogle(source *Source) error {
 	// Sync contacts using Google syncer with delta sync
 	result, err := s.googleSyncer.SyncContactsDelta(accessToken, ab.SyncToken)
 	if err != nil {
-		syncErr := fmt.Sprintf("failed to sync: %v", err)
+		syncErr := fmt.Sprintf("failed to sync: %v", errorutil.Message(err))
 		s.store.UpdateSourceSyncStatus(source.ID, syncErr)
 		return fmt.Errorf("Google sync failed: %w", err)
 	}
 
 	// Store contacts using delta sync logic
 	if err := s.storeOAuthContactsDelta(ab, result); err != nil {
-		syncErr := fmt.Sprintf("failed to store contacts: %v", err)
+		syncErr := fmt.Sprintf("failed to store contacts: %v", errorutil.Message(err))
 		s.store.UpdateSourceSyncStatus(source.ID, syncErr)
 		return fmt.Errorf("failed to store contacts: %w", err)
 	}
@@ -238,7 +247,7 @@ func (s *Syncer) syncMicrosoft(source *Source) error {
 	// Get OAuth access token
 	accessToken, err := s.getOAuthToken(source)
 	if err != nil {
-		syncErr := fmt.Sprintf("failed to get OAuth token: %v", err)
+		syncErr := fmt.Sprintf("failed to get OAuth token: %v", errorutil.Message(err))
 		s.store.UpdateSourceSyncStatus(source.ID, syncErr)
 		return fmt.Errorf("failed to get OAuth token: %w", err)
 	}
@@ -246,7 +255,7 @@ func (s *Syncer) syncMicrosoft(source *Source) error {
 	// Get or create the virtual addressbook to retrieve sync token
 	ab, err := s.getOrCreateOAuthAddressbook(source)
 	if err != nil {
-		syncErr := fmt.Sprintf("failed to get addressbook: %v", err)
+		syncErr := fmt.Sprintf("failed to get addressbook: %v", errorutil.Message(err))
 		s.store.UpdateSourceSyncStatus(source.ID, syncErr)
 		return fmt.Errorf("failed to get addressbook: %w", err)
 	}
@@ -254,14 +263,14 @@ func (s *Syncer) syncMicrosoft(source *Source) error {
 	// Sync contacts using Microsoft syncer with delta sync
 	result, err := s.microsoftSyncer.SyncContactsDelta(accessToken, ab.SyncToken)
 	if err != nil {
-		syncErr := fmt.Sprintf("failed to sync: %v", err)
+		syncErr := fmt.Sprintf("failed to sync: %v", errorutil.Message(err))
 		s.store.UpdateSourceSyncStatus(source.ID, syncErr)
 		return fmt.Errorf("Microsoft sync failed: %w", err)
 	}
 
 	// Store contacts using delta sync logic
 	if err := s.storeOAuthContactsDelta(ab, result); err != nil {
-		syncErr := fmt.Sprintf("failed to store contacts: %v", err)
+		syncErr := fmt.Sprintf("failed to store contacts: %v", errorutil.Message(err))
 		s.store.UpdateSourceSyncStatus(source.ID, syncErr)
 		return fmt.Errorf("failed to store contacts: %w", err)
 	}
@@ -555,7 +564,7 @@ func (s *Syncer) SyncAllSources() error {
 		return fmt.Errorf("failed to list sources: %w", err)
 	}
 
-	var syncErrors []string
+	var syncErrors []error
 	for _, source := range sources {
 		if !source.Enabled {
 			continue
@@ -563,12 +572,12 @@ func (s *Syncer) SyncAllSources() error {
 
 		if err := s.SyncSource(source.ID); err != nil {
 			s.log.Error().Err(err).Str("source", source.Name).Msg("Failed to sync source")
-			syncErrors = append(syncErrors, fmt.Sprintf("%s: %v", source.Name, err))
+			syncErrors = append(syncErrors, fmt.Errorf("%s: %w", source.Name, err))
 		}
 	}
 
 	if len(syncErrors) > 0 {
-		return fmt.Errorf("sync completed with errors: %v", syncErrors)
+		return fmt.Errorf("sync completed with errors: %w", errors.Join(syncErrors...))
 	}
 
 	return nil

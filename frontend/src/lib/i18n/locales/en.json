@@ -778,7 +778,7 @@
     "smtpPasswordPlaceholder": "SMTP password",
     "smtpCredsNote": "If you set a different username and password for SMTP, you can modify it in the \"SMTP authentication\" section in the \"Server\" tab.",
     "trustedCertificates": "Trusted Certificates",
-    "trustedCertsHelp": "Manually trusted TLS certificates for this account's servers.",
+    "trustedCertsHelp": "Manually trusted TLS certificates for mail, contacts, and calendar servers, including discovery hosts.",
     "loadingCerts": "Loading certificates...",
     "noTrustedCerts": "No manually trusted certificates for this account's servers.",
     "certFingerprint": "Fingerprint:",
@@ -1017,6 +1017,7 @@
   },
   "certificate": {
     "title": "Untrusted Certificate",
+    "host": "Host",
     "description": "The server presented a certificate that could not be verified.",
     "subject": "Subject:",
     "issuer": "Issuer:",

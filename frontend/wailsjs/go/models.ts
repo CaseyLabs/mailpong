@@ -1802,6 +1802,7 @@ export namespace carddav {
 export namespace certificate {
 	
 	export class CertificateInfo {
+	    host?: string;
 	    subject: string;
 	    issuer: string;
 	    fingerprint: string;
@@ -1817,6 +1818,7 @@ export namespace certificate {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.host = source["host"];
 	        this.subject = source["subject"];
 	        this.issuer = source["issuer"];
 	        this.fingerprint = source["fingerprint"];

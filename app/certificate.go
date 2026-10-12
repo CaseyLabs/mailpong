@@ -1,8 +1,10 @@
 package app
 
 import (
+	"errors"
 	"github.com/caseylabs/mailven/internal/certificate"
 	"github.com/caseylabs/mailven/internal/logging"
+	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // ============================================================================
@@ -70,4 +72,31 @@ func (a *App) RemoveTrustedCertificate(fingerprint string) error {
 	log := logging.WithComponent("app.certificate")
 	log.Info().Str("fingerprint", fingerprint).Msg("Removing trusted certificate")
 	return a.certStore.Remove(fingerprint)
+}
+
+// GetServerCertificateFailure returns the structured failure from a DAV request
+// whose error crossed Wails' string-only error channel. No repeat probe occurs.
+func (a *App) GetServerCertificateFailure(message string) ServerCertificateCheck {
+	failure := a.certStore.FailureDetails(message)
+	if failure == nil {
+		return ServerCertificateCheck{}
+	}
+	return ServerCertificateCheck{CertificateRequired: true, Host: failure.Host, Certificate: failure.Info}
+}
+
+// GetAllTrustedCertificates includes mail, DAV, and discovery redirect hosts.
+func (a *App) GetAllTrustedCertificates() ([]*certificate.CertificateInfo, error) {
+	return a.certStore.GetAll()
+}
+
+func (a *App) reportDAVCertificateError(sourceID string, err error) {
+	var failure *certificate.Error
+	if errors.As(err, &failure) && failure.Host != "" {
+		wailsRuntime.EventsEmit(a.ctx, "certificate:untrusted", map[string]any{"host": failure.Host, "certificate": failure.Info, "sourceId": sourceID})
+	}
+}
+
+// RemoveTrustedCertificateForHost revokes one host's certificate pin.
+func (a *App) RemoveTrustedCertificateForHost(host, fingerprint string) error {
+	return a.certStore.RemoveForHost(host, fingerprint)
 }

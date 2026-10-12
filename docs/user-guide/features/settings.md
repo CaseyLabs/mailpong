@@ -297,7 +297,7 @@ For non-OAuth accounts:
     - Manage folder sync - This is disabled by default. Enable it to see the UI to configure which folders to auto-sync
         - Sync all folders - Disabled by default. Enable it to sync all imap folders
         - Or just check only the folders you want to auto-sync
-- **Trusted Certificates** - Manually trusted TLS certificates for this account's servers.
+- **Trusted Certificates** - Manually trusted TLS certificates for all mail, contacts, and calendar servers, including hosts reached during discovery. Each entry shows the host; removing an entry revokes trust for that host only.
 
 #### Security Tab
 

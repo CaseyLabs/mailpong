@@ -44,6 +44,7 @@ func (a *App) initContactsExtension() {
 	// extension's `contacts:changed` frontend event, reusing the same Emitter
 	// as contacts:conflict. (carddavSyncer is constructed earlier in Startup.)
 	if a.carddavSyncer != nil {
+		a.carddavSyncer.SetSyncErrorHandler(a.reportDAVCertificateError)
 		a.carddavSyncer.SetSyncCompleteHandler(func(sourceID string) {
 			emit("contacts:changed", map[string]string{"sourceId": sourceID})
 		})

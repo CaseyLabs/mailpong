@@ -1,6 +1,7 @@
 package certificate
 
 import (
+	"errors"
 	"net/http"
 	"sync"
 )
@@ -28,7 +29,13 @@ func NewTransport(store *Store) *Transport {
 
 // RoundTrip sends req through the transport for req's host.
 func (t *Transport) RoundTrip(req *http.Request) (*http.Response, error) {
-	return t.forHost(normalizeHost(req.URL.Hostname())).RoundTrip(req)
+	host := normalizeHost(req.URL.Hostname())
+	resp, err := t.forHost(host).RoundTrip(req)
+	var certErr *Error
+	if errors.As(err, &certErr) && t.store != nil {
+		return resp, t.store.recordFailure(certErr, host)
+	}
+	return resp, err
 }
 
 func (t *Transport) forHost(host string) *http.Transport {

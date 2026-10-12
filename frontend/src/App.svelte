@@ -42,7 +42,7 @@
   import { dispatchExtensionShortcut } from '$lib/stores/extensionShortcuts.svelte'
   import { initLayout, registerViewerSelection, getLayoutMode, getResponsiveView, showViewer, hideViewer, showSidebar, hideSidebar, isResponsive, isSidebarHidden, toggleActiveSidebar } from '$lib/stores/layout.svelte'
   // @ts-ignore - wailsjs path
-  import { PrepareReply, GetPendingMailto, GetDraft, MarkAsRead, MarkAsUnread, Star, Unstar, Archive, MarkAsSpam, MarkAsNotSpam, Undo, GetTermsAccepted, SetTermsAccepted, RefreshWindowConstraints, AcceptCertificate, GetStartHiddenActive, CloseWindow, QuitApp, OpenComposerWindow, GetSystemTheme, NotifyStartupComplete, ChatDraftsFlushed } from '../wailsjs/go/app/App.js'
+  import { PrepareReply, GetPendingMailto, GetDraft, MarkAsRead, MarkAsUnread, Star, Unstar, Archive, MarkAsSpam, MarkAsNotSpam, Undo, GetTermsAccepted, SetTermsAccepted, RefreshWindowConstraints, AcceptCertificate, GetServerCertificateFailure, GetStartHiddenActive, CloseWindow, QuitApp, OpenComposerWindow, GetSystemTheme, NotifyStartupComplete, ChatDraftsFlushed } from '../wailsjs/go/app/App.js'
   // @ts-ignore - wailsjs path
   import { smtp, folder, certificate } from '../wailsjs/go/models'
   // @ts-ignore - wailsjs runtime
@@ -145,6 +145,7 @@
   let showCertDialog = $state(false)
   let pendingCertificate = $state<certificate.CertificateInfo | null>(null)
   let pendingCertAccountId = $state<string | null>(null)
+  let pendingCertHost = $state('')
 
   // Flatpak filesystem permission dialog state
   let showFlatpakFsDialog = $state(false)
@@ -162,39 +163,23 @@
   }
 
   // Certificate TOFU handlers for background sync
-  async function handleBgCertAcceptOnce() {
-    if (!pendingCertificate || !pendingCertAccountId) return
+  async function handleBgCertAccept(permanent: boolean) {
+    if (!pendingCertificate) return
     try {
-      // Look up the account's IMAP host for the accept call
       const acc = accountStore.accounts.find(a => a.account.id === pendingCertAccountId)
-      const host = acc?.account.imapHost || ''
-      await AcceptCertificate(host, pendingCertificate, false)
+      const host = pendingCertHost || acc?.account.imapHost || ''
+      await AcceptCertificate(host, pendingCertificate, permanent)
     } catch (err) {
       console.error('Failed to accept certificate:', err)
     }
-    showCertDialog = false
-    pendingCertificate = null
-    pendingCertAccountId = null
-  }
-
-  async function handleBgCertAcceptPermanently() {
-    if (!pendingCertificate || !pendingCertAccountId) return
-    try {
-      const acc = accountStore.accounts.find(a => a.account.id === pendingCertAccountId)
-      const host = acc?.account.imapHost || ''
-      await AcceptCertificate(host, pendingCertificate, true)
-    } catch (err) {
-      console.error('Failed to accept certificate:', err)
-    }
-    showCertDialog = false
-    pendingCertificate = null
-    pendingCertAccountId = null
+    handleBgCertDecline()
   }
 
   function handleBgCertDecline() {
     showCertDialog = false
     pendingCertificate = null
     pendingCertAccountId = null
+    pendingCertHost = ''
   }
 
   // Helper to find folder info by ID from account store
@@ -284,12 +269,29 @@
     })
 
     // Listen for untrusted certificate events from background sync
-    EventsOn('certificate:untrusted', (data: { accountId: string; certificate: certificate.CertificateInfo }) => {
+    EventsOn('certificate:untrusted', (data: { accountId?: string; host?: string; certificate: certificate.CertificateInfo }) => {
       // Only show if not already showing a cert dialog
       if (!showCertDialog) {
         pendingCertificate = data.certificate
-        pendingCertAccountId = data.accountId
+        pendingCertAccountId = data.accountId ?? null
+        pendingCertHost = data.host ?? ''
         showCertDialog = true
+      }
+    })
+
+    // Calendar owns its scheduler and reports DAV failures through its event bus.
+    EventsOn('calendar:source-error', async (data: { message: string; certificateFailure?: string }) => {
+      if (showCertDialog) return
+      try {
+        const failure = await GetServerCertificateFailure(data.certificateFailure ?? data.message)
+        if (!showCertDialog && failure.certificateRequired && failure.host && failure.certificate) {
+          pendingCertificate = failure.certificate
+          pendingCertAccountId = null
+          pendingCertHost = failure.host
+          showCertDialog = true
+        }
+      } catch (err) {
+        console.error('Failed to resolve calendar certificate error:', err)
       }
     })
 
@@ -1661,8 +1663,8 @@
 <CertificateDialog
   bind:open={showCertDialog}
   certificate={pendingCertificate}
-  onAcceptOnce={handleBgCertAcceptOnce}
-  onAcceptPermanently={handleBgCertAcceptPermanently}
+  onAcceptOnce={() => handleBgCertAccept(false)}
+  onAcceptPermanently={() => handleBgCertAccept(true)}
   onDecline={handleBgCertDecline}
 />
 
