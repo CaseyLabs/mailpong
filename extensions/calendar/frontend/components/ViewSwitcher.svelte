@@ -72,7 +72,7 @@
 
 <!-- Wraps onto a second row when the pane is too narrow, rather than
      clipping the view buttons or the title. -->
-<div class="flex flex-wrap items-center gap-2 px-4 py-3 border-b border-border bg-background">
+<div class="flex flex-wrap items-center gap-2 px-4 py-3 min-h-header border-b border-divider">
   <!-- Left: view selector + date nav. -->
   <div class="contents">
     <ResponsiveSidebarToggle />

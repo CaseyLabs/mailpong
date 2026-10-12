@@ -191,7 +191,7 @@
 </script>
 
 <div
-  class="{resizable ? 'pane-list-resizable' : 'flex-1 min-w-0'} min-h-0 flex flex-col border-r border-border bg-background"
+  class="{resizable ? 'pane-list-resizable' : 'flex-1 min-w-0'} min-h-0 flex flex-col border-r border-divider bg-surface-list"
   style:width={resizable ? `${width}px` : undefined}
 >
   <ListHeader

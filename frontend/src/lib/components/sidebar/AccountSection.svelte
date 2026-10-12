@@ -101,7 +101,7 @@
   <!-- Account Header -->
   <div class="relative group">
     <button
-      class="w-full flex items-center gap-2 px-3 min-h-control text-sm font-medium text-fg-primary hover:bg-muted/50 transition-colors {isHeaderFocused ? 'bg-muted ring-1 ring-primary/50' : ''}"
+      class="w-full flex items-center gap-2 px-3 min-h-control text-sm font-medium text-fg-primary hover:bg-muted/50 transition-colors {syncing || error ? 'pr-10' : ''} {isHeaderFocused ? 'bg-muted ring-1 ring-primary/50' : ''}"
       data-sidebar-item="account-header"
       data-account-id={acc.id}
       onclick={toggleExpanded}
@@ -113,6 +113,7 @@
       <Icon icon="mdi:email-outline" class="w-4 h-4" />
       <span class="truncate flex-1 text-left">{acc.name}</span>
 
+      <!-- pr-10 keeps these clear of the menu button, so the error tooltip stays hoverable. -->
       {#if syncing}
         <Icon icon="mdi:sync" class="w-4 h-4 animate-spin text-muted-foreground" />
       {:else if error}

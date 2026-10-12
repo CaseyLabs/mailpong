@@ -502,9 +502,10 @@
 </script>
 
 <div class="flex flex-col h-full {isFlashing ? 'pane-focus-flash' : ''}">
-  <!-- Header: close button for the narrow-layout overlay -->
+  <!-- Header: title and close button for the narrow-layout overlay -->
   {#if showBackButton}
-    <div class="flex items-center justify-end px-4 py-3 border-b border-border">
+    <div class="flex items-center justify-between gap-2 px-4 py-3 border-b border-border">
+      <h2 class="text-body font-semibold text-fg-primary">{$_('sidebar.accountsTitle')}</h2>
       <button
         class="p-2 rounded-md hover:bg-muted transition-colors shrink-0"
         title={$_('responsive.back')}
@@ -557,7 +558,7 @@
           loading={accWithFolders.loading}
           syncing={accWithFolders.syncing}
           error={accWithFolders.error}
-          selectedFolderId={accountStore.selectedFolder?.folderId ?? ''}
+          selectedFolderId={selectedFolderId ?? ''}
           {selectionSource}
           isHeaderFocused={focusedAccountId === accWithFolders.account.id}
           isExpanded={expandedAccounts[accWithFolders.account.id] ?? true}

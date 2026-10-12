@@ -219,7 +219,7 @@
   const noSources = $derived(calendarSources.sources.length === 0)
 </script>
 
-<div class="flex-1 flex flex-col min-h-0 bg-background">
+<div class="flex-1 flex flex-col min-h-0 bg-surface-content">
   {#if noSources}
     <div class="flex-1 flex items-center justify-center text-muted-foreground text-sm px-6 text-center">
       {$_('calendar.month.emptyState')}
@@ -250,7 +250,7 @@
               type="button"
               aria-label={String(toTzDate(cell.date).getDate())}
               class="border-r border-border min-h-0 hover:bg-muted/30 transition-colors
-                     {cell.isOtherMonth ? 'bg-muted/10' : 'bg-background'}"
+                     {cell.isOtherMonth ? 'bg-muted/10' : 'bg-surface-content'}"
               style:grid-column={`${i + 1}`}
               style:grid-row="1 / -1"
               onclick={() => onCellClick(cell.date)}

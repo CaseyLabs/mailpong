@@ -716,7 +716,7 @@
   onpointercancel={onWindowPointerUp}
 />
 
-<div class="flex-1 flex flex-col min-h-0 bg-background">
+<div class="flex-1 flex flex-col min-h-0 bg-surface-content">
   <!-- Day header row: weekday + day number per column -->
   <div
     class="grid border-b border-border bg-muted/20 shrink-0"
@@ -742,7 +742,7 @@
   <!-- All-day band: row per lane, columns aligned with day columns -->
   {#if bandLaneCount > 0}
     <div
-      class="grid border-b border-border bg-background shrink-0 py-1 gap-y-0.5"
+      class="grid border-b border-border bg-surface-content shrink-0 py-1 gap-y-0.5"
       style:grid-template-columns="60px repeat({dates.length}, 1fr)"
       style:padding-right={`${scrollbarPx}px`}
       style:grid-template-rows={`repeat(${bandLaneCount}, minmax(20px, auto))`}

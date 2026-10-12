@@ -25,11 +25,11 @@ and the composer editor and email body default to 15 px.
 | `--text-2xs` | `text-2xs` | Badges, title-bar glyphs, dense calendar grid text | 11 px / 14 px | `TitleBar`, `ComposerApp`, `EditorToolbar` shortcut chips, `ImagesTab` and `AccountSecurityTab` badges, calendar grid and timeline text, attendee badges |
 | `--height-control-sm` | `h-control-sm` | Small control | 28 px | `ChatListHeader` |
 | `--height-control` | `min-h-control` | Standard control | 32 px | Accounts column rows, list search, composer, `ToolbarButton` |
-| `--height-header` | `min-h-header` | Pane header bar | 61 px (conversation header: two 22 px lines) | `ChatViewHeader`, `ChatListHeader` top row |
+| `--height-header` | `min-h-header` | Pane header bar | 61 px (conversation header: two 22 px lines) | `ChatViewHeader`, `ChatListHeader` top row, kit `ListHeader` and `DetailPane`, Calendar `ViewSwitcher` |
 | `--surface-rail` | `bg-surface-rail` | Extension rail | `--muted` at 30 % | `ExtensionRail` |
 | `--surface-sidebar` | `bg-surface-sidebar` | Accounts column | `--muted` at 30 % | `App.svelte`, `SidebarFrame` |
-| `--surface-list` | `bg-surface-list` | Chat list | `--background` | `App.svelte` |
-| `--surface-content` | `bg-surface-content` | Conversation pane | `--background` | `App.svelte`, `DetailPane` |
+| `--surface-list` | `bg-surface-list` | Chat list, Contacts list | `--background` | `App.svelte`, `ContactList` |
+| `--surface-content` | `bg-surface-content` | Conversation pane, Calendar views | `--background` | `App.svelte`, `DetailPane`, `CalendarPane` and its views |
 | `--selected` | `bg-selected` | Selected chat row: a soft Frost tint | `--muted` | `ChatRow` |
 | `--bubble-own` | `bg-bubble-own` | My chat bubbles: a faint Frost tint (others' use `bg-muted`) | `--primary` at 20 % | `ChatBubble`, `ChatPendingBubble` |
 | `--fg-primary` | `text-fg-primary` | Main text | `--foreground` | Chat rows, headers, bubbles |
@@ -46,8 +46,8 @@ Surface and text-tier variables hold raw HSL triples, like the existing
 variable. The rail and sidebar defaults carry their own `/ 0.3` alpha, so
 don't add an opacity modifier (`bg-surface-sidebar/50`) to them. The sidebar
 overlay of the narrow layout keeps `bg-background`; the viewer overlay uses
-`bg-surface-content`. Contacts and Calendar panes do not use the surface
-tokens yet (see ISSUES.md).
+`bg-surface-content`. Contacts and Calendar use the same surface tokens and
+header height as Mail.
 
 ## Theme values and the contrast check
 
@@ -87,4 +87,4 @@ day separators), `--chat-bubble` (30 / 36 / 44 rem, the widest a bubble grows,
 never past 75% of the column) and `--chat-stream` (46 / 46 / 54 rem, the
 centred column for email cards and full bodies) in `app.css`. Inside the chat
 column (24 px side padding) their messages sit on the left, mine on the right;
-the composer spans the conversation pane.
+the conversation header and the composer sit in the same centred column.

@@ -131,7 +131,7 @@
   }
 </script>
 
-<div class="flex-1 flex flex-col min-h-0 bg-background" bind:clientWidth={paneWidth}>
+<div class="flex-1 flex flex-col min-h-0 bg-surface-content" bind:clientWidth={paneWidth}>
   <ListHeader label={headerLabel} showSidebarToggle={false} />
 
   <ListPane

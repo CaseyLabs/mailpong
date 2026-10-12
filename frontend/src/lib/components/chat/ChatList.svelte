@@ -36,6 +36,9 @@
     folderType: string
     isFocused?: boolean
     isFlashing?: boolean
+    // The conversation open in the viewer; its row is selected when none is.
+    openThreadId?: string | null
+    openAccountId?: string | null
     onConversationSelect?: (threadId: string, folderId: string, accountId: string) => void
     onReply?: (mode: 'reply' | 'reply-all' | 'forward', messageId: string) => void
     onRowActionComplete?: () => void
@@ -45,7 +48,7 @@
   }
 
   let {
-    accountId, folderId, folderName, folderType, isFocused = false, isFlashing = false,
+    accountId, folderId, folderName, folderType, isFocused = false, isFlashing = false, openThreadId = null, openAccountId = null,
     onConversationSelect, onReply, onRowActionComplete, onCompose, onUnifiedInboxSelect, onFolderSelect,
   }: Props = $props()
 
@@ -164,6 +167,14 @@
   }
 
   const selected = $derived(chatList.items.find((c) => c.key === selectedKey) ?? null)
+
+  // Adopt the open conversation's row (e.g. the one restored at launch) so
+  // it is highlighted and arrow keys start from it.
+  $effect(() => {
+    if (selectedKey !== null || !openThreadId) return
+    const c = chatList.items.find((r) => r.threadId === openThreadId && (!openAccountId || r.accountId === openAccountId))
+    if (c) selectedKey = c.key
+  })
 
   function open(c: ChatItem) {
     selectedKey = c.key
@@ -380,16 +391,11 @@
     pendingDeleteIds = []
   }
 
-  function handleInboxSelect(acctId: string, inbox: folder.Folder) {
-    onFolderSelect(acctId, inbox.id, inbox.path, inbox.name, inbox.type)
-  }
+  const handleInboxSelect = (acctId: string, inbox: folder.Folder) => onFolderSelect(acctId, inbox.id, inbox.path, inbox.name, inbox.type)
 
   function handleBrowseFolders() {
-    if (getLayoutMode() === 'narrow') {
-      showSidebar()
-      return
-    }
-    if (isSidebarHidden()) toggleActiveSidebar()
+    if (getLayoutMode() === 'narrow') showSidebar()
+    else if (isSidebarHidden()) toggleActiveSidebar()
   }
 
   // Only core folders auto-sync, so other folders stay empty until synced once.
@@ -462,13 +468,7 @@
     onscroll={maybeLoadMore}
   >
     {#if chatList.items.length === 0 && (chatList.error || !chatList.loading)}
-      <ChatListEmpty
-        failed={!!chatList.error}
-        {folderType}
-        {neverSynced}
-        {syncBusy}
-        onSyncNow={toggleFolderSync}
-      />
+      <ChatListEmpty failed={!!chatList.error} {folderType} {neverSynced} {syncBusy} onSyncNow={toggleFolderSync} />
     {:else}
       {#if pinned.length > 0}{@render group($_('chat.pinned'), pinnedShown, 'pinned', pinnedFewer, true)}{/if}
       {#if grouped}

@@ -2,7 +2,8 @@
   // ChatViewHeader — the open chat's top bar, a single row. Left: Back (when
   // the chat covers the list) and the title block: every participant, then a
   // subtitle (the subject, or subject and message counts for a sender chat with several subjects).
-  // Right: Compose (when set), Archive, Delete, Snooze, Pin and a "⋯" button
+  // Right: Compose (when set; not on narrow panes, where the title needs the
+  // room and the list header offers it), Archive, Delete, Snooze, Pin and a "⋯" button
   // that opens the shared thread context menu. Reply, Spam, Forward and
   // Read/Unread live in the menu, on each bubble and in the reply box. On
   // narrow panes Pin moves into the menu too, and Forward joins it for
@@ -143,53 +144,56 @@
   {/if}
 {/snippet}
 
-<header bind:clientWidth={width} class="flex items-center gap-3 px-3 py-2 min-h-header border-b border-divider">
-  {#if showBackButton}
-    {@render iconButton('mdi:arrow-left', $_('responsive.back'), () => onBack?.())}
-  {/if}
+<header bind:clientWidth={width} class="flex min-h-header border-b border-divider">
+  <!-- Centred like the stream and reply box, so wide panes line up. -->
+  <div class="mx-auto w-full max-w-(--chat-column) flex items-center gap-3 px-3 py-2">
+    {#if showBackButton}
+      {@render iconButton('mdi:arrow-left', $_('responsive.back'), () => onBack?.())}
+    {/if}
 
-  <div class="min-w-0 flex-1 px-1">
-    <h2 class="text-body font-semibold text-fg-primary truncate" title={people.map((p) => p.email).join(', ')}>{title}</h2>
-    <p class="text-body text-fg-secondary truncate" title={senderEmail ? undefined : subject}>
-      {@render snoozed()}{subtitle}
-    </p>
-  </div>
+    <div class="min-w-0 flex-1 px-1">
+      <h2 class="text-body font-semibold text-fg-primary truncate" title={people.map((p) => p.email).join(', ')}>{title}</h2>
+      <p class="text-body text-fg-secondary truncate" title={senderEmail ? undefined : subject}>
+        {@render snoozed()}{subtitle}
+      </p>
+    </div>
 
-  <div class="flex items-center gap-2 shrink-0">
-    {#if onCompose}<ComposeButton {compact} onclick={onCompose} />{/if}
-    <ToolbarButton ghost icon="mdi:archive-outline" label={$_('viewer.archive')} {compact} onclick={onArchive} />
-    <ToolbarButton
-      ghost
-      icon={isTrash ? 'mdi:delete-forever' : 'mdi:delete-outline'}
-      label={$_('viewer.delete')}
-      title={$_(isTrash ? 'viewer.deletePermanently' : 'viewer.delete')}
-      {compact}
-      onclick={onDelete}
-    />
-    <div class="w-px h-5 bg-divider"></div>
-    <div class="flex items-center gap-0.5">
-      {#if canTriage}
-        <ChatSnoozeMenu bind:this={snoozeMenu} {snoozedUntil} {onSnooze} {onUnsnooze} />
-        {#if !narrow}{@render iconButton(isPinned ? 'mdi:pin' : 'mdi:pin-outline', isPinned ? $_('chat.unpin') : $_('chat.pin'), onPin, isPinned)}{/if}
-      {/if}
+    <div class="flex items-center gap-2 shrink-0">
+      {#if onCompose && !narrow}<ComposeButton {compact} onclick={onCompose} />{/if}
+      <ToolbarButton ghost icon="mdi:archive-outline" label={$_('viewer.archive')} {compact} onclick={onArchive} />
+      <ToolbarButton
+        ghost
+        icon={isTrash ? 'mdi:delete-forever' : 'mdi:delete-outline'}
+        label={$_('viewer.delete')}
+        title={$_(isTrash ? 'viewer.deletePermanently' : 'viewer.delete')}
+        {compact}
+        onclick={onDelete}
+      />
+      <div class="w-px h-5 bg-divider"></div>
+      <div class="flex items-center gap-0.5">
+        {#if canTriage}
+          <ChatSnoozeMenu bind:this={snoozeMenu} {snoozedUntil} {onSnooze} {onUnsnooze} />
+          {#if !narrow}{@render iconButton(isPinned ? 'mdi:pin' : 'mdi:pin-outline', isPinned ? $_('chat.unpin') : $_('chat.pin'), onPin, isPinned)}{/if}
+        {/if}
 
-      <MessageContextMenu
-        {messageIds}
-        {accountId}
-        currentFolderId={folderId}
-        {folderType}
-        {isStarred}
-        isRead={allRead}
-        {onActionComplete}
-        {onReply}
-        {onSpam}
-        {onToggleRead}
-        extraItems={forwardInMenu || pinInMenu || senderInMenu ? extraItems : undefined}
-      >
-        <span bind:this={menuAnchor} class="inline-flex">
-          {@render iconButton('mdi:dots-vertical', $_('chat.moreActions'), openMenu)}
-        </span>
-      </MessageContextMenu>
+        <MessageContextMenu
+          {messageIds}
+          {accountId}
+          currentFolderId={folderId}
+          {folderType}
+          {isStarred}
+          isRead={allRead}
+          {onActionComplete}
+          {onReply}
+          {onSpam}
+          {onToggleRead}
+          extraItems={forwardInMenu || pinInMenu || senderInMenu ? extraItems : undefined}
+        >
+          <span bind:this={menuAnchor} class="inline-flex">
+            {@render iconButton('mdi:dots-vertical', $_('chat.moreActions'), openMenu)}
+          </span>
+        </MessageContextMenu>
+      </div>
     </div>
   </div>
 </header>

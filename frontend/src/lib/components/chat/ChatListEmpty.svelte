@@ -52,5 +52,6 @@
   {:else}
     <Icon icon="mdi:chat-outline" class="w-10 h-10" />
     <p>{emptyText}</p>
+    {#if chatList.filter === 'snoozed' && !chatList.isSearch}<p class="text-sm text-center px-6">{$_('chat.noSnoozedHint')}</p>{/if}
   {/if}
 </div>

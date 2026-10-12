@@ -96,92 +96,94 @@
   <span class="shrink-0" aria-hidden="true">|</span>
 {/snippet}
 
-<div class="w-full border-t border-divider px-6 py-2 bg-background">
-  <div class="flex items-baseline gap-1.5 mb-1.5 px-1 text-xs text-fg-tertiary min-w-0">
-    {#if choices}
-      <span class="shrink-0">{$_('chat.replyTo')}</span>
-      {#if sameChoice}
-        <span class="truncate min-w-[4rem] shrink-[3] font-medium text-foreground" title={emails(choices.reply)}>{replyNames}</span>
-      {:else}
-        <!-- Shows the selected target; a click switches to the other one. -->
-        <button
-          class="flex items-baseline gap-0.5 {composer.replyAll ? 'shrink-0' : 'min-w-[4rem] shrink-[3]'} font-medium text-foreground hover:underline disabled:opacity-50 disabled:pointer-events-none"
-          title={$_('chat.replySwitchTo', { values: { target: composer.replyAll ? replyNames : $_('chat.replyToAll') } })}
-          {disabled}
-          onclick={() => composer.toggleReplyAll()}
-        >
-          <span class="truncate">{composer.replyAll ? $_('chat.replyToAll') : replyNames}</span>
-          <Icon icon="mdi:chevron-down" class="w-3.5 h-3.5 shrink-0 self-center" aria-hidden="true" />
-        </button>
-        {#if composer.replyAll}
-          {@render sep()}
-          <span class="shrink-0" title={emails(choices.all)}>{$_('chat.replyRecipientCount', { values: { count: choices.all.length } })}</span>
+<div class="w-full border-t border-divider bg-background">
+  <div class="mx-auto w-full max-w-(--chat-column) px-6 py-2">
+    <div class="flex items-baseline gap-1.5 mb-1.5 px-1 text-xs text-fg-tertiary min-w-0">
+      {#if choices}
+        <span class="shrink-0">{$_('chat.replyTo')}</span>
+        {#if sameChoice}
+          <span class="truncate min-w-[4rem] shrink-[3] font-medium text-foreground" title={emails(choices.reply)}>{replyNames}</span>
+        {:else}
+          <!-- Shows the selected target; a click switches to the other one. -->
+          <button
+            class="flex items-baseline gap-0.5 {composer.replyAll ? 'shrink-0' : 'min-w-[4rem] shrink-[3]'} font-medium text-foreground hover:underline disabled:opacity-50 disabled:pointer-events-none"
+            title={$_('chat.replySwitchTo', { values: { target: composer.replyAll ? replyNames : $_('chat.replyToAll') } })}
+            {disabled}
+            onclick={() => composer.toggleReplyAll()}
+          >
+            <span class="truncate">{composer.replyAll ? $_('chat.replyToAll') : replyNames}</span>
+            <Icon icon="mdi:chevron-down" class="w-3.5 h-3.5 shrink-0 self-center" aria-hidden="true" />
+          </button>
+          {#if composer.replyAll}
+            {@render sep()}
+            <span class="shrink-0" title={emails(choices.all)}>{$_('chat.replyRecipientCount', { values: { count: choices.all.length } })}</span>
+          {/if}
         {/if}
       {/if}
+      {#if subject}
+        {#if choices}{@render sep()}{/if}
+        <span class="truncate min-w-0 shrink max-w-[24rem]" title={subject}>{$_('chat.replyTopic', { values: { subject } })}</span>
+      {/if}
+      {#if from}
+        <span class="ml-auto shrink-0 max-w-[40%] truncate">{$_('chat.replyLineFrom', { values: { sender: from } })}</span>
+      {/if}
+    </div>
+
+    {#if composer.attachments.length > 0}
+      <ul class="flex flex-wrap gap-1.5 mb-2" aria-label={$_('chat.attachments')}>
+        {#each composer.attachments as att, i (i)}
+          <li class="flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full bg-muted text-xs max-w-60">
+            <Icon icon="mdi:paperclip" class="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
+            <span class="truncate">{att.filename}</span>
+            <span class="text-muted-foreground shrink-0">{sizeLabel(att)}</span>
+            <button
+              class="p-0.5 rounded-full hover:bg-foreground/10"
+              title={$_('chat.removeAttachment')}
+              aria-label={$_('chat.removeAttachmentNamed', { values: { name: att.filename } })}
+              onclick={() => composer.removeAttachment(i)}
+            >
+              <Icon icon="mdi:close" class="w-3.5 h-3.5" />
+            </button>
+          </li>
+        {/each}
+      </ul>
     {/if}
-    {#if subject}
-      {#if choices}{@render sep()}{/if}
-      <span class="truncate min-w-0 shrink max-w-[24rem]" title={subject}>{$_('chat.replyTopic', { values: { subject } })}</span>
-    {/if}
-    {#if from}
-      <span class="ml-auto shrink-0 max-w-[40%] truncate">{$_('chat.replyLineFrom', { values: { sender: from } })}</span>
-    {/if}
-  </div>
 
-  {#if composer.attachments.length > 0}
-    <ul class="flex flex-wrap gap-1.5 mb-2" aria-label={$_('chat.attachments')}>
-      {#each composer.attachments as att, i (i)}
-        <li class="flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-full bg-muted text-xs max-w-60">
-          <Icon icon="mdi:paperclip" class="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
-          <span class="truncate">{att.filename}</span>
-          <span class="text-muted-foreground shrink-0">{sizeLabel(att)}</span>
-          <button
-            class="p-0.5 rounded-full hover:bg-foreground/10"
-            title={$_('chat.removeAttachment')}
-            aria-label={$_('chat.removeAttachmentNamed', { values: { name: att.filename } })}
-            onclick={() => composer.removeAttachment(i)}
-          >
-            <Icon icon="mdi:close" class="w-3.5 h-3.5" />
-          </button>
-        </li>
-      {/each}
-    </ul>
-  {/if}
-
-  <div class="flex items-end gap-1 min-h-control rounded-xl border border-divider px-1.5 py-1 focus-within:ring-2 focus-within:ring-ring">
-    <button class="shrink-0 p-1.5 rounded-full hover:bg-muted" title={$_('chat.attach')} aria-label={$_('chat.attach')} {disabled} onclick={attach}>
-      <Icon icon="mdi:paperclip" class="w-5 h-5 text-muted-foreground" />
-    </button>
-
-    <textarea
-      bind:this={textarea}
-      class="flex-1 min-w-0 max-h-[40vh] resize-none bg-transparent px-1.5 py-1.5 text-sm leading-5 focus:outline-none scrollbar-thin"
-      rows="1"
-      placeholder={$_('chat.typeReply')}
-      aria-label={$_('viewer.reply')}
-      {title}
-      spellcheck="true"
-      {disabled}
-      value={composer.text}
-      oninput={(e) => composer.setText(e.currentTarget.value)}
-      onkeydown={handleKeyDown}
-      onblur={() => void composer.flush()}
-    ></textarea>
-
-    <button class="shrink-0 p-1.5 rounded-full hover:bg-muted" title={$_('chat.expand')} aria-label={$_('chat.expand')} {disabled} onclick={onExpand}>
-      <Icon icon="mdi:arrow-expand" class="w-5 h-5 text-muted-foreground" />
-    </button>
-
-    <!-- The wrapper carries the tooltip, which a disabled button may not show. -->
-    <span class="shrink-0" title={`${$_('chat.send')} (${sendHint})`}>
-      <button
-        class="h-8 w-8 rounded-full border flex items-center justify-center transition-colors border-primary bg-primary text-primary-foreground enabled:hover:bg-primary/90 disabled:border-border disabled:bg-transparent disabled:text-muted-foreground disabled:cursor-not-allowed"
-        aria-label={$_('chat.send')}
-        disabled={!canSend}
-        onclick={() => void composer.send()}
-      >
-        <Icon icon="mdi:send" class="w-4 h-4" />
+    <div class="flex items-end gap-1 min-h-control rounded-xl border border-divider px-1.5 py-1 focus-within:ring-2 focus-within:ring-ring">
+      <button class="shrink-0 p-1.5 rounded-full hover:bg-muted" title={$_('chat.attach')} aria-label={$_('chat.attach')} {disabled} onclick={attach}>
+        <Icon icon="mdi:paperclip" class="w-5 h-5 text-muted-foreground" />
       </button>
-    </span>
+
+      <textarea
+        bind:this={textarea}
+        class="flex-1 min-w-0 max-h-[40vh] resize-none bg-transparent px-1.5 py-1.5 text-sm leading-5 focus:outline-none scrollbar-thin"
+        rows="1"
+        placeholder={$_('chat.typeReply')}
+        aria-label={$_('viewer.reply')}
+        {title}
+        spellcheck="true"
+        {disabled}
+        value={composer.text}
+        oninput={(e) => composer.setText(e.currentTarget.value)}
+        onkeydown={handleKeyDown}
+        onblur={() => void composer.flush()}
+      ></textarea>
+
+      <button class="shrink-0 p-1.5 rounded-full hover:bg-muted" title={$_('chat.expand')} aria-label={$_('chat.expand')} {disabled} onclick={onExpand}>
+        <Icon icon="mdi:arrow-expand" class="w-5 h-5 text-muted-foreground" />
+      </button>
+
+      <!-- The wrapper carries the tooltip, which a disabled button may not show. -->
+      <span class="shrink-0" title={`${$_('chat.send')} (${sendHint})`}>
+        <button
+          class="h-8 w-8 rounded-full border flex items-center justify-center transition-colors border-primary bg-primary text-primary-foreground enabled:hover:bg-primary/90 disabled:border-border disabled:bg-transparent disabled:text-muted-foreground disabled:cursor-not-allowed"
+          aria-label={$_('chat.send')}
+          disabled={!canSend}
+          onclick={() => void composer.send()}
+        >
+          <Icon icon="mdi:send" class="w-4 h-4" />
+        </button>
+      </span>
+    </div>
   </div>
 </div>

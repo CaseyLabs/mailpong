@@ -57,7 +57,7 @@
   }: Props = $props()
 </script>
 
-<div class="flex items-center justify-between px-4 py-3 border-b border-border">
+<div class="flex items-center justify-between px-4 py-3 min-h-header border-b border-divider">
   <div class="flex items-center gap-2 flex-1 min-w-0">
     {#if showSidebarToggle}
       <ResponsiveSidebarToggle />

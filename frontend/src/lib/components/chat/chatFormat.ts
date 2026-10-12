@@ -84,8 +84,10 @@ export function myAddresses(accounts: AccountWithFolders[]): Set<string> {
   return emails
 }
 
-// People in the thread other than me, in first-appearance order, each under
-// their latest real display name. Falls back to recipients when every message is mine (e.g. a Sent-only thread).
+// People in the thread other than me, latest sender first as the chat list
+// row orders them, each under their latest real display name (not empty or
+// the bare address). Falls back to recipients when every message is mine
+// (e.g. a Sent-only thread).
 export function threadPeople(messages: messageModels.Message[], myEmails: Set<string>): Person[] {
   const seen = new Map<string, Person>()
   const people: Person[] = []
@@ -95,14 +97,13 @@ export function threadPeople(messages: messageModels.Message[], myEmails: Set<st
     seen.set(key, p)
     people.push(p)
   }
-  for (const m of messages) {
-    if (!m.mine) add({ name: m.fromName || '', email: m.fromEmail || '' })
-  }
-  // Order is first appearance, but a name is the latest real one (not empty or
-  // the bare address), as the chat list row shows.
-  for (const m of messages) {
-    const person = m.mine ? undefined : seen.get((m.fromEmail || '').toLowerCase())
-    if (person && m.fromName && m.fromName.toLowerCase() !== person.email.toLowerCase()) person.name = m.fromName
+  const isRealName = (name: string, email: string) => !!name && name.toLowerCase() !== email.toLowerCase()
+  const newestFirst = [...messages].reverse()
+  for (const m of newestFirst) {
+    if (m.mine) continue
+    add({ name: m.fromName || '', email: m.fromEmail || '' })
+    const person = seen.get((m.fromEmail || '').toLowerCase())
+    if (person && !isRealName(person.name, person.email) && isRealName(m.fromName || '', person.email)) person.name = m.fromName
   }
   if (people.length === 0) {
     for (const m of messages) {

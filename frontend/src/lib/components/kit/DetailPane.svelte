@@ -63,7 +63,7 @@
         a visible overlay and no back button.
   -->
   {#if overlay || (!empty && header)}
-    <header class="flex items-center gap-3 px-4 py-3 border-b border-border">
+    <header class="flex items-center gap-3 px-4 py-3 min-h-header border-b border-divider">
       {#if overlay}
         <button
           type="button"

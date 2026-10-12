@@ -66,12 +66,13 @@
   })
 
   // Selected folder state
-  let selectedAccountId = $state<string | null>(null)
-  let selectedFolderId = $state<string | null>(null)
-  let selectedFolderName = $state('Inbox')
-  let selectedFolderType = $state<string | null>(null)
+  // Starts on All Inboxes, so the Accounts column highlights what the list shows.
+  let selectedAccountId = $state<string | null>('unified')
+  let selectedFolderId = $state<string | null>('inbox')
+  let selectedFolderName = $state('All Inboxes')
+  let selectedFolderType = $state<string | null>('inbox')
   // Track where the selection came from: 'unified' for unified section, 'account' for account tree
-  let selectionSource = $state<'unified' | 'account' | null>(null)
+  let selectionSource = $state<'unified' | 'account' | null>('unified')
 
   // Selected conversation state
   let selectedThreadId = $state<string | null>(null)
@@ -358,6 +359,8 @@
         selectedFolderId = uiState.selectedFolderId
         selectedFolderName = uiState.selectedFolderName || 'Inbox'
         selectedFolderType = uiState.selectedFolderType
+        // The saved state has no source; an account folder highlights in its tree.
+        selectionSource = isUnified ? 'unified' : 'account'
 
         // Restore conversation selection
         if (uiState.selectedThreadId) {
@@ -1556,6 +1559,8 @@
         onFolderSelect={handleFolderSelect}
         isFocused={getFocusedPane() === 'messageList'}
         isFlashing={isPaneFlashing('messageList')}
+        openThreadId={selectedThreadId}
+        openAccountId={selectedConversationAccountId}
       />
     </section>
 

@@ -39,6 +39,7 @@
   "sidebar": {
     "compose": "Compose",
     "allInboxes": "All Inboxes",
+    "accountsTitle": "Accounts",
     "accountOptions": "Account options",
     "addAccount": "Add Account",
     "noAccountsYet": "No accounts yet",
@@ -121,6 +122,7 @@
     "noUnread": "You're all caught up",
     "noLow": "No low-priority mail",
     "noSnoozed": "No snoozed chats",
+    "noSnoozedHint": "Press H, or use a chat's Snooze button, to hide it until a time you pick.",
     "noResults": "No chats match \"{query}\"",
     "unreadCount": "{count} unread",
     "snoozedUntil": "Snoozed until {time}",

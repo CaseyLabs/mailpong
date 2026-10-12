@@ -178,7 +178,7 @@
 
 <PaneLayout>
   <CalendarSidebar onOpenSettings={openSettings} />
-  <div class="flex-1 flex flex-col min-w-0 bg-background">
+  <div class="flex-1 flex flex-col min-w-0 bg-surface-content">
     <ViewSwitcher />
     {#if calendarView.viewKind === 'month'}<MonthView />{/if}
     {#if calendarView.viewKind === 'week'}<WeekView />{/if}

@@ -17,7 +17,7 @@ window.__installFakes = (win) => {
   const sam = p('Sam Rivera', 'sam.rivera@example.org'), priya = p('Priya Shah', 'priya@example.net'), jamie = p('Jamie Chen', 'jamie.chen@example.com')
   const chat = (id, subject, snippet, people, ago, o = {}) => ({ threadId: id, threadKey: id, subject, snippet, messageCount: o.count ?? 3, unreadCount: o.unread ?? 0, hasAttachments: !!o.att, isStarred: false, latestDate: iso(ago), participants: [...people, me], recipients: [], messageIds: [id + '-m'], isEncrypted: false, accountId: 'acc1', accountName: 'Personal', accountColor: '#88c0d0', folderId: 'f1-inbox', senderEmail: o.sender ?? '', isPinned: !!o.pinned, isLowPriority: !!o.low })
   const pinned = [
-    chat('t-trip', 'Weekend trip to the coast', 'Booking the cabin tonight. Sunday dinner is on me.', [sam, priya], 25 * 60e3, { pinned: true, count: 6 }),
+    chat('t-trip', 'Weekend trip to the coast', 'Booking the cabin tonight. Sunday dinner is on me.', [priya, sam], 25 * 60e3, { pinned: true, count: 6 }),
     chat('t-mum', 'Sunday lunch', 'Lovely, see you at one. Bring the lemon tart!', [p('Mum', 'mum@example.com')], 3 * H, { pinned: true }),
   ]
   const regular = [
