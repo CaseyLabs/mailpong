@@ -147,7 +147,7 @@
 
     {#each sections as section, sIdx (sIdx)}
       {#if section.heading}
-        <div class="mx-4 mt-3 mb-1 text-caption uppercase tracking-wider text-muted-foreground">
+        <div class="mx-4 mt-4 mb-1 text-meta font-semibold text-fg-tertiary">
           {section.heading}
         </div>
       {/if}

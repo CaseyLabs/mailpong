@@ -110,7 +110,7 @@
         <Icon icon={addressesCollapsed ? 'mdi:chevron-right' : 'mdi:chevron-down'} class="w-4 h-4 shrink-0" />
         <Icon icon="mdi:email-outline" class="w-4 h-4" />
         {$_('images.addresses')}
-        <span class="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">{addresses.length}</span>
+        <span class="text-2xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">{addresses.length}</span>
       </button>
 
       {#if !addressesCollapsed}
@@ -141,7 +141,7 @@
         <Icon icon={domainsCollapsed ? 'mdi:chevron-right' : 'mdi:chevron-down'} class="w-4 h-4 shrink-0" />
         <Icon icon="mdi:web" class="w-4 h-4" />
         {$_('images.domains')}
-        <span class="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">{domains.length}</span>
+        <span class="text-2xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">{domains.length}</span>
       </button>
 
       {#if !domainsCollapsed}

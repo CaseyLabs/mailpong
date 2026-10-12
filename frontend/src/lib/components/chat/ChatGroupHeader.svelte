@@ -22,7 +22,7 @@
 <div role="group" aria-label={label}>
   {#if onToggle}
     <button
-      class="flex items-center gap-1 w-full px-4 pt-3 pb-1 text-left text-caption font-semibold uppercase tracking-wide text-fg-tertiary hover:text-fg-primary"
+      class="flex items-center gap-1 w-full px-4 pt-4 pb-1 text-left text-meta font-semibold text-fg-tertiary hover:text-fg-primary"
       aria-expanded={open}
       onclick={onToggle}
     >

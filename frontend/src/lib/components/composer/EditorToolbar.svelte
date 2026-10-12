@@ -87,7 +87,7 @@
   ]
 
   // Font sizes
-  const fontSizes = ['10px', '12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px']
+  const fontSizes = ['10px', '12px', '14px', '15px', '16px', '18px', '20px', '24px', '28px', '32px']
 
   // Update active states from editor
   function updateActiveStates() {
@@ -256,7 +256,7 @@
       <Icon icon="mdi:format-bold" class="w-5 h-5" />
     </button>
     {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded z-20">1</span>
+      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">1</span>
     {/if}
   </div>
   <div class="relative">
@@ -272,7 +272,7 @@
       <Icon icon="mdi:format-italic" class="w-5 h-5" />
     </button>
     {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded z-20">2</span>
+      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">2</span>
     {/if}
   </div>
   <div class="relative">
@@ -288,7 +288,7 @@
       <Icon icon="mdi:format-underline" class="w-5 h-5" />
     </button>
     {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded z-20">3</span>
+      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">3</span>
     {/if}
   </div>
   <div class="relative">
@@ -304,7 +304,7 @@
       <Icon icon="mdi:format-strikethrough" class="w-5 h-5" />
     </button>
     {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded z-20">4</span>
+      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">4</span>
     {/if}
   </div>
 
@@ -328,7 +328,7 @@
       ></div>
     </button>
     {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded z-20">5</span>
+      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">5</span>
     {/if}
 
     {#if showColorPicker && !isPlainTextMode}
@@ -373,10 +373,10 @@
       tabindex="-1"
       title={$_('editor.fontSize')}
     >
-      {currentFontSize || '14px'}
+      {currentFontSize || '15px'}
     </button>
     {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded z-20">6</span>
+      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">6</span>
     {/if}
 
     {#if showFontSizePicker && !isPlainTextMode}
@@ -410,7 +410,7 @@
       <Icon icon="mdi:format-align-left" class="w-5 h-5" />
     </button>
     {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded z-20">7</span>
+      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">7</span>
     {/if}
   </div>
   <div class="relative">
@@ -426,7 +426,7 @@
       <Icon icon="mdi:format-align-center" class="w-5 h-5" />
     </button>
     {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded z-20">8</span>
+      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">8</span>
     {/if}
   </div>
   <div class="relative">
@@ -442,7 +442,7 @@
       <Icon icon="mdi:format-align-right" class="w-5 h-5" />
     </button>
     {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded z-20">9</span>
+      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">9</span>
     {/if}
   </div>
 
@@ -461,7 +461,7 @@
       <Icon icon="mdi:format-list-bulleted" class="w-5 h-5" />
     </button>
     {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded z-20">a</span>
+      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">a</span>
     {/if}
   </div>
   <div class="relative">
@@ -477,7 +477,7 @@
       <Icon icon="mdi:format-list-numbered" class="w-5 h-5" />
     </button>
     {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded z-20">b</span>
+      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">b</span>
     {/if}
   </div>
   <div class="w-px h-5 bg-border mx-1"></div>
@@ -494,7 +494,7 @@
       <Icon icon="mdi:format-quote-close" class="w-5 h-5" />
     </button>
     {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded z-20">c</span>
+      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">c</span>
     {/if}
   </div>
   <div class="relative">
@@ -510,7 +510,7 @@
       <Icon icon="mdi:link" class="w-5 h-5" />
     </button>
     {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded z-20">d</span>
+      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">d</span>
     {/if}
   </div>
   <div class="relative">
@@ -525,7 +525,7 @@
       <Icon icon="mdi:image" class="w-5 h-5" />
     </button>
     {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded z-20">e</span>
+      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">e</span>
     {/if}
   </div>
 
@@ -545,7 +545,7 @@
       <span class="hidden sm:inline">{isPlainTextMode ? $_('editor.richText') : $_('editor.plainText')}</span>
     </button>
     {#if hintMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded z-20">f</span>
+      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">f</span>
     {/if}
   </div>
 </div>

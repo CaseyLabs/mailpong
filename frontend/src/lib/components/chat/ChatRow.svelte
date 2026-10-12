@@ -74,18 +74,18 @@
     return extra > 0 ? `${names} ${$_('chat.andMore', { values: { count: extra } })}` : names
   })
 
-  // Per density: avatar px, vertical padding class and the text lines' size
-  // class. Row heights come out at 32 (micro), 44 (compact), 60/44 (standard)
-  // and 76/60 (large) px, with the 4/8 px padding.
-  interface DensityStyle { avatar: number; pad: string; line: string }
+  // Per density: avatar px, vertical padding class, and the size class and
+  // line height (px) of the lines under the 22 px name line. Without previews,
+  // rows come out at 32 (micro), 52 (compact), 72 (standard) and 80 (large) px.
+  interface DensityStyle { avatar: number; pad: string; line: string; lineHeight: number }
   const DENSITY: Record<MessageListDensity, DensityStyle> = {
-    micro: { avatar: 24, pad: 'py-1', line: 'text-body' },
-    compact: { avatar: 28, pad: 'py-1', line: 'text-meta' },
-    standard: { avatar: 36, pad: 'py-1', line: 'text-meta' },
-    large: { avatar: 44, pad: 'py-2', line: 'text-body' },
+    micro: { avatar: 24, pad: 'py-1', line: 'text-body', lineHeight: 22 },
+    compact: { avatar: 32, pad: 'py-1.5', line: 'text-meta', lineHeight: 18 },
+    standard: { avatar: 44, pad: 'py-3.5', line: 'text-compact', lineHeight: 20 },
+    large: { avatar: 48, pad: 'py-4', line: 'text-body', lineHeight: 22 },
   }
-  // Text height by layout: 20px name line, plus 16px (20px at large) lines.
-  const TEXT_HEIGHT = { single: 20, double: 36, triple: 52, tripleLarge: 60 }
+  const NAME_LINE_HEIGHT = 22
+  const LINE_COUNT = { single: 0, double: 1, triple: 2 }
 
   const hasUnread = $derived(chat.unreadCount > 0)
   const density = $derived(getMessageListDensity())
@@ -101,7 +101,7 @@
       : showPreview && (density === 'standard' || density === 'large') ? 'triple' : 'double'
   )
   // The content box: the taller of the avatar and the text lines.
-  const intrinsicHeight = $derived(Math.max(ds.avatar, layout === 'triple' && density === 'large' ? TEXT_HEIGHT.tripleLarge : TEXT_HEIGHT[layout]))
+  const intrinsicHeight = $derived(Math.max(ds.avatar, NAME_LINE_HEIGHT + LINE_COUNT[layout] * ds.lineHeight))
   const time = $derived(formatListDate(chat.latestDate))
   const snoozeTime = $derived(chat.snoozedUntil ? formatSnoozedUntil(chat.snoozedUntil) : '')
 
@@ -207,7 +207,7 @@
     draggable={getLayoutMode() !== 'narrow'}
     data-density={density}
     style:contain-intrinsic-size="auto {intrinsicHeight}px"
-    class="chat-row relative flex items-center {density === 'micro' ? 'gap-2' : 'gap-3'} px-3 {ds.pad} mx-1.5 my-0.5 rounded-lg cursor-pointer outline-hidden transition-colors {selected ? 'bg-muted text-foreground group-data-[focused]/list:ring-2 group-data-[focused]/list:ring-inset group-data-[focused]/list:ring-ring' : 'hover:bg-muted/50'}"
+    class="chat-row relative flex items-center {density === 'micro' ? 'gap-2' : 'gap-3'} px-3 {ds.pad} mx-1.5 my-1.5 rounded-lg cursor-pointer outline-hidden transition-colors {selected ? 'bg-selected text-foreground group-data-[focused]/list:ring-2 group-data-[focused]/list:ring-inset group-data-[focused]/list:ring-ring' : 'hover:bg-muted/50'}"
     onclick={onSelect}
     onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect() } }}
     ondragstart={handleDragStart}
@@ -222,7 +222,7 @@
       {/if}
       {#if showAccount && chat.accountColor}
         <span
-          class="absolute -bottom-0.5 -left-0.5 rounded-full ring-2 ring-background {ds.avatar < 32 ? 'w-2 h-2' : 'w-3 h-3'}"
+          class="absolute -bottom-0.5 -left-0.5 rounded-full ring-2 ring-background {ds.avatar < 36 ? 'w-2 h-2' : 'w-3 h-3'}"
           style="background-color: {chat.accountColor}"
           title={chat.accountName}
         ></span>

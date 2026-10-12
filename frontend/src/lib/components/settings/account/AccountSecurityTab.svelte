@@ -528,7 +528,7 @@
         <Icon icon="mdi:key-outline" class="w-4 h-4" />
         {$_('security.pgp')}
         {#if pgpKeys.length > 0}
-          <span class="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">{$_('security.keysCount', { values: { count: pgpKeys.length } })}</span>
+          <span class="text-2xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">{$_('security.keysCount', { values: { count: pgpKeys.length } })}</span>
         {/if}
       </button>
 
@@ -560,10 +560,10 @@
                   <div class="flex items-center gap-2">
                     <span class="text-sm font-medium truncate">{key.email}</span>
                     {#if key.isDefault}
-                      <span class="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">{$_('security.defaultBadge')}</span>
+                      <span class="text-2xs px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">{$_('security.defaultBadge')}</span>
                     {/if}
                     {#if key.isExpired}
-                      <span class="text-[10px] px-1.5 py-0.5 rounded bg-destructive/10 text-destructive font-medium">{$_('security.expiredBadge')}</span>
+                      <span class="text-2xs px-1.5 py-0.5 rounded bg-destructive/10 text-destructive font-medium">{$_('security.expiredBadge')}</span>
                     {/if}
                   </div>
                   <p class="text-xs text-muted-foreground truncate mt-0.5">{key.userId}</p>
@@ -660,7 +660,7 @@
         >
           <Icon icon={keyServersCollapsed ? 'mdi:chevron-right' : 'mdi:chevron-down'} class="w-3.5 h-3.5 shrink-0" />
           {$_('security.keyServersLabel')}
-          <span class="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">{keyServers.length}</span>
+          <span class="text-2xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">{keyServers.length}</span>
         </button>
 
         {#if !keyServersCollapsed}
@@ -737,7 +737,7 @@
                   <span class="text-sm truncate block">{key.email}</span>
                   <span class="text-xs text-muted-foreground truncate block">{key.fingerprint?.slice(-16)} &middot; {key.algorithm}</span>
                 </div>
-                <span class="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium shrink-0">
+                <span class="text-2xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium shrink-0">
                   {key.source}
                 </span>
                 <span class="text-xs text-muted-foreground shrink-0">
@@ -764,7 +764,7 @@
         <Icon icon="mdi:shield-lock-outline" class="w-4 h-4" />
         {$_('security.smime')}
         {#if certificates.length > 0}
-          <span class="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">{$_('security.certsCount', { values: { count: certificates.length } })}</span>
+          <span class="text-2xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground font-medium">{$_('security.certsCount', { values: { count: certificates.length } })}</span>
         {/if}
       </button>
 
@@ -796,13 +796,13 @@
                   <div class="flex items-center gap-2">
                     <span class="text-sm font-medium truncate">{cert.email}</span>
                     {#if cert.isDefault}
-                      <span class="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">{$_('security.defaultBadge')}</span>
+                      <span class="text-2xs px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium">{$_('security.defaultBadge')}</span>
                     {/if}
                     {#if cert.isExpired}
-                      <span class="text-[10px] px-1.5 py-0.5 rounded bg-destructive/10 text-destructive font-medium">{$_('security.expiredBadge')}</span>
+                      <span class="text-2xs px-1.5 py-0.5 rounded bg-destructive/10 text-destructive font-medium">{$_('security.expiredBadge')}</span>
                     {/if}
                     {#if cert.isSelfSigned}
-                      <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium">{$_('security.selfSignedBadge')}</span>
+                      <span class="text-2xs px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium">{$_('security.selfSignedBadge')}</span>
                     {/if}
                   </div>
                   <p class="text-xs text-muted-foreground truncate mt-0.5">{cert.subject}</p>

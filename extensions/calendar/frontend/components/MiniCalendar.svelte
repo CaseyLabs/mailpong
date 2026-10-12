@@ -192,7 +192,7 @@
       {#if level === 'days'}
         <div class="grid grid-cols-7 mb-1">
           {#each weekdayLabels as wd (wd)}
-            <div class="text-center text-[10px] font-medium text-muted-foreground py-0.5">{wd}</div>
+            <div class="text-center text-2xs font-medium text-muted-foreground py-0.5">{wd}</div>
           {/each}
         </div>
         {#each dayRows as row, r (r)}

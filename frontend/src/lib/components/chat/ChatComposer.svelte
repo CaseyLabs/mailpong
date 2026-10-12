@@ -96,7 +96,7 @@
   <span class="shrink-0" aria-hidden="true">|</span>
 {/snippet}
 
-<div class="mx-auto w-full max-w-(--chat-column) border-t border-divider px-3 py-2 bg-background">
+<div class="w-full border-t border-divider px-6 py-2 bg-background">
   <div class="flex items-baseline gap-1.5 mb-1.5 px-1 text-xs text-fg-tertiary min-w-0">
     {#if choices}
       <span class="shrink-0">{$_('chat.replyTo')}</span>

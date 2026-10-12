@@ -96,7 +96,7 @@
   let showFontSizePicker = $state(false)
 
   // Font size options
-  const fontSizes = ['10px', '12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px']
+  const fontSizes = ['10px', '12px', '14px', '15px', '16px', '18px', '20px', '24px', '28px', '32px']
 
   // Preset colors for quick selection
   const presetColors = [
@@ -531,7 +531,7 @@
           class:bg-muted={showFontSizePicker}
           title={$_('editor.fontSize')}
         >
-          {currentFontSize || '14px'}
+          {currentFontSize || '15px'}
         </button>
 
         {#if showFontSizePicker}

@@ -140,7 +140,7 @@
   <header class="flex items-start gap-3 mb-3">
     <Icon icon="mdi:calendar-month" width="24" height="24" />
     <div>
-      <h3 class="m-0 mb-1 text-[15px] font-semibold text-foreground">{hook.buttonLabel}</h3>
+      <h3 class="m-0 mb-1 text-base font-semibold text-foreground">{hook.buttonLabel}</h3>
       {#if hook.description}
         <p class="m-0 text-sm text-muted-foreground">{hook.description}</p>
       {/if}

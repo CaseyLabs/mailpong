@@ -34,6 +34,7 @@
   --color-warning-foreground: hsl(var(--warning-foreground));
 
   --color-muted: hsl(var(--muted));
+  --color-selected: hsl(var(--selected));
   --color-muted-foreground: hsl(var(--muted-foreground));
 
   --color-accent: hsl(var(--accent));
@@ -60,25 +61,35 @@
     ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono,
     Courier New, monospace;
 
-  --text-2xs: 0.625rem;
-  --text-2xs--line-height: 0.75rem;
+  /* Tailwind's own small sizes, one pixel up from its defaults (12/14/16)
+     so the many text-xs/sm/base uses stay readable on laptop panels. */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.125rem;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.375rem;
+  --text-base: 1.0625rem;
+  --text-base--line-height: 1.5rem;
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 0.875rem;
 
   /* Type roles (see docs/UI_TOKENS.md). meta/body/title match text-xs,
-     text-sm and text-base; caption and compact are the 11px and 13px sizes
-     used by chips and quoted text, with no line-height of their own. */
-  --text-meta: 0.75rem;
-  --text-meta--line-height: 1rem;
-  --text-body: 0.875rem;
-  --text-body--line-height: 1.25rem;
-  --text-title: 1rem;
+     text-sm and text-base; caption (12px, chips and small notes) has no
+     line-height of its own; compact (14px) sits one step below body, for
+     quoted text and chat-list subject lines. */
+  --text-meta: 0.8125rem;
+  --text-meta--line-height: 1.125rem;
+  --text-body: 0.9375rem;
+  --text-body--line-height: 1.375rem;
+  --text-title: 1.0625rem;
   --text-title--line-height: 1.5rem;
-  --text-caption: 0.6875rem;
-  --text-compact: 0.8125rem;
+  --text-caption: 0.75rem;
+  --text-compact: 0.875rem;
+  --text-compact--line-height: 1.25rem;
 
   /* Control and header heights. */
   --height-control-sm: 1.75rem;
   --height-control: 2rem;
-  --height-header: 3.6875rem;
+  --height-header: 3.8125rem;
 
   /* Pane surfaces and text tiers: raw HSL triples (themes override them). */
   --color-surface-rail: hsl(var(--surface-rail));
@@ -132,20 +143,21 @@
   color utility to any element that depends on these defaults.
 */
 /* Chat widths (Settings → Chat → Reading width). Bubbles, pending sends, day
-   separators and the composer sit in --chat-column, centred in the wider
-   --chat-stream that email cards and full email bodies use, so a 600px HTML
-   email fits without horizontal scrolling (it needs about 45.5rem with the
-   avatar and paddings). Plain variables, not @theme tokens: @theme inline
+   separators and the composer span the conversation pane; --chat-bubble caps
+   how wide a bubble grows (and never more than 75% of the pane). Email cards
+   and full email bodies sit in a centred --chat-stream column, so a 600px
+   HTML email fits without horizontal scrolling (it needs about 45.5rem with
+   the avatar and paddings). Plain variables, not @theme tokens: @theme inline
    would bake the values into the utilities. */
 :root {
-  --chat-column: 40rem;
+  --chat-bubble: 36rem;
   --chat-stream: 46rem;
 }
 :root[data-reading-width='narrow'] {
-  --chat-column: 34rem;
+  --chat-bubble: 30rem;
 }
 :root[data-reading-width='wide'] {
-  --chat-column: 48rem;
+  --chat-bubble: 44rem;
   --chat-stream: 54rem;
 }
 
@@ -265,7 +277,7 @@ mark {
 /* Replaces prose/prose-sm for better performance and cursor behavior */
 .composer-editor {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 0.875rem; /* 14px */
+  font-size: 0.9375rem; /* 15px */
   line-height: 1.5;
   color: hsl(var(--foreground));
 }
@@ -384,7 +396,7 @@ mark {
 /* Signature editor uses same base styles */
 .signature-editor {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 0.875rem;
+  font-size: 0.9375rem;
   line-height: 1.5;
   color: hsl(var(--foreground));
 }

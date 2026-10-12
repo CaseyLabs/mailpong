@@ -75,15 +75,15 @@
               {/if}
             </span>
             {#if a.role === 'OPT-PARTICIPANT'}
-              <span class="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+              <span class="rounded bg-muted px-1.5 py-0.5 text-2xs text-muted-foreground">
                 {$_('calendar.attendees.optional')}
               </span>
             {/if}
-            <span class={`rounded px-1.5 py-0.5 text-[10px] font-medium ${partStatBadgeClass(a.partStat)}`}>
+            <span class={`rounded px-1.5 py-0.5 text-2xs font-medium ${partStatBadgeClass(a.partStat)}`}>
               {$_(partStatBadgeKey(a.partStat))}
             </span>
             {#if a.scheduleStatus}
-              <span class="text-[10px] text-muted-foreground" title={$_('calendar.attendees.scheduleStatusTooltip')}>
+              <span class="text-caption text-muted-foreground" title={$_('calendar.attendees.scheduleStatusTooltip')}>
                 {a.scheduleStatus}
               </span>
             {/if}

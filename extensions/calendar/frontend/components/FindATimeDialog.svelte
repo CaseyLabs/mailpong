@@ -161,7 +161,7 @@
       {/if}
       {#if !loading && results.length > 0}
         <!-- Header: time labels -->
-        <div class="grid items-center gap-px text-[10px] text-muted-foreground" style:grid-template-columns="180px repeat({SLOTS}, minmax(0, 1fr))">
+        <div class="grid items-center gap-px text-2xs text-muted-foreground" style:grid-template-columns="180px repeat({SLOTS}, minmax(0, 1fr))">
           <div></div>
           {#each Array(SLOTS) as _, i}
             <div class="text-center">{i % 2 === 0 ? slotLabel(i) : ''}</div>
@@ -174,7 +174,7 @@
             <div class="flex items-center gap-1 truncate pr-2">
               <span class="truncate">{r.email}</span>
               {#if r.source === ''}
-                <span class="text-[10px] text-muted-foreground">{$_('calendar.attendees.noData')}</span>
+                <span class="text-caption text-muted-foreground">{$_('calendar.attendees.noData')}</span>
               {/if}
             </div>
             {#each Array(SLOTS) as _, i}

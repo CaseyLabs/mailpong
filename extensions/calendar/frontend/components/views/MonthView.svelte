@@ -24,14 +24,14 @@
   import type { backend } from '$wailsjs/go/models'
 
   // Per-cell event count tracks the available cell height (#323). Sizes match
-  // the rendered rows: PILL_PX = one EventCard (20px) plus the gap-0.5;
-  // MORE_PX = the "+N more" line; BAND_PX = one multi-day lane; DAY_NUM_PX =
-  // the day-number header row; CELL_PAD_PX = the pill column's pb-1 plus the
-  // row's bottom border.
-  const PILL_PX = 22
+  // the rendered rows: PILL_PX = one EventCard (22px: an 18px text-xs line plus
+  // py-0.5) plus the gap-0.5; MORE_PX = the "+N more" line; BAND_PX = one
+  // multi-day lane; DAY_NUM_PX = the day-number header row; CELL_PAD_PX = the
+  // pill column's pb-1 plus the row's bottom border.
+  const PILL_PX = 24
   const PILL_GAP_PX = 2
   const MORE_PX = 15
-  const BAND_PX = 20
+  const BAND_PX = 22
   const DAY_NUM_PX = 28
   const CELL_PAD_PX = 5
 
@@ -230,7 +230,7 @@
     <!-- Weekday header row -->
     <div class="grid grid-cols-7 border-b border-border bg-muted/20">
       {#each weekdayLabels as label, i (i)}
-        <div class="px-2 py-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wide text-center">
+        <div class="px-2 py-1 text-caption font-medium text-muted-foreground uppercase tracking-wide text-center">
           {label}
         </div>
       {/each}
@@ -313,7 +313,7 @@
                 </div>
               {/each}
               {#if overflow > 0}
-                <span class="pointer-events-none text-[10px] text-muted-foreground px-1">
+                <span class="pointer-events-none text-2xs text-muted-foreground px-1">
                   {$_('calendar.month.moreEventsHidden', { values: { n: overflow } })}
                 </span>
               {/if}

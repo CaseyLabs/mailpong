@@ -158,7 +158,7 @@
   {onReply}
 >
   <div
-    class="group flex gap-2 {wide ? 'px-4' : 'mx-auto w-full max-w-(--chat-column) px-4'} {item.groupStart ? (mode === 'full' && !item.newDay && !item.subject ? 'mt-3 pt-3 border-t border-border' : 'mt-3') : 'mt-0.5'} {item.mine ? 'flex-row-reverse' : ''}"
+    class="group flex gap-2 {wide ? 'mx-auto w-full max-w-(--chat-stream) px-4' : 'w-full px-6'} {item.groupStart ? (mode === 'full' && !item.newDay && !item.subject ? 'mt-3 pt-3 border-t border-border' : 'mt-3') : 'mt-0.5'} {item.mine ? 'flex-row-reverse' : ''}"
     data-message-id={msg.id}
     tabindex="-1"
     role="article"
@@ -175,7 +175,7 @@
       </div>
     {/if}
 
-    <div class="flex flex-col min-w-0 {mode === 'bubble' ? 'max-w-[min(75%,36rem)]' : 'flex-1'} {item.mine ? 'items-end' : 'items-start'}">
+    <div class="flex flex-col min-w-0 {mode === 'bubble' ? 'max-w-[min(75%,var(--chat-bubble))]' : 'flex-1'} {item.mine ? 'items-end' : 'items-start'}">
       {#if item.groupStart || badges.length > 0}
         <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-1 mb-0.5 text-xs text-fg-tertiary" title={item.groupStart ? recipientsTitle : undefined}>
           {#if item.groupStart}
@@ -212,7 +212,7 @@
           {:else if bare}
             <!-- Attachment-only mail: the attachment list below is the message -->
           {:else if mode === 'bubble'}
-            <div class="px-3.5 py-2 text-[15px] leading-[1.45] whitespace-pre-wrap wrap-anywhere">
+            <div class="px-3.5 py-2 text-[1rem] leading-[1.45] whitespace-pre-wrap wrap-anywhere">
               {@render text(msg.chat!.text)}
               {#if msg.chat!.hasQuoted}
                 <!-- Quiet marker at the end of the text, not a pill below it -->

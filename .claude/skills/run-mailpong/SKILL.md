@@ -234,6 +234,10 @@ session, so rebuild it from the clean checkout first.
   `pkill -f 'serve-fake[s]'`, and run `dev.sh stop` (and in the cloud `pkill Xvfb`) as well.
 - The native window and dock icon aren't visible under Xvfb; report that.
 - zsh treats an unquoted `==` as a command: quote it in `echo`.
+- Expected noise in page errors: `blocked: <Binding>` from the fakes, and `Cannot read
+  properties of null (reading 'nodes')` from the Svelte copy bundled in `/wails/ipc.js`.
+- On a cold Vite the faked chat rows can mount more than 8 s after load; in your own
+  scripts wait for `.chat-row` (`frame.waitForSelector`) rather than a fixed delay.
 
 ## Retaking the README screenshot
 

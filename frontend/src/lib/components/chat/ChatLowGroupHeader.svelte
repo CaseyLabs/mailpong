@@ -53,7 +53,7 @@
   >
     <Icon icon={expanded ? 'mdi:chevron-down' : 'mdi:chevron-right'} class="w-4 h-4 shrink-0" />
     <Icon icon="mdi:newspaper-variant-outline" class="w-4 h-4 shrink-0" />
-    <span class="truncate text-caption font-semibold uppercase tracking-wide">{$_('chat.lowPriorityGroup', { values: { count: chatList.lowCount } })}</span>
+    <span class="truncate text-meta font-semibold">{$_('chat.lowPriorityGroup', { values: { count: chatList.lowCount } })}</span>
   </button>
   <div class="flex items-center gap-0.5 pr-1.5 shrink-0">
     {@render action('mdi:email-open-multiple-outline', $_('chat.markAllLowRead'), markAllRead)}

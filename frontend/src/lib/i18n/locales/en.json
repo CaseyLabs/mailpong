@@ -579,7 +579,7 @@
     "readingWidthNarrow": "Narrow",
     "readingWidthStandard": "Standard",
     "readingWidthWide": "Wide",
-    "readingWidthDescription": "How wide the messages and the reply box are in an open chat. Wide fits long lines better on large windows.",
+    "readingWidthDescription": "How wide message bubbles and email cards can grow in an open chat. Wide fits long lines better on large windows.",
     "includeQuote": "Include quoted history",
     "includeQuoteDescription": "Quote the message you reply to below your reply, so people on traditional email clients keep the context.",
     "triage": "Triage",

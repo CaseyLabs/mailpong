@@ -27,9 +27,14 @@ const ratio = (fg, bg) => {
 
 const css = readFileSync(fileURLToPath(new URL('../frontend/src/themes/built-in.css', import.meta.url)), 'utf8')
 const themes = { light: ':root,\\s*\\[data-theme="light"\\]', dark: '\\[data-theme="dark"\\]' }
-// Pane surfaces plus the selected-row fill (muted).
-const surfaces = ['surface-rail', 'surface-sidebar', 'surface-list', 'surface-content', 'muted']
 const tiers = ['primary', 'secondary', 'tertiary']
+// Each fill and the text tiers drawn on it: the pane surfaces, the hover and
+// others'-bubble fill (muted), the selected chat row, and my bubbles (whose
+// text is always primary).
+const fills = {
+  'surface-rail': tiers, 'surface-sidebar': tiers, 'surface-list': tiers, 'surface-content': tiers,
+  muted: tiers, selected: tiers, 'bubble-own': ['primary'],
+}
 const MIN = 4.5
 
 let failed = false
@@ -40,7 +45,7 @@ for (const [name, selector] of Object.entries(themes)) {
   console.log(`\n${name}`)
   for (const t of tiers) {
     const fg = get(`fg-${t}`)
-    const cells = surfaces.map((s) => {
+    const cells = Object.keys(fills).filter((s) => fills[s].includes(t)).map((s) => {
       const bg = get(s)
       if (!fg || !bg) { failed = true; return `${s.replace('surface-', '')}: missing` }
       let r = 0

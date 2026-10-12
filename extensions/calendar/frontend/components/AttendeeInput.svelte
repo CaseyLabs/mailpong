@@ -214,12 +214,12 @@
       >
         <Avatar email={a.email} name={a.cn || a.email} density="compact" size={20} />
         <span class="max-w-48 truncate">{a.cn || a.email}</span>
-        <span class={`rounded px-1.5 py-0.5 text-[10px] font-medium ${partStatBadgeClass(a.partStat)}`}>
+        <span class={`rounded px-1.5 py-0.5 text-2xs font-medium ${partStatBadgeClass(a.partStat)}`}>
           {$_(partStatBadgeKey(a.partStat))}
         </span>
         <button
           type="button"
-          class="rounded px-1 text-[10px] text-muted-foreground hover:bg-muted hover:text-foreground"
+          class="rounded px-1 text-caption text-muted-foreground hover:bg-muted hover:text-foreground"
           onclick={() => toggleOptional(i)}
           disabled={disabled}
           title={a.role === 'OPT-PARTICIPANT'

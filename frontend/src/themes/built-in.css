@@ -27,7 +27,8 @@
     --destructive: 354 39% 56%;            /* nord11 #BF616A — Aurora red */
     --destructive-foreground: 219 28% 95%; /* nord6 */
     --border: 219 28% 88%;                 /* nord4 #D8DEE9 */
-    --bubble-own: 219 28% 88%;             /* nord4 — neutral, differs from others' --muted */
+    --bubble-own: 214 31% 89.3%;           /* nord10 at 18% over surface-content — my bubbles */
+    --selected: 215 30% 89%;               /* nord10 at 14% over surface-list — selected chat row */
     --divider: 219 20% 84%;                /* hairline darker than every pane surface */
     --input: 219 28% 88%;                  /* nord4 */
     --ring: 213 32% 52%;                   /* nord10 */
@@ -79,7 +80,8 @@
     --destructive: 354 39% 56%;            /* nord11 #BF616A — Aurora red */
     --destructive-foreground: 219 28% 95%; /* nord6 */
     --border: 220 17% 36%;                 /* nord3 #4C566A */
-    --bubble-own: 220 17% 36%;             /* nord3 — neutral, differs from others' --muted */
+    --bubble-own: 205 19% 33.2%;           /* nord8 at 25% over surface-content — my bubbles */
+    --selected: 209 18% 27%;               /* nord8 at 14% over surface-list — selected chat row */
     --divider: 220 16% 13%;                /* hairline darker than every pane surface */
     --input: 220 17% 36%;                  /* nord3 */
     --ring: 193 43% 67%;                   /* nord8 */

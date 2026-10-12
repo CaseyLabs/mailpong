@@ -13,9 +13,10 @@ MailPong is an independent email client derived from [Aerion](https://github.com
 
 **Visual refinement**
 
-- Calmer chat list: density-aware rows (micro, compact, standard, large), uppercase group labels and a quieter list header with a tonal Compose button
+- Calmer chat list: roomy, airy density-aware rows (micro, compact, standard, large), sentence-case group labels, a quieter list header with an accent Compose button, and a soft Frost tint on the selected chat and on your own bubbles
+- Easier-to-read text: one size step larger throughout the app
 - Clearer hierarchy: contrast-checked primary, secondary and tertiary text, and a tonal step between the extension rail, Accounts column, chat list and conversation pane in Dark and Light
-- Conversation pane polish: a Reading width setting (Narrow, Standard, Wide) and larger message text
+- Conversation pane polish: messages span the whole pane (theirs on the left, yours on the right), a Reading width setting (Narrow, Standard, Wide) for how wide bubbles grow, and larger message text
 - Design tokens documented in `docs/UI_TOKENS.md`; `make lint` checks text contrast
 
 **Migration to MailPong**

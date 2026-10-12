@@ -69,7 +69,7 @@
     <span class="shrink-0 text-muted-foreground" aria-hidden="true">◀</span>
   {/if}
   {#if !isAllDay}
-    <span class="shrink-0 font-mono text-[10px] text-muted-foreground">{timeLabel}</span>
+    <span class="shrink-0 font-mono text-2xs text-muted-foreground">{timeLabel}</span>
   {/if}
   <span class="flex-1 min-w-0 truncate">{instance.summary || $_('calendar.detail.noTitle')}</span>
   {#if continuesRight}

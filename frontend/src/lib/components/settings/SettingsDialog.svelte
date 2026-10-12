@@ -316,7 +316,7 @@
 </script>
 
 <Dialog.Root bind:open onOpenChange={handleOpenChange}>
-  <Dialog.Content class="max-w-3xl" preventCloseAutoFocus onInteractOutside={(e) => e.preventDefault()}>
+  <Dialog.Content class="max-w-4xl" preventCloseAutoFocus onInteractOutside={(e) => e.preventDefault()}>
     <Dialog.Header>
       <Dialog.Title>{$_('settings.title')}</Dialog.Title>
       <Dialog.Description>

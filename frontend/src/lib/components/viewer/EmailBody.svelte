@@ -366,7 +366,7 @@
     html, body {
       margin: 0; padding: 0;
       font-family: system-ui, sans-serif;
-      font-size: 14px; line-height: 1.5;
+      font-size: 15px; line-height: 1.5;
       color: #1a1a0a; background-color: white;
       overflow-x: auto; word-wrap: break-word;
       scrollbar-width: none; /* Firefox */

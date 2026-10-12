@@ -195,7 +195,7 @@ Options for the chat-style mail list, thread view, and reply box.
 
 ### Reading Width
 
-How wide the messages, day headings and reply box are in an open chat: **Narrow**, **Standard** (default) or **Wide**. Email cards and full email bodies stay wide enough for a 600 px HTML email at every setting.
+How wide message bubbles can grow in an open chat: **Narrow**, **Standard** (default) or **Wide**. Messages always use the whole conversation pane, with other people's on the left and yours on the right. **Wide** also widens email cards and full email bodies, which stay wide enough for a 600 px HTML email at every setting.
 
 ### Include Quoted History
 

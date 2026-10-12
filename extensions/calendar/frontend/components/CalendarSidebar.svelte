@@ -111,7 +111,7 @@
 
       {#each sections as section (section.source.id)}
         <div class="mb-3">
-          <div class="px-4 mb-1 text-[11px] uppercase tracking-wider text-muted-foreground truncate">
+          <div class="px-4 mb-1 text-meta font-semibold text-fg-tertiary truncate">
             {section.source.name}
           </div>
           {#each section.calendars as cal (cal.id)}
