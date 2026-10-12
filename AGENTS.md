@@ -5,7 +5,6 @@
 - Mailven is an independent desktop email client (Go, Wails v2, Svelte 5, TypeScript) derived from Aerion.
 - Branding: replace "Aerion" only where it names this app, never by blind search-and-replace. Keep it in attribution, history, `LICENSE`, `archive/`, and statements of origin ("derived from Aerion").
 - Persisted internal identifiers keep their Aerion values: the `"aerion"` contact source, the `"aerion-shipped"`/`"aerion-mail"` OAuth choice IDs, the `'aerion'` title-bar setting, `minAerionVersion`, and the `aerion:` KDF prefix. Each carries a `Legacy identifier from Aerion; persisted, do not rename.` comment. Renaming them breaks stored data.
-- Upstream Aerion fixes may be cherry-picked (`git remote add upstream https://github.com/hkdb/aerion.git` in clones that lack it); renamed paths can make that conflict.
 
 ## Layout Notes
 
