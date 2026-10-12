@@ -6,6 +6,7 @@ import (
 	"encoding/asn1"
 	"encoding/base64"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -19,9 +20,11 @@ import (
 
 // Verifier handles S/MIME signature verification
 type Verifier struct {
-	store *Store
-	log   zerolog.Logger
-	roots *x509.CertPool // trusted roots; nil uses the system pool
+	store           *Store
+	log             zerolog.Logger
+	roots           *x509.CertPool // trusted roots; nil uses the system pool
+	revocationCheck func([][]*x509.Certificate) error
+	revocation      *revocationChecker
 }
 
 // NewVerifier creates a new S/MIME verifier
@@ -29,6 +32,29 @@ func NewVerifier(store *Store, log zerolog.Logger) *Verifier {
 	return &Verifier{
 		store: store,
 		log:   log,
+	}
+}
+
+// Offline returns a verifier sharing the certificate store and trust roots,
+// with online requests disabled. Sync extraction must not spend its body
+// parsing deadline waiting on certificate authority endpoints.
+func (v *Verifier) Offline() *Verifier {
+	copy := *v
+	copy.revocationCheck = nil
+	copy.revocation = nil
+	return &copy
+}
+
+// SetOnlineRevocationCheck configures the privacy preference once before
+// verification starts. The callback is consulted for every verification so
+// changes in Settings take effect without restarting the application.
+func (v *Verifier) SetOnlineRevocationCheck(enabled func() bool) {
+	v.revocation = newRevocationChecker()
+	v.revocationCheck = func(chains [][]*x509.Certificate) error {
+		if enabled == nil || !enabled() {
+			return errRevocationUnchecked
+		}
+		return v.revocation.checkChains(chains)
 	}
 }
 
@@ -287,18 +313,15 @@ func (v *Verifier) verifyPKCS7(p7 *pkcs7.PKCS7) *SignatureResult {
 
 	result := v.verifySigners(p7, signers, signerEmail, signerName)
 
-	// Cache the signer cert for future encryption. Only a chain-trusted
-	// cert may become the recipient's encryption key; untrusted ones are
-	// kept for reference but need explicit import to be used.
-	v.cacheSenderCert(signer, signerEmail, result.Status == StatusSigned)
 	return result
 }
 
 // verifySigners requires every signer, not just the displayed one, to chain
 // to a trusted root.
 func (v *Verifier) verifySigners(p7 *pkcs7.PKCS7, signers []*x509.Certificate, signerEmail, signerName string) *SignatureResult {
+	var revocationWarning, failure *SignatureResult
 	for _, cert := range signers {
-		err := v.verifyChain(p7, cert)
+		err := v.verifySignerChain(p7, cert)
 		if err == nil {
 			continue
 		}
@@ -307,8 +330,16 @@ func (v *Verifier) verifySigners(p7 *pkcs7.PKCS7, signers []*x509.Certificate, s
 			SignerEmail:  signerEmail,
 			SignerName:   signerName,
 			ErrorMessage: fmt.Sprintf("unverified signer: %v", err),
+			signerEmails: certEmails(signers[0]),
 		}
 		switch {
+		case errors.Is(err, errCertificateRevoked):
+			result.Status = StatusRevokedCert
+			result.ErrorMessage = "signer certificate has been revoked"
+		case errors.Is(err, errRevocationUnchecked):
+			result.Status = StatusRevocationUnchecked
+		case errors.Is(err, errRevocationUnknown):
+			result.Status = StatusRevocationUnknown
 		case time.Now().After(cert.NotAfter):
 			result.Status = StatusExpiredCert
 			result.ErrorMessage = "signer certificate has expired"
@@ -316,7 +347,19 @@ func (v *Verifier) verifySigners(p7 *pkcs7.PKCS7, signers []*x509.Certificate, s
 			result.Status = StatusSelfSigned
 			result.ErrorMessage = "self-signed certificate"
 		}
-		return result
+		if result.Status == StatusRevocationUnchecked || result.Status == StatusRevocationUnknown {
+			revocationWarning = result
+			continue
+		}
+		if failure == nil || result.Status == StatusRevokedCert {
+			failure = result
+		}
+	}
+	if failure != nil {
+		return failure
+	}
+	if revocationWarning != nil {
+		return revocationWarning
 	}
 
 	return &SignatureResult{
@@ -325,6 +368,34 @@ func (v *Verifier) verifySigners(p7 *pkcs7.PKCS7, signers []*x509.Certificate, s
 		SignerName:   signerName,
 		signerEmails: certEmails(signers[0]),
 	}
+}
+
+// verifySignerChain keeps known revocation attached to the actual signer,
+// including when a multi-signer message displays another signer first.
+func (v *Verifier) verifySignerChain(p7 *pkcs7.PKCS7, cert *x509.Certificate) error {
+	err := v.verifyChain(p7, cert)
+	fingerprint := certificateFingerprint(cert.Raw)
+	switch {
+	case err == nil:
+		if saveErr := v.store.SetSenderCertRevoked(fingerprint, false); saveErr != nil {
+			v.log.Warn().Err(saveErr).Msg("Failed to clear cached sender revocation")
+		}
+	case errors.Is(err, errRevocationUnchecked) || errors.Is(err, errRevocationUnknown):
+		if revoked, lookupErr := v.store.SenderCertRevoked(fingerprint); lookupErr == nil && revoked {
+			err = errCertificateRevoked
+		}
+	}
+	// Encryption eligibility follows this signer's trusted chain, independently
+	// of the displayed aggregate status or another signer's failure.
+	trusted := err == nil || errors.Is(err, errRevocationUnchecked) || errors.Is(err, errRevocationUnknown)
+	email, _ := signerIdentity(cert)
+	v.cacheSenderCert(cert, email, trusted)
+	if errors.Is(err, errCertificateRevoked) {
+		if saveErr := v.store.SetSenderCertRevoked(fingerprint, true); saveErr != nil {
+			v.log.Warn().Err(saveErr).Msg("Failed to persist sender revocation")
+		}
+	}
+	return err
 }
 
 // verifyChain verifies the signer certificate chains to a trusted root for
@@ -348,12 +419,18 @@ func (v *Verifier) verifyChain(p7 *pkcs7.PKCS7, signer *x509.Certificate) error 
 		}
 	}
 
-	_, err := signer.Verify(x509.VerifyOptions{
+	chains, err := signer.Verify(x509.VerifyOptions{
 		Roots:         roots,
 		Intermediates: intermediates,
 		KeyUsages:     []x509.ExtKeyUsage{x509.ExtKeyUsageEmailProtection},
 	})
-	return err
+	if err != nil {
+		return err
+	}
+	if v.revocationCheck == nil {
+		return errRevocationUnchecked
+	}
+	return v.revocationCheck(chains)
 }
 
 // signerCertificates returns the certificate referenced by each

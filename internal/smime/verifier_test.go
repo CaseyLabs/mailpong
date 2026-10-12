@@ -47,7 +47,7 @@ func newTestCertValid(t *testing.T, cn, email string, isCA bool, parent *testCer
 		IsCA:                  isCA,
 	}
 	if isCA {
-		tmpl.KeyUsage = x509.KeyUsageCertSign
+		tmpl.KeyUsage = x509.KeyUsageCertSign | x509.KeyUsageCRLSign
 	} else {
 		tmpl.KeyUsage = x509.KeyUsageDigitalSignature
 		tmpl.ExtKeyUsage = []x509.ExtKeyUsage{x509.ExtKeyUsageEmailProtection}
@@ -113,6 +113,8 @@ func newTestVerifier(t *testing.T, roots ...*x509.Certificate) (*Verifier, *Stor
 
 	store := NewStore(db.DB, zerolog.Nop())
 	v := NewVerifier(store, zerolog.Nop())
+	// These fixtures isolate cryptographic trust; online revocation has its own tests.
+	v.revocationCheck = func([][]*x509.Certificate) error { return nil }
 	v.roots = x509.NewCertPool()
 	for _, r := range roots {
 		v.roots.AddCert(r)
@@ -200,6 +202,7 @@ func TestVerifyPKCS7ChecksEverySigner(t *testing.T) {
 	}
 
 	v, _ := newTestVerifier(t, trustedCA.cert)
+	v.SetOnlineRevocationCheck(func() bool { return false })
 	if result := v.verifyPKCS7(p7); result.Status != StatusUnknownSigner {
 		t.Fatalf("status = %q (%s), want %q", result.Status, result.ErrorMessage, StatusUnknownSigner)
 	}

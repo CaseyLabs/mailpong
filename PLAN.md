@@ -4,12 +4,10 @@
 Review and fix every finding in ISSUES.md on separate branches. Run `codex review --base main` (the CLI `/review` equivalent) and resolve findings before each squash merge and push. Preserve unrelated commits and files.
 
 ## Milestones
-- S6: validate certificate revocation with privacy preference. Validate generated certificate/CRL cases and settings UI.
 - D2: verify published TypeScript tooling compatibility; upgrade only if supported. Validate lint, check, and build.
 - Recurring tooling: incorporate reliable alternatives in current guidance and clear obsolete tallies.
 
 ## Progress
-- [ ] S6
 - [ ] D2
 - [ ] Recurring tooling
 
@@ -30,3 +28,5 @@ M14: default/startup and existing split regression cases passed; `make test` pas
 A4/C12: Contacts production imports now use SDK/kit only; shared mirror service is restricted to Contacts; sidecar ownership and legacy credentials preserved. `make test`, `make lint`, independent acceptance review, simplify, and final `codex review --base main` passed. Logs: `/tmp/mailven-issues-review/contacts-*.log`.
 
 C17: exact-host DAV errors resolve through typed local IPC; both schedulers preserve certificate chains without leaking references into saved/displayed errors. Host-scoped trust removal and all-host pin list added. `make test`, `make lint`, frontend check/build, both Accounts prompt layouts, DAV pin UI, simplify, independent review, and final `codex review --base main` passed. Logs/screenshots: `/tmp/mailven-issues-review/C17*`.
+
+S6: opt-in revocation checks, explicit warning/error states, alternate chains, and persistent signer-specific revoked trust. `make test`, `make lint`, frontend check/build, both Accounts layouts, keyboard settings UI, and independent acceptance/simplify review passed after fixes. Final `codex review --base main` passed, including regressions for every signer and offline sync extraction. Logs/screenshots: `/tmp/mailven-issues-review/S6*`.

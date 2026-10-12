@@ -50,6 +50,7 @@ const (
 	KeyChatNotifyPriorityOnly     = "chat_notify_priority_only" // skip new-mail notifications for low-priority mail (defaults on)
 	KeyChatAutoAdvance            = "chat_auto_advance"         // "next" or "previous": which chat opens after Done, Snooze, delete, or move
 	KeyChatShowLowGroup           = "chat_show_low_group"       // show the Low priority group under the All filter (defaults on)
+	KeySMIMEOnlineRevocation      = "smime_online_revocation"   // opt-in online certificate revocation checking
 	KeyChatCombineSenders         = "chat_combine_senders"      // combine each sender's threads into one chat (defaults on); read in SQL by message.senderCombinedExpr
 )
 
@@ -1027,4 +1028,14 @@ func (s *Store) getBoolDefaultTrue(key string) (bool, error) {
 		return true, err
 	}
 	return value != "false", nil
+}
+
+// GetSMIMEOnlineRevocation defaults to false so certificate authorities are
+// never contacted without the user's opt-in.
+func (s *Store) GetSMIMEOnlineRevocation() (bool, error) {
+	value, err := s.Get(KeySMIMEOnlineRevocation)
+	return value == "true", err
+}
+func (s *Store) SetSMIMEOnlineRevocation(enabled bool) error {
+	return s.Set(KeySMIMEOnlineRevocation, strconv.FormatBool(enabled))
 }

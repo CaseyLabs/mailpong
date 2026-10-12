@@ -298,3 +298,13 @@ func (a *App) validateCertEmailForAccount(accountID, certEmail string) error {
 
 	return fmt.Errorf("certificate email %q does not match this account or any of its aliases", certEmail)
 }
+
+// GetSMIMEOnlineRevocation returns the application-wide privacy preference.
+func (a *App) GetSMIMEOnlineRevocation() (bool, error) {
+	return a.settingsStore.GetSMIMEOnlineRevocation()
+}
+
+// SetSMIMEOnlineRevocation opts in or out of online OCSP/CRL checks.
+func (a *App) SetSMIMEOnlineRevocation(enabled bool) error {
+	return a.settingsStore.SetSMIMEOnlineRevocation(enabled)
+}

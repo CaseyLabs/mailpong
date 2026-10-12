@@ -599,6 +599,10 @@ func (a *App) Startup(ctx context.Context) {
 	a.smimeStore = smime.NewStore(db.DB, log)
 	a.smimeSigner = smime.NewSigner(a.smimeStore, a.credStore, log)
 	a.smimeVerifier = smime.NewVerifier(a.smimeStore, log)
+	a.smimeVerifier.SetOnlineRevocationCheck(func() bool {
+		enabled, err := a.settingsStore.GetSMIMEOnlineRevocation()
+		return err == nil && enabled
+	})
 	a.smimeEncryptor = smime.NewEncryptor(a.smimeStore, a.credStore, log)
 	a.smimeDecryptor = smime.NewDecryptor(a.smimeStore, a.credStore, log)
 

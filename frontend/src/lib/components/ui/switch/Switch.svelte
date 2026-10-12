@@ -3,6 +3,7 @@
     checked?: boolean
     disabled?: boolean
     onCheckedChange?: (checked: boolean) => void
+    ariaLabel?: string
     id?: string
     class?: string
   }
@@ -11,6 +12,7 @@
     checked = $bindable(false),
     disabled = false,
     onCheckedChange,
+    ariaLabel,
     id,
     class: className = '',
   }: Props = $props()
@@ -35,7 +37,7 @@
   role="switch"
   aria-checked={checked}
   aria-disabled={disabled}
-  aria-label={checked ? 'Toggle on' : 'Toggle off'}
+  aria-label={ariaLabel ?? (checked ? 'Toggle on' : 'Toggle off')}
   {id}
   class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 {checked ? 'bg-primary' : 'bg-muted-foreground'} {className}"
   onclick={handleClick}

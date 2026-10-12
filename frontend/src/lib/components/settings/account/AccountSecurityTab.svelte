@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SMIMERevocationSetting from './SMIMERevocationSetting.svelte'
   import { onMount } from 'svelte'
   import Icon from '@iconify/svelte'
   import { Button } from '$lib/components/ui/button'
@@ -769,6 +770,7 @@
       </button>
 
       {#if !smimeCollapsed}
+      <SMIMERevocationSetting />
       <!-- Your Certificates -->
       <div class="space-y-3">
         <div class="flex items-center justify-between">

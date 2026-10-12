@@ -139,9 +139,14 @@ func (e *Engine) SetProgressCallback(callback ProgressCallback) {
 	e.progressCallback = callback
 }
 
-// SetSMIMEVerifier sets the S/MIME verifier for signature verification during body parsing
+// SetSMIMEVerifier uses an offline copy for body parsing so network revocation
+// checks cannot consume the parser deadline. Viewing mail verifies online when opted in.
 func (e *Engine) SetSMIMEVerifier(verifier *smime.Verifier) {
-	e.smimeVerifier = verifier
+	if verifier == nil {
+		e.smimeVerifier = nil
+		return
+	}
+	e.smimeVerifier = verifier.Offline()
 }
 
 // SetPGPVerifier sets the PGP verifier for signature verification during body parsing

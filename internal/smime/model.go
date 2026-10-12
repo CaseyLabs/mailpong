@@ -18,7 +18,10 @@ const (
 	StatusExpiredCert   SignatureStatus = "expired_cert"   // Valid sig, expired cert
 	// StatusSignerMismatch: valid sig, trusted chain, but the certificate
 	// does not name the message's From address
-	StatusSignerMismatch SignatureStatus = "signer_mismatch"
+	StatusSignerMismatch      SignatureStatus = "signer_mismatch"
+	StatusRevokedCert         SignatureStatus = "revoked_cert"
+	StatusRevocationUnchecked SignatureStatus = "revocation_unchecked"
+	StatusRevocationUnknown   SignatureStatus = "revocation_unknown"
 )
 
 // Certificate represents a user's imported S/MIME certificate
@@ -68,7 +71,7 @@ type SignatureResult struct {
 // signed; shown as "signed by" beside a different From it would vouch for
 // a forged sender.
 func (r *SignatureResult) CheckSender(from string) {
-	if r.Status != StatusSigned {
+	if r.Status != StatusSigned && r.Status != StatusRevocationUnchecked && r.Status != StatusRevocationUnknown {
 		return
 	}
 	for _, email := range r.signerEmails {

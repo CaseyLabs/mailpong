@@ -375,6 +375,8 @@ export function GetSMIMECertificateForEmail(arg1:string,arg2:string):Promise<smi
 
 export function GetSMIMEEncryptPolicy(arg1:string):Promise<string>;
 
+export function GetSMIMEOnlineRevocation():Promise<boolean>;
+
 export function GetSMIMESignPolicy(arg1:string):Promise<string>;
 
 export function GetSearchCount(arg1:string,arg2:string,arg3:string,arg4:string):Promise<number>;
@@ -688,6 +690,8 @@ export function SetReadReceiptResponsePolicy(arg1:string):Promise<void>;
 export function SetRunBackground(arg1:boolean):Promise<void>;
 
 export function SetSMIMEEncryptPolicy(arg1:string,arg2:string):Promise<void>;
+
+export function SetSMIMEOnlineRevocation(arg1:boolean):Promise<void>;
 
 export function SetSMIMESignPolicy(arg1:string,arg2:string):Promise<void>;
 

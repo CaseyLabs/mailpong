@@ -309,6 +309,7 @@ For non-OAuth accounts:
         - **Search** - Search for public keys. Starts with WKD and then searches key servers 
         - **List** - There's a list below the above 2 buttons that shows the current stored public keys
 - **S/MIME** - S/MIME cert based signing and encryption settings for your account
+    - **Online certificate revocation checks** - Off by default and applies to all accounts. When enabled, verifies current OCSP responses or complete CRLs for the signer and intermediate certificates. Requests may reveal when you view or download signed mail. Good/revoked results are cached for at most one hour and never beyond their next update. Unchecked, unavailable, stale, or unsupported revocation status is shown as a warning; a revoked certificate is shown as an error. The preference applies on the next verification when viewing or downloading a message; background sync extracts message content without online checks. Certificates already reported revoked remain blocked for automatic encryption until a successful online verification clears that result. Checks use direct HTTP(S) connections to public endpoints; proxy-only networks can report unavailable status.
     - **Import .p12** - Import your .p12 certificate. Imported certificate will appear below
     - **Import** - Import recipient certificates here. Imported or auto-collected public certs will appear below. Auto-collected certs are used for encryption only when they chain to a trusted certificate authority; import a self-signed or otherwise untrusted cert to accept it for encryption
 

@@ -714,6 +714,10 @@ export function GetSMIMEEncryptPolicy(arg1) {
   return window['go']['app']['App']['GetSMIMEEncryptPolicy'](arg1);
 }
 
+export function GetSMIMEOnlineRevocation() {
+  return window['go']['app']['App']['GetSMIMEOnlineRevocation']();
+}
+
 export function GetSMIMESignPolicy(arg1) {
   return window['go']['app']['App']['GetSMIMESignPolicy'](arg1);
 }
@@ -1340,6 +1344,10 @@ export function SetRunBackground(arg1) {
 
 export function SetSMIMEEncryptPolicy(arg1, arg2) {
   return window['go']['app']['App']['SetSMIMEEncryptPolicy'](arg1, arg2);
+}
+
+export function SetSMIMEOnlineRevocation(arg1) {
+  return window['go']['app']['App']['SetSMIMEOnlineRevocation'](arg1);
 }
 
 export function SetSMIMESignPolicy(arg1, arg2) {

@@ -190,7 +190,8 @@ func (s *Store) GetDefaultCertificate(accountID string) (*Certificate, string, e
 
 // CacheSenderCert stores or updates a sender's public certificate. trusted
 // marks certificates that chain to a trusted root or that the user imported;
-// only those are used for encryption. Once trusted, a cert stays trusted.
+// only those are used for encryption. Negative trusted values record a known
+// revoked chain until a later successful online verification clears them.
 func (s *Store) CacheSenderCert(email, certPEM string, trusted bool) error {
 	// Parse the PEM to extract metadata
 	block, _ := pem.Decode([]byte(certPEM))
@@ -215,7 +216,7 @@ func (s *Store) CacheSenderCert(email, certPEM string, trusted bool) error {
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(fingerprint) DO UPDATE SET
 			last_seen_at = excluded.last_seen_at,
-			trusted = MAX(trusted, excluded.trusted)`,
+			trusted = CASE WHEN trusted < 0 THEN trusted ELSE MAX(trusted, excluded.trusted) END`,
 		id, email, cert.Subject.String(), cert.Issuer.String(),
 		cert.SerialNumber.String(), fingerprint,
 		cert.NotBefore, cert.NotAfter, certPEM, now, now, trusted,
@@ -392,4 +393,20 @@ func (s *Store) ImportSenderCertFromFile(email string, certData []byte) error {
 
 	// An explicit import is the user's acceptance of the certificate.
 	return s.CacheSenderCert(email, certPEM, true)
+}
+
+// SenderCertRevoked records/checks previously verified revocation without a
+// network request. Negative trust is excluded by GetSenderCertPEMs, which only
+// selects trusted=1. Existing Boolean trust rows remain compatible.
+func (s *Store) SenderCertRevoked(fingerprint string) (bool, error) {
+	var trusted int
+	err := s.db.QueryRow(`SELECT trusted FROM smime_sender_certs WHERE fingerprint=?`, fingerprint).Scan(&trusted)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	return trusted < 0, err
+}
+func (s *Store) SetSenderCertRevoked(fingerprint string, revoked bool) error {
+	_, err := s.db.Exec(`UPDATE smime_sender_certs SET trusted=CASE WHEN ? THEN -1 WHEN trusted<0 THEN 0 ELSE trusted END WHERE fingerprint=?`, revoked, fingerprint)
+	return err
 }
