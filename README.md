@@ -2,7 +2,7 @@
 
 ## Overview
 
-Mailven is a Chat-like email client, that simplifies your inbox by turning emails into combined chats, with the clutter removed. Think of it as Messenger for your mailbox.
+Mailven is a Messenger-style email client, that simplifies your inbox by turning emails into combined chats with the clutter removed.
 
 ![Mailven chat mail view](docs/ss.png)
 
@@ -10,18 +10,18 @@ This is a personal project that is alpha software under active development. User
 
 ### History
 
-Mailven started with the desire for a simple chat-like app for email, similar to the way that the [Beeper app](https://www.beeper.com/) has done for messenger apps. Unfortunately, no such solutuion existed.
+Mailven started with the desire for a simple chat app interface for email, similar to the way that [Beeper](https://www.beeper.com/) has done for messenger apps. Unfortunately, no such solutuion existed.
 
-However, the the open-source [Aerion](https://github.com/hkdb/aerion) project created by [@hkdb](https://github.com/hkdb) has made great strides in creating a modern cross-platform email client. Mailven first started out as a simple custom fork of Aerion v0.35, but has since diverged into its own project.
+However, the the open-source [Aerion](https://github.com/hkdb/aerion) project created by [@hkdb](https://github.com/hkdb) has made great strides in creating a modern looking cross-platform email client. Mailven first started out as a simple custom fork of Aerion v0.35, but has since diverged into its own project.
 
 ## Features
 
-Mailven strives to present your email (whether it's Gmail or Outlook) like a chat/messenger app, in order to reduce the information overload that contemporary email has become:
+Mailven strives to present your emails as chats, similar to how instant messaging apps like Messages, WhatsApp, etc. The goal is to reduce the information overload that contemporary email has become:
 
-- Emails are grouped by the sender, not subjects, so that senders show up as a single chat, even if the email subject changes.
+- Emails are grouped by the sender, not subjects, so that senders always show up as a single chat.
 - Unneccessary message clutter (such as signatures, quoted text, HTML) are hidden by default.
-- Newsletters and notifications are automatically marked as "Low priority" emails.
-- Email chats can be pinned and snoozed.
+- Newsletters and notifications are automatically marked as "Low priority".
+- Chats can be pinned and snoozed.
 
 See [Email Management](docs/user-guide/features/email-management.md#chat-mail) for details.
 
