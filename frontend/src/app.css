@@ -39,13 +39,6 @@
   --color-accent: hsl(var(--accent));
   --color-accent-foreground: hsl(var(--accent-foreground));
 
-  /* Chat: bubbles, pending sends, day separators and the composer sit in
-     chat-column, centred in the wider chat-stream that email cards and full
-     email bodies use, so a 600px HTML email fits without horizontal
-     scrolling (it needs about 45.5rem with the avatar and paddings). */
-  --container-chat-column: 40rem;
-  --container-chat-stream: 46rem;
-
   --color-popover: hsl(var(--popover));
   --color-popover-foreground: hsl(var(--popover-foreground));
 
@@ -69,6 +62,32 @@
 
   --text-2xs: 0.625rem;
   --text-2xs--line-height: 0.75rem;
+
+  /* Type roles (see docs/UI_TOKENS.md). meta/body/title match text-xs,
+     text-sm and text-base; caption and compact are the 11px and 13px sizes
+     used by chips and quoted text, with no line-height of their own. */
+  --text-meta: 0.75rem;
+  --text-meta--line-height: 1rem;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.25rem;
+  --text-title: 1rem;
+  --text-title--line-height: 1.5rem;
+  --text-caption: 0.6875rem;
+  --text-compact: 0.8125rem;
+
+  /* Control and header heights. */
+  --height-control-sm: 1.75rem;
+  --height-control: 2rem;
+  --height-header: 3.6875rem;
+
+  /* Pane surfaces and text tiers: raw HSL triples (themes override them). */
+  --color-surface-rail: hsl(var(--surface-rail));
+  --color-surface-sidebar: hsl(var(--surface-sidebar));
+  --color-surface-list: hsl(var(--surface-list));
+  --color-surface-content: hsl(var(--surface-content));
+  --color-fg-primary: hsl(var(--fg-primary));
+  --color-fg-secondary: hsl(var(--fg-secondary));
+  --color-fg-tertiary: hsl(var(--fg-tertiary));
 
   --animate-fade-in: fadeIn 150ms ease-out;
   --animate-slide-up: slideUp 150ms ease-out;
@@ -112,6 +131,24 @@
   If we ever want to remove these styles, we need to add an explicit border
   color utility to any element that depends on these defaults.
 */
+/* Chat widths (Settings → Chat → Reading width). Bubbles, pending sends, day
+   separators and the composer sit in --chat-column, centred in the wider
+   --chat-stream that email cards and full email bodies use, so a 600px HTML
+   email fits without horizontal scrolling (it needs about 45.5rem with the
+   avatar and paddings). Plain variables, not @theme tokens: @theme inline
+   would bake the values into the utilities. */
+:root {
+  --chat-column: 40rem;
+  --chat-stream: 46rem;
+}
+:root[data-reading-width='narrow'] {
+  --chat-column: 34rem;
+}
+:root[data-reading-width='wide'] {
+  --chat-column: 48rem;
+  --chat-stream: 54rem;
+}
+
 @layer base {
   *,
   ::after,

@@ -577,3 +577,46 @@ func TestSetGetChatShowLowGroup(t *testing.T) {
 		}
 	}
 }
+
+func TestSetGetChatReadingWidth(t *testing.T) {
+	tests := []struct {
+		name    string
+		width   string
+		wantErr bool
+	}{
+		{name: "narrow", width: "narrow"},
+		{name: "standard", width: "standard"},
+		{name: "wide", width: "wide"},
+		{name: "invalid", width: "huge", wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := NewStore(openTestDB(t))
+
+			got, err := store.GetChatReadingWidth()
+			if err != nil || got != ChatReadingWidthStandard {
+				t.Fatalf("default = %q, %v; want standard", got, err)
+			}
+
+			err = store.SetChatReadingWidth(tt.width)
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected error, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			got, err = store.GetChatReadingWidth()
+			if err != nil {
+				t.Fatalf("unexpected error on get: %v", err)
+			}
+			if got != tt.width {
+				t.Errorf("got %q, want %q", got, tt.width)
+			}
+		})
+	}
+}

@@ -143,14 +143,14 @@
   {/if}
 {/snippet}
 
-<header bind:clientWidth={width} class="flex items-center gap-3 px-3 py-2 border-b border-divider">
+<header bind:clientWidth={width} class="flex items-center gap-3 px-3 py-2 min-h-header border-b border-divider">
   {#if showBackButton}
     {@render iconButton('mdi:arrow-left', $_('responsive.back'), () => onBack?.())}
   {/if}
 
   <div class="min-w-0 flex-1 px-1">
-    <h2 class="text-sm font-semibold text-foreground truncate" title={people.map((p) => p.email).join(', ')}>{title}</h2>
-    <p class="text-sm text-muted-foreground truncate" title={senderEmail ? undefined : subject}>
+    <h2 class="text-body font-semibold text-fg-primary truncate" title={people.map((p) => p.email).join(', ')}>{title}</h2>
+    <p class="text-body text-fg-secondary truncate" title={senderEmail ? undefined : subject}>
       {@render snoozed()}{subtitle}
     </p>
   </div>

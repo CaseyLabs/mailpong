@@ -62,3 +62,4 @@ frontend/wailsjs/go/models.ts :: minAerionVersion :: Generated binding of the D6
 docs/user-guide/getting-started/import-from-aerion.md :: . :: The import guide names Aerion's paths and database by design
 tools/db/rollback-v39-to-v30.sql :: . :: Historical rollback script for Aerion databases (0.3.0 to 0.2.5)
 frontend/src/lib/stores/contactSources.svelte.ts :: "aerion" local :: Comment about the D6 'aerion' contact source
+docs/PLAN-migration.md :: Aerion :: Migration plan, a history document

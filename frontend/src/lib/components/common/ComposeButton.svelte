@@ -1,7 +1,6 @@
 <script lang="ts">
-  // Primary "Compose" call to action, shared by the chat list header, the
-  // overlaid chat toolbar, and the message-list header and viewer. Keeps the
-  // original sidebar button's colours and label.
+  // Primary "Compose" call to action, shared by the chat list header and the
+  // conversation header. Tonal: a tinted fill with an accent icon.
   import { _ } from '$lib/i18n'
   import ToolbarButton from './ToolbarButton.svelte'
 
@@ -13,4 +12,4 @@
   let { onclick, compact = false }: Props = $props()
 </script>
 
-<ToolbarButton icon="mdi:pencil" label={$_('sidebar.compose')} primary {compact} {onclick} />
+<ToolbarButton icon="mdi:pencil" label={$_('sidebar.compose')} tonal {compact} {onclick} />

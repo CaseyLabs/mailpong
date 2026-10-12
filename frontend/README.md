@@ -29,6 +29,8 @@ Run `make dev` from the repository root to start the desktop application with ho
 - `npm run lint:fix`: apply automatic lint fixes; review the changes.
 - `npm run build`: production frontend build.
 
+Design tokens (type roles, control heights, pane surfaces, text tiers) are listed in [../docs/UI_TOKENS.md](../docs/UI_TOKENS.md).
+
 There is no frontend test script configured. Manually verify changed desktop flows, including keyboard navigation and the detached composer where relevant.
 
 Use two-space indentation, single quotes, no semicolons, and Svelte 5 runes. Regenerate bindings with `make generate` from the repository root after backend API changes. See [the translation guide](../docs/LANGUAGE.md) when changing locale support.

@@ -101,7 +101,7 @@
   <!-- Account Header -->
   <div class="relative group">
     <button
-      class="w-full flex items-center gap-2 px-3 py-2 text-sm font-medium text-foreground hover:bg-muted/50 transition-colors {isHeaderFocused ? 'bg-muted ring-1 ring-primary/50' : ''}"
+      class="w-full flex items-center gap-2 px-3 min-h-control text-sm font-medium text-fg-primary hover:bg-muted/50 transition-colors {isHeaderFocused ? 'bg-muted ring-1 ring-primary/50' : ''}"
       data-sidebar-item="account-header"
       data-account-id={acc.id}
       onclick={toggleExpanded}
@@ -124,7 +124,7 @@
 
     <!-- Account Menu Button -->
     <button
-      class="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-muted transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+      class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center size-7 rounded hover:bg-muted transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
       bind:this={menuButton}
       onclick={toggleMenu}
       onkeydown={handleMenuKeydown}

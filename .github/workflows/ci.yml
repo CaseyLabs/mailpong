@@ -50,6 +50,9 @@ jobs:
       - name: Run brand check
         run: ./tools/brand-check.sh
 
+      - name: Run contrast check
+        run: node tools/contrast-check.mjs
+
   check:
     name: Type check
     runs-on: ubuntu-22.04

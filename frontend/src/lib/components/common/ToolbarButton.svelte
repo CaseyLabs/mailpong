@@ -1,6 +1,7 @@
 <script lang="ts">
   // Labelled icon button for primary toolbar actions (Compose, Reply, Archive…).
-  // `primary` uses the accent colours; `ghost` drops the border until hover;
+  // `primary` uses the accent colours; `tonal` is a quieter accent (tinted fill,
+  // accent icon, primary-tier text for contrast); `ghost` drops the border until hover;
   // otherwise a bordered neutral style.
   // `compact` shows only the icon, keeping the label for screen readers.
   import Icon from '@iconify/svelte'
@@ -10,21 +11,24 @@
     label: string
     title?: string
     primary?: boolean
+    tonal?: boolean
     ghost?: boolean
     compact?: boolean
     disabled?: boolean
     onclick: () => void
   }
 
-  let { icon, label, title = label, primary = false, ghost = false, compact = false, disabled = false, onclick }: Props = $props()
+  let { icon, label, title = label, primary = false, tonal = false, ghost = false, compact = false, disabled = false, onclick }: Props = $props()
 </script>
 
 <button
-  class="flex items-center gap-2 {compact ? 'px-2' : 'px-3'} py-2 rounded-md text-sm font-medium whitespace-nowrap shrink-0 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:pointer-events-none {primary
+  class="flex items-center gap-2 {compact ? 'px-2' : 'px-3'} min-h-control rounded-md text-sm font-medium whitespace-nowrap shrink-0 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:opacity-50 disabled:pointer-events-none {primary
     ? 'border border-transparent bg-primary text-primary-foreground hover:bg-primary/90'
-    : ghost
-      ? 'border border-transparent text-foreground hover:bg-muted'
-      : 'border border-border text-foreground hover:bg-muted'}"
+    : tonal
+      ? 'border border-transparent bg-primary/15 text-fg-primary hover:bg-primary/25 [&_svg]:text-primary'
+      : ghost
+        ? 'border border-transparent text-foreground hover:bg-muted'
+        : 'border border-border text-foreground hover:bg-muted'}"
   {title}
   {disabled}
   {onclick}

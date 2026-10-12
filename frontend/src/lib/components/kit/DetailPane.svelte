@@ -48,7 +48,7 @@
   const visible = $derived(getResponsiveView() === 'viewer')
 </script>
 
-<section class="pane-detail flex flex-col bg-background {flashing ? 'pane-focus-flash' : ''} {overlay ? 'responsive-viewer-overlay' : ''} {overlay && visible ? 'responsive-viewer-visible' : ''}">
+<section class="pane-detail flex flex-col bg-surface-content {flashing ? 'pane-focus-flash' : ''} {overlay ? 'responsive-viewer-overlay' : ''} {overlay && visible ? 'responsive-viewer-visible' : ''}">
   <!--
     Header rendering rules — matched 1-for-1 with mail's ConversationViewer
     pattern at App.svelte:1488 (showBackButton={isResponsive()}):

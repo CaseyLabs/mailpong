@@ -1,10 +1,10 @@
-// Headless UI check for cloud sessions (no Claude-in-Chrome). See "Headless (cloud) path" in SKILL.md.
+// Headless README shot and Accounts-column crops. See "Playwright checks" in SKILL.md.
 // Usage: node headless-shot.js <outdir>   (dev server on :34115, serve-fakes.py on :8765, DISPLAY not needed)
 // Writes <outdir>/ss.png (1040x660, README shot) and <outdir>/vc-<theme>-<expanded|collapsed>.png (title bar + sidebar).
-const { chromium } = require('/opt/node-tools/node_modules/playwright')
+const { launch } = require('./pw')
 const out = process.argv[2]
 ;(async () => {
-  const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium' })
+  const b = await launch()
   const p = await b.newPage({ viewport: { width: 1300, height: 700 }, locale: 'en-GB' }) // en-GB gives 24-hour times
   p.on('pageerror', (e) => console.log('pageerror:', e.message))
   await p.goto('http://localhost:34115'); await p.waitForTimeout(3000)

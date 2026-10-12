@@ -83,7 +83,7 @@
   role="navigation"
   aria-label={label ?? title ?? $_('kit.sidebar')}
   tabindex={focusable ? 0 : undefined}
-  class="{resizable ? '' : 'w-60'} shrink-0 flex flex-col pt-3 border-r border-border outline-hidden {narrow ? 'bg-background' : 'bg-muted/30'} {narrow ? 'responsive-sidebar-overlay' : ''} {overlayVisible ? 'responsive-sidebar-visible' : ''} {isSidebarHidden() ? 'hidden' : ''} {extraClass}"
+  class="{resizable ? '' : 'w-60'} shrink-0 flex flex-col pt-3 border-r border-divider outline-hidden {narrow ? 'bg-background' : 'bg-surface-sidebar'} {narrow ? 'responsive-sidebar-overlay' : ''} {overlayVisible ? 'responsive-sidebar-visible' : ''} {isSidebarHidden() ? 'hidden' : ''} {extraClass}"
   style:width={resizable ? `${width}px` : undefined}
   {onkeydown}
   {onfocus}

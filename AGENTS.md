@@ -23,7 +23,7 @@ Toolchain: Go 1.26, Node.js 24 (matches CI), Wails v2 CLI. Linux needs GTK 3 and
 - `make build`: production build in `build/bin/`.
 - `make generate`: regenerate Wails TypeScript bindings.
 - `make test`, `make fmt`: Go tests and formatting.
-- `make lint`: golangci-lint v2, frontend ESLint and the brand check (`tools/brand-check.sh`, allowlist in `tools/brand-check.allow`).
+- `make lint`: golangci-lint v2, frontend ESLint, the brand check (`tools/brand-check.sh`, allowlist in `tools/brand-check.allow`) and the theme contrast check (`tools/contrast-check.mjs`, text tiers ≥ 4.5:1 on pane surfaces).
 - `cd frontend && npm run check`: Svelte/TypeScript checks.
 - OAuth testing: copy `.env.example` to `.env`; `.env.local` overrides it.
 

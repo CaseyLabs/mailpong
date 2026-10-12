@@ -96,8 +96,8 @@
   <span class="shrink-0" aria-hidden="true">|</span>
 {/snippet}
 
-<div class="mx-auto w-full max-w-chat-column border-t border-divider px-3 py-2 bg-background">
-  <div class="flex items-baseline gap-1.5 mb-1.5 px-1 text-xs text-muted-foreground min-w-0">
+<div class="mx-auto w-full max-w-(--chat-column) border-t border-divider px-3 py-2 bg-background">
+  <div class="flex items-baseline gap-1.5 mb-1.5 px-1 text-xs text-fg-tertiary min-w-0">
     {#if choices}
       <span class="shrink-0">{$_('chat.replyTo')}</span>
       {#if sameChoice}
@@ -148,7 +148,7 @@
     </ul>
   {/if}
 
-  <div class="flex items-end gap-1 rounded-xl border border-divider px-1.5 py-1 focus-within:ring-2 focus-within:ring-ring">
+  <div class="flex items-end gap-1 min-h-control rounded-xl border border-divider px-1.5 py-1 focus-within:ring-2 focus-within:ring-ring">
     <button class="shrink-0 p-1.5 rounded-full hover:bg-muted" title={$_('chat.attach')} aria-label={$_('chat.attach')} {disabled} onclick={attach}>
       <Icon icon="mdi:paperclip" class="w-5 h-5 text-muted-foreground" />
     </button>

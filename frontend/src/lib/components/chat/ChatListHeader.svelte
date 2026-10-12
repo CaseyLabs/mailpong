@@ -38,7 +38,7 @@
 
   let searchInputRef = $state<HTMLInputElement | null>(null)
   // Icon-only Compose in a narrow list, so the scope name keeps room.
-  const COMPACT_WIDTH = 340
+  const COMPACT_WIDTH = 364 // row width including its 24 px padding
   let topRowWidth = $state(0)
   const compactCompose = $derived(topRowWidth > 0 && topRowWidth < COMPACT_WIDTH)
 
@@ -92,12 +92,13 @@
   const itemClass = 'relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden focus:bg-accent focus:text-accent-foreground'
 </script>
 
-<div class="@container flex flex-col gap-2 px-3 pt-3">
-  <div class="flex items-center gap-1 min-w-0" bind:clientWidth={topRowWidth}>
+<div class="@container flex flex-col">
+  <!-- Same height as the conversation header, so their bottom edges line up. -->
+  <div class="flex items-center gap-1 min-w-0 min-h-header px-3 border-b border-divider" bind:clientWidth={topRowWidth}>
     <ResponsiveSidebarToggle />
     <DropdownMenu.Root>
       <DropdownMenu.Trigger
-        class="flex items-center gap-1 min-w-0 px-2 py-1 rounded-md hover:bg-muted transition-colors {ring}"
+        class="flex items-center gap-1 min-w-0 px-2 min-h-control rounded-md hover:bg-muted transition-colors {ring}"
         aria-label={`${$_('chat.scope')}: ${scopeLabel}`}
       >
         <span class="font-semibold text-foreground truncate">{scopeLabel}</span>
@@ -140,7 +141,7 @@
 
     <div class="flex-1"></div>
     <button
-      class="p-2 rounded-md hover:bg-muted transition-colors {ring}"
+      class="flex items-center justify-center h-control w-8 rounded-md hover:bg-muted transition-colors {ring}"
       title={syncTitle}
       onmouseenter={() => syncHover++}
       aria-label={$_('sidebar.syncAllAccounts')}
@@ -151,45 +152,47 @@
     <div class="ml-1 shrink-0"><ComposeButton compact={compactCompose} onclick={onCompose} /></div>
   </div>
 
-  <div class="flex items-center gap-1 bg-muted rounded-md px-2 focus-within:ring-2 focus-within:ring-ring">
-    <Icon icon="mdi:magnify" class="w-4 h-4 text-muted-foreground shrink-0" />
-    <input
-      bind:this={searchInputRef}
-      type="search"
-      placeholder={$_('chat.searchChats')}
-      aria-label={$_('chat.searchChats')}
-      class="bg-transparent border-none outline-hidden text-sm py-1.5 w-full min-w-0"
-      value={query}
-      oninput={(e) => onQuery(e.currentTarget.value)}
-      onkeydown={handleSearchKeydown}
-    />
-    {#if query}
-      <button
-        class="p-0.5 rounded hover:bg-background/60 {ring}"
-        aria-label={$_('messageList.clearSearch')}
-        onclick={() => { onQuery(''); searchInputRef?.focus() }}
-      >
-        <Icon icon="mdi:close" class="w-4 h-4 text-muted-foreground" />
-      </button>
-    {/if}
-  </div>
+  <div class="flex flex-col gap-2 px-3 pt-3">
+    <div class="flex items-center gap-1 min-h-control bg-muted rounded-md px-2 focus-within:ring-2 focus-within:ring-ring">
+      <Icon icon="mdi:magnify" class="w-4 h-4 text-muted-foreground shrink-0" />
+      <input
+        bind:this={searchInputRef}
+        type="search"
+        placeholder={$_('chat.searchChats')}
+        aria-label={$_('chat.searchChats')}
+        class="bg-transparent border-none outline-hidden text-sm py-1 w-full min-w-0"
+        value={query}
+        oninput={(e) => onQuery(e.currentTarget.value)}
+        onkeydown={handleSearchKeydown}
+      />
+      {#if query}
+        <button
+          class="flex items-center justify-center h-control-sm w-7 -mr-2 rounded hover:bg-background/60 {ring}"
+          aria-label={$_('messageList.clearSearch')}
+          onclick={() => { onQuery(''); searchInputRef?.focus() }}
+        >
+          <Icon icon="mdi:close" class="w-4 h-4 text-muted-foreground" />
+        </button>
+      {/if}
+    </div>
 
-  <!-- One non-wrapping row; the gap narrows in a narrow pane so every tab still fits.
-       The row's divider is the header's bottom edge. -->
-  <div class="-mx-3 px-3 flex items-center gap-2.5 @[16rem]:gap-4 border-b border-divider text-xs" role="group" aria-label={$_('chat.filters')}>
-    {#each filters as f (f.value)}
-      {@const active = filter === f.value}
-      {@const unavailable = isSearch && !searchSupports(f.value)}
-      <!-- No pointer-events-none when disabled, so the tooltip still shows on hover. -->
-      <button
-        disabled={unavailable}
-        title={unavailable ? $_('chat.filterUnavailableInSearch') : undefined}
-        class="shrink-0 -mb-px py-1.5 border-b-2 whitespace-nowrap transition-colors {active ? 'border-foreground text-foreground font-semibold' : 'border-transparent text-muted-foreground enabled:hover:text-foreground'} disabled:opacity-50 disabled:cursor-not-allowed {ring}"
-        aria-pressed={active}
-        onclick={() => onFilter(f.value)}
-      >
-        {f.label}
-      </button>
-    {/each}
+    <!-- One non-wrapping row; the gap narrows in a narrow pane so every tab still fits.
+         The row's divider is the header's bottom edge. -->
+    <div class="-mx-3 px-3 flex items-center gap-2.5 @[16rem]:gap-4 border-b border-divider text-meta" role="group" aria-label={$_('chat.filters')}>
+      {#each filters as f (f.value)}
+        {@const active = filter === f.value}
+        {@const unavailable = isSearch && !searchSupports(f.value)}
+        <!-- No pointer-events-none when disabled, so the tooltip still shows on hover. -->
+        <button
+          disabled={unavailable}
+          title={unavailable ? $_('chat.filterUnavailableInSearch') : undefined}
+          class="shrink-0 -mb-px min-h-control-sm border-b-2 whitespace-nowrap transition-colors {active ? 'border-foreground text-fg-primary font-semibold' : 'border-transparent text-fg-secondary enabled:hover:text-fg-primary'} disabled:opacity-50 disabled:cursor-not-allowed {ring}"
+          aria-pressed={active}
+          onclick={() => onFilter(f.value)}
+        >
+          {f.label}
+        </button>
+      {/each}
+    </div>
   </div>
 </div>

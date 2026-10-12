@@ -470,6 +470,10 @@ export function GetChatNotifyPriorityOnly() {
   return window['go']['app']['App']['GetChatNotifyPriorityOnly']();
 }
 
+export function GetChatReadingWidth() {
+  return window['go']['app']['App']['GetChatReadingWidth']();
+}
+
 export function GetChatSendKey() {
   return window['go']['app']['App']['GetChatSendKey']();
 }
@@ -1200,6 +1204,10 @@ export function SetChatIncludeQuote(arg1) {
 
 export function SetChatNotifyPriorityOnly(arg1) {
   return window['go']['app']['App']['SetChatNotifyPriorityOnly'](arg1);
+}
+
+export function SetChatReadingWidth(arg1) {
+  return window['go']['app']['App']['SetChatReadingWidth'](arg1);
 }
 
 export function SetChatSendKey(arg1) {

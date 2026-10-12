@@ -12,8 +12,8 @@
 </script>
 
 <button
-  class="flex items-center justify-center w-12 h-12 border-l-[3px] transition-colors duration-150 cursor-pointer focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-primary focus-visible:-outline-offset-2 {active
-    ? 'border-l-transparent text-foreground bg-accent'
+  class="flex items-center justify-center w-12 h-11 border-l-[3px] transition-colors duration-150 cursor-pointer focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-primary focus-visible:-outline-offset-2 {active
+    ? 'border-l-primary text-fg-primary bg-accent'
     : 'border-l-transparent text-muted-foreground hover:text-foreground hover:bg-accent/30'}"
   type="button"
   title={label}

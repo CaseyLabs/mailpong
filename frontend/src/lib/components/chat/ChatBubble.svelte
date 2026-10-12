@@ -158,7 +158,7 @@
   {onReply}
 >
   <div
-    class="group flex gap-2 {wide ? 'px-4' : 'mx-auto w-full max-w-chat-column px-4'} {item.groupStart ? (mode === 'full' && !item.newDay && !item.subject ? 'mt-3 pt-3 border-t border-border' : 'mt-3') : 'mt-0.5'} {item.mine ? 'flex-row-reverse' : ''}"
+    class="group flex gap-2 {wide ? 'px-4' : 'mx-auto w-full max-w-(--chat-column) px-4'} {item.groupStart ? (mode === 'full' && !item.newDay && !item.subject ? 'mt-3 pt-3 border-t border-border' : 'mt-3') : 'mt-0.5'} {item.mine ? 'flex-row-reverse' : ''}"
     data-message-id={msg.id}
     tabindex="-1"
     role="article"
@@ -177,14 +177,14 @@
 
     <div class="flex flex-col min-w-0 {mode === 'bubble' ? 'max-w-[min(75%,36rem)]' : 'flex-1'} {item.mine ? 'items-end' : 'items-start'}">
       {#if item.groupStart || badges.length > 0}
-        <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-1 mb-0.5 text-xs text-muted-foreground" title={item.groupStart ? recipientsTitle : undefined}>
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-1 mb-0.5 text-xs text-fg-tertiary" title={item.groupStart ? recipientsTitle : undefined}>
           {#if item.groupStart}
-            {#if !item.mine}<span class="font-medium text-foreground/80">{senderName}</span>{/if}
+            {#if !item.mine}<span class="font-medium text-fg-primary">{senderName}</span>{/if}
             {#if msg.isDraft}<span class="text-destructive font-medium">{$_('chat.draft')}</span>{/if}
             <span class="tabular-nums">{time}</span>
           {/if}
           {#each badges as b (b.icon + b.text)}
-            <span class="inline-flex items-center gap-1 px-1.5 py-px rounded-full border text-[11px] leading-4 {TONES[b.tone]}" title={b.text}>
+            <span class="inline-flex items-center gap-1 px-1.5 py-px rounded-full border text-caption leading-4 {TONES[b.tone]}" title={b.text}>
               <Icon icon={b.icon} class="w-3 h-3 shrink-0" aria-hidden="true" />
               <span class="max-w-48 truncate">{b.text}</span>
             </span>
@@ -212,7 +212,7 @@
           {:else if bare}
             <!-- Attachment-only mail: the attachment list below is the message -->
           {:else if mode === 'bubble'}
-            <div class="px-3.5 py-2 text-sm whitespace-pre-wrap wrap-anywhere">
+            <div class="px-3.5 py-2 text-[15px] leading-[1.45] whitespace-pre-wrap wrap-anywhere">
               {@render text(msg.chat!.text)}
               {#if msg.chat!.hasQuoted}
                 <!-- Quiet marker at the end of the text, not a pill below it -->
@@ -224,7 +224,7 @@
                   onclick={() => (showQuoted = !showQuoted)}
                 ><Icon icon="mdi:dots-horizontal" class="w-4 h-4" /></button>
                 {#if showQuoted}
-                  <div class="mt-2 pl-2 border-l-2 text-[13px] opacity-80 border-foreground/20">
+                  <div class="mt-2 pl-2 border-l-2 text-compact opacity-80 border-foreground/20">
                     {@render text(msg.chat!.quoted ?? '')}
                   </div>
                 {/if}
@@ -237,7 +237,7 @@
           {/if}
 
           <!-- Hover / focus actions -->
-          <div class="absolute {actionsPos} flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 group-has-focus-visible:opacity-100 transition-opacity">
+          <div class="absolute {actionsPos} flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 group-has-focus-visible:opacity-100 has-data-[state=open]:opacity-100 transition-opacity">
             {#if msg.isDraft && onEditDraft}
               <button class="p-1 rounded hover:bg-muted" title={$_('viewer.editDraft')} onclick={() => onEditDraft(msg.id)}>
                 <Icon icon="mdi:pencil" class="w-4 h-4 text-muted-foreground" />

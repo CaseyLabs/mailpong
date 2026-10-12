@@ -22,7 +22,7 @@
 <div role="group" aria-label={label}>
   {#if onToggle}
     <button
-      class="flex items-center gap-1 w-full px-4 pt-3 pb-1 text-left text-xs font-semibold text-muted-foreground hover:text-foreground"
+      class="flex items-center gap-1 w-full px-4 pt-3 pb-1 text-left text-caption font-semibold uppercase tracking-wide text-fg-tertiary hover:text-fg-primary"
       aria-expanded={open}
       onclick={onToggle}
     >
@@ -33,7 +33,7 @@
   {#if open}
     {@render children()}
     {#if fewerLabel}
-      <button class="px-4 py-1 text-xs text-muted-foreground hover:text-foreground hover:underline" onclick={onToggleFewer}>
+      <button class="px-4 py-1 text-xs text-fg-tertiary hover:text-fg-primary hover:underline" onclick={onToggleFewer}>
         {fewerLabel}
       </button>
     {/if}

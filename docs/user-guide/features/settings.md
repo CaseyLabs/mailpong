@@ -193,6 +193,10 @@ Options for the chat-style mail list, thread view, and reply box.
 
 **Enter** (default) sends from the reply box, with Shift+Enter for a new line. **Ctrl+Enter** sends instead, and Enter adds a new line.
 
+### Reading Width
+
+How wide the messages, day headings and reply box are in an open chat: **Narrow**, **Standard** (default) or **Wide**. Email cards and full email bodies stay wide enough for a 600 px HTML email at every setting.
+
 ### Include Quoted History
 
 On by default. Chat replies quote the replied-to message below your text, so recipients using traditional email clients keep the context. The quote stays hidden in the chat view.

@@ -175,31 +175,65 @@ those.
 If the page loses its copy of the starting state, read the saved state directly:
 `sqlite3 -readonly ~/.local/share/mailpong/mailpong.db "select value from app_state where key='ui_state'"`.
 
-## Headless (cloud) path
+## Playwright checks (local and cloud)
 
-Cloud sessions have no Claude-in-Chrome, but Xvfb and Playwright's Chromium are
-installed, so the UI checks still work:
+Headless Playwright writes screenshots from one Bash call, so it needs neither
+Claude-in-Chrome nor a visible window. Detect the environment once:
 
 ```bash
-export PATH=$PATH:$HOME/go/bin DISPLAY=:99   # wails lives in ~/go/bin
-(Xvfb :99 -screen 0 1600x1000x24 &) ; .claude/skills/run-mailpong/dev.sh start   # then dev.sh wait
-python3 .claude/skills/run-mailpong/serve-fakes.py &
-node .claude/skills/run-mailpong/headless-shot.js "$SCRATCH"   # ss.png plus vc-<theme>-<state>.png
+if [ "$CLAUDE_CODE_REMOTE" = true ] || [ -d /opt/node-tools/node_modules/playwright ]; then echo cloud; else echo local; fi
+```
+
+| | Local (desktop) | Cloud |
+|---|---|---|
+| Playwright module | `~/.cache/mailpong-upnote-ui/node_modules/playwright` (1.63.0) | `/opt/node-tools/node_modules/playwright` |
+| Chromium | Playwright's own, no `executablePath` | `/opt/pw-browsers/chromium` |
+| Display for `dev.sh start` | the real desktop | `Xvfb :99 -screen 0 1600x1000x24`, `DISPLAY=:99`, `PATH=$PATH:$HOME/go/bin` |
+
+`pw.js` does this selection and exports `launch()`. `$PLAYWRIGHT_MODULE` and
+`$PLAYWRIGHT_CHROMIUM` override the paths. If the module is missing it exits
+with the reinstall command
+(`npm install --prefix ~/.cache/mailpong-upnote-ui --no-save playwright@1.63.0`;
+never add Playwright to `frontend/package.json`).
+
+```bash
+# cloud only: (Xvfb :99 -screen 0 1600x1000x24 &)  and  export PATH=$PATH:$HOME/go/bin DISPLAY=:99
+.claude/skills/run-mailpong/dev.sh start          # run_in_background; then dev.sh wait
+python3 .claude/skills/run-mailpong/serve-fakes.py   # run_in_background
+node .claude/skills/run-mailpong/headless-shot.js "$SCRATCH"          # ss.png plus vc-<theme>-<state>.png
+node .claude/skills/run-mailpong/ui-matrix.js "$SCRATCH" <prefix>     # the full matrix
 ```
 
 `headless-shot.js` dismisses the first-run dialogs, enables Contacts and
 Calendar (their rail icons only show once enabled), runs the fakes from
 "Retaking the README screenshot", and writes the README shot plus the
-dark/light x Accounts-column expanded/collapsed crops. Look at the PNGs with
-Read. Copy `ss.png` to `docs/ss.png` as is.
+dark/light x Accounts-column expanded/collapsed crops. Copy `ss.png` to
+`docs/ss.png` as is.
+
+`ui-matrix.js <outdir> <prefix>` uses the same page setup and writes 36 PNGs:
+`<prefix>-<dark|light>-<1400|900|700>-<expanded|collapsed>-<previews|nopreviews>.png`
+(at 700 px the app is in overlay layout with no Accounts toggle, so only the
+`expanded` file exists), plus `<prefix>-<theme>-<state>-<previews|nopreviews>-row-<hover|focus>.png`
+crops at 1400 px. Compare a before and an after set without loading images:
+
+```bash
+for f in "$SCRATCH"/before/*.png; do n=$(basename "$f"); echo "$(compare -metric AE "$f" "$SCRATCH/after/${n/before/after}" null: 2>&1) $n"; done | sort -rn | head
+```
+
+Back-to-back runs on an unchanged tree differ by up to about 200 pixels per
+image (relative times in the fake data, and a 9x9 px spot at the window
+edge), so treat an AE under about 300 as unchanged. Before and after must
+come from the same environment. The local `before` set lives in
+`~/.cache/mailpong-upnote-ui/before/`; the cloud container is fresh each
+session, so rebuild it from the clean checkout first.
 
 - It sets `locale: 'en-GB'` so times are 24-hour, as in the old screenshot.
-- Dev builds force Dark, so the script sets `data-theme="light"` by hand
-  for the light check.
-- ImageMagick 7's `magick` is missing; use `convert`.
+- Dev builds force Dark, so the scripts set `data-theme="light"` by hand.
+- ImageMagick 7: `magick` and `compare` exist; `convert` is deprecated.
 - `pkill -f serve-fakes.py` matches the shell running it and kills it (exit 144). Use
-  `pkill -f 'serve-fake[s]'`, and run `dev.sh stop` and `pkill Xvfb` as well.
+  `pkill -f 'serve-fake[s]'`, and run `dev.sh stop` (and in the cloud `pkill Xvfb`) as well.
 - The native window and dock icon aren't visible under Xvfb; report that.
+- zsh treats an unquoted `==` as a command: quote it in `echo`.
 
 ## Retaking the README screenshot
 

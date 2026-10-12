@@ -8,7 +8,7 @@
 # OAuth credentials are loaded from .env or .env.local files
 # See .env.example for required variables
 
-.PHONY: all build build-linux dev dev-race credentials generate clean test lint lint-brand help \
+.PHONY: all build build-linux dev dev-race credentials generate clean test lint lint-brand lint-contrast help \
         install uninstall install-linux uninstall-linux \
         install-darwin uninstall-darwin build-windows-installer flatpak flatpak-install flatpak-dev
 
@@ -127,7 +127,7 @@ test:
 	go test ./...
 
 # Run all linters (Go + frontend)
-lint: lint-go lint-frontend lint-brand
+lint: lint-go lint-frontend lint-brand lint-contrast
 
 # Run Go linter (requires golangci-lint)
 lint-go:
@@ -143,6 +143,11 @@ lint-frontend:
 lint-brand:
 	@echo "Running brand check..."
 	./tools/brand-check.sh
+
+# Contrast check: theme text tiers vs pane surfaces (>= 4.5:1)
+lint-contrast:
+	@echo "Running contrast check..."
+	node tools/contrast-check.mjs
 
 # Format Go code
 fmt:

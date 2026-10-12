@@ -22,7 +22,7 @@
 <div class="px-3 py-2">
   <button
     type="button"
-    class="w-full flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground
+    class="w-full flex items-center gap-2 px-3 min-h-control text-sm text-fg-secondary
            hover:text-foreground hover:bg-muted/50 rounded-md transition-colors"
     {onclick}
   >

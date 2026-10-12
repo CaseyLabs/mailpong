@@ -36,7 +36,7 @@ For OAuth testing, copy `.env.example` to `.env` and configure your own credenti
 Prefer small changes, explicit Go error handling, and guard clauses. Format Go with `gofmt`, document exported functions, and use zerolog for logging. Frontend code uses two-space indentation, single quotes, no semicolons, PascalCase component names, and Svelte 5 runes. Keep components focused and under 500 lines. Preserve keyboard accessibility, resource efficiency, and user privacy.
 
 - `make fmt`: format Go code.
-- `make lint`: run golangci-lint v2, frontend ESLint and the brand check (`tools/brand-check.sh`; add a reasoned line to `tools/brand-check.allow` for any legitimate "Aerion" mention).
+- `make lint`: run golangci-lint v2, frontend ESLint, the theme contrast check (`tools/contrast-check.mjs`) and the brand check (`tools/brand-check.sh`; add a reasoned line to `tools/brand-check.allow` for any legitimate "Aerion" mention).
 - `cd frontend && npm run check`: check Svelte and TypeScript.
 - `make test`: run Go tests; build the frontend first because Go embeds `frontend/dist/`.
 - `make build`: produce the desktop application.

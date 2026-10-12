@@ -290,6 +290,17 @@ func (a *App) SetChatCombineSenders(combine bool) error {
 	return moveErr
 }
 
+// GetChatReadingWidth returns the chat reading column width ("narrow",
+// "standard" or "wide")
+func (a *App) GetChatReadingWidth() (string, error) {
+	return a.settingsStore.GetChatReadingWidth()
+}
+
+// SetChatReadingWidth sets the chat reading column width
+func (a *App) SetChatReadingWidth(width string) error {
+	return a.settingsStore.SetChatReadingWidth(width)
+}
+
 // GetChatSendKey returns the chat composer's send key ("enter" or "ctrl-enter")
 func (a *App) GetChatSendKey() (string, error) {
 	return a.settingsStore.GetChatSendKey()

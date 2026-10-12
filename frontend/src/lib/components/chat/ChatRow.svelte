@@ -12,7 +12,7 @@
   import { ContextMenuItem } from '$lib/components/ui/context-menu'
   import { contactPhotos } from '$lib/stores/contactPhotos.svelte'
   import { getLayoutMode } from '$lib/stores/layout.svelte'
-  import { getShowMessagePreview } from '$lib/stores/settings.svelte'
+  import { getMessageListDensity, getShowMessagePreview, type MessageListDensity } from '$lib/stores/settings.svelte'
   import type { ChatItem, ChatPerson } from '$lib/stores/chat.svelte'
   import ChatSnoozeMenu from './ChatSnoozeMenu.svelte'
   import { canToggleSenderChat, displayName, displaySubject, rowPeople } from './chatFormat'
@@ -74,9 +74,34 @@
     return extra > 0 ? `${names} ${$_('chat.andMore', { values: { count: extra } })}` : names
   })
 
+  // Per density: avatar px, vertical padding class and the text lines' size
+  // class. Row heights come out at 32 (micro), 44 (compact), 60/44 (standard)
+  // and 76/60 (large) px, with the 4/8 px padding.
+  interface DensityStyle { avatar: number; pad: string; line: string }
+  const DENSITY: Record<MessageListDensity, DensityStyle> = {
+    micro: { avatar: 24, pad: 'py-1', line: 'text-body' },
+    compact: { avatar: 28, pad: 'py-1', line: 'text-meta' },
+    standard: { avatar: 36, pad: 'py-1', line: 'text-meta' },
+    large: { avatar: 44, pad: 'py-2', line: 'text-body' },
+  }
+  // Text height by layout: 20px name line, plus 16px (20px at large) lines.
+  const TEXT_HEIGHT = { single: 20, double: 36, triple: 52, tripleLarge: 60 }
+
   const hasUnread = $derived(chat.unreadCount > 0)
+  const density = $derived(getMessageListDensity())
+  const ds = $derived(DENSITY[density])
   // Search results always show the matching text.
   const showPreview = $derived(getShowMessagePreview() || !!chat.highlightedSnippet)
+  // single: name, subject and time on one line (micro, no search match).
+  // double: name line, then subject (with the preview inline at micro and
+  // compact, where search matches land).
+  // triple: name, subject, preview on their own lines.
+  const layout = $derived<'single' | 'double' | 'triple'>(
+    density === 'micro' && !chat.highlightedSnippet ? 'single'
+      : showPreview && (density === 'standard' || density === 'large') ? 'triple' : 'double'
+  )
+  // The content box: the taller of the avatar and the text lines.
+  const intrinsicHeight = $derived(Math.max(ds.avatar, layout === 'triple' && density === 'large' ? TEXT_HEIGHT.tripleLarge : TEXT_HEIGHT[layout]))
   const time = $derived(formatListDate(chat.latestDate))
   const snoozeTime = $derived(chat.snoozedUntil ? formatSnoozedUntil(chat.snoozedUntil) : '')
 
@@ -139,6 +164,22 @@
   </span>
 {/snippet}
 
+{#snippet subjectLine()}
+  <span class="flex-1 min-w-0 truncate {ds.line} text-fg-secondary {hasUnread ? 'font-medium' : ''}">
+    <!-- Chat search highlights the subject with its prefixes already dropped. -->
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -- highlightMatches only inserts <mark> around already-escaped text -->
+    {#if chat.highlightedSubject}{@html chat.highlightedSubject}{:else}{subject}{/if}
+    {#if layout === 'double' && showPreview}<span class="text-fg-tertiary"> — {@render previewText('')}</span>{/if}
+  </span>
+{/snippet}
+
+{#snippet previewText(cls: string)}
+  <span class="{cls} {ds.line} text-fg-tertiary">
+    <!-- eslint-disable-next-line svelte/no-at-html-tags -- highlightMatches only inserts <mark> around already-escaped text -->
+    {#if chat.highlightedSnippet}{@html chat.highlightedSnippet}{:else}{chat.snippet}{/if}
+  </span>
+{/snippet}
+
 {#snippet avatar(p: ChatPerson | undefined, size: number)}
   {@const photo = p ? contactPhotos.get(p.email) : undefined}
   <Avatar email={p?.email || chat.threadId} name={p?.name} {size} photoData={photo?.data} photoMediaType={photo?.mediaType} />
@@ -164,22 +205,24 @@
     tabindex="-1"
     data-chat-row
     draggable={getLayoutMode() !== 'narrow'}
-    class="chat-row relative flex items-center gap-3 px-3 py-2 mx-1.5 my-0.5 rounded-lg cursor-pointer outline-hidden transition-colors {selected ? 'bg-muted text-foreground group-data-[focused]/list:ring-2 group-data-[focused]/list:ring-inset group-data-[focused]/list:ring-ring' : 'hover:bg-muted/50'} {showPreview ? 'chat-row-tall' : 'chat-row-short'}"
+    data-density={density}
+    style:contain-intrinsic-size="auto {intrinsicHeight}px"
+    class="chat-row relative flex items-center {density === 'micro' ? 'gap-2' : 'gap-3'} px-3 {ds.pad} mx-1.5 my-0.5 rounded-lg cursor-pointer outline-hidden transition-colors {selected ? 'bg-muted text-foreground group-data-[focused]/list:ring-2 group-data-[focused]/list:ring-inset group-data-[focused]/list:ring-ring' : 'hover:bg-muted/50'}"
     onclick={onSelect}
     onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect() } }}
     ondragstart={handleDragStart}
   >
     <!-- Avatar: one person, or two stacked for a group -->
-    <div class="relative shrink-0 w-11 h-11" aria-hidden="true">
+    <div class="relative shrink-0" style:width="{ds.avatar}px" style:height="{ds.avatar}px" aria-hidden="true">
       {#if people.length > 1}
-        <div class="absolute top-0 left-0">{@render avatar(people[0], 26)}</div>
-        <div class="absolute bottom-0 right-0 rounded-full ring-2 ring-background">{@render avatar(people[1], 26)}</div>
+        <div class="absolute top-0 left-0">{@render avatar(people[0], Math.round(ds.avatar * 0.6))}</div>
+        <div class="absolute bottom-0 right-0 rounded-full ring-2 ring-background">{@render avatar(people[1], Math.round(ds.avatar * 0.6))}</div>
       {:else}
-        {@render avatar(people[0], 44)}
+        {@render avatar(people[0], ds.avatar)}
       {/if}
       {#if showAccount && chat.accountColor}
         <span
-          class="absolute -bottom-0.5 -left-0.5 w-3 h-3 rounded-full ring-2 ring-background"
+          class="absolute -bottom-0.5 -left-0.5 rounded-full ring-2 ring-background {ds.avatar < 32 ? 'w-2 h-2' : 'w-3 h-3'}"
           style="background-color: {chat.accountColor}"
           title={chat.accountName}
         ></span>
@@ -187,27 +230,26 @@
     </div>
 
     <div class="flex-1 min-w-0">
-      <!-- People + time -->
+      <!-- People + time (+ subject on one line when single) -->
       <div class="flex items-baseline gap-2">
-        <span class="flex-1 min-w-0 truncate text-sm {hasUnread ? 'font-semibold text-foreground' : 'font-medium text-foreground/90'}">{title}</span>
-        <span class="shrink-0 text-xs tabular-nums text-muted-foreground">{time}</span>
+        <span class="min-w-0 truncate text-body text-fg-primary {layout === 'single' ? 'max-w-[45%] shrink-0' : 'flex-1'} {hasUnread ? 'font-semibold' : 'font-medium'}">{title}</span>
+        {#if layout === 'single'}
+          {@render subjectLine()}
+          {@render statusIcons()}
+        {/if}
+        <span class="shrink-0 text-meta tabular-nums text-fg-tertiary">{time}</span>
       </div>
-      <!-- Subject (one line), with the status icons when the latest line is hidden -->
-      <div class="flex items-center gap-1.5">
-        <span class="flex-1 min-w-0 truncate text-sm leading-5 {hasUnread ? 'text-foreground' : 'text-foreground/80'}">
-          <!-- Chat search highlights the subject with its prefixes already dropped. -->
-          <!-- eslint-disable-next-line svelte/no-at-html-tags -- highlightMatches only inserts <mark> around already-escaped text -->
-          {#if chat.highlightedSubject}{@html chat.highlightedSubject}{:else}{subject}{/if}
-        </span>
-        {#if !showPreview}{@render statusIcons()}{/if}
-      </div>
-      {#if showPreview}
+      {#if layout !== 'single'}
+        <!-- Subject (one line), with the status icons when the latest line is hidden -->
+        <div class="flex items-center gap-1.5">
+          {@render subjectLine()}
+          {#if layout !== 'triple'}{@render statusIcons()}{/if}
+        </div>
+      {/if}
+      {#if layout === 'triple'}
         <!-- Latest line + status icons -->
         <div class="flex items-center gap-1.5">
-          <span class="flex-1 min-w-0 truncate text-sm {hasUnread ? 'text-foreground/90' : 'text-muted-foreground'}">
-            <!-- eslint-disable-next-line svelte/no-at-html-tags -- highlightMatches only inserts <mark> around already-escaped text -->
-            {#if chat.highlightedSnippet}{@html chat.highlightedSnippet}{:else}{chat.snippet}{/if}
-          </span>
+          {@render previewText('flex-1 min-w-0 truncate')}
           {@render statusIcons()}
         </div>
       {/if}
@@ -230,15 +272,9 @@
 </MessageContextMenu>
 
 <style>
-  /* Skip layout and paint for off-screen rows in long lists. The sizes are
-     the content box (the row's padding is added to them). */
+  /* Skip layout and paint for off-screen rows in long lists. The intrinsic
+     size (the content box; padding is added) is set inline per density. */
   .chat-row {
     content-visibility: auto;
-  }
-  .chat-row-tall {
-    contain-intrinsic-size: auto 60px;
-  }
-  .chat-row-short {
-    contain-intrinsic-size: auto 44px;
   }
 </style>

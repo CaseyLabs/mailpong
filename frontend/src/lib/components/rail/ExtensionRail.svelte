@@ -26,7 +26,7 @@
 </script>
 
 <nav
-  class="flex flex-col items-stretch w-12 shrink-0 bg-muted/30 border-r border-border pt-2"
+  class="flex flex-col items-stretch w-12 shrink-0 bg-surface-rail border-r border-divider pt-2"
   aria-label="Active extension"
 >
   <RailButton
@@ -45,7 +45,7 @@
   {/each}
 
   <button
-    class="relative mt-auto flex items-center justify-center w-12 h-12 text-muted-foreground hover:text-foreground hover:bg-accent/30 transition-colors duration-150 cursor-pointer focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-primary focus-visible:-outline-offset-2"
+    class="relative mt-auto flex items-center justify-center w-12 h-11 text-muted-foreground hover:text-foreground hover:bg-accent/30 transition-colors duration-150 cursor-pointer focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-primary focus-visible:-outline-offset-2"
     type="button"
     title={$_('sidebar.settings')}
     aria-label={$_('sidebar.settings')}

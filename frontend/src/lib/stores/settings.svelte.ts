@@ -2,7 +2,7 @@
 // Provides reactive state for application settings
 
 // @ts-ignore - wailsjs path
-import { GetMessageListDensity, GetMessageListSortOrder, GetThemeMode, GetShowTitleBar, GetRunBackground, GetStartHidden, GetAutostart, GetLanguage, GetComposerMode, GetMailtoMode, GetComposerFormat, GetNativeTitleBar, GetAlwaysLoadImages, GetDarkMailContent, GetDarkComposerBody, GetAccentBarUnread, GetAccentUnreadStyle, GetShowMessageListCircles, GetShowMessageListProfilePics, GetAlwaysShowMessageCheckbox, GetShowMessagePreview, GetShowViewerCircles, GetSpellcheckEnabled, GetSpellcheckLanguages, GetSpellcheckCustomWords, GetChatSendKey, GetChatAutoAdvance, GetChatShowLowGroup } from '../../../wailsjs/go/app/App'
+import { GetMessageListDensity, GetMessageListSortOrder, GetThemeMode, GetShowTitleBar, GetRunBackground, GetStartHidden, GetAutostart, GetLanguage, GetComposerMode, GetMailtoMode, GetComposerFormat, GetNativeTitleBar, GetAlwaysLoadImages, GetDarkMailContent, GetDarkComposerBody, GetAccentBarUnread, GetAccentUnreadStyle, GetShowMessageListCircles, GetShowMessageListProfilePics, GetAlwaysShowMessageCheckbox, GetShowMessagePreview, GetShowViewerCircles, GetSpellcheckEnabled, GetSpellcheckLanguages, GetSpellcheckCustomWords, GetChatSendKey, GetChatAutoAdvance, GetChatShowLowGroup, GetChatReadingWidth } from '../../../wailsjs/go/app/App'
 import { setLocale as setI18nLocale, resolveLocale } from '$lib/i18n'
 import { filterSupportedDicts } from '$lib/spellcheck/locales'
 import { loadDateFnsLocale, getDateFnsLocale } from '$lib/i18n/dateFnsLocale'
@@ -11,6 +11,7 @@ import type { Locale } from 'date-fns'
 export type ComposerMode = 'inline' | 'detached'
 export type ComposerFormat = 'rich' | 'plain'
 export type ChatSendKey = 'enter' | 'ctrl-enter'
+export type ChatReadingWidth = 'narrow' | 'standard' | 'wide'
 export type ChatAutoAdvance = 'next' | 'previous'
 export type MessageListDensity = 'micro' | 'compact' | 'standard' | 'large'
 export type MessageListSortOrder = 'newest' | 'oldest'
@@ -29,6 +30,7 @@ let startHidden = $state<boolean>(false)
 let autostart = $state<boolean>(false)
 let spellcheckEnabled = $state<boolean>(true)
 let chatSendKey = $state<ChatSendKey>('enter')
+let chatReadingWidth = $state<ChatReadingWidth>('standard')
 let chatAutoAdvance = $state<ChatAutoAdvance>('next')
 let chatShowLowGroup = $state(true)
 let spellcheckLanguages = $state<string[]>([])
@@ -84,6 +86,17 @@ export function getChatSendKey(): ChatSendKey {
 
 export function setChatSendKey(v: ChatSendKey) {
   chatSendKey = v
+}
+
+export function getChatReadingWidth(): ChatReadingWidth {
+  return chatReadingWidth
+}
+
+// Stores the width and applies it: app.css maps data-reading-width on <html>
+// to the chat column and stream widths.
+export function setChatReadingWidth(v: ChatReadingWidth) {
+  chatReadingWidth = v
+  document.documentElement.dataset.readingWidth = v
 }
 
 export function getChatAutoAdvance(): ChatAutoAdvance {
@@ -286,7 +299,7 @@ export function setShowViewerCircles(v: boolean) {
 // Load settings from backend (call on app startup)
 export async function loadSettings(): Promise<ThemeMode> {
   try {
-    const [density, sortOrder, theme, titleBar, runBg, startHid, autoSt, lang, compMode, mailMode, compFormat, nativeTB, alwaysImages, darkMail, darkComposer, accentBar, accentStyle, listCircles, listProfilePics, alwaysCheckbox, messagePreview, viewerCircles, scEnabled, scLangs, scWords, sendKey, autoAdvance, showLowGroup] = await Promise.all([
+    const [density, sortOrder, theme, titleBar, runBg, startHid, autoSt, lang, compMode, mailMode, compFormat, nativeTB, alwaysImages, darkMail, darkComposer, accentBar, accentStyle, listCircles, listProfilePics, alwaysCheckbox, messagePreview, viewerCircles, scEnabled, scLangs, scWords, sendKey, autoAdvance, showLowGroup, readingWidth] = await Promise.all([
       GetMessageListDensity(),
       GetMessageListSortOrder(),
       GetThemeMode(),
@@ -315,6 +328,7 @@ export async function loadSettings(): Promise<ThemeMode> {
       GetChatSendKey(),
       GetChatAutoAdvance(),
       GetChatShowLowGroup(),
+      GetChatReadingWidth(),
     ])
     messageListDensity = (density as MessageListDensity) || 'standard'
     messageListSortOrder = (sortOrder as MessageListSortOrder) || 'newest'
@@ -343,6 +357,7 @@ export async function loadSettings(): Promise<ThemeMode> {
     chatSendKey = sendKey === 'ctrl-enter' ? 'ctrl-enter' : 'enter'
     chatAutoAdvance = autoAdvance === 'previous' ? 'previous' : 'next'
     chatShowLowGroup = showLowGroup ?? true
+    setChatReadingWidth(readingWidth === 'narrow' || readingWidth === 'wide' ? readingWidth : 'standard')
     // Apply saved language (if set, overrides system detection from initI18n)
     if (lang) {
       language = resolveLocale(lang)

@@ -253,6 +253,8 @@ export function GetChatIncludeQuote():Promise<boolean>;
 
 export function GetChatNotifyPriorityOnly():Promise<boolean>;
 
+export function GetChatReadingWidth():Promise<string>;
+
 export function GetChatSendKey():Promise<string>;
 
 export function GetChatShowLowGroup():Promise<boolean>;
@@ -618,6 +620,8 @@ export function SetChatCombineSenders(arg1:boolean):Promise<void>;
 export function SetChatIncludeQuote(arg1:boolean):Promise<void>;
 
 export function SetChatNotifyPriorityOnly(arg1:boolean):Promise<void>;
+
+export function SetChatReadingWidth(arg1:string):Promise<void>;
 
 export function SetChatSendKey(arg1:string):Promise<void>;
 

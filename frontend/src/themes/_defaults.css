@@ -19,3 +19,19 @@
     --avatar-14: 330 81% 60%;  /* pink */
   }
 }
+
+/* Pane surfaces and text tiers — global defaults that reproduce the colours
+   the panes use today. Themes may override any of them in their own
+   [data-theme="..."] block (see docs/UI_TOKENS.md). */
+@layer base {
+  :root {
+    --surface-rail:    var(--muted) / 0.3;
+    --surface-sidebar: var(--muted) / 0.3;
+    --surface-list:    var(--background);
+    --surface-content: var(--background);
+
+    --fg-primary:   var(--foreground);
+    --fg-secondary: var(--muted-foreground);
+    --fg-tertiary:  var(--muted-foreground);
+  }
+}

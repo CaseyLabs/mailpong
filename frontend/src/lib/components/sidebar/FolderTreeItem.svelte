@@ -127,9 +127,9 @@
 {#if tree.folder}
   <FolderContextMenu {accountId} folderId={tree.folder.id}>
     <button
-      class="w-full flex items-center gap-2 px-3 py-1.5 text-sm rounded-md transition-colors {isFolderSelected(tree.folder.id)
+      class="w-full flex items-center gap-2 px-3 min-h-control text-sm rounded-md transition-colors {isFolderSelected(tree.folder.id)
         ? 'bg-primary/10 text-primary font-medium'
-        : 'text-foreground hover:bg-muted/50'} {isDragOver ? 'ring-2 ring-primary ring-inset' : ''}"
+        : 'text-fg-secondary hover:bg-muted/50'} {isDragOver ? 'ring-2 ring-primary ring-inset' : ''}"
       data-sidebar-item="folder"
       data-folder-id={tree.folder.id}
       data-has-children={hasChildren ? 'true' : undefined}
@@ -147,7 +147,7 @@
       {#if hasChildren}
         <!-- svelte-ignore a11y_click_events_have_key_events -->
         <span
-          class="shrink-0 p-0.5 rounded hover:bg-muted"
+          class="shrink-0 flex items-center justify-center size-7 -my-1 rounded hover:bg-muted"
           role="button"
           tabindex="-1"
           onclick={(e: MouseEvent) => {
@@ -163,9 +163,7 @@
       {/if}
       <span class="flex-1"></span>
       {#if tree.folder.unreadCount > 0}
-        <span
-          class="px-1.5 py-0.5 text-xs font-medium rounded-full bg-primary text-primary-foreground"
-        >
+        <span class="text-meta tabular-nums {isFolderSelected(tree.folder.id) ? 'text-fg-secondary' : 'text-fg-tertiary'}">
           {tree.folder.unreadCount}
         </span>
       {/if}

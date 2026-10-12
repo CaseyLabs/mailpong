@@ -28,9 +28,18 @@
     --destructive-foreground: 219 28% 95%; /* nord6 */
     --border: 219 28% 88%;                 /* nord4 #D8DEE9 */
     --bubble-own: 219 28% 88%;             /* nord4 — neutral, differs from others' --muted */
-    --divider: 219 27% 92%;                /* nord5 — equals --muted; keep dividers off muted fills */
+    --divider: 219 20% 84%;                /* hairline darker than every pane surface */
     --input: 219 28% 88%;                  /* nord4 */
     --ring: 213 32% 52%;                   /* nord10 */
+    /* Pane surfaces: a subtle tone step from rail to conversation pane. */
+    --surface-rail:    219 27% 89%;
+    --surface-sidebar: 219 27% 92%;
+    --surface-list:    219 28% 95%;         /* nord6 */
+    --surface-content: 219 28% 97.5%;
+    /* Text tiers: primary > secondary > tertiary, each >= 4.5:1 on every surface. */
+    --fg-primary:   220 16% 22%;            /* nord0 */
+    --fg-secondary: 220 17% 30%;
+    --fg-tertiary:  220 11% 39%;
     /* Avatar palette: Aurora (5) + Frost (4). Most colors are lightness 52-73%,
        dark text gives better contrast than white. */
     --avatar-1:  354 39% 56%;              /* nord11 red */
@@ -71,9 +80,18 @@
     --destructive-foreground: 219 28% 95%; /* nord6 */
     --border: 220 17% 36%;                 /* nord3 #4C566A */
     --bubble-own: 220 17% 36%;             /* nord3 — neutral, differs from others' --muted */
-    --divider: 222 16% 28%;                /* nord1 — equals --muted; keep dividers off muted fills */
+    --divider: 220 16% 13%;                /* hairline darker than every pane surface */
     --input: 220 17% 36%;                  /* nord3 */
     --ring: 193 43% 67%;                   /* nord8 */
+    /* Pane surfaces: a subtle tone step from rail to conversation pane. */
+    --surface-rail:    220 16% 16%;
+    --surface-sidebar: 220 16% 18.5%;
+    --surface-list:    220 16% 20.5%;
+    --surface-content: 220 16% 22%;         /* nord0 */
+    /* Text tiers: primary > secondary > tertiary, each >= 4.5:1 on every surface. */
+    --fg-primary:   219 28% 95%;            /* nord6 */
+    --fg-secondary: 219 24% 85%;
+    --fg-tertiary:  219 14% 72%;
     /* Avatar palette: same 9 Aurora + Frost colors as Light (Nord). */
     --avatar-1:  354 39% 56%;              /* nord11 red */
     --avatar-2:  14 51% 63%;               /* nord12 orange */

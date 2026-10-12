@@ -11,6 +11,13 @@ MailPong is an independent email client derived from [Aerion](https://github.com
 - A Low priority split for newsletters and other bulk mail
 - Sender chats that combine all of one sender's threads into one conversation (pin, snooze, sender priority and sender chats are stored locally and are not synced)
 
+**Visual refinement**
+
+- Calmer chat list: density-aware rows (micro, compact, standard, large), uppercase group labels and a quieter list header with a tonal Compose button
+- Clearer hierarchy: contrast-checked primary, secondary and tertiary text, and a tonal step between the extension rail, Accounts column, chat list and conversation pane in Dark and Light
+- Conversation pane polish: a Reading width setting (Narrow, Standard, Wide) and larger message text
+- Design tokens documented in `docs/UI_TOKENS.md`; `make lint` checks text contrast
+
 **Migration to MailPong**
 
 - New name, icon and app ID (`io.github.caseylabs.MailPong`); Go module `github.com/caseylabs/mailpong`

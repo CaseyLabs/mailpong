@@ -69,15 +69,17 @@
 <div class="px-2 py-1">
   <!-- Unified Inbox Header -->
   <div
-    class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md transition-colors cursor-pointer {isUnifiedSelected
+    class="w-full flex items-center gap-2 px-2 min-h-control rounded-md transition-colors cursor-pointer {isUnifiedSelected
       ? 'bg-primary/10 text-primary'
       : 'hover:bg-muted/50'}"
     data-sidebar-item="unified"
   >
     <!-- Expand/Collapse Toggle -->
     <button
-      class="p-0.5 -ml-0.5 hover:bg-muted rounded transition-colors"
+      class="flex items-center justify-center size-7 -ml-1 hover:bg-muted rounded transition-colors"
       onclick={(e) => { e.stopPropagation(); toggleExpanded() }}
+      aria-label={$_('sidebar.allInboxes')}
+      aria-expanded={expanded}
     >
       <Icon
         icon={expanded ? 'mdi:chevron-down' : 'mdi:chevron-right'}
@@ -98,7 +100,7 @@
 
       <!-- Unread Badge -->
       {#if unifiedUnreadCount > 0}
-        <span class="px-1.5 py-0.5 text-xs font-medium bg-primary text-primary-foreground rounded-full">
+        <span class="text-meta tabular-nums {isUnifiedSelected ? 'text-fg-secondary' : 'text-fg-tertiary'}">
           {unifiedUnreadCount}
         </span>
       {/if}
@@ -112,7 +114,7 @@
         {#if acc.inbox}
           <FolderContextMenu accountId={acc.account.id} folderId={acc.inbox.id}>
             <button
-              class="w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm transition-colors {isAccountInboxSelected(acc.account.id, acc.inbox.id)
+              class="w-full flex items-center gap-2 px-2 min-h-control rounded-md text-sm transition-colors {isAccountInboxSelected(acc.account.id, acc.inbox.id)
                 ? 'bg-primary/10 text-primary'
                 : 'hover:bg-muted/50 text-muted-foreground hover:text-foreground'}"
               data-sidebar-item="unified-account"
@@ -130,7 +132,7 @@
 
               <!-- Unread Badge -->
               {#if acc.inbox.unreadCount > 0}
-                <span class="px-1.5 py-0.5 text-xs font-medium bg-muted text-muted-foreground rounded-full">
+                <span class="text-meta tabular-nums {isAccountInboxSelected(acc.account.id, acc.inbox.id) ? 'text-fg-secondary' : 'text-fg-tertiary'}">
                   {acc.inbox.unreadCount}
                 </span>
               {/if}

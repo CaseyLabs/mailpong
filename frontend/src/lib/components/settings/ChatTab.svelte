@@ -8,6 +8,7 @@
 
   interface Props {
     sendKey: string
+    readingWidth: string
     includeQuote: boolean
     autoAdvance: string
     notifyPriorityOnly: boolean
@@ -17,6 +18,7 @@
 
   let {
     sendKey = $bindable(),
+    readingWidth = $bindable(),
     includeQuote = $bindable(),
     autoAdvance = $bindable(),
     notifyPriorityOnly = $bindable(),
@@ -27,6 +29,12 @@
   const sendKeyOptions = $derived([
     { value: 'enter', label: $_('settingsChat.sendKeyEnter') },
     { value: 'ctrl-enter', label: $_('settingsChat.sendKeyCtrlEnter') },
+  ])
+
+  const readingWidthOptions = $derived([
+    { value: 'narrow', label: $_('settingsChat.readingWidthNarrow') },
+    { value: 'standard', label: $_('settingsChat.readingWidthStandard') },
+    { value: 'wide', label: $_('settingsChat.readingWidthWide') },
   ])
 
   const autoAdvanceOptions = $derived([
@@ -52,6 +60,21 @@
       </Select.Content>
     </Select.Root>
     <p class="text-xs text-muted-foreground">{$_('settingsChat.sendKeyDescription')}</p>
+  </div>
+
+  <div class="space-y-2">
+    <Label>{$_('settingsChat.readingWidth')}</Label>
+    <Select.Root value={readingWidth} onValueChange={(v) => { if (v) readingWidth = v }}>
+      <Select.Trigger>
+        <Select.Value placeholder={$_('settingsChat.readingWidth')}>{label(readingWidthOptions, readingWidth)}</Select.Value>
+      </Select.Trigger>
+      <Select.Content>
+        {#each readingWidthOptions as opt (opt.value)}
+          <Select.Item value={opt.value} label={opt.label} />
+        {/each}
+      </Select.Content>
+    </Select.Root>
+    <p class="text-xs text-muted-foreground">{$_('settingsChat.readingWidthDescription')}</p>
   </div>
 
   <div class="flex items-center justify-between gap-4">

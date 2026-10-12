@@ -6,6 +6,10 @@ Found by the full audit on 2026-10-08. Each entry gives a severity, the
 location, and the failure. "Unverified" means a reviewer reported it and it
 has not yet been confirmed against the code.
 
+### UI
+
+- **U2 low** `sidebar/AccountSection.svelte` account menu button (28 px, `right-2`, shown on hover/focus) covers the header's sync spinner and error icon, so the error `title` tooltip can't be hovered then. Existed at 24 px before M5.
+
 ### Security
 
 - **S6 medium** `internal/smime/verifier.go` `verifyChain`: there is no
@@ -36,6 +40,10 @@ has not yet been confirmed against the code.
   `certificate.Transport` and return it structurally from the DAV bindings,
   replacing the frontend's error-string regex and the second `Probe` request
   (which also misses certificates only discovery redirects reach).
+
+### UI tokens
+
+- **U1 low** `frontend/src/lib/components/kit/ListPane.svelte`, `kit/ListHeader.svelte`, `kit/DetailPane.svelte` header, `extensions/calendar` `CalendarPane.svelte:181`: the Contacts and Calendar panes and headers don't use `bg-surface-list` or `min-h-header`, so M2/M5 token changes would only affect Mail. Decide in M2 whether the tokens should apply to the extension panes too.
 
 ### Chat list
 
@@ -75,9 +83,6 @@ has not yet been confirmed against the code.
   `ConversationRow` and `ConversationViewer` as the reference to match
   (ListRow says "keep in sync" with a file that no longer exists). Repoint
   them at the chat components or state the values inline.
-- **U5 low** `tools/brand-check.sh` (so `make lint`) fails on three
-  "Aerion" lines in `docs/PLAN-migration.md` (53, 174, 206). Add an
-  allowlist entry or reword them.
 
 ### Upstream independence
 

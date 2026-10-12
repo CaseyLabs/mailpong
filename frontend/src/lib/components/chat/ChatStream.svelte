@@ -30,10 +30,10 @@
   }: Props = $props()
 </script>
 
-<div class="mx-auto w-full max-w-chat-stream">
+<div class="mx-auto w-full max-w-(--chat-stream)">
   {#each items as item (item.msg.id)}
     {#if item.newDay || item.subject}
-      <div class="mx-auto w-full max-w-chat-column px-4"><ChatDaySeparator date={item.newDay ? item.date : undefined} subject={item.subject} /></div>
+      <div class="mx-auto w-full max-w-(--chat-column) px-4"><ChatDaySeparator date={item.newDay ? item.date : undefined} subject={item.subject} /></div>
     {/if}
     <ChatBubble
       {item}

@@ -45,7 +45,7 @@
   </button>
 {/snippet}
 
-<div class="flex items-center w-[calc(100%-0.75rem)] mx-1.5 mt-2 rounded-lg text-sm text-muted-foreground hover:bg-muted/60">
+<div class="flex items-center w-[calc(100%-0.75rem)] mx-1.5 mt-2 rounded-lg text-fg-tertiary hover:bg-muted/60">
   <button
     class="flex flex-1 min-w-0 items-center gap-1.5 px-3 py-2 text-left"
     aria-expanded={expanded}
@@ -53,7 +53,7 @@
   >
     <Icon icon={expanded ? 'mdi:chevron-down' : 'mdi:chevron-right'} class="w-4 h-4 shrink-0" />
     <Icon icon="mdi:newspaper-variant-outline" class="w-4 h-4 shrink-0" />
-    <span class="truncate">{$_('chat.lowPriorityGroup', { values: { count: chatList.lowCount } })}</span>
+    <span class="truncate text-caption font-semibold uppercase tracking-wide">{$_('chat.lowPriorityGroup', { values: { count: chatList.lowCount } })}</span>
   </button>
   <div class="flex items-center gap-0.5 pr-1.5 shrink-0">
     {@render action('mdi:email-open-multiple-outline', $_('chat.markAllLowRead'), markAllRead)}

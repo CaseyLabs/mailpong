@@ -45,6 +45,7 @@ const (
 	KeySpellcheckLanguages        = "spellcheck_languages"      // JSON array of enabled dictionary codes, e.g. ["en","en-gb"]
 	KeySpellcheckCustomWords      = "spellcheck_custom_words"   // JSON array of user-added dictionary words
 	KeyChatSendKey                = "chat_send_key"             // "enter" or "ctrl-enter": which key sends from the chat composer
+	KeyChatReadingWidth           = "chat_reading_width"        // "narrow", "standard" or "wide": width of the chat reading column
 	KeyChatIncludeQuote           = "chat_include_quote"        // quote the replied-to message below chat replies (defaults on)
 	KeyChatNotifyPriorityOnly     = "chat_notify_priority_only" // skip new-mail notifications for low-priority mail (defaults on)
 	KeyChatAutoAdvance            = "chat_auto_advance"         // "next" or "previous": which chat opens after Done, Snooze, delete, or move
@@ -109,6 +110,13 @@ const (
 const (
 	ChatSendKeyEnter     = "enter"
 	ChatSendKeyCtrlEnter = "ctrl-enter"
+)
+
+// Chat reading widths
+const (
+	ChatReadingWidthNarrow   = "narrow"
+	ChatReadingWidthStandard = "standard"
+	ChatReadingWidthWide     = "wide"
 )
 
 // Chat auto-advance directions
@@ -673,6 +681,26 @@ func (s *Store) SetChatSendKey(key string) error {
 		return fmt.Errorf("invalid chat send key: %s", key)
 	}
 	return s.Set(KeyChatSendKey, key)
+}
+
+// GetChatReadingWidth returns the chat reading column width: "narrow",
+// "standard" (default) or "wide".
+func (s *Store) GetChatReadingWidth() (string, error) {
+	value, err := s.Get(KeyChatReadingWidth)
+	switch value {
+	case ChatReadingWidthNarrow, ChatReadingWidthWide:
+		return value, err
+	}
+	return ChatReadingWidthStandard, err
+}
+
+// SetChatReadingWidth sets the chat reading column width.
+func (s *Store) SetChatReadingWidth(width string) error {
+	switch width {
+	case ChatReadingWidthNarrow, ChatReadingWidthStandard, ChatReadingWidthWide:
+		return s.Set(KeyChatReadingWidth, width)
+	}
+	return fmt.Errorf("invalid chat reading width: %s", width)
 }
 
 // GetChatIncludeQuote returns whether chat replies quote the replied-to

@@ -1488,7 +1488,7 @@
     <div style:display={getActiveExtension() === 'mail' ? 'contents' : 'none'}>
     <!-- Sidebar (Folder List) -->
     <aside
-      class="{getLayoutMode() === 'narrow' ? `responsive-sidebar-overlay w-72 border-r border-border bg-background ${getResponsiveView() === 'sidebar' ? 'responsive-sidebar-visible' : ''}` : 'shrink-0 border-r border-border bg-muted/30'} {mailSidebarHidden ? 'hidden' : ''}"
+      class="{getLayoutMode() === 'narrow' ? `responsive-sidebar-overlay w-72 border-r border-divider bg-background ${getResponsiveView() === 'sidebar' ? 'responsive-sidebar-visible' : ''}` : 'shrink-0 border-r border-divider bg-surface-sidebar'} {mailSidebarHidden ? 'hidden' : ''}"
       style="{getLayoutMode() !== 'narrow' ? `width: ${sidebarWidth}px` : ''}"
       role="presentation"
       onclick={() => handlePaneClick('sidebar')}
@@ -1535,7 +1535,7 @@
     <!-- Chat List -->
     <section
       bind:this={messageListContainerRef}
-      class="{isResponsive() ? 'flex-1 min-w-0' : 'pane-list-resizable'} border-r border-border bg-background"
+      class="{isResponsive() ? 'flex-1 min-w-0' : 'pane-list-resizable'} border-r border-divider bg-surface-list"
       style="{getLayoutMode() === 'full' ? `width: ${listWidth}px` : ''}"
       role="presentation"
       data-pane="messageList"
@@ -1572,7 +1572,7 @@
 
     <!-- Conversation Viewer -->
     <main
-      class="{viewerIsOverlay ? `responsive-viewer-overlay bg-background ${viewerIsVisible ? 'responsive-viewer-visible' : ''}` : 'pane-detail bg-background'}"
+      class="{viewerIsOverlay ? `responsive-viewer-overlay bg-surface-content ${viewerIsVisible ? 'responsive-viewer-visible' : ''}` : 'pane-detail bg-surface-content'}"
       role="presentation"
       data-pane="viewer"
       onclick={() => handlePaneClick('viewer')}
