@@ -1,32 +1,19 @@
-# ISSUES.md remediation
+# Remaining dependency issue
 
 ## Scope
-Review and fix every finding in ISSUES.md on separate branches. Run `codex review --base main` (the CLI `/review` equivalent) and resolve findings before each squash merge and push. Preserve unrelated commits and files.
+Resolve D2 when stable frontend tools support TypeScript 7. Other ISSUES.md findings have been fixed, reviewed, squash merged, and pushed.
 
 ## Milestones
-- D2: verify published TypeScript tooling compatibility; upgrade only if supported. Validate lint, check, and build.
-- Recurring tooling: incorporate reliable alternatives in current guidance and clear obsolete tallies.
+- D2: upgrade TypeScript when both published peer ranges accept 7. Acceptance: supported dependency graph; frontend lint, check, and build pass.
 
 ## Progress
-- [ ] D2
-- [ ] Recurring tooling
+- [ ] D2 — blocked upstream as of 2026-10-12. `npm view` reports typescript-eslint 8.71.1 requires `<6.1.0`; svelte-check 4.7.6 accepts only 5/6. No supported upgrade is available.
 
 ## Surprises & Discoveries
-- Starting main contains the user's unpushed `889b417 Update AGENTS.md` commit.
-- `codex review --base main` is available for the requested branch reviews.
+- The latest lint/check tools still exclude the published TypeScript 7.0.2 release.
 
 ## Decision Log
-- Owner selected opt-in online revocation checking in Settings.
+- Keep TypeScript ~6.0.3 until both tools support 7.
 
 ## Outcomes & Retrospective
-A6: focused and full sync tests passed; `codex review --base main` caught a connection cleanup gap, fixed; repeat review passed. Review logs: `/tmp/mailven-issues-review/A6*.log`.
-
-P1/P2: OAuth tests and Darwin dry runs passed; final `codex review --base main` passed after correcting remaining guide paths and removing the Node dependency from uninstall. Logs: `/tmp/mailven-issues-review/P*.log`.
-
-M14: default/startup and existing split regression cases passed; `make test` passed; `codex review --base main` passed. Logs: `/tmp/mailven-issues-review/M14*.log`.
-
-A4/C12: Contacts production imports now use SDK/kit only; shared mirror service is restricted to Contacts; sidecar ownership and legacy credentials preserved. `make test`, `make lint`, independent acceptance review, simplify, and final `codex review --base main` passed. Logs: `/tmp/mailven-issues-review/contacts-*.log`.
-
-C17: exact-host DAV errors resolve through typed local IPC; both schedulers preserve certificate chains without leaking references into saved/displayed errors. Host-scoped trust removal and all-host pin list added. `make test`, `make lint`, frontend check/build, both Accounts prompt layouts, DAV pin UI, simplify, independent review, and final `codex review --base main` passed. Logs/screenshots: `/tmp/mailven-issues-review/C17*`.
-
-S6: opt-in revocation checks, explicit warning/error states, alternate chains, and persistent signer-specific revoked trust. `make test`, `make lint`, frontend check/build, both Accounts layouts, keyboard settings UI, and independent acceptance/simplify review passed after fixes. Final `codex review --base main` passed, including regressions for every signer and offline sync extraction. Logs/screenshots: `/tmp/mailven-issues-review/S6*`.
+All actionable audit findings and recurring tooling guidance are resolved. Each implementation branch passed CLI review before landing. Full Go tests, lint, frontend check/build, and affected headless UI checks passed; native desktop window chrome was not inspected. Review logs and UI artifacts are in `/tmp/mailven-issues-review/`.

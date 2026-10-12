@@ -4,8 +4,10 @@ description: Run, start, launch, and drive the Mailven desktop email client for 
 ---
 
 Mailven is a Wails v2 app (Go backend, Svelte 5 frontend). `make dev` serves the
-frontend with the Go bindings at `http://localhost:34115`. An agent drives that
-URL in Chrome with the Claude-in-Chrome tools. `.claude/skills/run-mailven/dev.sh`
+frontend with the Go bindings at `http://localhost:34115`. For repeatable agent
+UI checks, drive that URL with headless Playwright
+(`pw.js`); use browser tools for interactive exploration. If a browser connector
+stops answering or times out, switch to the headless path below. `.claude/skills/run-mailven/dev.sh`
 starts, waits for and stops the dev session. All paths are relative to the repo
 root.
 
@@ -244,6 +246,12 @@ session, so rebuild it from the clean checkout first.
   properties of null (reading 'nodes')` from the Svelte copy bundled in `/wails/ipc.js`.
 - On a cold Vite the faked chat rows can mount more than 8 s after load; in your own
   scripts wait for `.chat-row` (`frame.waitForSelector`) rather than a fixed delay.
+- When a fake UI check emits runtime events inside an iframe, override that
+  iframe’s `runtime.EventsOnMultiple` and `runtime.EventsEmit` with a local
+  dispatcher before the app mounts. Native Wails dispatch also reaches the parent
+  app, which can open a second modal and intercept clicks.
+- Finish Go edits before starting a UI check. Go hot reload replaces the page and
+  detaches the iframe; recreate the fake frame if a rebuild occurs.
 
 ### Composer and undo-send checks
 

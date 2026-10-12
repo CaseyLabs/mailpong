@@ -8,13 +8,13 @@ has not yet been confirmed against the code.
 
 ### Dependencies
 
-- **D2 low** `frontend/package.json`: TypeScript is held at 6.0.x.
-  TypeScript 7 is blocked by peer ranges: `typescript-eslint` requires
-  `<6.1.0` and `svelte-check` requires `^5 || ^6`. Upgrade once both accept 7.
+- **D2 low** `frontend/package.json`: TypeScript 7 remains blocked upstream.
+  Verified on 2026-10-12 with `npm view <package>@latest version peerDependencies --json`:
+  TypeScript 7.0.2 is published, but latest `typescript-eslint` 8.71.1 requires
+  `>=4.8.4 <6.1.0` and `svelte-check` 4.7.6 requires `^5.0.0 || ^6.0.0`.
+  Both tools are already current here; retain TypeScript ~6.0.3 until both accept 7.
+  Recheck using the commands in `CONTRIBUTING.md`.
 
 ## Recurring problems
 
-Format: `- symptom: workaround (count)`. Promote to AGENTS.md or a skill and delete the line when a problem recurs or proves costly.
-
-- Claude-in-Chrome tab stops answering (CDP timeout) during a long UI check: switch to the headless Playwright path (`pw.js`) (1)
-- `rm` in the agent shell is a confirming wrapper that aborts when non-interactive: use `git rm` for tracked files, `command rm` otherwise (1)
+None.

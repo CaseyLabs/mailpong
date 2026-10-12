@@ -14,6 +14,16 @@ Mailven is an independent project derived from [Aerion](https://github.com/hkdb/
 
 Use Go 1.26, Node.js 24 (matching CI), and the Wails v2 CLI. On Linux, install GTK 3 and WebKitGTK 4.1 development libraries.
 
+The frontend uses TypeScript 6, the newest major accepted by both the lint and Svelte check tools.
+Before upgrading TypeScript, check the published peer ranges of both tools:
+
+```bash
+npm view typescript-eslint@latest version peerDependencies --json
+npm view svelte-check@latest version peerDependencies --json
+```
+
+Upgrade only to a version accepted by both, then run frontend lint, check, and build.
+
 ```bash
 git clone https://github.com/CaseyLabs/mailven.git
 cd mailven
