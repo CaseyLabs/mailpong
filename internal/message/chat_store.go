@@ -990,10 +990,12 @@ func (s *Store) CleanupChatState() (int64, error) {
 // that no longer names a chat in the inbox list. From is a thread that now
 // belongs to sender chat To, or a sender chat whose sender no longer
 // combines, with To the newest inbox thread the sender started (empty when there is
-// none, which drops the state).
+// none, which drops the state). LinkTo is the draft destination: the reply
+// target's thread for a split, or To when combining.
 type ChatKeyMove struct {
 	AccountID string
 	From, To  string
+	LinkTo    string // draft target; may differ from the pin/snooze target
 }
 
 // chatStateKeys selects (account_id, thread_key) of every pin/snooze row and
@@ -1045,7 +1047,11 @@ func (s *Store) StaleChatKeys() ([]ChatKeyMove, error) {
 		}
 	}
 	for i, m := range moves {
-		moves[i].To = newest[m.AccountID][strings.TrimPrefix(m.From, SenderChatPrefix)]
+		email := strings.TrimPrefix(m.From, SenderChatPrefix)
+		moves[i], err = s.senderChatSplitMove(m.AccountID, email, newest[m.AccountID][email])
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	chatKeys, err := s.inboxChatKeys(threads)
@@ -1055,11 +1061,46 @@ func (s *Store) StaleChatKeys() ([]ChatKeyMove, error) {
 	for _, accountID := range slices.Sorted(maps.Keys(threads)) {
 		for _, key := range threads[accountID] {
 			if to := chatKeys[chatRef{accountID, key}]; to != "" {
-				moves = append(moves, ChatKeyMove{AccountID: accountID, From: key, To: to})
+				moves = append(moves, ChatKeyMove{AccountID: accountID, From: key, To: to, LinkTo: to})
 			}
 		}
 	}
 	return moves, nil
+}
+
+// SenderChatSplitMove plans the distinct state and reply-draft destinations
+// used by explicit splits and automatic reconciliation. Missing or unrelated
+// reply targets fall back to the newest inbox thread started by the sender.
+func (s *Store) SenderChatSplitMove(accountID, email string) (ChatKeyMove, error) {
+	email = NormalizeSenderEmail(email)
+	newest, err := s.NewestInboxThreadKey(accountID, email)
+	if err != nil {
+		return ChatKeyMove{}, err
+	}
+	return s.senderChatSplitMove(accountID, email, newest)
+}
+
+func (s *Store) senderChatSplitMove(accountID, email, newest string) (ChatKeyMove, error) {
+	move := ChatKeyMove{AccountID: accountID, From: SenderChatKey(email), To: newest, LinkTo: newest}
+	var replyID string
+	err := s.db.QueryRow(`SELECT message_id FROM chat_drafts WHERE account_id = ? AND thread_key = ?`, accountID, move.From).Scan(&replyID)
+	if err == sql.ErrNoRows {
+		return move, nil
+	}
+	if err != nil {
+		return ChatKeyMove{}, fmt.Errorf("failed to read reply draft target: %w", err)
+	}
+	if replyID == "" {
+		return move, nil
+	}
+	replyKey, err := s.StartedInboxThreadKey(accountID, email, replyID)
+	if err != nil {
+		return ChatKeyMove{}, err
+	}
+	if replyKey != "" {
+		move.LinkTo = replyKey
+	}
+	return move, nil
 }
 
 // NewestInboxThreadKey returns the thread key of the inbox thread a sender

@@ -4,7 +4,6 @@
 Review and fix every finding in ISSUES.md on separate branches. Run `codex review --base main` (the CLI `/review` equivalent) and resolve findings before each squash merge and push. Preserve unrelated commits and files.
 
 ## Milestones
-- M14: preserve the reply-target draft link when splitting stale sender chats. Validate database and app regression tests.
 - A4/C12: enforce extension boundaries for contacts, using coreapi and generic kit only. Validate extension contracts and full Go tests.
 - C17: structured DAV certificate errors, background prompts, and trusted-certificate management. Validate DAV tests, frontend checks, and UI.
 - S6: validate certificate revocation with privacy preference. Validate generated certificate/CRL cases and settings UI.
@@ -12,7 +11,6 @@ Review and fix every finding in ISSUES.md on separate branches. Run `codex revie
 - Recurring tooling: incorporate reliable alternatives in current guidance and clear obsolete tallies.
 
 ## Progress
-- [ ] M14
 - [ ] A4/C12
 - [ ] C17
 - [ ] S6
@@ -30,3 +28,5 @@ Review and fix every finding in ISSUES.md on separate branches. Run `codex revie
 A6: focused and full sync tests passed; `codex review --base main` caught a connection cleanup gap, fixed; repeat review passed. Review logs: `/tmp/mailven-issues-review/A6*.log`.
 
 P1/P2: OAuth tests and Darwin dry runs passed; final `codex review --base main` passed after correcting remaining guide paths and removing the Node dependency from uninstall. Logs: `/tmp/mailven-issues-review/P*.log`.
+
+M14: default/startup and existing split regression cases passed; `make test` passed; `codex review --base main` passed. Logs: `/tmp/mailven-issues-review/M14*.log`.

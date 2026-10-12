@@ -336,9 +336,9 @@ func TestSenderChatStaleKeys(t *testing.T) {
 		{"default off drops senders without a choice", func() error {
 			_, err := s.db.Exec(`INSERT INTO settings (key, value) VALUES ('chat_combine_senders', 'false')`)
 			return err
-		}, []move{{accountID, SenderChatKey("ghost@x"), ""}}},
+		}, []move{{AccountID: accountID, From: SenderChatKey("ghost@x"), To: "", LinkTo: ""}}},
 		{"split without inbox mail drops state", func() error { return s.SetSenderChat(accountID, lms, false) },
-			[]move{{accountID, SenderChatKey("ghost@x"), ""}, {accountID, lmsKey, ""}}},
+			[]move{{AccountID: accountID, From: SenderChatKey("ghost@x"), To: "", LinkTo: ""}, {AccountID: accountID, From: lmsKey, To: "", LinkTo: ""}}},
 	}
 	for _, st := range steps {
 		t.Run(st.name, func(t *testing.T) {
@@ -354,7 +354,7 @@ func TestSenderChatStaleKeys(t *testing.T) {
 			}
 		})
 	}
-	if err := s.MoveChatState(ChatKeyMove{accountID, lmsKey, ""}); err != nil {
+	if err := s.MoveChatState(ChatKeyMove{AccountID: accountID, From: lmsKey, To: "", LinkTo: ""}); err != nil {
 		t.Fatal(err)
 	}
 	if got, err := s.GetChatState(accountID, lmsKey); err != nil || !got.empty() {
@@ -376,7 +376,7 @@ func TestSenderChatStaleKeys(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []move{{accountID, SenderChatKey("ghost@x"), ""}, {accountID, "t@x", lmsKey}}
+	want := []move{{AccountID: accountID, From: SenderChatKey("ghost@x"), To: "", LinkTo: ""}, {AccountID: accountID, From: "t@x", To: lmsKey, LinkTo: lmsKey}}
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("StaleChatKeys = %+v, want %+v", got, want)
 	}
@@ -487,7 +487,7 @@ func TestSenderChatSplitHandOff(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			want := []ChatKeyMove{{accountID, lmsKey, tt.wantTo}}
+			want := []ChatKeyMove{{AccountID: accountID, From: lmsKey, To: tt.wantTo, LinkTo: tt.wantTo}}
 			if !reflect.DeepEqual(moves, want) {
 				t.Fatalf("StaleChatKeys = %+v, want %+v", moves, want)
 			}

@@ -199,7 +199,7 @@ func (a *App) applySenderChat(accountID, email string, choice, rollback *bool, r
 // move fails part-way.
 func (a *App) splitSenderChat(accountID, email string) (undo.SenderChatSnapshot, error) {
 	key := message.SenderChatKey(email)
-	newest, err := a.messageStore.NewestInboxThreadKey(accountID, email)
+	move, err := a.messageStore.SenderChatSplitMove(accountID, email)
 	if err != nil {
 		return nil, err
 	}
@@ -214,25 +214,14 @@ func (a *App) splitSenderChat(accountID, email string) (undo.SenderChatSnapshot,
 	if state == (message.ChatState{}) && link == nil {
 		return undo.SenderChatSnapshot{{Key: key}}, nil // nothing to move
 	}
-	linkTo := newest
-	if link != nil && link.MessageID != "" {
-		replyKey, err := a.messageStore.StartedInboxThreadKey(accountID, email, link.MessageID)
-		if err != nil {
-			return nil, err
-		}
-		if replyKey != "" {
-			linkTo = replyKey
-		}
-	}
-	snapshot, err := a.snapshotChatKeys(accountID, key, newest, linkTo)
+	snapshot, err := a.snapshotChatKeys(accountID, key, move.To, move.LinkTo)
 	if err != nil {
 		return nil, err
 	}
-	move := message.ChatKeyMove{AccountID: accountID, From: key, To: newest}
 	if err := a.messageStore.MoveChatState(move); err != nil {
 		return snapshot, err
 	}
-	return snapshot, a.draftStore.MoveChatLink(accountID, key, linkTo)
+	return snapshot, a.draftStore.MoveChatLink(accountID, key, move.LinkTo)
 }
 
 // snapshotChatKeys records the pin/snooze state and chat draft link of each
@@ -397,8 +386,8 @@ func (a *App) initChatState() {
 
 // moveStaleChatState moves pins, snoozes and chat draft links whose thread now
 // belongs to a sender chat into that chat, and moves them from sender chats
-// whose sender no longer combines to the thread of the sender's newest inbox
-// message (dropping them when there is none), so state follows the chat list
+// whose sender no longer combines using the same state and draft destinations
+// as an explicit split (dropping them when there is no inbox thread), so state follows the chat list
 // after an upgrade or a change to the combine default. It returns
 // the accounts it changed. Callers hold chatStateMu.
 func (a *App) moveStaleChatState() (map[string]bool, error) {
@@ -413,7 +402,7 @@ func (a *App) moveStaleChatState() (map[string]bool, error) {
 			errs = append(errs, err)
 			continue
 		}
-		if err := a.draftStore.MoveChatLink(m.AccountID, m.From, m.To); err != nil {
+		if err := a.draftStore.MoveChatLink(m.AccountID, m.From, m.LinkTo); err != nil {
 			errs = append(errs, err)
 		}
 		changed[m.AccountID] = true

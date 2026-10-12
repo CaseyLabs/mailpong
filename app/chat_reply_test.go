@@ -668,3 +668,32 @@ func TestChatReplyFrom(t *testing.T) {
 		}
 	}
 }
+
+func TestStaleSenderChatDraftTargets(t *testing.T) {
+	for _, trigger := range []string{"default change", "startup reconcile"} {
+		for _, target := range []string{"m-1", "m-2", "m-gone", "m-3"} {
+			t.Run(trigger+"/"+target, func(t *testing.T) {
+				a := newChatReplyTestApp(t)
+				pinned, link := splitFixture(t, a, "bob@example.com", target)
+				if trigger == "default change" {
+					if err := a.settingsStore.SetChatCombineSenders(false); err != nil {
+						t.Fatal(err)
+					}
+				} else if err := a.messageStore.SetSenderChat("acct-1", "bob@example.com", false); err != nil {
+					t.Fatal(err)
+				}
+				if _, err := a.moveStaleChatState(); err != nil {
+					t.Fatal(err)
+				}
+				checkChatKey(t, a, message.SenderChatKey("bob@example.com"), nil, nil)
+				if target == "m-1" {
+					checkChatKey(t, a, "m-1", nil, &link)
+					checkChatKey(t, a, "m-2", &pinned, nil)
+				} else {
+					checkChatKey(t, a, "m-1", nil, nil)
+					checkChatKey(t, a, "m-2", &pinned, &link)
+				}
+			})
+		}
+	}
+}

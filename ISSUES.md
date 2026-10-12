@@ -37,15 +37,6 @@ has not yet been confirmed against the code.
   replacing the frontend's error-string regex and the second `Probe` request
   (which also misses certificates only discovery redirects reach).
 
-### Chat list
-
-- **M14 low** `app/chat.go` `moveStaleChatState`: splits from a changed
-  combine default (`app/settings.go`) or the startup reconcile still move a
-  sender chat's draft link to the newest thread, not to the thread holding its
-  reply target as `splitSenderChat` does. Fix idea: give `ChatKeyMove` a
-  `LinkTo` worked out in `StaleChatKeys`, and have `splitSenderChat` use the
-  same planner.
-
 ### Dependencies
 
 - **D2 low** `frontend/package.json`: TypeScript is held at 6.0.x.
