@@ -29,7 +29,7 @@ For OAuth testing, copy `.env.example` to `.env` and configure your own credenti
 
 `make dev` uses the same data directory (`~/.local/share/mailpong` on Linux) and OS keyring as a native build. Refresh tokens belong to the OAuth client that issued them, so after the client ID in `.env`/`.env.local` changes, or for accounts added by a build with other credentials, sync fails with `token refresh failed: unauthorized_client`. Re-authorize the account once in the dev app (edit it in Settings → Accounts, then **Re-authorize**) to fix it.
 
-`make dev` always renders the Nord (Dark) theme, whatever theme is saved in Settings. Theme choices are still saved and apply in production builds.
+`make dev` always renders the Dark theme, whatever theme is saved in Settings. Theme choices are still saved and apply in production builds.
 
 ## Code and Validation
 

@@ -1,17 +1,11 @@
-/* Theme registry — entry point that imports each theme family and the
-   shared avatar palette plumbing. To add a new theme:
-     1. Create a new file in ./themes/<name>.css with a [data-theme="<name>"]
-        block wrapped in @layer base. Optionally override --avatar-* variables.
-     2. Add an @import line below.
-     3. (If the new theme is dark) append the [data-theme="<name>"] mark
-        selector to the dark mark override list in ./themes/_utilities.css.
-     4. Register the theme in: internal/settings/store.go (const + switch +
-        error message), frontend/src/lib/stores/settings.svelte.ts (ThemeMode
-        union), and frontend/src/lib/components/settings/GeneralTab.svelte
-        (themeModeOptions). */
+/* Theme registry — entry point for the two themes (Light and Dark, both Nord
+   palettes in ./themes/built-in.css) and the shared avatar palette plumbing.
+   "System" is not a stylesheet: theme.svelte.ts resolves it to light or dark.
+   Theme ids are registered in internal/settings/store.go,
+   frontend/src/lib/stores/settings.svelte.ts (ThemeMode) and
+   frontend/src/lib/components/settings/GeneralTab.svelte (themeModeOptions). */
 
 @import './themes/_defaults.css';
 @import './themes/built-in.css';
-@import './themes/nord.css';
 @import './themes/_status.css';
 @import './themes/_utilities.css';

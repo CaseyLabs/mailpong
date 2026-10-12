@@ -155,6 +155,23 @@ func TestGetThemeModeRemovedThemeFallsBack(t *testing.T) {
 	}
 }
 
+// The former Nord themes read as their Light/Dark successors.
+func TestGetThemeModeLegacyNord(t *testing.T) {
+	for stored, want := range map[string]string{"nord-light": "light", "nord-dark": "dark"} {
+		store := NewStore(openTestDB(t))
+		if err := store.Set(KeyThemeMode, stored); err != nil {
+			t.Fatal(err)
+		}
+		got, err := store.GetThemeMode()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got != want {
+			t.Errorf("%s: got %q, want %q", stored, got, want)
+		}
+	}
+}
+
 func TestSetGetThemeMode(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -163,14 +180,7 @@ func TestSetGetThemeMode(t *testing.T) {
 	}{
 		{name: "system", mode: "system"},
 		{name: "light", mode: "light"},
-		{name: "light-blue", mode: "light-blue"},
-		{name: "light-orange", mode: "light-orange"},
-		{name: "light-balanced", mode: "light-balanced"},
 		{name: "dark", mode: "dark"},
-		{name: "dark-gray", mode: "dark-gray"},
-		{name: "dark-balanced", mode: "dark-balanced"},
-		{name: "nord-light", mode: "nord-light"},
-		{name: "nord-dark", mode: "nord-dark"},
 		{name: "removed theme", mode: "dracula", wantErr: true},
 		{name: "invalid", mode: "invalid", wantErr: true},
 	}

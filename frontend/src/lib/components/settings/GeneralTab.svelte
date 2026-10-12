@@ -90,14 +90,7 @@
   const themeModeOptions = $derived([
     { value: 'system', label: $_('settingsGeneral.themeSystem') },
     { value: 'light', label: $_('settingsGeneral.themeLight') },
-    { value: 'light-blue', label: $_('settingsGeneral.themeLightBlue') },
-    { value: 'light-orange', label: $_('settingsGeneral.themeLightOrange') },
-    { value: 'light-balanced', label: $_('settingsGeneral.themeLightBalanced') },
-    { value: 'nord-light', label: 'Nord (Light)' },
     { value: 'dark', label: $_('settingsGeneral.themeDark') },
-    { value: 'dark-gray', label: $_('settingsGeneral.themeDarkGray') },
-    { value: 'dark-balanced', label: $_('settingsGeneral.themeDarkBalanced') },
-    { value: 'nord-dark', label: 'Nord (Dark)' },
   ])
 
   function getDensityLabel(value: string): string {

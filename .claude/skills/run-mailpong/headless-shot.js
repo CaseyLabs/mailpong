@@ -30,10 +30,10 @@ const out = process.argv[2]
   })
   await p.mouse.move(1250, 400)
   await p.screenshot({ path: `${out}/ss.png`, clip: { x: 0, y: 0, width: 1040, height: 660 } })
-  // Theme x Accounts-column check. Dev builds force nord-dark, so set data-theme by hand for light.
+  // Theme x Accounts-column check. Dev builds force dark, so set data-theme by hand for light.
   const fr = p.frames().find((f) => f !== p.mainFrame())
   const toggle = fr.locator('[title="Hide sidebar"],[aria-label="Hide sidebar"],[title="Show sidebar"],[aria-label="Show sidebar"]').first()
-  for (const theme of ['nord-dark', 'light']) {
+  for (const theme of ['dark', 'light']) {
     await fr.evaluate((t) => document.documentElement.setAttribute('data-theme', t), theme)
     for (const state of ['collapsed', 'expanded']) { // starts collapsed, so the first toggle expands
       await p.waitForTimeout(600)

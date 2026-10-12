@@ -78,7 +78,7 @@ func main() {
 }
 
 // runMainMode runs the main application window
-// windowBackground is opaque Nord Dark, the default theme; the frontend
+// windowBackground is opaque Dark, the default theme; the frontend
 // replaces it with the active theme's background. A translucent colour shows a
 // light strip while the window widens.
 var windowBackground = &options.RGBA{R: 47, G: 53, B: 65, A: 255}

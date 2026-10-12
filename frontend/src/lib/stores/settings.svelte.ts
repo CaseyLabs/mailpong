@@ -14,14 +14,10 @@ export type ChatSendKey = 'enter' | 'ctrl-enter'
 export type ChatAutoAdvance = 'next' | 'previous'
 export type MessageListDensity = 'micro' | 'compact' | 'standard' | 'large'
 export type MessageListSortOrder = 'newest' | 'oldest'
-export type ThemeMode =
-  | 'system'
-  | 'light' | 'light-blue' | 'light-orange' | 'light-balanced'
-  | 'dark' | 'dark-gray' | 'dark-balanced'
-  | 'nord-light' | 'nord-dark'
+export type ThemeMode = 'system' | 'light' | 'dark'
 
 // Mirrors the default in internal/settings/store.go.
-export const DEFAULT_THEME: ThemeMode = 'nord-dark'
+export const DEFAULT_THEME: ThemeMode = 'dark'
 
 // Module-level reactive state
 let messageListDensity = $state<MessageListDensity>('standard')

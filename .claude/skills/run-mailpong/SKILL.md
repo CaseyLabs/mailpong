@@ -75,7 +75,7 @@ When finished, put back anything you changed (see Gotchas), close the tab, then:
 
 ## Gotchas
 
-- **Dev mode always renders Nord (Dark)** (`applyTheme` in
+- **Dev mode always renders Dark** (`applyTheme` in
   `theme.svelte.ts` forces it under `import.meta.env.DEV`), so the theme picker
   has no visible effect in dev.
 - **Dev mode uses the user's real accounts and saved UI state.** It syncs real
@@ -194,7 +194,7 @@ dark/light x Accounts-column expanded/collapsed crops. Look at the PNGs with
 Read. Copy `ss.png` to `docs/ss.png` as is.
 
 - It sets `locale: 'en-GB'` so times are 24-hour, as in the old screenshot.
-- Dev builds force Nord Dark, so the script sets `data-theme="light"` by hand
+- Dev builds force Dark, so the script sets `data-theme="light"` by hand
   for the light check.
 - ImageMagick 7's `magick` is missing; use `convert`.
 - `pkill -f serve-fakes.py` matches the shell running it and kills it (exit 144). Use

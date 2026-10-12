@@ -26,15 +26,8 @@ The MailPong interface is English only, so there is no language picker. Email co
 Choose your visual theme:
 
 - **System** - Follows your operating system's light/dark preference
-- **Light** - Always use default light theme (Purple accent)
-- **Light (Blue)** - Always use light theme with blue accent
-- **Light (Orange)** - Always use light theme with orange accent
-- **Light (Balanced)** - A less bright light mode with gray accent
-- **Nord (Light)** - Nord light theme colors
-- **Dark** - Always use default dark theme (Purple accent)
-- **Dark (Gray)** - Always use Gray on gray dark theme
-- **Dark (Balanced)** - A slightly lighter dark mode with gray accent
-- **Nord (Dark)** (Default) - Nord dark theme colors
+- **Light** - Always use the light theme (Nord Snow Storm colors)
+- **Dark** (Default) - Always use the dark theme (Nord Polar Night colors)
 
 ### Dark mail content
 

@@ -89,22 +89,15 @@ const (
 // DefaultMessageListSortOrder is the default sort order
 const DefaultMessageListSortOrder = SortOrderNewest
 
-// Theme mode values
+// Theme mode values. Light and Dark both use the Nord palette.
 const (
-	ThemeModeSystem        = "system"
-	ThemeModeLight         = "light"          // Default light purple
-	ThemeModeLightBlue     = "light-blue"     // New
-	ThemeModeLightOrange   = "light-orange"   // New
-	ThemeModeLightBalanced = "light-balanced" // New
-	ThemeModeDark          = "dark"           // Default dark purple
-	ThemeModeDarkGray      = "dark-gray"      // New
-	ThemeModeDarkBalanced  = "dark-balanced"  // New
-	ThemeModeNordLight     = "nord-light"     // Nord Light
-	ThemeModeNordDark      = "nord-dark"      // Nord Dark
+	ThemeModeSystem = "system"
+	ThemeModeLight  = "light"
+	ThemeModeDark   = "dark"
 )
 
 // DefaultThemeMode is the default theme mode
-const DefaultThemeMode = ThemeModeNordDark
+const DefaultThemeMode = ThemeModeDark
 
 // Composer mode values
 const (
@@ -527,19 +520,25 @@ func (s *Store) SetMessageListSortOrder(sortOrder string) error {
 // validThemeMode reports whether mode names a shipped theme.
 func validThemeMode(mode string) bool {
 	switch mode {
-	case ThemeModeSystem, ThemeModeLight, ThemeModeLightBlue, ThemeModeLightOrange, ThemeModeLightBalanced,
-		ThemeModeDark, ThemeModeDarkGray, ThemeModeDarkBalanced, ThemeModeNordLight, ThemeModeNordDark:
+	case ThemeModeSystem, ThemeModeLight, ThemeModeDark:
 		return true
 	}
 	return false
 }
 
-// GetThemeMode returns the current theme mode setting. A stored theme that is
-// no longer shipped (removed families such as Dracula) reads as the default.
+// GetThemeMode returns the current theme mode setting. The former Nord themes
+// read as their Light/Dark successors; any other theme that is no longer
+// shipped reads as the default.
 func (s *Store) GetThemeMode() (string, error) {
 	value, err := s.Get(KeyThemeMode)
 	if err != nil {
 		return DefaultThemeMode, err
+	}
+	switch value {
+	case "nord-light":
+		return ThemeModeLight, nil
+	case "nord-dark":
+		return ThemeModeDark, nil
 	}
 	if !validThemeMode(value) {
 		return DefaultThemeMode, nil
@@ -550,7 +549,7 @@ func (s *Store) GetThemeMode() (string, error) {
 // SetThemeMode sets the theme mode
 func (s *Store) SetThemeMode(mode string) error {
 	if !validThemeMode(mode) {
-		return fmt.Errorf("invalid theme mode: %s (must be 'system', 'light', 'light-blue', 'light-orange', 'light-balanced', 'dark', 'dark-gray', 'dark-balanced', 'nord-light', or 'nord-dark')", mode)
+		return fmt.Errorf("invalid theme mode: %s (must be 'system', 'light', or 'dark')", mode)
 	}
 	return s.Set(KeyThemeMode, mode)
 }

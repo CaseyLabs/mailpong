@@ -1,177 +1,93 @@
-/* MailPong's original built-in themes — light variants and dark variants
-   sharing the same purple/blue/orange/gray accent system. */
+/* Nord — palette per nordtheme.com spec.
+   Single 16-color palette designed for both dark and bright ambiances:
+   - Dark: Polar Night (nord0-3) as bg, Snow Storm (nord4-6) as text
+   - Light: Snow Storm as bg, Polar Night as text
+   Frost (nord7-10) drives accents in both. Avatars use Aurora + Frost (9 colors).
+   MailPong-specific override: --ring matches --primary per MailPong convention. */
 @layer base {
-  /* Default Light Purple Theme */
+  /* Light (Nord) — Snow Storm bg, Polar Night text. nord10 (darker Frost) as
+     primary for sufficient contrast on light bg. */
   :root,
   [data-theme="light"] {
     color-scheme: light;
-    --background: 0 0% 96%;
-    --foreground: 224 71.4% 4.1%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --primary: 262.1 83.3% 57.8%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220.9 39.3% 11%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 262.1 83.3% 57.8%;
-    --radius: 0.5rem;
+    --background: 219 28% 95%;             /* nord6 #ECEFF4 */
+    --foreground: 220 16% 22%;             /* nord0 #2E3440 */
+    --card: 219 28% 95%;                   /* nord6 */
+    --card-foreground: 220 16% 22%;
+    --popover: 219 28% 95%;                /* nord6 */
+    --popover-foreground: 220 16% 22%;
+    --primary: 213 32% 52%;                /* nord10 #5E81AC — Frost dark blue */
+    --primary-foreground: 219 28% 95%;     /* nord6 */
+    --secondary: 219 27% 92%;              /* nord5 #E5E9F0 */
+    --secondary-foreground: 220 16% 22%;
+    --muted: 219 27% 92%;                  /* nord5 */
+    --muted-foreground: 220 17% 36%;       /* nord3 #4C566A */
+    --accent: 219 27% 92%;                 /* nord5 */
+    --accent-foreground: 220 16% 22%;
+    --destructive: 354 39% 56%;            /* nord11 #BF616A — Aurora red */
+    --destructive-foreground: 219 28% 95%; /* nord6 */
+    --border: 219 28% 88%;                 /* nord4 #D8DEE9 */
+    --bubble-own: 219 28% 88%;             /* nord4 — neutral, differs from others' --muted */
+    --divider: 219 27% 92%;                /* nord5 — equals --muted; keep dividers off muted fills */
+    --input: 219 28% 88%;                  /* nord4 */
+    --ring: 213 32% 52%;                   /* nord10 */
+    /* Avatar palette: Aurora (5) + Frost (4). Most colors are lightness 52-73%,
+       dark text gives better contrast than white. */
+    --avatar-1:  354 39% 56%;              /* nord11 red */
+    --avatar-2:  14 51% 63%;               /* nord12 orange #D08770 */
+    --avatar-3:  40 70% 73%;               /* nord13 yellow #EBCB8B */
+    --avatar-4:  92 28% 65%;               /* nord14 green #A3BE8C */
+    --avatar-5:  311 20% 63%;              /* nord15 purple #B48EAD */
+    --avatar-6:  179 25% 65%;              /* nord7 teal #8FBCBB */
+    --avatar-7:  193 43% 67%;              /* nord8 light blue #88C0D0 */
+    --avatar-8:  210 34% 63%;              /* nord9 steel blue #81A1C1 */
+    --avatar-9:  213 32% 52%;              /* nord10 dark blue */
+    --avatar-10: 354 39% 56%;              /* red (repeat) */
+    --avatar-11: 14 51% 63%;               /* orange (repeat) */
+    --avatar-12: 40 70% 73%;               /* yellow (repeat) */
+    --avatar-13: 92 28% 65%;               /* green (repeat) */
+    --avatar-14: 311 20% 63%;              /* purple (repeat) */
   }
 
-  /* Light Blue Theme */
-  [data-theme="light-blue"] {
-    color-scheme: light;
-    --background: 0 0% 96%;
-    --foreground: 224 71.4% 4.1%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --primary: 217 91% 60%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220.9 39.3% 11%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 217 91% 60%;
-    --radius: 0.5rem;
-  }
-
-  /* Light Orange Theme */
-  [data-theme="light-orange"] {
-    color-scheme: light;
-    --background: 0 0% 96%;
-    --foreground: 224 71.4% 4.1%;
-    --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --primary: 25 95% 53%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 220 14.3% 95.9%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 220 14.3% 95.9%;
-    --muted-foreground: 220 8.9% 46.1%;
-    --accent: 220 14.3% 95.9%;
-    --accent-foreground: 220.9 39.3% 11%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 25 95% 53%;
-    --radius: 0.5rem;
-  }
-
-  /* Light Balanced Theme – darker light gray with gray accents */
-  [data-theme="light-balanced"] {
-    color-scheme: light;
-    --background: 210 8% 88%;
-    --foreground: 224 71.4% 4.1%;
-    --card: 210 6% 93%;
-    --card-foreground: 224 71.4% 4.1%;
-    --popover: 210 6% 93%;
-    --popover-foreground: 224 71.4% 4.1%;
-    --primary: 215 10% 45%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 210 8% 82%;
-    --secondary-foreground: 220.9 39.3% 11%;
-    --muted: 210 8% 82%;
-    --muted-foreground: 220 8.9% 40%;
-    --accent: 210 8% 82%;
-    --accent-foreground: 220.9 39.3% 11%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 210 8% 78%;
-    --input: 210 8% 78%;
-    --ring: 215 10% 45%;
-    --radius: 0.5rem;
-  }
-
-  /* Default Dark Purple Theme */
+  /* Dark (Nord) — Polar Night bg, Snow Storm text. nord8 (lighter Frost) as
+     primary, the canonical Nord dark accent. */
   [data-theme="dark"] {
     color-scheme: dark;
-    --background: 224 71.4% 4.1%;
-    --foreground: 210 20% 98%;
-    --card: 224 71.4% 4.1%;
-    --card-foreground: 210 20% 98%;
-    --popover: 224 71.4% 4.1%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 263.4 70% 50.4%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 215 27.9% 16.9%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 215 27.9% 16.9%;
-    --muted-foreground: 217.9 10.6% 64.9%;
-    --accent: 215 27.9% 16.9%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 215 27.9% 16.9%;
-    --input: 215 27.9% 16.9%;
-    --ring: 263.4 70% 50.4%;
-  }
-
-  /* Dark Gray Theme */
-  [data-theme="dark-gray"] {
-    color-scheme: dark;
-    --background: 222 13% 9%;
-    --foreground: 210 20% 98%;
-    --card: 222 13% 9%;
-    --card-foreground: 210 20% 98%;
-    --popover: 222 13% 9%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 215 10% 50%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 215 15% 16%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 215 15% 16%;
-    --muted-foreground: 217 8% 65%;
-    --accent: 215 15% 16%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 215 15% 16%;
-    --input: 215 15% 16%;
-    --ring: 215 10% 50%;
-  }
-
-  /* Dark Balanced Theme – mid-dark background with gray accents */
-  [data-theme="dark-balanced"] {
-    color-scheme: dark;
-    --dark-mail-bg-l: 12;
-    --background: 210 11% 14%;
-    --foreground: 210 20% 98%;
-    --card: 210 11% 14%;
-    --card-foreground: 210 20% 98%;
-    --popover: 210 11% 14%;
-    --popover-foreground: 210 20% 98%;
-    --primary: 215 10% 50%;
-    --primary-foreground: 210 20% 98%;
-    --secondary: 210 10% 20%;
-    --secondary-foreground: 210 20% 98%;
-    --muted: 210 10% 20%;
-    --muted-foreground: 217 8% 65%;
-    --accent: 210 10% 20%;
-    --accent-foreground: 210 20% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 20% 98%;
-    --border: 210 10% 20%;
-    --input: 210 10% 20%;
-    --ring: 215 10% 50%;
+    --background: 220 16% 22%;             /* nord0 #2E3440 */
+    --foreground: 219 28% 95%;             /* nord6 #ECEFF4 */
+    --card: 220 16% 22%;                   /* nord0 */
+    --card-foreground: 219 28% 95%;
+    --popover: 220 16% 22%;                /* nord0 */
+    --popover-foreground: 219 28% 95%;
+    --primary: 193 43% 67%;                /* nord8 #88C0D0 — Frost light blue */
+    --primary-foreground: 220 16% 22%;     /* nord0 — dark text on light Frost */
+    --secondary: 222 16% 28%;              /* nord1 #3B4252 */
+    --secondary-foreground: 219 28% 95%;
+    --muted: 222 16% 28%;                  /* nord1 */
+    --muted-foreground: 219 28% 88%;       /* nord4 #D8DEE9 — dimmer than fg (nord6) */
+    --accent: 222 16% 28%;                 /* nord1 */
+    --accent-foreground: 219 28% 95%;
+    --destructive: 354 39% 56%;            /* nord11 #BF616A — Aurora red */
+    --destructive-foreground: 219 28% 95%; /* nord6 */
+    --border: 220 17% 36%;                 /* nord3 #4C566A */
+    --bubble-own: 220 17% 36%;             /* nord3 — neutral, differs from others' --muted */
+    --divider: 222 16% 28%;                /* nord1 — equals --muted; keep dividers off muted fills */
+    --input: 220 17% 36%;                  /* nord3 */
+    --ring: 193 43% 67%;                   /* nord8 */
+    /* Avatar palette: same 9 Aurora + Frost colors as Light (Nord). */
+    --avatar-1:  354 39% 56%;              /* nord11 red */
+    --avatar-2:  14 51% 63%;               /* nord12 orange */
+    --avatar-3:  40 70% 73%;               /* nord13 yellow */
+    --avatar-4:  92 28% 65%;               /* nord14 green */
+    --avatar-5:  311 20% 63%;              /* nord15 purple */
+    --avatar-6:  179 25% 65%;              /* nord7 teal */
+    --avatar-7:  193 43% 67%;              /* nord8 light blue */
+    --avatar-8:  210 34% 63%;              /* nord9 steel blue */
+    --avatar-9:  213 32% 52%;              /* nord10 dark blue */
+    --avatar-10: 354 39% 56%;              /* red (repeat) */
+    --avatar-11: 14 51% 63%;               /* orange (repeat) */
+    --avatar-12: 40 70% 73%;               /* yellow (repeat) */
+    --avatar-13: 92 28% 65%;               /* green (repeat) */
+    --avatar-14: 311 20% 63%;              /* purple (repeat) */
   }
 }

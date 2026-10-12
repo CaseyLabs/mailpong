@@ -27,10 +27,10 @@ export function getIsDarkActive(): boolean {
  *  [data-theme="..."] block, so each theme owns its own scheme — no JS list to
  *  maintain. We mirror it as the `.dark` class so Tailwind `dark:` variants and
  *  any `.dark mark`-style selectors keep working.
- *  Fork: dev builds (`make dev`) always render Nord (Dark), whatever theme is
+ *  Fork: dev builds (`make dev`) always render Dark, whatever theme is
  *  saved, so dev sessions and screenshots match the fork's default look. */
 export function applyTheme(themeName: ThemeMode) {
-  if (import.meta.env.DEV) themeName = 'nord-dark'
+  if (import.meta.env.DEV) themeName = 'dark'
   document.documentElement.setAttribute('data-theme', themeName)
   const scheme = getComputedStyle(document.documentElement).colorScheme.trim()
   const dark = scheme === 'dark'
