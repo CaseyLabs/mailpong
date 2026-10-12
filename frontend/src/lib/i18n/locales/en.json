@@ -1017,22 +1017,6 @@
     "acceptOnce": "Accept Once",
     "acceptAlways": "Accept Always"
   },
-  "terms": {
-    "title": "Terms of Use & Privacy Policy",
-    "description": "Please review and accept our terms to continue using MailPong.",
-    "content": "These documents explain how the application handles your data and the terms under which you may use this software.",
-    "privacyPolicy": "Privacy Policy",
-    "termsOfUse": "Terms of Use",
-    "agreeLabel": "I have read and agree to the Terms of Use and Privacy Policy",
-    "accept": "Accept & Continue"
-  },
-  "oauthMissing": {
-    "title": "OAuth credentials missing",
-    "intro": "This build is missing MailPong OAuth credentials for:",
-    "implication": "This means the providers that have missing credentials will not work properly. This is likely because you did not install MailPong from an official source.",
-    "installInstruction": "To install MailPong from an official source, see:",
-    "dontShowAgain": "Don't show this again"
-  },
   "dialog": {
     "deletePermanently": "Delete Permanently?",
     "deleteDescription": "This will permanently delete the selected message(s). This action cannot be undone.",

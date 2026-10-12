@@ -25,7 +25,6 @@ SECURITY.md :: upstream Aerion :: Asks reporters whether the issue also reproduc
 build/README.md :: Aerion :: States that MailPong installs next to Aerion
 build/flatpak/README.md :: Aerion :: History of earlier Aerion manifests
 build/windows/installer/project.nsi :: Aerion install :: Comment explaining why the uninstall key differs
-frontend/src/lib/components/WhatsNewDialog.svelte :: Aerion is now MailPong|any Aerion install :: Rename announcement
 frontend/src/lib/components/settings/AboutTab.svelte :: [Aa]erion|AERION_URL :: Attribution link to the upstream project
 docs/user-guide/** :: Aerion :: Upstream relationship, CASA note and import guide
 docs/LANGUAGE.md :: Aerion :: States the i18n machinery's origin and imported-database behaviour

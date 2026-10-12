@@ -613,22 +613,6 @@ export namespace app {
 	        this.body = source["body"];
 	    }
 	}
-	export class OAuthBuildStatus {
-	    google: boolean;
-	    microsoft: boolean;
-	    googleTesting: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new OAuthBuildStatus(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.google = source["google"];
-	        this.microsoft = source["microsoft"];
-	        this.googleTesting = source["googleTesting"];
-	    }
-	}
 	export class OAuthCredsChoice {
 	    id: string;
 	    label: string;

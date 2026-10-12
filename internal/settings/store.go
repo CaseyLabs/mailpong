@@ -41,8 +41,6 @@ const (
 	KeyAlwaysShowMessageCheckbox  = "always_show_message_checkbox"   // reserve a fixed checkbox column instead of the hover/swipe slide-reveal (default off)
 	KeyShowMessagePreview         = "show_message_preview"           // show the body preview line in message-list rows (default off)
 	KeyShowViewerCircles          = "show_viewer_circles"
-	KeyLastSeenVersion            = "last_seen_version"         // for "What's new in this version" launch dialog
-	KeyOAuthWarningDisabled       = "oauth_warning_disabled"    // user toggled "Don't show again" on the missing-OAuth-creds launch warning
 	KeySpellcheckEnabled          = "spellcheck_enabled"        // composer spellcheck master toggle (defaults on)
 	KeySpellcheckLanguages        = "spellcheck_languages"      // JSON array of enabled dictionary codes, e.g. ["en","en-gb"]
 	KeySpellcheckCustomWords      = "spellcheck_custom_words"   // JSON array of user-added dictionary words
@@ -610,40 +608,6 @@ func (s *Store) SetTermsAccepted(accepted bool) error {
 		value = "true"
 	}
 	return s.Set(KeyTermsAccepted, value)
-}
-
-// GetLastSeenVersion returns the MailPong version that was running the last time
-// the "What's new in this version" dialog was acknowledged with OK. Empty
-// string means it's never been acknowledged (e.g. fresh install).
-func (s *Store) GetLastSeenVersion() (string, error) {
-	return s.Get(KeyLastSeenVersion)
-}
-
-// SetLastSeenVersion records the current MailPong version as acknowledged so the
-// What's New dialog doesn't fire again until the next version upgrade.
-func (s *Store) SetLastSeenVersion(version string) error {
-	return s.Set(KeyLastSeenVersion, version)
-}
-
-// GetOAuthWarningDisabled returns whether the user has opted out of the
-// missing-OAuth-creds launch warning via the dialog's "Don't show again"
-// toggle. Defaults to false on first launch (key unset).
-func (s *Store) GetOAuthWarningDisabled() (bool, error) {
-	value, err := s.Get(KeyOAuthWarningDisabled)
-	if err != nil {
-		return false, err
-	}
-	return value == "true", nil
-}
-
-// SetOAuthWarningDisabled persists the user's "Don't show again" choice from
-// the OAuth-credentials-missing launch warning.
-func (s *Store) SetOAuthWarningDisabled(disabled bool) error {
-	value := "false"
-	if disabled {
-		value = "true"
-	}
-	return s.Set(KeyOAuthWarningDisabled, value)
 }
 
 // GetRunBackground returns whether MailPong should keep running when the window is closed

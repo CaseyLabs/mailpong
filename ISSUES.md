@@ -19,11 +19,6 @@ has not yet been confirmed against the code.
   imports: EXT_RULES R1, R2 and R5. The bridge gets a token closure and the
   core DB, and the extension imports `internal/*`. This is architectural
   (see C12).
-- **A5 low** Dead code after the no-startup-pop-ups change: `TermsDialog`,
-  `OAuthMissingDialog` and `WhatsNewDialog` have no references, and the Go
-  bindings `GetOAuthBuildStatus`, `Get/SetOAuthWarningDisabled` and
-  `Get/SetLastSeenVersion` have no frontend callers. Delete the components;
-  dropping the bindings needs `make generate`.
 - **A6 decision** `frontend/src/App.svelte`: Terms of Use are recorded as
   accepted at startup without being shown, and builds missing OAuth
   credentials give no warning before sign-in fails. Intentional per commit
@@ -48,18 +43,9 @@ has not yet been confirmed against the code.
 
 ### Mail sync
 
-- **M13 low** `app/sync.go` `beginFolderSync`, `trackSyncUnlessBusy`: a
-  slot cancelled by `CancelFolderSync`, `CancelAccountSync` or
-  `CancelAllSyncs` leaves `syncContexts` before it releases, so a new sync of
-  the same folder can start while the cancelled one still runs. Fix idea: treat
-  a key with an unreleased slot in `cancelledSlots` as busy.
-
 - **M14 low** Sidebar sync button and Ctrl+Shift+A cancel syncs directly,
-  while the header sync buttons (`MessageList`, `ChatList`) now open the
-  status dialog. Decide whether the sidebar should match. The cancel logic is
-  also duplicated in `ChatList` (`cancelRunningSyncs`) and `MessageList`
-  (`cancelAllRunningSyncs`), with a redundant per-folder cancel; one
-  `accountStore.cancelAllSyncs()` would replace both.
+  while the `ChatList` header sync button opens the status dialog. Decide
+  whether the sidebar should match.
 
 ### Chat list
 
@@ -90,9 +76,18 @@ has not yet been confirmed against the code.
   shows the account label (or nothing) while the reply goes out from the
   alias. Fix with a binding that returns the resolved identity.
 
-- **M16 low** sender chat header: the title uses the first message's sender
-  address ("TrackingUpdates@fedex.com") while the list row shows the display
-  name ("FedEx Tracking").
+### Docs
+
+- **U4 low** `docs/EXTENSIONS.md` (the 1-for-1 rule, ~1493-1501, 1956),
+  `docs/EXT_RULES.md:123`, `frontend/src/lib/components/kit/ListRow.svelte:23`,
+  `kit/Avatar.svelte:36`, `kit/DetailPane.svelte:16,53` and
+  `app/background.go:318` still point at the deleted `MessageList`,
+  `ConversationRow` and `ConversationViewer` as the reference to match
+  (ListRow says "keep in sync" with a file that no longer exists). Repoint
+  them at the chat components or state the values inline.
+- **U5 low** `tools/brand-check.sh` (so `make lint`) fails on three
+  "Aerion" lines in `docs/PLAN-migration.md` (53, 174, 206). Add an
+  allowlist entry or reword them.
 
 ### Upstream independence
 
@@ -100,14 +95,7 @@ This fork may eventually stop tracking upstream Aerion. Until then, some code
 is kept or left untouched only to keep upstream merges clean. Record each such
 cleanup here, so it can be done once the fork is independent.
 
-- **U1** frontend: delete the unmounted classic `MessageList`,
-  `ConversationRow` and `ConversationViewer`, kept only to avoid merge
-  conflicts. They hold unshared copies of chat-component logic (the inbox
-  lookup, the sync toggle, trash-with-undo) that go with them; the chat
-  side uses `accountStore.getFolder`/`getInbox` and
-  `components/chat/chatTriage.ts`.
-- **U3** non-English locale files: this fork updates English only, so the
-  other locales drift. Remove them, or decide to maintain them.
+None open.
 
 ### Themes
 

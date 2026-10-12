@@ -308,3 +308,81 @@ func TestShutdownSyncsWaitsForCancelledSlots(t *testing.T) {
 		}
 	}
 }
+
+// TestCancelledSlotStaysBusyUntilReleased checks that a background sync of a
+// folder defers while a cancelled sync of it winds down, and starts once that
+// sync releases, or once it has been stuck past slotReleaseWait.
+func TestCancelledSlotStaysBusyUntilReleased(t *testing.T) {
+	const key = "acc:inbox"
+	tests := []struct {
+		name   string
+		cancel func(a *App)
+	}{
+		{"CancelFolderSync", func(a *App) { a.CancelFolderSync("acc", "inbox") }},
+		{"CancelAccountSync", func(a *App) { a.CancelAccountSync("acc") }},
+		{"CancelAllSyncs", func(a *App) { a.CancelAllSyncs() }},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			a := &App{ctx: context.Background(), syncContexts: make(map[string]*syncSlot)}
+			_, release, ok := a.beginFolderSync(key)
+			if !ok {
+				t.Fatal("beginFolderSync: want ok")
+			}
+			tt.cancel(a)
+			if _, _, ok := a.beginFolderSync(key); ok {
+				t.Fatal("beginFolderSync while the cancelled sync runs: want !ok")
+			}
+			if _, busy := a.trackSyncUnlessBusy(key); !busy {
+				t.Fatal("trackSyncUnlessBusy while the cancelled sync runs: want busy")
+			}
+
+			a.syncMu.Lock()
+			for slot := range a.cancelledSlots {
+				slot.cancelledAt = time.Now().Add(-2 * slotReleaseWait)
+			}
+			a.syncMu.Unlock()
+			if _, release2, ok := a.beginFolderSync(key); !ok {
+				t.Fatal("beginFolderSync after a stuck slot's bound: want ok")
+			} else {
+				release2()
+			}
+
+			release()
+			if _, release3, ok := a.beginFolderSync(key); !ok {
+				t.Fatal("beginFolderSync after release: want ok")
+			} else {
+				release3()
+			}
+		})
+	}
+}
+
+// TestReplaceWaitsForCancelledSlot checks that SyncFolder's replace waits for
+// a sync of the folder that was cancelled but has not released yet.
+func TestReplaceWaitsForCancelledSlot(t *testing.T) {
+	const key = "acc:inbox"
+	const hold = 50 * time.Millisecond
+	a := &App{ctx: context.Background(), syncContexts: make(map[string]*syncSlot)}
+	_, oldRelease, ok := a.beginFolderSync(key)
+	if !ok {
+		t.Fatal("beginFolderSync: want ok")
+	}
+	a.CancelFolderSync("acc", "inbox")
+	go func() {
+		time.Sleep(hold)
+		oldRelease()
+	}()
+
+	start := time.Now()
+	a.syncMu.Lock()
+	_, release, ok := a.replaceFolderSyncLocked(key, 2*time.Second)
+	a.syncMu.Unlock()
+	if !ok {
+		t.Fatal("replaceFolderSyncLocked: want ok")
+	}
+	defer release()
+	if waited := time.Since(start); waited < hold {
+		t.Fatalf("waited %v: want at least %v for the cancelled sync to release", waited, hold)
+	}
+}

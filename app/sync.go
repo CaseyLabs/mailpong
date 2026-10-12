@@ -407,6 +407,8 @@ type syncSlot struct {
 	key    string // "accountID:folderID"
 	cancel context.CancelFunc
 	done   chan struct{} // closed by the slot's release
+
+	cancelledAt time.Time // set by cancelSlotLocked
 }
 
 // cancelSlotLocked cancels slot and records it in cancelledSlots until its
@@ -414,6 +416,7 @@ type syncSlot struct {
 // Every cancel of a registered slot goes through here. The caller holds syncMu.
 func (a *App) cancelSlotLocked(slot *syncSlot) {
 	slot.cancel()
+	slot.cancelledAt = time.Now()
 	if a.cancelledSlots == nil {
 		a.cancelledSlots = make(map[*syncSlot]struct{})
 	}
@@ -424,6 +427,28 @@ func (a *App) cancelSlotLocked(slot *syncSlot) {
 // release its slot before replacing it anyway.
 const slotReleaseWait = 5 * time.Second
 
+// pendingSlotLocked returns the slot that holds key: the registered one, or
+// one cancelled less than slotReleaseWait ago that has not released yet, so a
+// new sync doesn't overlap the winding-down one. A slot stuck past that bound
+// no longer counts. It returns nil when key is free. The caller holds syncMu.
+func (a *App) pendingSlotLocked(key string) *syncSlot {
+	if slot, ok := a.syncContexts[key]; ok {
+		return slot
+	}
+	for slot := range a.cancelledSlots {
+		if slot.key == key && time.Since(slot.cancelledAt) < slotReleaseWait {
+			return slot
+		}
+	}
+	return nil
+}
+
+// folderBusyLocked reports whether a sync holds key (see pendingSlotLocked).
+// The caller holds syncMu.
+func (a *App) folderBusyLocked(key string) bool {
+	return a.pendingSlotLocked(key) != nil
+}
+
 // beginFolderSync claims the sync slot for key unless a sync already holds
 // it. release cancels ctx and frees the slot if this call still owns it.
 func (a *App) beginFolderSync(key string) (ctx context.Context, release func(), ok bool) {
@@ -432,7 +457,7 @@ func (a *App) beginFolderSync(key string) (ctx context.Context, release func(), 
 	if a.shuttingDown {
 		return nil, nil, false
 	}
-	if _, busy := a.syncContexts[key]; busy {
+	if a.folderBusyLocked(key) {
 		return nil, nil, false
 	}
 	ctx, release = a.registerFolderSyncLocked(key)
@@ -463,8 +488,9 @@ func (a *App) registerFolderSyncLocked(key string) (context.Context, func()) {
 }
 
 // replaceFolderSyncLocked cancels the sync registered under key, if any, and
-// waits up to maxWait for it to release its slot, so the two syncs don't
-// overlap; then it registers a new sync as registerFolderSyncLocked does.
+// waits up to maxWait for it, and for a cancelled sync of key still winding
+// down, to release its slot, so the syncs don't overlap; then it registers a
+// new sync as registerFolderSyncLocked does.
 // The caller holds syncMu, which is dropped while waiting. ok is false when
 // shutdown has begun, before or during the wait; nothing is registered then.
 func (a *App) replaceFolderSyncLocked(key string, maxWait time.Duration) (ctx context.Context, release func(), ok bool) {
@@ -474,8 +500,10 @@ func (a *App) replaceFolderSyncLocked(key string, maxWait time.Duration) (ctx co
 	timeout := time.NewTimer(maxWait)
 	defer timeout.Stop()
 	// Re-check after each wait: another sync may have claimed the slot.
-	for old, exists := a.syncContexts[key]; exists; old, exists = a.syncContexts[key] {
-		a.cancelSlotLocked(old)
+	for old := a.pendingSlotLocked(key); old != nil; old = a.pendingSlotLocked(key) {
+		if a.syncContexts[key] == old {
+			a.cancelSlotLocked(old)
+		}
 		a.syncMu.Unlock()
 		select {
 		case <-old.done:
@@ -516,7 +544,7 @@ func (a *App) trackSync() (done func(), ok bool) {
 func (a *App) trackSyncUnlessBusy(key string) (done func(), busy bool) {
 	a.syncMu.Lock()
 	defer a.syncMu.Unlock()
-	if _, busy := a.syncContexts[key]; busy && !a.shuttingDown {
+	if !a.shuttingDown && a.folderBusyLocked(key) {
 		return nil, true
 	}
 	done, _ = a.trackSyncLocked()

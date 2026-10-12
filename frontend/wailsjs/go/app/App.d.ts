@@ -321,8 +321,6 @@ export function GetInlineAttachments(arg1:string):Promise<Record<string, string>
 
 export function GetLanguage():Promise<string>;
 
-export function GetLastSeenVersion():Promise<string>;
-
 export function GetLinkedAccountsForContactSync():Promise<Array<app.LinkedAccountInfo>>;
 
 export function GetMailtoMode():Promise<string>;
@@ -345,15 +343,11 @@ export function GetMicrosoftSharedMailboxes(arg1:string):Promise<Array<account.A
 
 export function GetNativeTitleBar():Promise<boolean>;
 
-export function GetOAuthBuildStatus():Promise<app.OAuthBuildStatus>;
-
 export function GetOAuthCredsChoices(arg1:string,arg2:string):Promise<app.OAuthCredsChoices>;
 
 export function GetOAuthCredsStatus(arg1:string):Promise<app.OAuthCredsStatus>;
 
 export function GetOAuthStatus(arg1:string):Promise<app.OAuthStatus>;
-
-export function GetOAuthWarningDisabled():Promise<boolean>;
 
 export function GetPGPEncryptPolicy(arg1:string):Promise<string>;
 
@@ -653,8 +647,6 @@ export function SetExtensionEnabled(arg1:string,arg2:boolean):Promise<void>;
 
 export function SetLanguage(arg1:string):Promise<void>;
 
-export function SetLastSeenVersion(arg1:string):Promise<void>;
-
 export function SetMailtoMode(arg1:string):Promise<void>;
 
 export function SetMarkAsReadDelay(arg1:number):Promise<void>;
@@ -668,8 +660,6 @@ export function SetNativeTitleBar(arg1:boolean):Promise<void>;
 export function SetOAuthCreds(arg1:string,arg2:string,arg3:string):Promise<void>;
 
 export function SetOAuthCredsChoice(arg1:string,arg2:string):Promise<void>;
-
-export function SetOAuthWarningDisabled(arg1:boolean):Promise<void>;
 
 export function SetPGPEncryptPolicy(arg1:string,arg2:string):Promise<void>;
 
