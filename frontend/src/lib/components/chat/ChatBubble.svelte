@@ -135,7 +135,7 @@
 
 {#snippet avatar()}
   <div class="w-8 shrink-0" aria-hidden="true">
-    {#if item.groupStart}
+    {#if item.groupStart && !item.mine}
       <Avatar email={msg.fromEmail} name={msg.fromName} size={32} photoData={photo?.data} photoMediaType={photo?.mediaType} />
     {/if}
   </div>
