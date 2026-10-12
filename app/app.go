@@ -454,6 +454,7 @@ func (a *App) Preflight() error {
 	_ = logging.Init(logging.Config{
 		Level:   logLevel,
 		Console: true,
+		File:    debugLogFile(logLevel == "debug"),
 	})
 	log := logging.WithComponent("app")
 

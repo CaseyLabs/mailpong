@@ -131,6 +131,7 @@ func (c *ComposerApp) Startup(ctx context.Context) {
 	_ = logging.Init(logging.Config{
 		Level:   logLevel,
 		Console: true,
+		File:    debugLogFile(logLevel == "debug"),
 	})
 	log := logging.WithComponent("composer")
 

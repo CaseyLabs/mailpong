@@ -172,6 +172,11 @@ func (p *Paths) EnsureDirectories() error {
 	return nil
 }
 
+// LogFilePath returns the path to the debug log file
+func (p *Paths) LogFilePath() string {
+	return filepath.Join(p.Data, "mailven.log")
+}
+
 // DatabasePath returns the path to the main database
 func (p *Paths) DatabasePath() string {
 	return filepath.Join(p.Data, "mailven.db")
