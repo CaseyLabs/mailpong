@@ -142,21 +142,25 @@
   If we ever want to remove these styles, we need to add an explicit border
   color utility to any element that depends on these defaults.
 */
-/* Chat widths (Settings → Chat → Reading width). Bubbles, pending sends, day
-   separators and the composer span the conversation pane; --chat-bubble caps
-   how wide a bubble grows (and never more than 75% of the pane). Email cards
+/* Chat widths (Settings → Chat → Reading width). Bubbles, pending sends and
+   day separators sit in a centred --chat-column, so on a wide pane my replies
+   stay near theirs instead of drifting to the far edge; --chat-bubble caps
+   how wide a bubble grows (and never more than 75% of the column). Email cards
    and full email bodies sit in a centred --chat-stream column, so a 600px
    HTML email fits without horizontal scrolling (it needs about 45.5rem with
    the avatar and paddings). Plain variables, not @theme tokens: @theme inline
    would bake the values into the utilities. */
 :root {
+  --chat-column: 60rem;
   --chat-bubble: 36rem;
   --chat-stream: 46rem;
 }
 :root[data-reading-width='narrow'] {
+  --chat-column: 52rem;
   --chat-bubble: 30rem;
 }
 :root[data-reading-width='wide'] {
+  --chat-column: 72rem;
   --chat-bubble: 44rem;
   --chat-stream: 54rem;
 }

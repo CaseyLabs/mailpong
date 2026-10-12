@@ -81,9 +81,10 @@ Final values (HSL triples, `built-in.css`):
 | `--fg-tertiary` | 219 14% 72% | 220 11% 39% |
 
 Reading width is not a token: `data-reading-width` on `<html>` (the "Reading
-width" chat setting) selects the plain variables `--chat-bubble` (Narrow 30 /
-Standard 36 / Wide 44 rem, the widest a bubble grows, never past 75% of the
-pane) and `--chat-stream` (46 / 46 / 54 rem, the centred column for email cards
-and full bodies) in `app.css`. Bubbles, day separators and the composer span
-the conversation pane with 24 px side padding: their messages sit on the left,
-mine on the right.
+width" chat setting) selects the plain variables `--chat-column` (Narrow 52 /
+Standard 60 / Wide 72 rem, the centred column for bubbles, pending sends and
+day separators), `--chat-bubble` (30 / 36 / 44 rem, the widest a bubble grows,
+never past 75% of the column) and `--chat-stream` (46 / 46 / 54 rem, the
+centred column for email cards and full bodies) in `app.css`. Inside the chat
+column (24 px side padding) their messages sit on the left, mine on the right;
+the composer spans the conversation pane.

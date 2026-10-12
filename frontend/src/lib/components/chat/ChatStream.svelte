@@ -1,7 +1,7 @@
 <script lang="ts">
   // ChatStream — the messages of a chat: day / subject headings, bubbles and
-  // pending replies across the whole pane (theirs on the left, mine on the
-  // right); email cards stay in a centred --chat-stream column.
+  // pending replies in a centred --chat-column (theirs on the left, mine on
+  // the right); email cards stay in a narrower centred --chat-stream column.
   import ChatBubble from './ChatBubble.svelte'
   import ChatDaySeparator from './ChatDaySeparator.svelte'
   import ChatPendingBubble from './ChatPendingBubble.svelte'
@@ -31,7 +31,7 @@
   }: Props = $props()
 </script>
 
-<div class="w-full">
+<div class="mx-auto w-full max-w-(--chat-column)">
   {#each items as item (item.msg.id)}
     {#if item.newDay || item.subject}
       <div class="w-full px-6"><ChatDaySeparator date={item.newDay ? item.date : undefined} subject={item.subject} /></div>
