@@ -4,7 +4,7 @@ sidebar_position: 1
 
 # Features Overview
 
-MailPong packs essential email features into a lightweight, efficient package. Here's what you can do.
+Mailven packs essential email features into a lightweight, efficient package. Here's what you can do.
 
 ## Email Management
 
@@ -38,7 +38,7 @@ MailPong packs essential email features into a lightweight, efficient package. H
 
 ## Keyboard Navigation
 
-MailPong is fully keyboard-navigable with vim-style shortcuts:
+Mailven is fully keyboard-navigable with vim-style shortcuts:
 
 - Navigate between panes with `Alt+H/L`
 - Move through messages with `J/K`
@@ -52,7 +52,7 @@ MailPong is fully keyboard-navigable with vim-style shortcuts:
 - **Local Storage** - All data stays on your computer
 - **Direct Connections** - Connects directly to your email provider via IMAP/SMTP
 - **Tracking Removal** - Basic removal of tracking elements in emails
-- **No Analytics** - MailPong doesn't phone home
+- **No Analytics** - Mailven doesn't phone home
 
 ## Customization
 
@@ -79,11 +79,11 @@ MailPong is fully keyboard-navigable with vim-style shortcuts:
 
 ## What's Not Included
 
-MailPong focuses on core email functionality. These features are not currently available:
+Mailven focuses on core email functionality. These features are not currently available:
 
 - Calendar integration
 - Email filters/rules
 - Offline sending (no message queue - requires connection to send)
 - Import from other email clients
 
-Some of these are on the [roadmap](https://github.com/caseylabs/mailpong) for future releases.
+Some of these are on the [roadmap](https://github.com/CaseyLabs/mailven) for future releases.

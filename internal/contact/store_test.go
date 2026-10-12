@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/caseylabs/mailpong/internal/database"
+	"github.com/caseylabs/mailven/internal/database"
 )
 
 func openTestDB(t *testing.T) *database.DB {

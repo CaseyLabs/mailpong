@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/folder"
-	"github.com/caseylabs/mailpong/internal/imap"
-	"github.com/caseylabs/mailpong/internal/logging"
-	"github.com/caseylabs/mailpong/internal/message"
-	"github.com/caseylabs/mailpong/internal/undo"
+	"github.com/caseylabs/mailven/internal/folder"
+	"github.com/caseylabs/mailven/internal/imap"
+	"github.com/caseylabs/mailven/internal/logging"
+	"github.com/caseylabs/mailven/internal/message"
+	"github.com/caseylabs/mailven/internal/undo"
 	goImap "github.com/emersion/go-imap/v2"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )

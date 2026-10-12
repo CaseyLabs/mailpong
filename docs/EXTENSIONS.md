@@ -1,10 +1,10 @@
-# MailPong Extension System
+# Mailven Extension System
 
-Developer reference for building first-party extensions on top of MailPong's core.
+Developer reference for building first-party extensions on top of Mailven's core.
 
 > **Status (today):** First-party extensions only — extensions ship compiled into the binary and are individually toggleable in Settings. The bridge architecture documented here is **designed so the project can accept third-party extensions via PR if community-extension demand emerges**, but no third-party-PR intake is open today and there's no commitment to open one. A full community-extension runtime (dynamic loading, sandboxing, manifest verification) is a separate, later possibility contingent on the same demand signal; see [§ Not yet implemented](#not-yet-implemented).
 
-This doc is the contract every MailPong extension uses to interact with the host and with other extensions. Every claim is backed by a file path you can read directly — no second source of truth.
+This doc is the contract every Mailven extension uses to interact with the host and with other extensions. Every claim is backed by a file path you can read directly — no second source of truth.
 
 ---
 
@@ -34,7 +34,7 @@ This doc is the contract every MailPong extension uses to interact with the host
 
 ## Overview
 
-MailPong's extension system lets first-party extensions (Calendar, Contacts, Notes/Chat in the future) ship inside the same binary as Mail, while staying invisible to users who don't enable them. Design principles, in order of importance:
+Mailven's extension system lets first-party extensions (Calendar, Contacts, Notes/Chat in the future) ship inside the same binary as Mail, while staying invisible to users who don't enable them. Design principles, in order of importance:
 
 1. **Built-in, disabled by default.** Extensions compile into the binary but do nothing until enabled. Minimalists never see them.
 2. **Per-extension SQLite isolation.** Each extension owns its own database file under `<dataDir>/extensions/<name>/data.db`. Extensions never query each other's tables — cross-extension data access goes through Go interfaces in `internal/core/api/v1`.
@@ -50,7 +50,7 @@ Full architectural rationale lives in `context/EXTENSION_ARCHITECTURE.md` (an Ae
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  MailPong process (single binary, single WebKit view)                 │
+│  Mailven process (single binary, single WebKit view)                 │
 │                                                                     │
 │  ┌────────────────────────┐    ┌──────────────────────────────┐    │
 │  │  Core (always running) │    │  Extensions (toggleable)     │    │
@@ -126,7 +126,7 @@ This shape is **subprocess-ready**: if community-extension demand emerges and a 
   "name": "Contacts",
   "version": "0.1.0",
   "description": "Browse and edit contacts from your accounts (CardDAV, Google, Microsoft). Local-contact editing in v0.3.x; provider write capability rolling out incrementally.",
-  "author": "MailPong Contributors",
+  "author": "Mailven Contributors",
   "minAerionVersion": "0.3.0",
   "capabilities": [
     "contacts.read",
@@ -154,7 +154,7 @@ This shape is **subprocess-ready**: if community-extension demand emerges and a 
 | `author` | Display name only. No URL. |
 | `minAerionVersion` | Semver. Future host versions will refuse to load an extension whose minAerionVersion is higher than the running build. |
 | `capabilities` | Coarse capability strings the extension declares. See [coreapi.Capability](../internal/core/api/v1/manifest.go) for the known set (e.g., `contacts.read`, `contacts.write`, `ui.rail-tab`, `ui.settings-tab`). Unknown strings are treated as opaque so the set can grow without breaking older hosts. |
-| `oauth.first_party_uses_core_for_scopes` | Optional. Lists OAuth scopes that should route through MailPong core's mail OAuth (reusing the user's existing consent) instead of the extension's own client config. See [§ Manifest OAuth routing](#manifest-oauth-routing--first_party_uses_core_for_scopes). First-party only. |
+| `oauth.first_party_uses_core_for_scopes` | Optional. Lists OAuth scopes that should route through Mailven core's mail OAuth (reusing the user's existing consent) instead of the extension's own client config. See [§ Manifest OAuth routing](#manifest-oauth-routing--first_party_uses_core_for_scopes). First-party only. |
 
 ### Loading the manifest into Go
 
@@ -167,7 +167,7 @@ package contacts
 import (
     _ "embed"
     "encoding/json"
-    coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
+    coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
 )
 
 //go:embed manifest.json
@@ -307,7 +307,7 @@ The wiring file ([`app/extension_contacts.go`](../app/extension_contacts.go), ~2
 package app
 
 import (
-    extcontactsbe "github.com/caseylabs/mailpong/extensions/contacts/backend"
+    extcontactsbe "github.com/caseylabs/mailven/extensions/contacts/backend"
     wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -407,7 +407,7 @@ s.notif.Show(coreapi.NotifyRequest{
 })
 ```
 
-Clicking the notification raises the MailPong window, switches the rail to Calendar via the host's generic `extension:open` Wails event, and the calendar pane drains the `/event/<id>` path on mount via a small kit-level pending-deep-link buffer ([`frontend/src/lib/stores/extensionDeepLink.svelte.ts`](../frontend/src/lib/stores/extensionDeepLink.svelte.ts)) — solving the mount-gap problem where the target pane isn't mounted yet when the Wails event fires.
+Clicking the notification raises the Mailven window, switches the rail to Calendar via the host's generic `extension:open` Wails event, and the calendar pane drains the `/event/<id>` path on mount via a small kit-level pending-deep-link buffer ([`frontend/src/lib/stores/extensionDeepLink.svelte.ts`](../frontend/src/lib/stores/extensionDeepLink.svelte.ts)) — solving the mount-gap problem where the target pane isn't mounted yet when the Wails event fires.
 
 **Frontend patterns Calendar pioneered** that future extensions can borrow from:
 
@@ -437,7 +437,7 @@ When your extension needs more than wrapping a host surface — own data soverei
 
 ## `coreapi` reference
 
-Package: `github.com/caseylabs/mailpong/internal/core/api/v1` (12 files; entirely interface + type declarations, no logic).
+Package: `github.com/caseylabs/mailven/internal/core/api/v1` (12 files; entirely interface + type declarations, no logic).
 
 The full surface is defined in [`internal/core/api/v1/`](../internal/core/api/v1). Every extension method receives a `coreapi.Core` (see [§ Core interface](#core-interface)) at initialization. From there it grabs the surfaces it needs.
 
@@ -530,7 +530,7 @@ make per-user decisions. First wired examples:
 
 The current `coreapi` surface is the one extensions should code against. **Non-breaking additions** (new methods on existing interfaces with sensible defaults, new event types, new fields on request structs with zero values) may land between minor releases. **Breaking changes** are avoided wherever possible; when they're truly necessary, they ship with migration notes and a deprecation period rather than a silent rename.
 
-MailPong is still pre-1.0 — the surface may continue to evolve as more first-party extensions surface their needs.
+Mailven is still pre-1.0 — the surface may continue to evolve as more first-party extensions surface their needs.
 
 ### `Core` interface
 
@@ -889,7 +889,7 @@ Aside from `system:*`, extensions publish their own namespaced events (e.g. Cale
 
 - `Address{ Name, Email }`
 - `Attachment{ Filename, MIMEType, Size, Data, Path, IsInline, ContentID }`
-- `MessageRef{ AccountID, FolderID, MessageID }` — MailPong DB id, not RFC 5322 Message-ID
+- `MessageRef{ AccountID, FolderID, MessageID }` — Mailven DB id, not RFC 5322 Message-ID
 - `Flags{ Seen, Flagged, Answered, Draft, Deleted, Forwarded }`
 - `FolderKind` — `inbox|sent|drafts|trash|archive|spam|all|starred`
 - `Message`, `Folder` — API-surface mirrors of internal storage types (decoupled so internal storage can evolve)
@@ -918,7 +918,7 @@ Use `errors.Is(err, coreapi.ErrXxx)` for sentinel matching. `ErrAdditionalConsen
 Package: [`internal/extensions/`](../internal/extensions/) (files [`store.go`](../internal/extensions/store.go) and [`kv.go`](../internal/extensions/kv.go)).
 
 ```go
-import "github.com/caseylabs/mailpong/internal/extensions"
+import "github.com/caseylabs/mailven/internal/extensions"
 
 func NewStore(dataDir string) (*extensions.Store, error) {
     return extensions.OpenStore(dataDir, "myextension", []extensions.Migration{
@@ -945,7 +945,7 @@ kv := store.KV()           // coreapi.KVStore backed by ext_kv table
 
 **Migrations** start at version 1, increment monotonically. Each runs inside a transaction. Already-applied versions are skipped on every startup. Each extension's migration sequence is INDEPENDENT — no global migration namespace.
 
-**File location:** Linux `~/.local/share/mailpong/extensions/<name>/data.db`, macOS `~/Library/Application Support/MailPong/extensions/<name>/data.db`, Windows `%APPDATA%\MailPong\extensions\<name>\data.db`. The `extensions/` parent is created by [`internal/platform/paths.go EnsureDirectories`](../internal/platform/paths.go).
+**File location:** Linux `~/.local/share/mailven/extensions/<name>/data.db`, macOS `~/Library/Application Support/Mailven/extensions/<name>/data.db`, Windows `%APPDATA%\Mailven\extensions\<name>\data.db`. The `extensions/` parent is created by [`internal/platform/paths.go EnsureDirectories`](../internal/platform/paths.go).
 
 **Lifecycle:** Per the architecture doc, stores open EAGERLY at `App.Startup`, regardless of whether the extension is currently enabled. This keeps schemas valid across enable/disable cycles — users can disable, the migrations stay applied, re-enabling is instantaneous.
 
@@ -990,7 +990,7 @@ resp, err := client.Get("https://www.googleapis.com/calendar/v3/users/me/calenda
 
 1. Broker reads the account's existing Mail tokens to discover its provider (`google`, `microsoft`).
 2. Broker classifies each requested scope using the extension's manifest:
-   - Scopes listed in `manifest.oauth.first_party_uses_core_for_scopes` route to MailPong core's **mail** client config (`<provider>-mail`) — reuses existing mail consent; no new prompt.
+   - Scopes listed in `manifest.oauth.first_party_uses_core_for_scopes` route to Mailven core's **mail** client config (`<provider>-mail`) — reuses existing mail consent; no new prompt.
    - Scopes NOT listed route to the **extension's own** client config (`<provider>-<extensionID>`, e.g., `google-contacts`).
 3. **Mixed-scope calls are rejected.** Some-to-core + some-to-own in a single call returns an error; the extension must split into two HTTPClient calls.
 4. Broker checks whether the account has tokens under the resolved `ClientConfigID` covering the requested scopes.
@@ -1027,8 +1027,8 @@ type ClientCredentials struct {
 }
 
 // Known ids:
-//   "google-mail"          — MailPong core's Mail-scoped Google project
-//   "microsoft-mail"       — MailPong core's Mail-scoped Azure AD registration
+//   "google-mail"          — Mailven core's Mail-scoped Google project
+//   "microsoft-mail"       — Mailven core's Mail-scoped Azure AD registration
 //   "google-<extensionID>" — per-extension Google project (e.g., "google-contacts")
 //   "microsoft-<extensionID>" — per-extension Azure AD registration (e.g., "microsoft-contacts")
 func ClientConfigForID(id string) (ClientCredentials, bool)
@@ -1037,7 +1037,7 @@ func ClientConfigForID(id string) (ClientCredentials, bool)
 Resolution order:
 
 1. User override from `credentials.Store` (Settings UI override) via `oauth2.UserOverrideLookup`
-2. Registered `CredentialsProvider` chain — MailPong core's mail slots, then each extension's own slots (registered at startup from each extension's `OAuthClients()` return value)
+2. Registered `CredentialsProvider` chain — Mailven core's mail slots, then each extension's own slots (registered at startup from each extension's `OAuthClients()` return value)
 3. `(zero, false)` → the consent flow surfaces "no creds configured" pointing the user at the extension's settings dialog
 
 > **Don't use `oauth2.GetProvider(clientConfigID)` to test "is this slot configured?"** It silently inherits the mail-side ldflag creds when the extension slot is empty, producing a misleading "configured" answer. Use `oauth2.ClientConfigForID(clientConfigID)` — that's the canonical resolver and only returns truthy when there are real per-slot creds. See [§ Incremental consent flow](#incremental-consent-flow) for the correctness rule.
@@ -1058,12 +1058,12 @@ When you ship a new first-party extension that needs its own OAuth project:
 1. Create a Google Cloud project (or Azure AD app registration) with the scopes your extension needs.
 2. Define ldflag-injected vars in `extensions/<name>/creds.go` (e.g., `GoogleClientID`, `GoogleClientSecret`, `MicrosoftClientID`). See `extensions/contacts/creds.go` (no longer present; see the credentials section below) for the canonical pattern.
 3. Return them from the extension's `OAuthClients()` as `[]coreapi.OAuthProviderRegistration` keyed by `<provider>-<extensionID>`. The host iterates this list at startup and registers each entry into the global `ClientConfigForID` resolver chain.
-4. Inject the actual values at build time: typically a per-extension `.env` file (`extensions/<name>/.env`) consumed by the Makefile via `-ldflags '-X github.com/caseylabs/mailpong/extensions/<name>.GoogleClientID=...'`.
-5. Optionally also expose an "MailPong - {Google,Microsoft}" option in the extension slot's dropdown (see [§ User-supplied OAuth credentials](#user-supplied-oauth-credentials-override-ui)) so users on builds with shipped credentials can opt into them without pasting anything. The option only appears when the corresponding shipped creds were injected at build time. Choosing it clears any user-typed creds on the slot; the resolver then falls through to the shipped values via the provider chain.
+4. Inject the actual values at build time: typically a per-extension `.env` file (`extensions/<name>/.env`) consumed by the Makefile via `-ldflags '-X github.com/caseylabs/mailven/extensions/<name>.GoogleClientID=...'`.
+5. Optionally also expose an "Mailven - {Google,Microsoft}" option in the extension slot's dropdown (see [§ User-supplied OAuth credentials](#user-supplied-oauth-credentials-override-ui)) so users on builds with shipped credentials can opt into them without pasting anything. The option only appears when the corresponding shipped creds were injected at build time. Choosing it clears any user-typed creds on the slot; the resolver then falls through to the shipped values via the provider chain.
 
 Once the extension's slot is populated, `ClientConfigForID("<provider>-<extensionID>")` returns configured credentials and the Auth Broker routes the extension's scope requests to that client. Empty entries are safe — extensions can declare all their slots unconditionally and rely on build-time injection to fill in only the ones with credentials.
 
-MailPong core's mail credentials follow a separate path: they're loaded from the `mailpong-creds` shim binary (or build-time ldflags) at startup, when the builder supplied credentials; MailPong ships none, so a build with no credentials offers only the Custom option. See [`internal/oauth2/config.go`](../internal/oauth2/config.go). Extension credentials do NOT use the shim — they live in their own extension package.
+Mailven core's mail credentials follow a separate path: they're loaded from the `mailven-creds` shim binary (or build-time ldflags) at startup, when the builder supplied credentials; Mailven ships none, so a build with no credentials offers only the Custom option. See [`internal/oauth2/config.go`](../internal/oauth2/config.go). Extension credentials do NOT use the shim — they live in their own extension package.
 
 ### Mapping legacy provider names
 
@@ -1188,7 +1188,7 @@ Two things gate on the enabled flag:
 
 Background services (sync schedulers, IDLE managers, event publishers) follow the same lazy pattern — start them inside `ensureInit()` rather than at `Startup`, so a disabled extension contributes no goroutines, no timers, and no file handles. The Bridge struct itself is the only thing in memory.
 
-**Implication for the user:** enabling an extension after MailPong is launched works — the first method call performs the migrations + initialization transparently. Disabling an extension stops new Wails calls from reaching its API; the already-allocated Store + API stay in memory until the next app restart. Users who want to **fully reclaim memory** after disabling must restart — the project deliberately accepts this trade-off because (a) disable→memory-free without restart would require a coordinated shutdown of the extension's goroutines that isn't worth designing yet, and (b) MailPong is a long-running desktop app where restart is cheap.
+**Implication for the user:** enabling an extension after Mailven is launched works — the first method call performs the migrations + initialization transparently. Disabling an extension stops new Wails calls from reaching its API; the already-allocated Store + API stay in memory until the next app restart. Users who want to **fully reclaim memory** after disabling must restart — the project deliberately accepts this trade-off because (a) disable→memory-free without restart would require a coordinated shutdown of the extension's goroutines that isn't worth designing yet, and (b) Mailven is a long-running desktop app where restart is cheap.
 
 ### Enable / disable
 
@@ -1238,7 +1238,7 @@ Extension-relevant subset. Many other `App.*` methods exist for mail-side concer
 | `App.SetContactSourceWritable(sourceID string, writable bool) error` | Flip a contact source's writable flag. Used by the Contacts extension's settings UI to enable/disable write access on CardDAV sources (a pure flag flip) and to disable previously-enabled OAuth sources. Enabling OAuth sources goes through `<Extension>_StartIncrementalConsent` (which calls `SetSourceWritable` server-side after consent). |
 | `App.GetOAuthCredsStatus(configID string) (app.OAuthCredsStatus, error)` | Reports per-slot config presence (`hasUserOverride`, `hasShipped`, last-4-char fingerprint of the active client_id). Never returns secret values. Used by the OAuth Credentials editor in each extension's settings dialog. |
 | `App.SetOAuthCreds(configID, clientID, clientSecret string) error` | Persist user-supplied client_id + secret for a slot (overrides any shipped defaults). |
-| `App.ClearOAuthCreds(configID string) error` | Remove a user override for a slot (reverts to shipped values, if any). Used both by the editor's "Clear" action and when the slot dropdown switches from Custom back to the MailPong-shipped option. |
+| `App.ClearOAuthCreds(configID string) error` | Remove a user override for a slot (reverts to shipped values, if any). Used both by the editor's "Clear" action and when the slot dropdown switches from Custom back to the Mailven-shipped option. |
 | `App.ListAuthContextsForProvider(provider string) ([]app.AuthContextInfo, error)` | Enumerates existing matching-provider auth identities: mail accounts (from `accountStore`) + standalone contact sources (`carddavStore.ListSources()` where `AccountID IS NULL` and `Type == provider`). Drives the `WriteAccessAccountPicker` dialog's radio list. Result entries carry `kind` (`"mail"` or `"standalone-contacts"`), `identifier` (account_id or source_id), `email`, and a pre-built display `label`. |
 | `App.CancelOAuthFlow()` | Cancel any in-progress OAuth flow (account add, write-access grant, etc.). Stops the OAuth manager's callback server; in-flight backend code returns with a cancellation error. |
 
@@ -1310,7 +1310,7 @@ When you write an extension that uses the broker, mirror this pattern.
 
 ### Don't mock; use the real store
 
-MailPong's testing style is integration-flavored: a real SQLite at `t.TempDir()` is fast enough (~10ms per open) and exercises actual SQL behavior. Avoid mock layers unless the dependency is genuinely external (an HTTP server — use `httptest.Server`).
+Mailven's testing style is integration-flavored: a real SQLite at `t.TempDir()` is fast enough (~10ms per open) and exercises actual SQL behavior. Avoid mock layers unless the dependency is genuinely external (an HTTP server — use `httptest.Server`).
 
 ---
 
@@ -1402,7 +1402,7 @@ Adding a new extension's i18n is purely a file drop under `extensions/<name>/fro
 
 **Key namespace convention:** use the extension id as the top-level namespace (`contacts.edit.save`, `calendar.event.create`). Don't reuse core's `common.*` — duplicate translations of `Save`/`Cancel` are cheap and prevent accidental coupling.
 
-**Adding a locale:** MailPong's UI is English-only today, so extensions ship `en.json` alone. [`docs/LANGUAGE.md`](LANGUAGE.md) lists the steps to add a locale later; an extension that skips it falls back to English via svelte-i18n's `fallbackLocale: 'en'`.
+**Adding a locale:** Mailven's UI is English-only today, so extensions ship `en.json` alone. [`docs/LANGUAGE.md`](LANGUAGE.md) lists the steps to add a locale later; an extension that skips it falls back to English via svelte-i18n's `fallbackLocale: 'en'`.
 
 **Lightweight invariant:** every extension's `registerExtensionI18n()` runs at startup regardless of enabled state, but `register()` only queues a lazy loader — the JSON isn't fetched until the locale activates and the extension's component first calls `$_()`. Disabled extensions whose UI never renders never load their dictionaries.
 
@@ -1486,11 +1486,11 @@ This coupling is architectural debt — extensions touching `frontend/vite.confi
 
 ## Extension UI Kit
 
-The kit at [`frontend/src/lib/components/kit/`](../frontend/src/lib/components/kit) is the layer extensions compose their UI from. Theme tokens, keyboard navigation, density, accent-bar selection, avatar palette, dialog interactions — all are baked in, **matching mail's behavior 1-for-1**. Your extension provides data and callbacks, the kit owns rendering, and the end user gets a UX indistinguishable from the rest of MailPong.
+The kit at [`frontend/src/lib/components/kit/`](../frontend/src/lib/components/kit) is the layer extensions compose their UI from. Theme tokens, keyboard navigation, density, accent-bar selection, avatar palette, dialog interactions — all are baked in, **matching mail's behavior 1-for-1**. Your extension provides data and callbacks, the kit owns rendering, and the end user gets a UX indistinguishable from the rest of Mailven.
 
 ### Why the UI kit exists
 
-Extensions need to look and behave like the rest of MailPong — same keys, same focus rules, same scrolling, same dialog interactions. Modifying mail's code (`ChatList.svelte`, `Sidebar.svelte`, `ChatView.svelte`, etc.) to share components directly carries too much regression risk to do that way. The kit is the mechanism for getting cohesion without touching mail. **It's not an alternative design — it's the necessary copy of mail's UX, made consumable by extensions.**
+Extensions need to look and behave like the rest of Mailven — same keys, same focus rules, same scrolling, same dialog interactions. Modifying mail's code (`ChatList.svelte`, `Sidebar.svelte`, `ChatView.svelte`, etc.) to share components directly carries too much regression risk to do that way. The kit is the mechanism for getting cohesion without touching mail. **It's not an alternative design — it's the necessary copy of mail's UX, made consumable by extensions.**
 
 ### The 1-for-1 rule
 
@@ -1504,7 +1504,7 @@ Visual consistency is also preserved at the **theme layer**. The kit's `Avatar` 
 
 When the host primitive has a bug that affects the kit, **fix it at the host layer** so both benefit. Don't add the fix only to the kit wrapper — that creates drift and silently breaks the 1-for-1 contract. Example: `ui/confirm-dialog/ConfirmDialog.svelte` was missing `dialogGuard` registration (which prevents mail's global key handler from killing Enter/Space activation on dialog buttons). The fix landed on the host primitive, and the kit's thin pass-through inherited it automatically.
 
-This pattern is anchored in [the lightweight-by-default motto](../README.md) — MailPong remains a simple email client for users who don't enable extensions, and extensions opt-in to features at the cost of weight. Mail must never carry kit overhead.
+This pattern is anchored in [the lightweight-by-default motto](../README.md) — Mailven remains a simple email client for users who don't enable extensions, and extensions opt-in to features at the cost of weight. Mail must never carry kit overhead.
 
 ### Keyboard bridge
 
@@ -1947,7 +1947,7 @@ The registration is scoped to the extension's id — the dispatcher only fires i
 
 ### Pane focus slots
 
-The kit reuses MailPong's existing pane-focus store at [`frontend/src/lib/stores/keyboard.svelte.ts`](../frontend/src/lib/stores/keyboard.svelte.ts). The slot type is `'sidebar' | 'messageList' | 'viewer'` — those names are kept as-is for backward compatibility with mail's existing focus dispatch. Extension panes register against these same slots:
+The kit reuses Mailven's existing pane-focus store at [`frontend/src/lib/stores/keyboard.svelte.ts`](../frontend/src/lib/stores/keyboard.svelte.ts). The slot type is `'sidebar' | 'messageList' | 'viewer'` — those names are kept as-is for backward compatibility with mail's existing focus dispatch. Extension panes register against these same slots:
 
 | Slot | Mail occupant | Kit equivalent |
 |---|---|---|
@@ -1967,21 +1967,21 @@ When a future extension needs a primitive that doesn't exist yet (e.g., Calendar
 4. **If you find a bug in the host primitive that affects the kit, fix it at the host layer** so mail benefits too. Don't patch the kit wrapper — that creates drift that breaks the 1-for-1 contract. Same code paths, same behavior, same fixes.
 5. **Add new shortcut predicates to `shortcuts.ts`** if introducing new keys. Both mail and any kit consumer should reference the same predicate.
 6. Document the component here with prop table + minimal usage example.
-7. **Verify the lightweight invariant**: with the new component built but no extension enabled, htop should show no MailPong/webkit2gtk activity. The kit must be lazily mounted only when an extension is active.
+7. **Verify the lightweight invariant**: with the new component built but no extension enabled, htop should show no Mailven/webkit2gtk activity. The kit must be lazily mounted only when an extension is active.
 
 ---
 
 ## Write capability
 
-Phase 2b introduces write capability to extensions. Reads continue through MailPong core's existing data paths (mail OAuth + per-source CardDAV creds); writes go through a parallel per-extension OAuth path.
+Phase 2b introduces write capability to extensions. Reads continue through Mailven core's existing data paths (mail OAuth + per-source CardDAV creds); writes go through a parallel per-extension OAuth path.
 
 ### Per-extension OAuth client configs
 
-Each first-party extension that needs OAuth writes owns its OWN client config slot, with its own credentials, injected at build time from the extension's package — MailPong core compiles in only `*-mail`.
+Each first-party extension that needs OAuth writes owns its OWN client config slot, with its own credentials, injected at build time from the extension's package — Mailven core compiles in only `*-mail`.
 
 ```
-google-mail            ← MailPong core (mail + contacts READ via existing grant)
-microsoft-mail         ← MailPong core
+google-mail            ← Mailven core (mail + contacts READ via existing grant)
+microsoft-mail         ← Mailven core
 google-contacts        ← Contacts extension (WRITE only)
 microsoft-contacts     ← Contacts extension
 google-calendar        ← Calendar extension (READ + WRITE; future)
@@ -1996,17 +1996,17 @@ Each extension's package contains:
 
 | Variable | Slots backed | Surfaced in picker as | Notes |
 |---|---|---|---|
-| `GoogleClientID` / `GoogleClientSecret` | `google-mail` | "MailPong - Google" | Mail's Google-verified project. Also routable for scopes that an extension manifest lists in `first_party_uses_core_for_scopes` (today: contacts.readonly). |
-| `GoogleTestingClientID` / `GoogleTestingClientSecret` | `google-contacts`, `google-calendar` | "MailPong - Google (Testing)" | **Single shared un-Google-verified test project** that backs every first-party extension needing broader Google scopes (contacts.readwrite, full Calendar). When the mail project eventually gets verified for those scopes, the default in the picker UI switches to "MailPong - Google" and this slot becomes a fallback. |
-| `MicrosoftClientID` | `microsoft-mail`, `microsoft-contacts`, `microsoft-calendar` | "MailPong - Microsoft" | One Azure AD app registration covers all three surfaces. Microsoft Graph doesn't gate scopes behind verification, so adding `Contacts.ReadWrite` / `Calendars.ReadWrite` to the existing mail registration is free. |
+| `GoogleClientID` / `GoogleClientSecret` | `google-mail` | "Mailven - Google" | Mail's Google-verified project. Also routable for scopes that an extension manifest lists in `first_party_uses_core_for_scopes` (today: contacts.readonly). |
+| `GoogleTestingClientID` / `GoogleTestingClientSecret` | `google-contacts`, `google-calendar` | "Mailven - Google (Testing)" | **Single shared un-Google-verified test project** that backs every first-party extension needing broader Google scopes (contacts.readwrite, full Calendar). When the mail project eventually gets verified for those scopes, the default in the picker UI switches to "Mailven - Google" and this slot becomes a fallback. |
+| `MicrosoftClientID` | `microsoft-mail`, `microsoft-contacts`, `microsoft-calendar` | "Mailven - Microsoft" | One Azure AD app registration covers all three surfaces. Microsoft Graph doesn't gate scopes behind verification, so adding `Contacts.ReadWrite` / `Calendars.ReadWrite` to the existing mail registration is free. |
 
-The root `Makefile`'s `credentials` target writes the values from the root `.env` / `.env.local` into the gitignored `internal/oauth2/credentials_gen.go` (compiled only with the `mailpong_creds` build tag), so they never appear on a command line or in Wails build output. Extension packages stay focused on domain logic — no `creds.go`, no `OAuthClients()`, no per-extension env file. If a slot's underlying variable is empty, the slot resolves to `(zero, false)` and the picker UI omits the corresponding option.
+The root `Makefile`'s `credentials` target writes the values from the root `.env` / `.env.local` into the gitignored `internal/oauth2/credentials_gen.go` (compiled only with the `mailven_creds` build tag), so they never appear on a command line or in Wails build output. Extension packages stay focused on domain logic — no `creds.go`, no `OAuthClients()`, no per-extension env file. If a slot's underlying variable is empty, the slot resolves to `(zero, false)` and the picker UI omits the corresponding option.
 
 ### Manifest OAuth routing — `first_party_uses_core_for_scopes`
 
 When an extension calls `core.Auth().HTTPClient(accountID, scopes)`, the Auth Broker reads the calling extension's manifest to decide whether each scope:
 
-- **Routes to MailPong core's mail OAuth** (`<provider>-mail`) — listed in `manifest.oauth.first_party_uses_core_for_scopes`. Reuses the user's existing mail consent; no new OAuth prompt. Only viable for scopes the user's mail OAuth already covers.
+- **Routes to Mailven core's mail OAuth** (`<provider>-mail`) — listed in `manifest.oauth.first_party_uses_core_for_scopes`. Reuses the user's existing mail consent; no new OAuth prompt. Only viable for scopes the user's mail OAuth already covers.
 - **Routes to the extension's own creds** (`<provider>-<extensionID>`) — NOT listed. If the account lacks those scopes under the extension's config, broker returns `*coreapi.ErrAdditionalConsentRequired`; the host runs an incremental-consent flow.
 
 ```jsonc
@@ -2036,24 +2036,24 @@ Mixed-scope calls (some routing to core, some to extension) are REJECTED — the
 
 ### User-supplied OAuth credentials (override UI)
 
-Users can paste their own Client ID + Secret per slot via MailPong's settings:
+Users can paste their own Client ID + Secret per slot via Mailven's settings:
 
-- **MailPong core's `*-mail` slots** → Settings → Accounts → "OAuth Credentials (advanced)" disclosure (collapsed by default). See [`CoreOAuthSection.svelte`](../frontend/src/lib/components/settings/CoreOAuthSection.svelte).
+- **Mailven core's `*-mail` slots** → Settings → Accounts → "OAuth Credentials (advanced)" disclosure (collapsed by default). See [`CoreOAuthSection.svelte`](../frontend/src/lib/components/settings/CoreOAuthSection.svelte).
 - **Per-extension slots** → that extension's own settings dialog. See [`ContactsSettingsDialog.svelte`](../extensions/contacts/frontend/components/ContactsSettingsDialog.svelte) for the canonical layout.
 
 Both UIs use the same shared primitive [`kit/OAuthCredsSlotEditor.svelte`](../frontend/src/lib/components/kit/OAuthCredsSlotEditor.svelte) (composed from existing `ui/input`, `ui/button`, `ui/select`, `ui/confirm-dialog` — no new low-level inputs). The picker shows an enumerated set of choices returned by `App.GetOAuthCredsChoices(configID, extensionID)`. The choice IDs are stable and persisted via `App.SetOAuthCredsChoice(configID, choiceID)`:
 
 - **`custom`** — user-supplied Client ID + Secret. Always available. Selecting reveals the edit form; saving writes to the `user_oauth_clients` table.
 - **`aerion-shipped`** — the slot's own built-in client (compiled in via the extension's `.env` ldflags). Only listed when the slot's shipped creds are populated. Label is per-slot:
-  - `google-contacts` / `google-calendar` → **"MailPong testing"** (un-Google-verified).
-  - `microsoft-*` slots → **"MailPong - Microsoft"** (backed by mail's client after the core consolidation).
-  - `<provider>-mail` → **"MailPong - Google"** / **"MailPong - Microsoft"** (mail's own settings UI).
+  - `google-contacts` / `google-calendar` → **"Mailven testing"** (un-Google-verified).
+  - `microsoft-*` slots → **"Mailven - Microsoft"** (backed by mail's client after the core consolidation).
+  - `<provider>-mail` → **"Mailven - Google"** / **"Mailven - Microsoft"** (mail's own settings UI).
 - **`aerion-mail`** — reuse the core `<provider>-mail` slot's client for this extension. Only listed when the extension's manifest declares the provider's scopes in `first_party_uses_core_for_scopes` AND the mail slot has shipped creds. Today only Google contacts qualifies (mail's verified client carries `contacts.readonly`).
 
 Resolution order in `oauth2.ClientConfigForID(configID)`:
 1. User override (`oauth2.UserOverrideLookup`) — Settings UI `custom` choice.
 2. User-set slot alias (`oauth2.SlotAliasLookup`) — Settings UI `aerion-mail` choice. Recursive lookup on the target slot id, capped at one hop.
-3. Registered `CredentialsProvider` chain (MailPong core's, then each extension's).
+3. Registered `CredentialsProvider` chain (Mailven core's, then each extension's).
 4. `(zero, false)` → triggers `ErrAdditionalConsentRequired` or "no creds available" UX.
 
 Storage: encrypted via `credentials.Store` (OS keyring primary, encrypted DB fallback). Custom Client IDs/Secrets live in `user_oauth_clients` ([`internal/credentials/oauth_user_creds.go`](../internal/credentials/oauth_user_creds.go)); slot aliases live in `user_oauth_slot_aliases` ([`internal/credentials/oauth_slot_alias.go`](../internal/credentials/oauth_slot_alias.go)).
@@ -2068,14 +2068,14 @@ Two entry paths:
 
 ### Write-access grant flow (account-picker model)
 
-When the user wants to enable writes on a Google or Microsoft contacts source, the UI is explicit: a dialog asks which existing MailPong auth identity to attach the new write grant to. No silent retries on access-denied; no inline "consent required" dialogs popping up mid-write.
+When the user wants to enable writes on a Google or Microsoft contacts source, the UI is explicit: a dialog asks which existing Mailven auth identity to attach the new write grant to. No silent retries on access-denied; no inline "consent required" dialogs popping up mid-write.
 
 **Frontend.** [`WriteAccessAccountPicker.svelte`](../frontend/src/lib/components/oauth/WriteAccessAccountPicker.svelte) is the canonical UI. It's a generic dialog that takes `provider` (`'google'` or `'microsoft'`), `sourceID`, and `sourceName`. On open it fetches `App.ListAuthContextsForProvider(provider)` to populate the radio list. The list is the union of:
 
 - Mail accounts of that provider (from the host's account store)
 - Standalone contacts sources of that provider (from `carddavStore.ListSources()` where `AccountID IS NULL`)
 
-There is **no "Add another account"** entry. All identities must come from MailPong's core setup paths (Mail → add account, OR Contacts → add source). If the list is empty, the dialog shows a hint pointing the user to those paths.
+There is **no "Add another account"** entry. All identities must come from Mailven's core setup paths (Mail → add account, OR Contacts → add source). If the list is empty, the dialog shows a hint pointing the user to those paths.
 
 On Continue, the dialog calls the extension's `<Extension>_EnableWriteAccess(sourceID, authContextKind, authContextIdentifier, expectedEmail)` bridge method.
 
@@ -2120,7 +2120,7 @@ For sent-recipient (local) contacts and CardDAV contacts alike, the Contacts ext
 
 ### Source-dispatch pattern (transferable to Calendar / future extensions)
 
-When an extension's API needs to mutate data that lives across multiple backends (local store, CardDAV-style WebDAV, OAuth APIs), the canonical MailPong pattern is **source dispatch inside the extension's `coreapi` impl**:
+When an extension's API needs to mutate data that lives across multiple backends (local store, CardDAV-style WebDAV, OAuth APIs), the canonical Mailven pattern is **source dispatch inside the extension's `coreapi` impl**:
 
 ```go
 // extensions/<name>/backend/api.go
@@ -2146,7 +2146,7 @@ func (a *API) UpdateThing(id string, patch coreapi.ThingPatch) error {
 }
 ```
 
-MailPong's house style avoids `if/else` chains. Use guard clauses for early returns and `switch` for branch dispatch — both for readability and because the no-else convention is enforced project-wide (see [§ The two hard rules](#the-two-hard-rules-for-any-new-extension)).
+Mailven's house style avoids `if/else` chains. Use guard clauses for early returns and `switch` for branch dispatch — both for readability and because the no-else convention is enforced project-wide (see [§ The two hard rules](#the-two-hard-rules-for-any-new-extension)).
 
 Rules that hold across this pattern:
 
@@ -2180,22 +2180,22 @@ When a new extension does land (first-party today, or third-party later if intak
 
 These are non-negotiable and apply equally to first-party and (hypothetical) third-party extensions:
 
-**1. Consume `coreapi` only. Never reach into MailPong internals.**
+**1. Consume `coreapi` only. Never reach into Mailven internals.**
 
-Extensions interact with MailPong exclusively through the `coreapi.Core` surfaces listed in [§ `coreapi` reference](#coreapi-reference). They:
+Extensions interact with Mailven exclusively through the `coreapi.Core` surfaces listed in [§ `coreapi` reference](#coreapi-reference). They:
 
 - DO NOT import any package from `internal/` outside `internal/extensions/` (and only the store/kv helpers there) and `internal/core/api/v1/`.
 - DO NOT call functions in `app/`, `internal/account/`, `internal/folder/`, `internal/message/`, `internal/draft/`, `internal/contact/`, `internal/carddav/`, `internal/imap/`, `internal/smtp/`, `internal/oauth2/`, `internal/credentials/`, etc., directly.
-- DO NOT query, read, or write any table in MailPong's main database (`mailpong.db`). The accounts/folders/messages/contacts/drafts tables are core-owned and off-limits.
+- DO NOT query, read, or write any table in Mailven's main database (`mailven.db`). The accounts/folders/messages/contacts/drafts tables are core-owned and off-limits.
 - DO NOT shell out, monkey-patch, or use `reflect`/build-tag tricks to do any of the above indirectly.
 
-The Contacts extension *is allowed* to receive a `*database.DB` handle to MailPong's main DB because it's a first-party special case: it grew out of code that already lived in MailPong core, owns the lifecycle of the `contact_records` + `contact_sources` + related tables, and is explicitly the canonical owner of that data. **This special case is not extended to new extensions.** A new extension never gets a handle to `mailpong.db`.
+The Contacts extension *is allowed* to receive a `*database.DB` handle to Mailven's main DB because it's a first-party special case: it grew out of code that already lived in Mailven core, owns the lifecycle of the `contact_records` + `contact_sources` + related tables, and is explicitly the canonical owner of that data. **This special case is not extended to new extensions.** A new extension never gets a handle to `mailven.db`.
 
 **2. If the extension needs persistence, it brings its own database.**
 
 Per-extension SQLite is the only persistence path. Use [`internal/extensions.OpenStore`](../internal/extensions/store.go) (see [§ Per-extension storage](#per-extension-storage)). That opens `<dataDir>/extensions/<name>/data.db`, applies the extension's own migrations, and gives back a `*sql.DB` scoped to that file only. Tiny config (sync tokens, view prefs) can go in the auto-created `ext_kv` table via `coreapi.Storage.KV`.
 
-If the extension wants to read or write data MailPong itself owns (e.g., list messages, insert a contact, move a message), the only legitimate path is calling the relevant `coreapi` interface method — and only if that method already exists and is implemented. If it doesn't exist or returns `ErrUnimplemented`, see [§ Requesting a new extension API](#requesting-a-new-extension-api) below.
+If the extension wants to read or write data Mailven itself owns (e.g., list messages, insert a contact, move a message), the only legitimate path is calling the relevant `coreapi` interface method — and only if that method already exists and is implemented. If it doesn't exist or returns `ErrUnimplemented`, see [§ Requesting a new extension API](#requesting-a-new-extension-api) below.
 
 ### Requesting a new extension API
 
@@ -2209,13 +2209,13 @@ Bundling an `internal/core/api/v1/` change into an extension PR is rejected on s
 
 ### Lightweight-by-default invariant (the load-bearing principle)
 
-Every extension MUST cost approximately zero when disabled. The reason this is non-negotiable: MailPong's core promise to its users is that it stays a lightweight email client. Each extension that breaks this invariant erodes that promise for the *entire user base*, not just the ones who'd use that extension.
+Every extension MUST cost approximately zero when disabled. The reason this is non-negotiable: Mailven's core promise to its users is that it stays a lightweight email client. Each extension that breaks this invariant erodes that promise for the *entire user base*, not just the ones who'd use that extension.
 
 Concretely, "approximately zero when disabled" means:
 
 - **At process startup:** one `*Bridge` struct allocation (a few host-dependency fields) + one `*Extension` allocation (a manifest copy) + descriptive UI registrations (rail tab metadata, account-setup hook metadata). No SQLite open. No goroutines. No file handles. No HTTP clients.
 - **At first enabled Wails call:** `ensureInit()` fires under `sync.Once`. THIS is where the SQLite file opens, migrations run, stores construct, and background goroutines spin up.
-- **When the user disables a previously enabled extension:** new Wails calls return empty (`gateEnabled() == false`). Already-allocated state stays in memory until the next process restart. Users who want to fully reclaim memory restart MailPong — this is an explicit trade-off the project accepts (see [§ Lifecycle](#lifecycle)).
+- **When the user disables a previously enabled extension:** new Wails calls return empty (`gateEnabled() == false`). Already-allocated state stays in memory until the next process restart. Users who want to fully reclaim memory restart Mailven — this is an explicit trade-off the project accepts (see [§ Lifecycle](#lifecycle)).
 
 Any extension that opens its database at startup, spawns goroutines unconditionally, or registers HTTP clients eagerly is non-conforming. **All such work happens inside `ensureInit()`, gated by the enabled flag.**
 
@@ -2251,7 +2251,7 @@ The host-side delta in `app/app.go` is:
 
 Go can't auto-discover packages, so the backend side has to be wired explicitly — that's why `app/extension_<name>.go` exists. Frontend i18n is auto-discovered via Vite glob (see [§ Extension i18n](#extension-i18n)), so no host edit is needed there.
 
-That's it. **No other host file should change.** If you find yourself editing files outside the points above and `extensions/<name>/`, you're either (a) reaching into MailPong internals (forbidden — see hard rule #1), or (b) trying to add a `coreapi` method (forbidden — file a Feature Request first).
+That's it. **No other host file should change.** If you find yourself editing files outside the points above and `extensions/<name>/`, you're either (a) reaching into Mailven internals (forbidden — see hard rule #1), or (b) trying to add a `coreapi` method (forbidden — file a Feature Request first).
 
 ### The `<Extension>_` method-name prefix (hard rule)
 
@@ -2265,14 +2265,14 @@ Every Wails-bound method on the Bridge MUST be named `<Extension>_<Method>` (e.g
 
 Whether the extension is first-party or third-party (if an intake opens), the review covers:
 
-1. **The two hard rules above hold.** No imports from `internal/` outside the small allowed surface. No queries against `mailpong.db`. Own SQLite via `extensions.OpenStore` if persistence is needed.
+1. **The two hard rules above hold.** No imports from `internal/` outside the small allowed surface. No queries against `mailven.db`. Own SQLite via `extensions.OpenStore` if persistence is needed.
 2. **No `internal/core/api/v1/` changes in this PR.** If the extension needed a new API method, that landed in a separate, prior PR (gated by a Feature Request issue).
 3. **Lightweight invariant intact.** Trace every line that runs at startup (`NewBridge`, `NewExtension`, `Register`, `registerExtensionI18n`). None of it can open SQLite, spawn goroutines, or do network I/O. `ensureInit()` is the ONLY place those happen.
 4. **All Wails-bound methods are gated.** Every method on `*Bridge` calls `b.gateEnabled()` and short-circuits if false. Disabled state returns `nil`/empty, never an error.
 5. **Prefix correctness.** Every bridge method is `<Name>_<Method>`. No exceptions.
 6. **No mail-code edits.** The mail UI components and the mail backend (`internal/imap/`, `internal/smtp/`, `internal/message/`, `frontend/src/lib/components/{list,viewer,composer,sidebar}/`, etc.) are off-limits to direct edits. The extension may **call into mail via `coreapi.Mail` / `coreapi.Composer` surfaces** — that's the whole point of those interfaces. What's forbidden is editing mail's own files. If you need a mail behavior that those interfaces don't expose today, see [§ Requesting a new extension API](#requesting-a-new-extension-api).
 7. **Per-extension SQLite isolation.** Extensions never read or write each other's tables; cross-extension data goes through `coreapi.Core.Extension(id)` typed handles. If your extension's bridge takes another extension's `*Store` as a dependency, it's wrong.
-8. **OAuth credentials are scoped per extension.** If the extension needs OAuth, it owns its own credential slot (`<provider>-<extension-id>`) and uses the Auth Broker; it doesn't reuse MailPong core's mail slot unless the manifest declares `first_party_uses_core_for_scopes` (see [§ OAuth client configurations](#oauth-client-configurations)) — and that field is honored only for first-party extensions.
+8. **OAuth credentials are scoped per extension.** If the extension needs OAuth, it owns its own credential slot (`<provider>-<extension-id>`) and uses the Auth Broker; it doesn't reuse Mailven core's mail slot unless the manifest declares `first_party_uses_core_for_scopes` (see [§ OAuth client configurations](#oauth-client-configurations)) — and that field is honored only for first-party extensions.
 9. **Frontend is independent.** No refactors to existing mail components to "share" code with the extension. Extension components stay self-contained under `extensions/<name>/frontend/`. The kit (`frontend/src/lib/components/kit/`) holds neutral primitives extensions can consume, but anything mail-specific stays mail-specific.
 10. **Extension owns its i18n.** New strings live under `extensions/<name>/frontend/i18n/locales/<code>.json` (own files, not mixed into core's `frontend/src/lib/i18n/locales/<code>.json`). At minimum `en.json` ships with the PR. Other locales are added later by translators in separate PRs; absence falls back to English at runtime. See [§ Extension i18n](#extension-i18n).
 11. **Documentation updated.** `docs/EXTENSIONS.md` § Wails-bound surface gains a row per new bridge method.
@@ -2285,13 +2285,13 @@ The bridge architecture is what makes this checklist enforceable as a code revie
 
 ### Today: static linking, first-party only
 
-All extensions compile into the single MailPong binary. Extensions live as Go packages under `extensions/<name>/backend/` and Svelte components under `extensions/<name>/frontend/`. The host embeds each extension's `*Bridge` on App (one wiring file at `app/extension_<name>.go`, ~28 LOC) and iterates `a.knownExtensions` to call `Register()` at startup.
+All extensions compile into the single Mailven binary. Extensions live as Go packages under `extensions/<name>/backend/` and Svelte components under `extensions/<name>/frontend/`. The host embeds each extension's `*Bridge` on App (one wiring file at `app/extension_<name>.go`, ~28 LOC) and iterates `a.knownExtensions` to call `Register()` at startup.
 
 Today this is **first-party only**. No third-party-PR intake is open and no extension installer exists. Everything past this point is a description of what the architecture *enables* the project to do if demand for it shows up — not a roadmap.
 
 ### If community-extension demand emerges: PR contribution path
 
-The bridge architecture is intentionally shaped so that, **if community-extension demand emerges**, the simplest first step is to open the door to third-party extensions as PRs to the MailPong repo. Once merged, they'd become first-party (shipped in the binary, opt-in via Settings → Extensions, default-disabled). The reviewer would read three things instead of auditing a sprawling diff:
+The bridge architecture is intentionally shaped so that, **if community-extension demand emerges**, the simplest first step is to open the door to third-party extensions as PRs to the Mailven repo. Once merged, they'd become first-party (shipped in the binary, opt-in via Settings → Extensions, default-disabled). The reviewer would read three things instead of auditing a sprawling diff:
 
 1. The extension's own `extensions/<name>/` directory (manifest, backend, frontend).
 2. The `app/extension_<name>.go` wiring file (one embed + one constructor call + dependency wiring).
@@ -2301,13 +2301,13 @@ See [§ Contributing a new extension](#contributing-a-new-extension) for what th
 
 ### If demand exceeds what PRs can handle: subprocess + IPC
 
-If third-party-PR intake opens and demand grows past what individual code reviews can sustain, the next step the architecture allows is a **pre-compiled subprocess + IPC** model for community extensions. Each community extension would ship as its own Go binary (cross-compiled per platform), launched as a subprocess at startup, communicating with the main app via Unix socket / named pipe — the same path MailPong already uses for the detached composer.
+If third-party-PR intake opens and demand grows past what individual code reviews can sustain, the next step the architecture allows is a **pre-compiled subprocess + IPC** model for community extensions. Each community extension would ship as its own Go binary (cross-compiled per platform), launched as a subprocess at startup, communicating with the main app via Unix socket / named pipe — the same path Mailven already uses for the detached composer.
 
 Why subprocess and not other options (in case it ever needs to happen):
 
 - **Go `plugin` package (.so loading)**: requires exact same Go version + same dependency tree as host; Linux/macOS only; no way to unload. Brittle in practice; almost no one ships this way.
 - **WASM**: Go-backend WASM (wazero) is still research-grade for this use case. Promising but immature.
-- **Embedded scripting (Lua, JS via goja)**: would force re-implementing CalDAV/CardDAV/heavy sync libs. MailPong extensions do real work and need the real Go ecosystem.
+- **Embedded scripting (Lua, JS via goja)**: would force re-implementing CalDAV/CardDAV/heavy sync libs. Mailven extensions do real work and need the real Go ecosystem.
 - **Subprocess + IPC**: used by VS Code (language servers), Docker (plugins), Hashicorp's `go-plugin`, Sourcegraph. Real process isolation = security. Capability enforcement at the IPC boundary actually means something (extension never sees raw tokens, can't bypass the Auth Broker via reflection).
 
 The current API design is already subprocess-compatible. Nothing in `coreapi v1` references Go module paths, compiled-type names, or in-process pointers:
@@ -2322,7 +2322,7 @@ What stays in the host even if community extensions arrive: **the Svelte compone
 
 ### What "if" actually buys
 
-Today's static-linking + first-party model is **sufficient on its own**. MailPong ships first-party extensions (Contacts today, others over time) and users get them as part of the binary. Nothing further needs to happen for the product to work.
+Today's static-linking + first-party model is **sufficient on its own**. Mailven ships first-party extensions (Contacts today, others over time) and users get them as part of the binary. Nothing further needs to happen for the product to work.
 
 The optionality described above costs nothing right now — the bridge pattern, the `coreapi v1` shape, the per-extension SQLite isolation, the Auth Broker, the `<Extension>_` prefix rule are all things the project does anyway to keep first-party extensions tidy. They happen to also be what's required to extend the model later. So:
 

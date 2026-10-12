@@ -10,7 +10,7 @@ PURPLE='\033[0;35m'
 NC='\033[0m' # No Color
 
 echo -e "${PURPLE}
-MailPong
+Mailven
 ${NC}
 "
 
@@ -34,23 +34,23 @@ if [[ "$(uname -s)" != "Linux" ]]; then
 fi
 
 # Check if binary exists
-if [[ ! -f "mailpong" ]]; then
-    print_error "mailpong binary not found in current directory"
-    echo "Please run this script from the directory containing the mailpong binary"
+if [[ ! -f "mailven" ]]; then
+    print_error "mailven binary not found in current directory"
+    echo "Please run this script from the directory containing the mailven binary"
     exit 1
 fi
 
 # Check if desktop file exists
-if [[ ! -f "io.github.caseylabs.MailPong.desktop" ]]; then
-    print_error "io.github.caseylabs.MailPong.desktop file not found in current directory"
+if [[ ! -f "io.github.caseylabs.Mailven.desktop" ]]; then
+    print_error "io.github.caseylabs.Mailven.desktop file not found in current directory"
     echo "Please ensure the desktop file is in the same directory as this script"
     exit 1
 fi
 
 # Check if icons exist. New tarballs ship sized icons under icons/ plus a
 # scalable SVG (#395); the root 256px PNG remains for backward compatibility.
-if [[ ! -f "io.github.caseylabs.MailPong.png" ]]; then
-    print_error "io.github.caseylabs.MailPong.png icon not found in current directory"
+if [[ ! -f "io.github.caseylabs.Mailven.png" ]]; then
+    print_error "io.github.caseylabs.Mailven.png icon not found in current directory"
     echo "Please ensure the icon file is in the same directory as this script"
     exit 1
 fi
@@ -60,9 +60,9 @@ fi
 ICON_SIZES="32 48 64 128 256"
 
 echo ""
-print_info "MailPong Email Client - Installation Script"
+print_info "Mailven Email Client - Installation Script"
 echo ""
-echo "This script will install MailPong on your system."
+echo "This script will install Mailven on your system."
 echo ""
 echo "Choose installation type:"
 echo "  1) System-wide (requires sudo, installs to /usr/local)"
@@ -95,7 +95,7 @@ while true; do
 done
 
 echo ""
-print_info "Installing MailPong ($INSTALL_TYPE)..."
+print_info "Installing Mailven ($INSTALL_TYPE)..."
 echo ""
 
 # Function to run command with or without sudo
@@ -115,29 +115,29 @@ run_cmd mkdir -p "$APPS_DIR"
 
 # Install binary
 print_info "Installing binary to $BIN_DIR..."
-run_cmd install -Dm755 mailpong "$BIN_DIR/mailpong"
+run_cmd install -Dm755 mailven "$BIN_DIR/mailven"
 
 # Install desktop file
 print_info "Installing desktop file to $APPS_DIR..."
-run_cmd install -Dm644 io.github.caseylabs.MailPong.desktop "$APPS_DIR/io.github.caseylabs.MailPong.desktop"
+run_cmd install -Dm644 io.github.caseylabs.Mailven.desktop "$APPS_DIR/io.github.caseylabs.Mailven.desktop"
 
 # Install icons: all hicolor sizes when the tarball ships them (#395),
 # falling back to the root 256px PNG for older tarballs
 print_info "Installing icons to $ICONS_BASE..."
 if [[ -d "icons" ]]; then
     for sz in $ICON_SIZES; do
-        if [[ -f "icons/${sz}x${sz}/io.github.caseylabs.MailPong.png" ]]; then
-            run_cmd install -Dm644 "icons/${sz}x${sz}/io.github.caseylabs.MailPong.png" \
-                "$ICONS_BASE/${sz}x${sz}/apps/io.github.caseylabs.MailPong.png"
+        if [[ -f "icons/${sz}x${sz}/io.github.caseylabs.Mailven.png" ]]; then
+            run_cmd install -Dm644 "icons/${sz}x${sz}/io.github.caseylabs.Mailven.png" \
+                "$ICONS_BASE/${sz}x${sz}/apps/io.github.caseylabs.Mailven.png"
         fi
     done
-    if [[ -f "icons/scalable/io.github.caseylabs.MailPong.svg" ]]; then
-        run_cmd install -Dm644 "icons/scalable/io.github.caseylabs.MailPong.svg" \
-            "$ICONS_BASE/scalable/apps/io.github.caseylabs.MailPong.svg"
+    if [[ -f "icons/scalable/io.github.caseylabs.Mailven.svg" ]]; then
+        run_cmd install -Dm644 "icons/scalable/io.github.caseylabs.Mailven.svg" \
+            "$ICONS_BASE/scalable/apps/io.github.caseylabs.Mailven.svg"
     fi
 else
     print_info "No sized icons in this package - installing 256px icon only"
-    run_cmd install -Dm644 io.github.caseylabs.MailPong.png "$ICONS_BASE/256x256/apps/io.github.caseylabs.MailPong.png"
+    run_cmd install -Dm644 io.github.caseylabs.Mailven.png "$ICONS_BASE/256x256/apps/io.github.caseylabs.Mailven.png"
 fi
 
 # Update icon cache
@@ -172,9 +172,9 @@ fi
 
 echo "You may need to log out and back in for the application to appear in your menu."
 echo ""
-echo "To set MailPong as your default email client, run:"
-echo "  xdg-mime default io.github.caseylabs.MailPong.desktop x-scheme-handler/mailto"
+echo "To set Mailven as your default email client, run:"
+echo "  xdg-mime default io.github.caseylabs.Mailven.desktop x-scheme-handler/mailto"
 echo ""
-echo "To start MailPong, run:"
-echo "  mailpong --dbus-notify"
+echo "To start Mailven, run:"
+echo "  mailven --dbus-notify"
 echo ""

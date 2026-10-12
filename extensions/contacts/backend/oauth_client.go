@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/caseylabs/mailpong/internal/carddav"
-	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
+	"github.com/caseylabs/mailven/internal/carddav"
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
 )
 
 // cardDAVWriteScope is the nominal scope passed when building a bearer client for an

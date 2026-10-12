@@ -7,7 +7,7 @@ LICENSE :: . :: Apache 2.0 text and original copyright notice
 NOTICE :: . :: Required attribution to Aerion
 THIRD_PARTY_NOTICES.md :: . :: Attribution to Aerion and upstream notices
 docs/user-guide/LICENSE :: Aerion Contributors :: Original copyright line of the Apache 2.0 text
-wails.json :: Aerion Contributors :: Original copyright holder, kept next to the MailPong one
+wails.json :: Aerion Contributors :: Original copyright holder, kept next to the Mailven one
 ISSUES.md :: . :: Notes about the upstream relationship
 frontend/package-lock.json :: . :: Generated lock file
 docs/SQL_ROLLBACK.md :: Aerion :: Rollback scripts were released as Aerion versions
@@ -21,7 +21,7 @@ CONTRIBUTING.md :: Aerion :: Upstream relationship and the naming rule
 AGENTS.md :: Aerion :: Project identity rules (the naming rule itself)
 SECURITY.md :: upstream Aerion :: Asks reporters whether the issue also reproduces upstream
 .github/ISSUE_TEMPLATE/*.yml :: Aerion :: Pointer to upstream Aerion for upstream bugs
-build/README.md :: Aerion :: States that MailPong installs next to Aerion
+build/README.md :: Aerion :: States that Mailven installs next to Aerion
 build/flatpak/README.md :: Aerion :: History of earlier Aerion manifests
 build/windows/installer/project.nsi :: Aerion install :: Comment explaining why the uninstall key differs
 frontend/src/lib/components/settings/AboutTab.svelte :: [Aa]erion|AERION_URL :: Attribution link to the upstream project
@@ -33,7 +33,7 @@ frontend/src/lib/spellcheck/locales.ts :: Aerion database :: Comment about impor
 frontend/src/lib/components/kit/DetailOverlay.svelte :: Aerion ancestry :: Comment on code origin
 internal/database/migrations.go :: Older Aerion :: Comments about older Aerion installs in migrations
 internal/platform/autostart_linux_test.go :: io\.github\.(hkdb|clabs_public_forks)\.Aerion :: Test that seeded Aerion autostart files are left untouched
-internal/platform/paths_test.go :: aerion :: Test that no MailPong path contains the old name
+internal/platform/paths_test.go :: aerion :: Test that no Mailven path contains the old name
 
 # --- D6 persisted internal identifiers (never rename) ---
 app/oauth_creds.go :: aerion-(shipped|mail) :: D6 OAuth choice IDs

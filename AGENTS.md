@@ -2,14 +2,14 @@
 
 ## Project Identity
 
-- MailPong is an independent desktop email client (Go, Wails v2, Svelte 5, TypeScript) derived from Aerion.
+- Mailven (formerly MailPong) is an independent desktop email client (Go, Wails v2, Svelte 5, TypeScript) derived from Aerion.
 - Branding: replace "Aerion" only where it names this app, never by blind search-and-replace. Keep it in attribution, history, `LICENSE`, `archive/`, and statements of origin ("derived from Aerion").
 - Persisted internal identifiers keep their Aerion values: the `"aerion"` contact source, the `"aerion-shipped"`/`"aerion-mail"` OAuth choice IDs, the `'aerion'` title-bar setting, `minAerionVersion`, and the `aerion:` KDF prefix. Each carries a `Legacy identifier from Aerion; persisted, do not rename.` comment. Renaming them breaks stored data.
 - Upstream Aerion fixes may be cherry-picked (`git remote add upstream https://github.com/hkdb/aerion.git` in clones that lack it); renamed paths can make that conflict.
 
 ## Layout Notes
 
-- `frontend/wailsjs/` holds generated Wails bindings; regenerate with `make generate` after binding changes, then revert unrelated churn in `frontend/wailsjs/runtime/*`. Stop any running Aerion first (`dev.sh stop`): the single-instance lock makes the generator exit without writing anything.
+- `frontend/wailsjs/` holds generated Wails bindings; regenerate with `make generate` after binding changes, then revert unrelated churn in `frontend/wailsjs/runtime/*`. Stop any running Mailven first (`dev.sh stop`): the single-instance lock makes the generator exit without writing anything.
 - `extensions/` (contacts, calendar) contains both backend and frontend code. Check extension, core API, and kit changes against `docs/EXT_RULES.md` before committing.
 - `docs/EXTENSIONS.md` (about 170 KB), `docs/history/AERION_CASA_TIER2.md`, and `docs/LANGUAGE.md` are long: grep them or read by section, never whole.
 
@@ -19,7 +19,7 @@ Toolchain: Go 1.26, Node.js 24 (matches CI), Wails v2 CLI. Linux needs GTK 3 and
 
 - `cd frontend && npm ci`: install locked frontend dependencies.
 - `cd frontend && npm run build`: build frontend assets. Run before Go checks that include the root package if `frontend/dist/` is missing; rebuild when validating changed assets.
-- `make dev`: launch the desktop app with hot reload. It blocks; for agent-driven UI checks use `.claude/skills/run-mailpong/dev.sh` instead.
+- `make dev`: launch the desktop app with hot reload. It blocks; for agent-driven UI checks use `.claude/skills/run-mailven/dev.sh` instead.
 - `make build`: production build in `build/bin/`.
 - `make generate`: regenerate Wails TypeScript bindings.
 - `make test`, `make fmt`: Go tests and formatting.
@@ -38,8 +38,8 @@ Toolchain: Go 1.26, Node.js 24 (matches CI), Wails v2 CLI. Linux needs GTK 3 and
 - Start with checks relevant to the change.
 - Run `make test` when a change affects multiple Go packages or shared behavior, or when focused checks leave unresolved risks.
 - Use table-driven Go tests for critical paths and edge cases.
-- There is no frontend test script. For frontend changes, run `npm run lint` and `npm run check` in `frontend/`, then verify the UI with the `run-mailpong` skill. In cloud sessions use the skill's headless path (Xvfb + Playwright); if no UI check can run at all, say so in the PLAN.md Progress entry and in your report.
-- Visual UI checks always cover the Mail view with the Accounts column expanded and collapsed (how-to: [Accounts column check](.claude/skills/run-mailpong/SKILL.md#accounts-column-check)). Report checks you couldn't perform.
+- There is no frontend test script. For frontend changes, run `npm run lint` and `npm run check` in `frontend/`, then verify the UI with the `run-mailven` skill. In cloud sessions use the skill's headless path (Xvfb + Playwright); if no UI check can run at all, say so in the PLAN.md Progress entry and in your report.
+- Visual UI checks always cover the Mail view with the Accounts column expanded and collapsed (how-to: [Accounts column check](.claude/skills/run-mailven/SKILL.md#accounts-column-check)). Report checks you couldn't perform.
 
 ## Documentation
 

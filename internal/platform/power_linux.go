@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/logging"
 )
 
 // LinuxPowerMonitor monitors power state on Linux

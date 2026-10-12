@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/database"
+	"github.com/caseylabs/mailven/internal/database"
 )
 
 // newBodyFailedTestStore opens a migrated temp DB, seeds one (account, folder)

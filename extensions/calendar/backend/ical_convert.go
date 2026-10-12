@@ -180,7 +180,7 @@ func buildOverride(ev *ical.Event) (EventOverride, error) {
 	// expander can read it standalone.
 	wrapper := ical.NewCalendar()
 	wrapper.Props.SetText(ical.PropVersion, "2.0")
-	wrapper.Props.SetText(ical.PropProductID, "-//MailPong//Calendar//EN")
+	wrapper.Props.SetText(ical.PropProductID, "-//Mailven//Calendar//EN")
 	wrapper.Children = append(wrapper.Children, ev.Component)
 
 	var sb strings.Builder

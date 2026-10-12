@@ -1,5 +1,5 @@
 // Package gmailapi is a minimal client for the Gmail REST API settings
-// endpoints MailPong needs (currently only the send-as list).
+// endpoints Mailven needs (currently only the send-as list).
 package gmailapi
 
 import (

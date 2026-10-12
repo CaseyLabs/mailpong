@@ -11,9 +11,9 @@ import (
 
 	"github.com/emersion/go-imap/v2"
 
-	"github.com/caseylabs/mailpong/internal/database"
-	"github.com/caseylabs/mailpong/internal/logging"
-	"github.com/caseylabs/mailpong/internal/message"
+	"github.com/caseylabs/mailven/internal/database"
+	"github.com/caseylabs/mailven/internal/logging"
+	"github.com/caseylabs/mailven/internal/message"
 )
 
 // newTestMessageStore opens a migrated database with account acct-1 and

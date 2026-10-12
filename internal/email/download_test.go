@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/caseylabs/mailpong/internal/message"
+	"github.com/caseylabs/mailven/internal/message"
 )
 
 func TestSafeFilename(t *testing.T) {

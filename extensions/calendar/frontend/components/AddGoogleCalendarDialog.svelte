@@ -1,9 +1,9 @@
 <script lang="ts">
   // AddGoogleCalendarDialog — minimal three-step picker for attaching a Google
-  // calendar source to an existing MailPong mail account. Phase 2 Chunk 3.
+  // calendar source to an existing Mailven mail account. Phase 2 Chunk 3.
   //
   // Flow:
-  //   1. Account select: dropdown of MailPong accounts filtered to Gmail.
+  //   1. Account select: dropdown of Mailven accounts filtered to Gmail.
   //   2. Calendar fetch: Calendar_ListGoogleCalendarsForAccount(accountID). If
   //      the broker returns "additional consent required", surface a banner
   //      asking the user to grant calendar access (Chunk 6 will hook this to

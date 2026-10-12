@@ -1,4 +1,4 @@
-// Package imap provides IMAP client functionality for MailPong
+// Package imap provides IMAP client functionality for Mailven
 package imap
 
 import (
@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/logging"
 	"github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-imap/v2/imapclient"
 	"github.com/emersion/go-sasl"

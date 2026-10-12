@@ -1,8 +1,8 @@
 # CHANGELOG
 
-## MailPong 0.4.0 (unreleased)
+## Mailven 0.4.0 (unreleased)
 
-MailPong is an independent email client derived from [Aerion](https://github.com/hkdb/aerion) 0.3.5. This is its first release line.
+Mailven is an independent email client derived from [Aerion](https://github.com/hkdb/aerion) 0.3.5. This is its first release line.
 
 **Features carried over from the fork**
 
@@ -19,13 +19,13 @@ MailPong is an independent email client derived from [Aerion](https://github.com
 - Conversation pane polish: messages span the whole pane (theirs on the left, yours on the right), a Reading width setting (Narrow, Standard, Wide) for how wide bubbles grow, and larger message text
 - Design tokens documented in `docs/UI_TOKENS.md`; `make lint` checks text contrast
 
-**Migration to MailPong**
+**Migration to Mailven**
 
-- New name, icon and app ID (`io.github.caseylabs.MailPong`); Go module `github.com/caseylabs/mailpong`
-- Separate data directories, keyring service, database (`mailpong.db`) and single-instance lock: MailPong never reads or writes Aerion's data, so both can be installed side by side
+- New name, icon and app ID (`io.github.caseylabs.Mailven`); Go module `github.com/caseylabs/mailven`
+- Separate data directories, keyring service, database (`mailven.db`) and single-instance lock: Mailven never reads or writes Aerion's data, so both can be installed side by side
 - Bring-your-own OAuth credentials; no OAuth clients are bundled
 - English-only UI; spellcheck dictionaries for English (US), English (UK) and English (Canada); email content in any language and charset still displays correctly
-- Packaging for Linux (tarball, Flatpak), macOS and Windows uses the MailPong identity; the release workflow builds draft prereleases only
+- Packaging for Linux (tarball, Flatpak), macOS and Windows uses the Mailven identity; the release workflow builds draft prereleases only
 - Apache-2.0 attribution: `NOTICE`, `THIRD_PARTY_NOTICES.md`, `DISCLAIMER.md`; rewritten Terms of Use, Privacy Policy and Security Policy
 
 For the Aerion history before this fork (0.3.5 and earlier), see [docs/history/AERION_CHANGELOG.md](docs/history/AERION_CHANGELOG.md).

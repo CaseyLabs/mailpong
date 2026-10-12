@@ -1,6 +1,6 @@
 package message
 
-import "github.com/caseylabs/mailpong/internal/cid"
+import "github.com/caseylabs/mailven/internal/cid"
 
 // MarkEmbedded sets Embedded on the inline parts whose Content-ID bodyHTML
 // embeds as an image source (src="cid:<id>"), the references the viewer

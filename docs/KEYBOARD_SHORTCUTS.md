@@ -1,6 +1,6 @@
-# MailPong Keyboard Shortcuts
+# Mailven Keyboard Shortcuts
 
-Complete reference of all keyboard shortcuts in MailPong.
+Complete reference of all keyboard shortcuts in Mailven.
 
 ## Global Shortcuts
 

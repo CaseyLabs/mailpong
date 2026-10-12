@@ -1,8 +1,8 @@
 package app
 
 import (
-	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
-	"github.com/caseylabs/mailpong/internal/settings"
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
+	"github.com/caseylabs/mailven/internal/settings"
 )
 
 // ListEnabledExtensions returns the names of all enabled first-party

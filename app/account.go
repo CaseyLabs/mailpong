@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/caseylabs/mailpong/internal/account"
-	"github.com/caseylabs/mailpong/internal/certificate"
-	"github.com/caseylabs/mailpong/internal/imap"
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/account"
+	"github.com/caseylabs/mailven/internal/certificate"
+	"github.com/caseylabs/mailven/internal/imap"
+	"github.com/caseylabs/mailven/internal/logging"
 )
 
 // ============================================================================

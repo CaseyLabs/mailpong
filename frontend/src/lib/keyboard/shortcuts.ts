@@ -1,5 +1,5 @@
 // Shared keyboard shortcut predicates — single source of truth for "what key
-// combination matches what action." Consumed by both MailPong's mail UI handler
+// combination matches what action." Consumed by both Mailven's mail UI handler
 // (App.svelte) and by extension UI components in the kit (frontend/src/lib/
 // components/kit/).
 //

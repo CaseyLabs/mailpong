@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/extensions"
+	"github.com/caseylabs/mailven/internal/extensions"
 )
 
 // migrations is the per-extension migration sequence for the Calendar
@@ -252,7 +252,7 @@ var migrations = []extensions.Migration{
 			--              Microsoft always; CalDAV servers with RFC 6638's
 			--              calendar-auto-schedule feature).
 			--   'none'   → CalDAV server that doesn't support 6638; the user's
-			--              attendees won't receive invitations from MailPong in
+			--              attendees won't receive invitations from Mailven in
 			--              this release. (SMTP-only 'client' mode is out of
 			--              scope per the v0.3.0 plan.)
 			--
@@ -314,7 +314,7 @@ var migrations = []extensions.Migration{
 
 // Store wraps the per-extension DB for the Calendar extension. Lives in an
 // isolated SQLite file at <dataDir>/extensions/calendar/data.db, separate
-// from MailPong's main DB. No tables in this file are read or written by
+// from Mailven's main DB. No tables in this file are read or written by
 // core code; cross-extension access (none exists yet for Calendar) flows
 // through coreapi only.
 type Store struct {

@@ -9,13 +9,13 @@ import (
 	"time"
 
 	"git.sr.ht/~jackmordaunt/go-toast/v2/wintoast"
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/logging"
 	"github.com/rs/zerolog"
 )
 
 const (
-	windowsAppID = "io.github.caseylabs.MailPong"
-	windowsGUID  = "{8F2B5A4E-3C1D-4E6F-9A7B-2D8E1F0C3B5A}"
+	windowsAppID = "io.github.caseylabs.Mailven"
+	windowsGUID  = "{EA2816AD-C733-4DE6-BEC4-40D22CDC56DB}"
 )
 
 // windowsNotifier uses Windows Toast notifications with COM activation
@@ -90,7 +90,7 @@ func (n *windowsNotifier) Stop() {
 func (n *windowsNotifier) generateNotificationID() string {
 	n.mu.Lock()
 	n.idCounter++
-	id := fmt.Sprintf("mailpong-notif-%d-%d", time.Now().Unix(), n.idCounter)
+	id := fmt.Sprintf("mailven-notif-%d-%d", time.Now().Unix(), n.idCounter)
 	n.mu.Unlock()
 	return id
 }

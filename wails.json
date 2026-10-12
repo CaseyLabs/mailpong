@@ -1,16 +1,16 @@
 {
   "$schema": "https://wails.io/schemas/config.v2.json",
-  "name": "mailpong",
-  "outputfilename": "mailpong",
+  "name": "mailven",
+  "outputfilename": "mailven",
   "frontend:install": "npm install",
   "frontend:build": "npm run build",
   "frontend:dev:watcher": "npm run dev",
   "frontend:dev:serverUrl": "auto",
   "info": {
-    "companyName": "MailPong Contributors",
-    "productName": "MailPong",
+    "companyName": "Mailven Contributors",
+    "productName": "Mailven",
     "productVersion": "0.4.0",
-    "copyright": "Copyright 2024-2025 Aerion Contributors; Copyright 2026 MailPong Contributors",
+    "copyright": "Copyright 2024-2025 Aerion Contributors; Copyright 2026 Mailven Contributors",
     "comments": "Email, reimagined as chat.",
     "protocols": [
       {
@@ -20,7 +20,7 @@
     ]
   },
   "author": {
-    "name": "MailPong Contributors",
+    "name": "Mailven Contributors",
     "email": ""
   }
 }

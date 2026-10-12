@@ -5,11 +5,11 @@ pagination_next: features/overview
 
 # Gmail Setup
 
-MailPong supports Gmail through two authentication methods: OAuth (recommended) and App Passwords.
+Mailven supports Gmail through two authentication methods: OAuth (recommended) and App Passwords.
 
 ## OAuth Method (Recommended)
 
-MailPong bundles no Google OAuth credentials. Create your own first: see [Custom Google OAuth Credentials](./google-oauth-credentials.md), or use an app password below.
+Mailven bundles no Google OAuth credentials. Create your own first: see [Custom Google OAuth Credentials](./google-oauth-credentials.md), or use an app password below.
 
 OAuth is the easiest and most secure way to connect your Gmail account.
 
@@ -19,21 +19,21 @@ OAuth is the easiest and most secure way to connect your Gmail account.
 2. A browser window will open to Google's sign-in page
 3. Sign in to your Google account
 4. Review the permissions and click **Allow**
-5. Return to MailPong and click **Add Account**
+5. Return to Mailven and click **Add Account**
 
 ### Permissions Requested
 
-MailPong requests the following permissions:
+Mailven requests the following permissions:
 - **Read, send, and manage your email** - Required for basic email functionality
 - **View your contacts** - Used for email address autocomplete
 
 ### Security Note
 
-You may see a warning that "This app isn't verified." This is expected: MailPong has no bundled Google credentials, so you authorize against an OAuth client you created yourself, which Google shows as unverified until it is verified. You can verify what MailPong does by reviewing the [source code](https://github.com/caseylabs/mailpong).
+You may see a warning that "This app isn't verified." This is expected: Mailven has no bundled Google credentials, so you authorize against an OAuth client you created yourself, which Google shows as unverified until it is verified. You can verify what Mailven does by reviewing the [source code](https://github.com/CaseyLabs/mailven).
 
 To proceed:
 1. Click **Advanced**
-2. Click **Go to MailPong (unsafe)**
+2. Click **Go to Mailven (unsafe)**
 3. Review permissions and click **Allow**
 
 ## App Password Method (Alternative)
@@ -53,11 +53,11 @@ You must have 2-Step Verification enabled on your Google account to use app pass
 2. Under "How you sign in to Google," click **2-Step Verification**
 3. Scroll down and click **App passwords**
 4. Select **Mail** and **Other (Custom name)**
-5. Enter "MailPong" as the name
+5. Enter "Mailven" as the name
 6. Click **Generate**
 7. Copy the 16-character password shown
 
-### Adding to MailPong
+### Adding to Mailven
 
 1. Click **+ Add Account** in the sidebar (or go to **Settings > Accounts > Add Account**)
 2. Select **Gmail** from the provider dropdown
@@ -93,6 +93,6 @@ If emails aren't appearing:
 
 ## Contact Sync
 
-When you authorize Gmail with OAuth, MailPong can also sync your Google Contacts for email autocomplete. This is configured separately in **Settings > Contacts**.
+When you authorize Gmail with OAuth, Mailven can also sync your Google Contacts for email autocomplete. This is configured separately in **Settings > Contacts**.
 
 See [Contacts](/docs/features/contacts) for more information.

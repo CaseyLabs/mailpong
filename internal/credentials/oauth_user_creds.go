@@ -11,7 +11,7 @@ import (
 // User-supplied OAuth client credentials (Settings → OAuth Credentials).
 // Distinct from oauth_tokens (which holds per-account access/refresh tokens);
 // these are the user's overrides for the PROJECT-level client_id + client_secret
-// values that would otherwise come from the shipped build (`mailpong-creds` shim
+// values that would otherwise come from the shipped build (`mailven-creds` shim
 // or per-extension .env). When present, they take priority over shipped values
 // in `oauth2.ClientConfigForID`.
 //

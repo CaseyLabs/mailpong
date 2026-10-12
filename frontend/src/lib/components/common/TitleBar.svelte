@@ -35,7 +35,7 @@
   <!-- Drag region - left side with app title -->
   <div class="flex-1 flex items-center gap-2 px-3 h-full" style="--wails-draggable: drag">
     <Icon icon="mdi:email-fast-outline" class="w-5 h-5 text-primary" />
-    <span class="text-sm font-medium text-foreground">MailPong</span>
+    <span class="text-sm font-medium text-foreground">Mailven</span>
   </div>
 
   <!-- Mac-style traffic light controls -->

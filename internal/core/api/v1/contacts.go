@@ -64,7 +64,7 @@ type ContactPhoto struct {
 // ContactCreateInput is the shape passed to Contacts.CreateContact.
 //
 // SourceID selects where the new contact lives:
-//   - "" or "local" or "local:manual" → local manual contact (MailPong's
+//   - "" or "local" or "local:manual" → local manual contact (Mailven's
 //     own SQLite store). The kind='manual' designation is set automatically.
 //   - "local:collected"               → REJECTED. The 'collected' kind is
 //     reserved for the sent-mail collection process to assign; users adding

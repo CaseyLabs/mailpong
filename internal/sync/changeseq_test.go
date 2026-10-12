@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/logging"
 )
 
 func TestFolderChangeSeq(t *testing.T) {

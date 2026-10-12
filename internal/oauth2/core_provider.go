@@ -1,6 +1,6 @@
 package oauth2
 
-// coreProvider is MailPong core's CredentialsProvider. It owns every slot:
+// coreProvider is Mailven core's CredentialsProvider. It owns every slot:
 //
 //   - `google-mail` — mail's verified Google client (GoogleClientID).
 //   - `google-contacts` / `google-calendar` — both resolve to the shared

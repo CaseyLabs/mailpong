@@ -1,6 +1,6 @@
 # Extension Architecture — Hard Rules
 
-This document is the single canonical sanity-check list for the MailPong
+This document is the single canonical sanity-check list for the Mailven
 extension system. Every extension-touching change MUST be cross-checked
 against these rules before commit. If a proposed change requires breaking
 one of them, the design is wrong — back up and rethink.

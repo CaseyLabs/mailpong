@@ -3,9 +3,9 @@ package app
 import (
 	"strings"
 
-	"github.com/caseylabs/mailpong/internal/folder"
-	"github.com/caseylabs/mailpong/internal/logging"
-	"github.com/caseylabs/mailpong/internal/message"
+	"github.com/caseylabs/mailven/internal/folder"
+	"github.com/caseylabs/mailven/internal/logging"
+	"github.com/caseylabs/mailven/internal/message"
 )
 
 // chatOwner recognizes my own messages for chat bubbles: any account or

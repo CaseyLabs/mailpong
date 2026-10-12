@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/caseylabs/mailpong/internal/database"
+	"github.com/caseylabs/mailven/internal/database"
 )
 
 func openTestDB(t *testing.T) *sql.DB {

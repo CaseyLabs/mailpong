@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/logging"
 	"github.com/rs/zerolog"
 )
 

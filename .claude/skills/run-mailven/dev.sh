@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Launch / wait for / stop MailPong's `make dev` session for agent-driven UI checks.
-# Usage (from the repo root): .claude/skills/run-mailpong/dev.sh start|wait|status|stop
+# Launch / wait for / stop Mailven's `make dev` session for agent-driven UI checks.
+# Usage (from the repo root): .claude/skills/run-mailven/dev.sh start|wait|status|stop
 set -u
 
 URL=http://localhost:34115
-LOG=${MAILPONG_DEV_LOG:-${TMPDIR:-/tmp}/mailpong-dev.log}
-SIDFILE=${TMPDIR:-/tmp}/mailpong-dev.sid
+LOG=${MAILVEN_DEV_LOG:-${TMPDIR:-/tmp}/mailven-dev.log}
+SIDFILE=${TMPDIR:-/tmp}/mailven-dev.sid
 ROOT=$(git -C "$(dirname "$0")" rev-parse --show-toplevel)
 
 up() { [ "$(curl -s -o /dev/null -w '%{http_code}' "$URL")" = 200 ]; }

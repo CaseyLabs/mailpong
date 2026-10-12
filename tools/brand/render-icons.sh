@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Regenerate every raster icon from the master SVG (brand/mailpong.svg).
+# Regenerate every raster icon from the master SVG (brand/mailven.svg).
 # Needs rsvg-convert (preferred) or headless Chromium, plus ImageMagick.
 set -euo pipefail
 
 cd "$(dirname "$0")/../.."
-SRC=brand/mailpong.svg
-ID=io.github.caseylabs.MailPong
+SRC=brand/mailven.svg
+ID=io.github.caseylabs.Mailven
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
@@ -32,7 +32,7 @@ for s in 32 48 64 128 256; do
   render "$s" "build/linux/icons/${s}x${s}/$ID.png"
 done
 cp "$SRC" "build/linux/icons/scalable/$ID.svg"
-render 256 build/linux/mailpong.png
+render 256 build/linux/mailven.png
 render 256 frontend/src/assets/images/logo-universal.png
 
 for s in 16 24 32 48 64 128 256; do render "$s" "$tmp/$s.png"; done

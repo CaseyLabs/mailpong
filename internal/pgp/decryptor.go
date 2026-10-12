@@ -10,7 +10,7 @@ import (
 
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/ProtonMail/go-crypto/openpgp/armor"
-	"github.com/caseylabs/mailpong/internal/credentials"
+	"github.com/caseylabs/mailven/internal/credentials"
 	"github.com/rs/zerolog"
 )
 

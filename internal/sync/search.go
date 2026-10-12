@@ -6,7 +6,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/message"
+	"github.com/caseylabs/mailven/internal/message"
 	"github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-imap/v2/imapclient"
 )

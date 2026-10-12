@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/logging"
 	_ "modernc.org/sqlite"
 
 	"github.com/rs/zerolog"
@@ -158,7 +158,7 @@ func (db *DB) Path() string {
 
 // ErrSchemaTooNew is returned by Migrate when the database's recorded migration
 // version is HIGHER than the highest migration this build knows about. This
-// happens when a user downgrades MailPong after a newer version applied a
+// happens when a user downgrades Mailven after a newer version applied a
 // forward-only migration. Callers (App.Startup) surface a friendly dialog
 // pointing the user at docs/SQL_ROLLBACK.md.
 type ErrSchemaTooNew struct {
@@ -167,7 +167,7 @@ type ErrSchemaTooNew struct {
 }
 
 func (e *ErrSchemaTooNew) Error() string {
-	return fmt.Sprintf("database schema version %d is newer than this MailPong build (max known: %d). See https://github.com/caseylabs/mailpong/blob/main/docs/SQL_ROLLBACK.md", e.DBVersion, e.BuildVersion)
+	return fmt.Sprintf("database schema version %d is newer than this Mailven build (max known: %d). See https://github.com/CaseyLabs/mailven/blob/main/docs/SQL_ROLLBACK.md", e.DBVersion, e.BuildVersion)
 }
 
 // Migrate runs all pending migrations
@@ -189,7 +189,7 @@ func (db *DB) Migrate() error {
 		return fmt.Errorf("failed to get current migration version: %w", err)
 	}
 
-	// Schema-version gate: refuse if the DB was written by a newer MailPong. The
+	// Schema-version gate: refuse if the DB was written by a newer Mailven. The
 	// DB has migrations this build doesn't know how to interpret — opening it
 	// would query columns/tables in an unexpected shape and likely corrupt
 	// autocomplete or crash. Surface a typed error the app can catch.

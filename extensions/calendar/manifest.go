@@ -10,7 +10,7 @@ import (
 	_ "embed"
 	"encoding/json"
 
-	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
 )
 
 //go:embed manifest.json

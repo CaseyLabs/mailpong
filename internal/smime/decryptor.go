@@ -9,7 +9,7 @@ import (
 	"mime"
 	"strings"
 
-	"github.com/caseylabs/mailpong/internal/credentials"
+	"github.com/caseylabs/mailven/internal/credentials"
 	"github.com/rs/zerolog"
 	"go.mozilla.org/pkcs7"
 )

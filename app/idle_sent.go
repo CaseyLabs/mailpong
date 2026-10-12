@@ -3,8 +3,8 @@ package app
 import (
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/folder"
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/folder"
+	"github.com/caseylabs/mailven/internal/logging"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 

@@ -8,10 +8,10 @@ import (
 	"io"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/folder"
-	imapPkg "github.com/caseylabs/mailpong/internal/imap"
-	"github.com/caseylabs/mailpong/internal/message"
-	"github.com/caseylabs/mailpong/internal/smime"
+	"github.com/caseylabs/mailven/internal/folder"
+	imapPkg "github.com/caseylabs/mailven/internal/imap"
+	"github.com/caseylabs/mailven/internal/message"
+	"github.com/caseylabs/mailven/internal/smime"
 	"github.com/emersion/go-imap/v2"
 	"github.com/emersion/go-imap/v2/imapclient"
 )
@@ -35,7 +35,7 @@ type ProcessedBody struct {
 	// body" from "server-side truncation". ReportedSize comes from the
 	// IMAP RFC822.SIZE response item; ReceivedBytes is what we actually
 	// read from the BODY[] literal. A meaningful shortfall between the
-	// two (and below maxMessageSize, to exclude MailPong's own cap) means
+	// two (and below maxMessageSize, to exclude Mailven's own cap) means
 	// the FETCH was likely truncated and we should NOT persist the
 	// failure — the next sync may succeed.
 	ReportedSize  int64
@@ -393,7 +393,7 @@ const bodyTruncationThreshold = 0.8
 // Decision table (all comparisons in bytes):
 //
 //	reportedSize == 0          → charge   (no signal to defer on; treat as definitive)
-//	received    >= maxMsgSize  → charge   (MailPong's own cap, not server truncation; next fetch hits same wall)
+//	received    >= maxMsgSize  → charge   (Mailven's own cap, not server truncation; next fetch hits same wall)
 //	received    <  reported*T  → DON'T    (clear shortfall; likely server-side truncation)
 //	otherwise                  → charge   (received is close enough to expected; the empty body is real)
 //

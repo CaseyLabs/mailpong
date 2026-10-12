@@ -4,7 +4,7 @@ import (
 	"sync"
 	"testing"
 
-	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
 )
 
 // countingEventBus tracks live subscriptions per event name.

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/caseylabs/mailpong/internal/cid"
+	"github.com/caseylabs/mailven/internal/cid"
 )
 
 // backfillEmbeddedAttachments marks the stored inline parts whose

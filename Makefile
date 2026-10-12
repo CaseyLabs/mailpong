@@ -1,4 +1,4 @@
-# MailPong Email Client - Build System
+# Mailven Email Client - Build System
 # 
 # Usage:
 #   make build    - Build production binary
@@ -21,7 +21,7 @@ export
 
 # OAuth credentials compiled into the app. The `credentials` target writes
 # them to the gitignored internal/oauth2/credentials_gen.go (built only with
-# the mailpong_creds tag) instead of passing -ldflags, so Wails and Go never
+# the mailven_creds tag) instead of passing -ldflags, so Wails and Go never
 # print them.
 #
 #   GOOGLE_CLIENT_ID/SECRET   — mail's Google-verified client. Also backs
@@ -29,21 +29,21 @@ export
 #                               manifest declares in
 #                               first_party_uses_core_for_scopes (today:
 #                               contacts.readonly). Surfaced as
-#                               "MailPong – Google" in the picker.
+#                               "Mailven – Google" in the picker.
 #   MICROSOFT_CLIENT_ID       — mail's Azure AD app registration. Also
 #                               backs microsoft-contacts and
 #                               microsoft-calendar (Microsoft Graph
 #                               doesn't gate scopes behind verification).
-#                               Surfaced as "MailPong – Microsoft".
+#                               Surfaced as "Mailven – Microsoft".
 #   GOOGLE_TESTING_CLIENT_ID/SECRET — shared un-Google-verified test
 #                               project for extensions that need broader
 #                               scopes than the mail project carries
 #                               (contacts.readwrite, full Calendar).
 #                               Single client backs google-contacts AND
 #                               google-calendar slots. Surfaced as
-#                               "MailPong – Google (Testing)".
+#                               "Mailven – Google (Testing)".
 # Wails build tags
-BUILD_TAGS := webkit2_41,mailpong_creds
+BUILD_TAGS := webkit2_41,mailven_creds
 
 # NOTE: AppImage build target has been removed due to webkit bundling incompatibility.
 # See archive/AppImage/README.md for details on what was tried and why it didn't work.
@@ -67,22 +67,22 @@ credentials:
 
 # Build production binary
 build: credentials
-	@echo "Building MailPong..."
+	@echo "Building Mailven..."
 	@if [ -z "$(GOOGLE_CLIENT_ID)" ] && [ -z "$(MICROSOFT_CLIENT_ID)" ]; then \
 		echo "Warning: No OAuth credentials configured. Gmail/Outlook OAuth will not work."; \
 		echo "See .env.example for required variables."; \
 	fi
 	@wails build -tags $(BUILD_TAGS)
 ifeq ($(UNAME_S),Darwin)
-	@echo "Bundling LICENSE, NOTICE and THIRD_PARTY_NOTICES.md into MailPong.app..."
-	cp LICENSE NOTICE THIRD_PARTY_NOTICES.md build/bin/MailPong.app/Contents/Resources/
-	@echo "Ad-hoc signing MailPong.app (required for macOS notifications)..."
-	codesign --force --deep --sign - build/bin/MailPong.app
+	@echo "Bundling LICENSE, NOTICE and THIRD_PARTY_NOTICES.md into Mailven.app..."
+	cp LICENSE NOTICE THIRD_PARTY_NOTICES.md build/bin/Mailven.app/Contents/Resources/
+	@echo "Ad-hoc signing Mailven.app (required for macOS notifications)..."
+	codesign --force --deep --sign - build/bin/Mailven.app
 endif
 
 # Build for Linux specifically
 build-linux: credentials
-	@echo "Building MailPong for Linux..."
+	@echo "Building Mailven for Linux..."
 	@wails build -tags $(BUILD_TAGS),linux,production
 
 # Build Flatpak from the Flathub manifest's pinned release (not this checkout)
@@ -92,7 +92,7 @@ flatpak:
 
 # Build a Flatpak bundle from this checkout and install it for the current user
 flatpak-install:
-	@echo "Building and installing MailPong Flatpak for the current user..."
+	@echo "Building and installing Mailven Flatpak for the current user..."
 	./build/flatpak/build-flatpak.sh --install
 
 # Build a Flatpak bundle from this checkout without installing it
@@ -102,7 +102,7 @@ flatpak-dev:
 
 # Run in development mode with hot reload
 dev: credentials
-	@echo "Starting MailPong in development mode..."
+	@echo "Starting Mailven in development mode..."
 	@wails dev -tags $(BUILD_TAGS)
 
 # Run in development mode with Go's race detector enabled. Builds significantly
@@ -111,7 +111,7 @@ dev: credentials
 # shared-memory access. Use this when chasing a suspected data race —
 # reproduce the crash and the detector report points right at it.
 dev-race: credentials
-	@echo "Starting MailPong in development mode with -race..."
+	@echo "Starting Mailven in development mode with -race..."
 	@wails dev -tags $(BUILD_TAGS) -race
 
 # Generate Wails TypeScript bindings
@@ -162,7 +162,7 @@ clean:
 	rm -rf build/bin
 	rm -rf frontend/dist
 	rm -rf AppDir
-	rm -f mailpong
+	rm -f mailven
 	rm -f internal/oauth2/credentials_gen.go
 
 # Clean downloaded tools (deprecated - AppImage removed)
@@ -190,7 +190,7 @@ else ifeq ($(UNAME_S),Darwin)
 	$(MAKE) install-darwin
 else
 	@echo "For Windows, use 'make build-windows-installer' and run the generated installer."
-	@echo "Or manually copy build/bin/mailpong.exe to your preferred location."
+	@echo "Or manually copy build/bin/mailven.exe to your preferred location."
 endif
 
 # Auto-detect platform and uninstall
@@ -209,57 +209,57 @@ endif
 # build/linux/install.sh ICON_SIZES and .github/workflows/release.yml.
 ICON_SIZES ?= 32 48 64 128 256
 
-# Install MailPong on Linux
+# Install Mailven on Linux
 install-linux: build
-	@echo "Installing MailPong to $(DESTDIR)$(PREFIX)..."
-	install -Dm755 build/bin/mailpong "$(DESTDIR)$(PREFIX)/bin/mailpong"
+	@echo "Installing Mailven to $(DESTDIR)$(PREFIX)..."
+	install -Dm755 build/bin/mailven "$(DESTDIR)$(PREFIX)/bin/mailven"
 	@for sz in $(ICON_SIZES); do \
-		install -Dm644 "build/linux/icons/$${sz}x$${sz}/io.github.caseylabs.MailPong.png" \
-			"$(DESTDIR)$(PREFIX)/share/icons/hicolor/$${sz}x$${sz}/apps/io.github.caseylabs.MailPong.png"; \
+		install -Dm644 "build/linux/icons/$${sz}x$${sz}/io.github.caseylabs.Mailven.png" \
+			"$(DESTDIR)$(PREFIX)/share/icons/hicolor/$${sz}x$${sz}/apps/io.github.caseylabs.Mailven.png"; \
 	done
-	install -Dm644 build/linux/icons/scalable/io.github.caseylabs.MailPong.svg "$(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/io.github.caseylabs.MailPong.svg"
-	install -Dm644 build/linux/io.github.caseylabs.MailPong.desktop "$(DESTDIR)$(PREFIX)/share/applications/io.github.caseylabs.MailPong.desktop"
+	install -Dm644 build/linux/icons/scalable/io.github.caseylabs.Mailven.svg "$(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/io.github.caseylabs.Mailven.svg"
+	install -Dm644 build/linux/io.github.caseylabs.Mailven.desktop "$(DESTDIR)$(PREFIX)/share/applications/io.github.caseylabs.Mailven.desktop"
 	@echo "Updating icon cache..."
 	-gtk-update-icon-cache -f -t "$(DESTDIR)$(PREFIX)/share/icons/hicolor" 2>/dev/null || true
 	@echo ""
 	@echo "Installation complete!"
 	@echo "You may need to log out and back in for the application to appear in your menu."
 	@echo ""
-	@echo "To set MailPong as your default email client:"
-	@echo "  xdg-mime default io.github.caseylabs.MailPong.desktop x-scheme-handler/mailto"
+	@echo "To set Mailven as your default email client:"
+	@echo "  xdg-mime default io.github.caseylabs.Mailven.desktop x-scheme-handler/mailto"
 
-# Uninstall MailPong from Linux
+# Uninstall Mailven from Linux
 uninstall-linux:
-	@echo "Uninstalling MailPong from $(DESTDIR)$(PREFIX)..."
-	rm -f "$(DESTDIR)$(PREFIX)/bin/mailpong"
+	@echo "Uninstalling Mailven from $(DESTDIR)$(PREFIX)..."
+	rm -f "$(DESTDIR)$(PREFIX)/bin/mailven"
 	@for sz in $(ICON_SIZES); do \
-		rm -f "$(DESTDIR)$(PREFIX)/share/icons/hicolor/$${sz}x$${sz}/apps/io.github.caseylabs.MailPong.png"; \
+		rm -f "$(DESTDIR)$(PREFIX)/share/icons/hicolor/$${sz}x$${sz}/apps/io.github.caseylabs.Mailven.png"; \
 	done
-	rm -f "$(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/io.github.caseylabs.MailPong.svg"
-	rm -f "$(DESTDIR)$(PREFIX)/share/applications/io.github.caseylabs.MailPong.desktop"
+	rm -f "$(DESTDIR)$(PREFIX)/share/icons/hicolor/scalable/apps/io.github.caseylabs.Mailven.svg"
+	rm -f "$(DESTDIR)$(PREFIX)/share/applications/io.github.caseylabs.Mailven.desktop"
 	-gtk-update-icon-cache -f -t "$(DESTDIR)$(PREFIX)/share/icons/hicolor" 2>/dev/null || true
 	@echo "Uninstallation complete!"
 
 ## macOS Installation
 
-# Install MailPong on macOS
+# Install Mailven on macOS
 install-darwin: build
-	@echo "Installing MailPong.app to /Applications..."
-	@if [ -d "/Applications/MailPong.app" ]; then \
+	@echo "Installing Mailven.app to /Applications..."
+	@if [ -d "/Applications/Mailven.app" ]; then \
 		echo "Removing existing installation..."; \
-		rm -rf "/Applications/MailPong.app"; \
+		rm -rf "/Applications/Mailven.app"; \
 	fi
-	cp -R "build/bin/MailPong.app" "/Applications/"
+	cp -R "build/bin/Mailven.app" "/Applications/"
 	@echo "Re-signing installed copy..."
-	codesign --force --deep --sign - "/Applications/MailPong.app"
+	codesign --force --deep --sign - "/Applications/Mailven.app"
 	@echo ""
 	@echo "Installation complete!"
-	@echo "MailPong is now available in /Applications."
+	@echo "Mailven is now available in /Applications."
 
-# Uninstall MailPong from macOS
+# Uninstall Mailven from macOS
 uninstall-darwin:
-	@echo "Uninstalling MailPong from /Applications..."
-	rm -rf "/Applications/MailPong.app"
+	@echo "Uninstalling Mailven from /Applications..."
+	rm -rf "/Applications/Mailven.app"
 	@echo "Uninstallation complete!"
 
 ## Windows Installation
@@ -269,13 +269,13 @@ build-windows-installer: credentials
 	@echo "Building Windows installer..."
 	@wails build -tags $(BUILD_TAGS) -nsis
 	@echo ""
-	@echo "Installer created at build/bin/mailpong-amd64-installer.exe"
+	@echo "Installer created at build/bin/mailven-amd64-installer.exe"
 
 ## Help
 
 # Show available targets
 help:
-	@echo "MailPong Email Client - Build System"
+	@echo "Mailven Email Client - Build System"
 	@echo ""
 	@echo "Build Targets:"
 	@echo "  make build        - Build production binary"
@@ -287,8 +287,8 @@ help:
 	@echo "  make generate     - Generate Wails TypeScript bindings"
 	@echo ""
 	@echo "Installation (auto-detects platform):"
-	@echo "  make install      - Install MailPong (Linux/macOS)"
-	@echo "  make uninstall    - Uninstall MailPong (Linux/macOS)"
+	@echo "  make install      - Install Mailven (Linux/macOS)"
+	@echo "  make uninstall    - Uninstall Mailven (Linux/macOS)"
 	@echo ""
 	@echo "Platform-Specific Installation:"
 	@echo "  make install-linux      - Install on Linux to $(PREFIX)"

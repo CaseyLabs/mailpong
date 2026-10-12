@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
 )
 
 // --- Fake Auth ---------------------------------------------------------------
@@ -72,7 +72,7 @@ func newTestGoogleProvider(serverURL string) googleProvider {
 
 func TestGoogleTranslate_NonRecurringTimedRoundTrip(t *testing.T) {
 	src := googleEvent{
-		ICalUID:     "evt-uid-1@mailpong-google",
+		ICalUID:     "evt-uid-1@mailven-google",
 		Status:      "confirmed",
 		Summary:     "Project sync",
 		Description: "Weekly project status",
@@ -91,7 +91,7 @@ func TestGoogleTranslate_NonRecurringTimedRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("translateGoogleEventToICS: %v", err)
 	}
-	if !strings.Contains(blob, "UID:evt-uid-1@mailpong-google") {
+	if !strings.Contains(blob, "UID:evt-uid-1@mailven-google") {
 		t.Errorf("blob missing UID:\n%s", blob)
 	}
 	if !strings.Contains(blob, "SUMMARY:Project sync") {
@@ -133,7 +133,7 @@ func TestGoogleTranslate_NonRecurringTimedRoundTrip(t *testing.T) {
 
 func TestGoogleTranslate_AllDay(t *testing.T) {
 	src := googleEvent{
-		ICalUID: "alld@mailpong-google",
+		ICalUID: "alld@mailven-google",
 		Status:  "confirmed",
 		Summary: "Holiday",
 		Start:   &googleTimePoint{Date: "2026-07-04"},
@@ -164,7 +164,7 @@ func TestGoogleTranslate_AllDay(t *testing.T) {
 
 func TestGoogleTranslate_RecurringWithReminder(t *testing.T) {
 	src := googleEvent{
-		ICalUID: "rec@mailpong-google",
+		ICalUID: "rec@mailven-google",
 		Status:  "confirmed",
 		Summary: "Standup",
 		Start: &googleTimePoint{
@@ -212,7 +212,7 @@ func TestGoogleTranslate_RecurringWithReminder(t *testing.T) {
 
 func TestGoogleTranslate_CancelledReturnsSentinel(t *testing.T) {
 	_, err := translateGoogleEventToICS(googleEvent{
-		ICalUID: "x@mailpong-google",
+		ICalUID: "x@mailven-google",
 		Status:  "cancelled",
 	})
 	if !errors.Is(err, errGoogleEventCancelled) {
@@ -282,7 +282,7 @@ func TestGoogleProvider_PushEvent_CreateSuccess(t *testing.T) {
 	p := newTestGoogleProvider(srv.URL)
 	src := Source{ID: "src-g1", Type: SourceTypeGoogle, AccountID: "acct-1"}
 	cal := Calendar{ID: "cal-g1", URL: "primary"}
-	ev := Event{UID: "evt@mailpong-google", ICSBlob: minimalICSBlob(t, "evt@mailpong-google")}
+	ev := Event{UID: "evt@mailven-google", ICSBlob: minimalICSBlob(t, "evt@mailven-google")}
 
 	result, err := p.PushEvent(t.Context(), src, cal, ev)
 	if err != nil {
@@ -303,7 +303,7 @@ func TestGoogleProvider_PushEvent_CreateSuccess(t *testing.T) {
 	if got.ifMatch != "" {
 		t.Errorf("If-Match should be empty on create, got %q", got.ifMatch)
 	}
-	if got.body.ICalUID != "evt@mailpong-google" {
+	if got.body.ICalUID != "evt@mailven-google" {
 		t.Errorf("payload iCalUID = %q", got.body.ICalUID)
 	}
 }
@@ -325,10 +325,10 @@ func TestGoogleProvider_PushEvent_UpdatePATCHWithIfMatch(t *testing.T) {
 	src := Source{ID: "src-g1", Type: SourceTypeGoogle, AccountID: "acct-1"}
 	cal := Calendar{ID: "cal-g1", URL: "primary"}
 	ev := Event{
-		UID:             "evt@mailpong-google",
+		UID:             "evt@mailven-google",
 		ProviderEventID: "existing-id",
 		ETag:            `"old-etag"`,
-		ICSBlob:         minimalICSBlob(t, "evt@mailpong-google"),
+		ICSBlob:         minimalICSBlob(t, "evt@mailven-google"),
 	}
 
 	result, err := p.PushEvent(t.Context(), src, cal, ev)
@@ -359,10 +359,10 @@ func TestGoogleProvider_PushEvent_412Conflict(t *testing.T) {
 	src := Source{ID: "src-g1", Type: SourceTypeGoogle, AccountID: "acct-1"}
 	cal := Calendar{ID: "cal-g1", URL: "primary"}
 	ev := Event{
-		UID:             "evt@mailpong-google",
+		UID:             "evt@mailven-google",
 		ProviderEventID: "stale-id",
 		ETag:            `"stale-etag"`,
-		ICSBlob:         minimalICSBlob(t, "evt@mailpong-google"),
+		ICSBlob:         minimalICSBlob(t, "evt@mailven-google"),
 	}
 	_, err := p.PushEvent(t.Context(), src, cal, ev)
 	if !errors.Is(err, ErrConflict) {
@@ -451,7 +451,7 @@ func TestGoogleProvider_DeleteRemote_NoProviderEventID(t *testing.T) {
 func TestGoogleTranslate_Transparency(t *testing.T) {
 	mk := func(transp string) googleEvent {
 		return googleEvent{
-			ICalUID: "g-transp@mailpong-google", Status: "confirmed", Summary: "s",
+			ICalUID: "g-transp@mailven-google", Status: "confirmed", Summary: "s",
 			Transparency: transp,
 			Start:        &googleTimePoint{DateTime: "2026-06-10T14:00:00Z", TimeZone: "UTC"},
 			End:          &googleTimePoint{DateTime: "2026-06-10T15:00:00Z", TimeZone: "UTC"},
@@ -485,7 +485,7 @@ func TestGoogleTranslate_Transparency(t *testing.T) {
 func TestGoogleTranslate_Visibility(t *testing.T) {
 	mk := func(vis string) googleEvent {
 		return googleEvent{
-			ICalUID: "g@mailpong", Status: "confirmed", Summary: "s", Visibility: vis,
+			ICalUID: "g@mailven", Status: "confirmed", Summary: "s", Visibility: vis,
 			Start: &googleTimePoint{DateTime: "2026-06-10T14:00:00Z", TimeZone: "UTC"},
 			End:   &googleTimePoint{DateTime: "2026-06-10T15:00:00Z", TimeZone: "UTC"},
 		}

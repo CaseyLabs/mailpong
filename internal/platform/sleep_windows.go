@@ -9,7 +9,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/logging"
 	"golang.org/x/sys/windows"
 )
 
@@ -139,7 +139,7 @@ func (m *WindowsSleepWakeMonitor) Start(ctx context.Context) error {
 
 		m.threadID = windows.GetCurrentThreadId()
 
-		className, _ := windows.UTF16PtrFromString("MailPongSleepWake")
+		className, _ := windows.UTF16PtrFromString("MailvenSleepWake")
 
 		wc := wndClassExW{
 			cbSize:        uint32(unsafe.Sizeof(wndClassExW{})),

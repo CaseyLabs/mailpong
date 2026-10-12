@@ -1,4 +1,4 @@
-> Historical: this describes upstream Aerion's OAuth verification and does not apply to MailPong.
+> Historical: this describes upstream Aerion's OAuth verification and does not apply to Mailven.
 
 # CASA Tier 2 — Self-Assessment Questionnaire
 

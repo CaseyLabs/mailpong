@@ -3,7 +3,7 @@ package app
 import (
 	"testing"
 
-	"github.com/caseylabs/mailpong/internal/message"
+	"github.com/caseylabs/mailven/internal/message"
 )
 
 func TestAttachChatText(t *testing.T) {

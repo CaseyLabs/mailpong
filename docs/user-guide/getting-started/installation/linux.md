@@ -5,11 +5,11 @@ pagination_next: getting-started/verify
 
 # Linux
 
-MailPong has no published releases yet, so build it from source. Clone the repository first:
+Mailven has no published releases yet, so build it from source. Clone the repository first:
 
 ```bash
-git clone https://github.com/caseylabs/mailpong.git
-cd mailpong
+git clone https://github.com/CaseyLabs/mailven.git
+cd mailven
 ```
 
 ## Flatpak (local build)
@@ -19,24 +19,24 @@ Install `flatpak-builder` (for example `sudo apt install flatpak-builder`, `sudo
 
 ```bash
 make flatpak-install
-flatpak run io.github.caseylabs.MailPong
+flatpak run io.github.caseylabs.Mailven
 ```
 
-`make flatpak-install` also writes a `.flatpak` bundle under `build/bin/`. MailPong is not on Flathub. See [build/flatpak/README.md](../../../../build/flatpak/README.md) for the other build paths.
+`make flatpak-install` also writes a `.flatpak` bundle under `build/bin/`. Mailven is not on Flathub. See [build/flatpak/README.md](../../../../build/flatpak/README.md) for the other build paths.
 
-If MailPong doesn't launch or it behaves weirdly, try disabling DMABUF, which is known to be buggy for certain hardware combinations:
+If Mailven doesn't launch or it behaves weirdly, try disabling DMABUF, which is known to be buggy for certain hardware combinations:
 
 ```bash
-flatpak run --env=WEBKIT_DISABLE_DMABUF_RENDERER=1 io.github.caseylabs.MailPong
+flatpak run --env=WEBKIT_DISABLE_DMABUF_RENDERER=1 io.github.caseylabs.Mailven
 ```
 
 If that solves the issue, make it permanent with:
 
 ```bash
-flatpak override --user --env=WEBKIT_DISABLE_DMABUF_RENDERER=1 io.github.caseylabs.MailPong
+flatpak override --user --env=WEBKIT_DISABLE_DMABUF_RENDERER=1 io.github.caseylabs.Mailven
 ```
 
-Flatpak data lives in `~/.var/app/io.github.caseylabs.MailPong/`.
+Flatpak data lives in `~/.var/app/io.github.caseylabs.Mailven/`.
 
 ## Native binary
 ---
@@ -56,12 +56,12 @@ make build
 make install-linux
 ```
 
-Run `make uninstall-linux` to remove it. Your data stays in `~/.local/share/mailpong`, `~/.config/mailpong` and `~/.cache/mailpong` until you delete it yourself.
+Run `make uninstall-linux` to remove it. Your data stays in `~/.local/share/mailven`, `~/.config/mailven` and `~/.cache/mailven` until you delete it yourself.
 
-If you run into issues running MailPong, try:
+If you run into issues running Mailven, try:
 
 ```bash
-export WEBKIT_DISABLE_DMABUF_RENDERER=1 && mailpong
+export WEBKIT_DISABLE_DMABUF_RENDERER=1 && mailven
 ```
 
 If this solves the issues, make the environment variable permanent for your user.
@@ -69,8 +69,8 @@ If this solves the issues, make the environment variable permanent for your user
 ## AppImage
 ---
 
-An AppImage for a `webkit2gtk-4.1` app that works on every distribution is not feasible, so MailPong does not provide one.
+An AppImage for a `webkit2gtk-4.1` app that works on every distribution is not feasible, so Mailven does not provide one.
 
 ## Packages from other sources
 
-MailPong is not packaged by any distribution or package manager. Packages named "Aerion" belong to the upstream project and do not contain MailPong.
+Mailven is not packaged by any distribution or package manager. Packages named "Aerion" belong to the upstream project and do not contain Mailven.

@@ -7,12 +7,12 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/caseylabs/mailpong/internal/account"
-	"github.com/caseylabs/mailpong/internal/draft"
-	"github.com/caseylabs/mailpong/internal/email"
-	"github.com/caseylabs/mailpong/internal/logging"
-	"github.com/caseylabs/mailpong/internal/settings"
-	"github.com/caseylabs/mailpong/internal/smtp"
+	"github.com/caseylabs/mailven/internal/account"
+	"github.com/caseylabs/mailven/internal/draft"
+	"github.com/caseylabs/mailven/internal/email"
+	"github.com/caseylabs/mailven/internal/logging"
+	"github.com/caseylabs/mailven/internal/settings"
+	"github.com/caseylabs/mailven/internal/smtp"
 )
 
 // ChatReply is a reply typed in the chat composer.

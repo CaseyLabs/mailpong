@@ -6,10 +6,10 @@ import (
 	"slices"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/logging"
-	"github.com/caseylabs/mailpong/internal/message"
-	"github.com/caseylabs/mailpong/internal/notification"
-	"github.com/caseylabs/mailpong/internal/undo"
+	"github.com/caseylabs/mailven/internal/logging"
+	"github.com/caseylabs/mailven/internal/message"
+	"github.com/caseylabs/mailven/internal/notification"
+	"github.com/caseylabs/mailven/internal/undo"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 

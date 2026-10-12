@@ -1,5 +1,5 @@
 // Maps an app locale or BCP 47 tag (e.g. "en", "en-CA", "en-GB") to a hunspell
-// dictionary key, or null when MailPong ships no dictionary for the language.
+// dictionary key, or null when Mailven ships no dictionary for the language.
 // The UI is English-only; the dictionaries cover its English variants.
 const APP_TO_DICT: Record<string, string> = {
   en: 'en',

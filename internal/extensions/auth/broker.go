@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"net/http"
 
-	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
-	"github.com/caseylabs/mailpong/internal/credentials"
-	"github.com/caseylabs/mailpong/internal/oauth2"
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
+	"github.com/caseylabs/mailven/internal/credentials"
+	"github.com/caseylabs/mailven/internal/oauth2"
 )
 
 // Broker is the concrete implementation of coreapi.Auth. It mediates between
-// extensions and MailPong's credential store + OAuth manager. Extensions get
+// extensions and Mailven's credential store + OAuth manager. Extensions get
 // pre-configured HTTP clients; tokens never leave the broker's boundary.
 type Broker struct {
 	credStore    *credentials.Store
@@ -91,7 +91,7 @@ func (b *Broker) HTTPClient(accountID string, scopes []coreapi.AuthScope) (*http
 // is making the request, and reads that extension's manifest to decide whether
 // each requested scope routes through:
 //
-//   - MailPong core's mail OAuth (<provider>-mail client config) — when the
+//   - Mailven core's mail OAuth (<provider>-mail client config) — when the
 //     scope is listed in manifest.OAuth.FirstPartyUsesCoreForScopes; reuses
 //     the user's existing mail consent.
 //   - The extension's own client config (<provider>-<extensionID>) — when the
@@ -136,7 +136,7 @@ func (b *Broker) HTTPClientForExtension(
 		return b.newClient(accountID, string(clientConfigID)), nil
 	}
 
-	// Classify each requested scope: does it use MailPong core's mail OAuth
+	// Classify each requested scope: does it use Mailven core's mail OAuth
 	// (per the manifest's first_party_uses_core_for_scopes) or the extension's
 	// own client config?
 	useCoreSet := map[string]bool{}

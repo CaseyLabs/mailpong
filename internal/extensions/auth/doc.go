@@ -1,5 +1,5 @@
 // Package auth implements the Auth Broker — the single path through which
-// MailPong extensions reach external services (Google APIs, Microsoft Graph,
+// Mailven extensions reach external services (Google APIs, Microsoft Graph,
 // CalDAV/CardDAV servers, IMAP/SMTP).
 //
 // Extensions never see access tokens, refresh tokens, or passwords. The Broker

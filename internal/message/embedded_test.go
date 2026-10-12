@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/caseylabs/mailpong/internal/cid"
+	"github.com/caseylabs/mailven/internal/cid"
 )
 
 func TestMarkEmbedded(t *testing.T) {

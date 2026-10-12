@@ -10,11 +10,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/logging"
 )
 
 // darwinSingleInstanceLock uses a Unix socket for single-instance detection.
-// The socket lives at ~/Library/Application Support/MailPong/instance.sock.
+// The socket lives at ~/Library/Application Support/Mailven/instance.sock.
 type darwinSingleInstanceLock struct {
 	listener   net.Listener
 	socketPath string
@@ -146,14 +146,14 @@ func (l *darwinSingleInstanceLock) handleConnection(conn net.Conn) {
 }
 
 // buildSocketPath returns the path for the instance lock socket.
-// Uses ~/Library/Application Support/MailPong/ which is the standard macOS app data location.
+// Uses ~/Library/Application Support/Mailven/ which is the standard macOS app data location.
 func (l *darwinSingleInstanceLock) buildSocketPath() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", fmt.Errorf("failed to get home directory: %w", err)
 	}
 
-	socketDir := filepath.Join(home, "Library", "Application Support", "MailPong")
+	socketDir := filepath.Join(home, "Library", "Application Support", "Mailven")
 	if err := os.MkdirAll(socketDir, 0700); err != nil {
 		return "", fmt.Errorf("failed to create socket directory: %w", err)
 	}

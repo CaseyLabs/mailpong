@@ -9,7 +9,7 @@ import (
 
 	"github.com/emersion/go-ical"
 
-	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
 )
 
 // Syncer drives periodic CalDAV sync for the calendar extension. Per

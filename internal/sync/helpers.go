@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/folder"
-	imapPkg "github.com/caseylabs/mailpong/internal/imap"
-	"github.com/caseylabs/mailpong/internal/message"
+	"github.com/caseylabs/mailven/internal/folder"
+	imapPkg "github.com/caseylabs/mailven/internal/imap"
+	"github.com/caseylabs/mailven/internal/message"
 	"github.com/emersion/go-imap/v2"
 )
 

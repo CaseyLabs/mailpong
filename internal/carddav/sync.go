@@ -5,11 +5,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/contact"
-	"github.com/caseylabs/mailpong/internal/credentials"
-	"github.com/caseylabs/mailpong/internal/keylock"
-	"github.com/caseylabs/mailpong/internal/kit/davutil"
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/contact"
+	"github.com/caseylabs/mailven/internal/credentials"
+	"github.com/caseylabs/mailven/internal/keylock"
+	"github.com/caseylabs/mailven/internal/kit/davutil"
+	"github.com/caseylabs/mailven/internal/logging"
 	"github.com/rs/zerolog"
 )
 

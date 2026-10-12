@@ -5,13 +5,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/account"
-	"github.com/caseylabs/mailpong/internal/carddav"
-	"github.com/caseylabs/mailpong/internal/credentials"
-	"github.com/caseylabs/mailpong/internal/kit/davutil"
-	"github.com/caseylabs/mailpong/internal/logging"
-	"github.com/caseylabs/mailpong/internal/oauth2"
-	"github.com/caseylabs/mailpong/internal/platform"
+	"github.com/caseylabs/mailven/internal/account"
+	"github.com/caseylabs/mailven/internal/carddav"
+	"github.com/caseylabs/mailven/internal/credentials"
+	"github.com/caseylabs/mailven/internal/kit/davutil"
+	"github.com/caseylabs/mailven/internal/logging"
+	"github.com/caseylabs/mailven/internal/oauth2"
+	"github.com/caseylabs/mailven/internal/platform"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 

@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/caseylabs/mailpong/internal/contact"
+	"github.com/caseylabs/mailven/internal/contact"
 	"github.com/emersion/go-vcard"
 )
 

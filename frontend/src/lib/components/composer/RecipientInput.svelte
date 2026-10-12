@@ -149,7 +149,7 @@
 
   // ─── Drag-and-drop: reorder within field, move between To/Cc/Bcc fields ───
 
-  const DND_MIME = 'application/x-mailpong-recipient'
+  const DND_MIME = 'application/x-mailven-recipient'
 
   let draggingIndex = $state<number | null>(null)
   let dropTargetIndex = $state<number | null>(null)

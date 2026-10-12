@@ -1,21 +1,21 @@
 [Desktop Entry]
 Version=1.5
 Type=Application
-Name=MailPong
+Name=Mailven
 GenericName=Email
 Comment=Email, reimagined as chat.
 Keywords=Mail;E-mail;email;IMAP;SMTP;CardDAV;
-Icon=io.github.caseylabs.MailPong
-TryExec=mailpong
-Exec=mailpong %U
+Icon=io.github.caseylabs.Mailven
+TryExec=mailven
+Exec=mailven %U
 Terminal=false
 Categories=Network;Email;
 MimeType=x-scheme-handler/mailto;
 StartupNotify=true
-StartupWMClass=io.github.caseylabs.MailPong
+StartupWMClass=io.github.caseylabs.Mailven
 X-GNOME-UsesNotifications=true
 Actions=compose;
 
 [Desktop Action compose]
 Name=Compose New Email
-Exec=mailpong mailto:
+Exec=mailven mailto:

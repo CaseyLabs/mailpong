@@ -1,13 +1,13 @@
 name: Bug Report
-description: Report a bug in MailPong
+description: Report a bug in Mailven
 body:
   - type: markdown
     attributes:
-      value: For vulnerabilities, follow SECURITY.md. Remove credentials and private mail data from reports. If you are not sure whether the bug is in MailPong or in upstream Aerion, report it here; do not file MailPong issues with Aerion.
+      value: For vulnerabilities, follow SECURITY.md. Remove credentials and private mail data from reports. If you are not sure whether the bug is in Mailven or in upstream Aerion, report it here; do not file Mailven issues with Aerion.
   - type: input
     id: version
     attributes:
-      label: MailPong version or commit
+      label: Mailven version or commit
       description: Include the commit hash for custom builds.
     validations:
       required: true

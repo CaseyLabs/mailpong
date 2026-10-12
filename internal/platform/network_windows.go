@@ -9,7 +9,7 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/logging"
 	"golang.org/x/sys/windows"
 )
 

@@ -1,10 +1,10 @@
-// mailpong-creds outputs OAuth credentials as JSON.
+// mailven-creds outputs OAuth credentials as JSON.
 // Built with ldflags in CI, shipped alongside the Flatpak build so the main
 // app (built from source on Flathub) can read credentials at runtime.
 //
 // Build:
 //
-//	go build -ldflags "-X 'main.GoogleClientID=...' -X 'main.GoogleClientSecret=...' -X 'main.MicrosoftClientID=...' -X 'main.GoogleTestingClientID=...' -X 'main.GoogleTestingClientSecret=...'" -o mailpong-creds
+//	go build -ldflags "-X 'main.GoogleClientID=...' -X 'main.GoogleClientSecret=...' -X 'main.MicrosoftClientID=...' -X 'main.GoogleTestingClientID=...' -X 'main.GoogleTestingClientSecret=...'" -o mailven-creds
 package main
 
 import (

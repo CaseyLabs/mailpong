@@ -8,15 +8,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailpong/extensions/contacts/backend/imaging"
-	"github.com/caseylabs/mailpong/internal/carddav"
-	"github.com/caseylabs/mailpong/internal/contact"
-	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
-	"github.com/caseylabs/mailpong/internal/kit/davutil"
+	"github.com/caseylabs/mailven/extensions/contacts/backend/imaging"
+	"github.com/caseylabs/mailven/internal/carddav"
+	"github.com/caseylabs/mailven/internal/contact"
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
+	"github.com/caseylabs/mailven/internal/kit/davutil"
 	"github.com/google/uuid"
 )
 
-// Source IDs for MailPong's core local contact store. CardDAV sources use their
+// Source IDs for Mailven's core local contact store. CardDAV sources use their
 // own UUIDs (one per configured source).
 //
 // The local source has two sub-categories distinguished by `contacts.kind`:

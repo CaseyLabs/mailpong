@@ -16,7 +16,7 @@ import (
 //   - "server": server handles iTIP delivery (PUTs with ATTENDEE
 //     properties automatically deliver invitations to recipients via the
 //     scheduling outbox).
-//   - "none":   server doesn't support 6638; MailPong's PUT carries
+//   - "none":   server doesn't support 6638; Mailven's PUT carries
 //     ATTENDEE lines but no invitations leave. (SMTP-only 'client' mode
 //     is out of scope for v0.3.0.)
 //
@@ -27,7 +27,7 @@ import (
 //
 // On any error returns "server" — defensive: a Google or Microsoft
 // account that briefly returns 5xx during probe shouldn't be flagged as
-// non-scheduling, and a real MailPong PUT to a non-6638 CalDAV server is
+// non-scheduling, and a real Mailven PUT to a non-6638 CalDAV server is
 // no worse than the pre-v0.3.0 behavior (no invitations delivered).
 //
 // Best-effort. NOT a blocking dependency: AddCalDAVSource succeeds even

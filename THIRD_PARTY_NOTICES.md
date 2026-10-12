@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-MailPong is licensed under the Apache License 2.0 (see `LICENSE` and `NOTICE`). It includes or links the third-party components listed below, each under its own license. This file is an attribution inventory; it does not change any component's license terms. A human should review it before each release (legal review flag L1 in `PLAN.md`).
+Mailven is licensed under the Apache License 2.0 (see `LICENSE` and `NOTICE`). It includes or links the third-party components listed below, each under its own license. This file is an attribution inventory; it does not change any component's license terms. A human should review it before each release (legal review flag L1 in `PLAN.md`).
 
 How this list was produced (ad hoc, 2026-10-11; neither tool is a project dependency):
 

@@ -76,9 +76,9 @@ echo "Cleaning flatpak-builder cache..."
 rm -rf .flatpak-builder
 
 echo "Checking that tag ${VERSION} exists..."
-if ! git ls-remote --exit-code --tags https://github.com/caseylabs/mailpong.git "refs/tags/${VERSION}" >/dev/null; then
+if ! git ls-remote --exit-code --tags https://github.com/CaseyLabs/mailven.git "refs/tags/${VERSION}" >/dev/null; then
     echo ""
-    echo "ERROR: Tag ${VERSION} not found at https://github.com/caseylabs/mailpong"
+    echo "ERROR: Tag ${VERSION} not found at https://github.com/CaseyLabs/mailven"
     echo ""
     exit 1
 fi
@@ -97,19 +97,19 @@ cd /workspace
 
 flatpak-builder --user --force-clean --repo=repo \
   --install-deps-from=flathub \
-  build-dir build/flatpak/flathub/io.github.caseylabs.MailPong.yml
+  build-dir build/flatpak/flathub/io.github.caseylabs.Mailven.yml
 
 echo ""
 echo "Creating bundle..."
 mkdir -p build/bin
-flatpak build-bundle repo build/bin/MailPong-${VERSION}.flatpak io.github.caseylabs.MailPong
+flatpak build-bundle repo build/bin/Mailven-${VERSION}.flatpak io.github.caseylabs.Mailven
 
 echo ""
 echo "=========================================="
 echo "Build successful!"
 echo "=========================================="
-echo "Output: build/bin/MailPong-${VERSION}.flatpak"
-ls -lh build/bin/MailPong-${VERSION}.flatpak
+echo "Output: build/bin/Mailven-${VERSION}.flatpak"
+ls -lh build/bin/Mailven-${VERSION}.flatpak
 INNERSCRIPT
 
 chmod +x /tmp/flatpak-build-test-inner.sh
@@ -132,5 +132,5 @@ echo "Test completed!"
 echo "=========================================="
 echo ""
 echo "If successful, the flatpak bundle is at:"
-echo "  $REPO_DIR/build/bin/MailPong-${VERSION}.flatpak"
+echo "  $REPO_DIR/build/bin/Mailven-${VERSION}.flatpak"
 echo ""

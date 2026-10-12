@@ -3,8 +3,8 @@ package app
 import (
 	"fmt"
 
-	"github.com/caseylabs/mailpong/internal/folder"
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/folder"
+	"github.com/caseylabs/mailven/internal/logging"
 )
 
 // ============================================================================

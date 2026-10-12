@@ -3,7 +3,7 @@
   "name": "Calendar",
   "version": "0.1.0",
   "description": "View and (later) edit calendar events from CalDAV, Google Calendar, and Microsoft 365. Phase 1 ships read-only CalDAV.",
-  "author": "MailPong Contributors",
+  "author": "Mailven Contributors",
   "minAerionVersion": "0.3.0",
   "capabilities": [
     "calendar.read",

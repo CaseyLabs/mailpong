@@ -3,8 +3,8 @@ package app
 import (
 	"testing"
 
-	"github.com/caseylabs/mailpong/internal/account"
-	"github.com/caseylabs/mailpong/internal/message"
+	"github.com/caseylabs/mailven/internal/account"
+	"github.com/caseylabs/mailven/internal/message"
 )
 
 // TestSelectReplyFromIdentity verifies the reply/forward From selection prefers

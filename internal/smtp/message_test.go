@@ -175,9 +175,9 @@ func TestToRFC822_MessageIDDomain(t *testing.T) {
 		from, want string
 	}{
 		{"sender@example.com", "@example.com>"},
-		{"no-at-sign", "@mailpong>"},
-		{"two@at@signs", "@mailpong>"},
-		{"trailing@", "@mailpong>"},
+		{"no-at-sign", "@mailven>"},
+		{"two@at@signs", "@mailven>"},
+		{"trailing@", "@mailven>"},
 	}
 	for _, tt := range tests {
 		msg := &ComposeMessage{From: Address{Address: tt.from}, TextBody: "x"}

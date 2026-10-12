@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/caseylabs/mailpong/internal/carddav"
-	"github.com/caseylabs/mailpong/internal/oauth2"
+	"github.com/caseylabs/mailven/internal/carddav"
+	"github.com/caseylabs/mailven/internal/oauth2"
 )
 
 // AuthContextInfo describes a single authenticated identity (email account or
@@ -112,7 +112,7 @@ type OAuthCredsChoices struct {
 	//   - placeholder copy ("Leave empty to keep current" vs "Paste …")
 	//   - "Clear saved Custom credentials" button visibility
 	//   - the "You also have a saved Custom override" hint when the
-	//     user is currently on a MailPong choice but Custom is still on file
+	//     user is currently on a Mailven choice but Custom is still on file
 	// Under the pre-active-choice architecture this was equivalent to
 	// `Current == "custom"` because the picker wiped the row when the
 	// user switched away from Custom. With explicit active-choice
@@ -156,7 +156,7 @@ func (a *App) GetOAuthCredsChoices(configID, extensionID string) (OAuthCredsChoi
 		})
 	}
 
-	// Mail-reuse option ("MailPong – Google"): use MailPong's mail client
+	// Mail-reuse option ("Mailven – Google"): use Mailven's mail client
 	// id/secret for THIS extension slot (via the slot alias). This is purely
 	// about which client app mints the slot's tokens — the tokens still live
 	// in the extension's own slot and need their own consent. It is therefore
@@ -169,7 +169,7 @@ func (a *App) GetOAuthCredsChoices(configID, extensionID string) (OAuthCredsChoi
 	// `microsoft-calendar` are core-registered aliases of `microsoft-mail`
 	// (microsoft-mail's client IS the consolidated Microsoft client), so
 	// showing a separate "use mail's client" option would be a redundant
-	// duplicate of the "MailPong – Microsoft" shipped choice already added
+	// duplicate of the "Mailven – Microsoft" shipped choice already added
 	// above.
 	if extensionID != "" && providerFromConfigID(configID) == "google" {
 		const mailSlot = "google-mail"
@@ -178,7 +178,7 @@ func (a *App) GetOAuthCredsChoices(configID, extensionID string) (OAuthCredsChoi
 			out.Choices = append(out.Choices, OAuthCredsChoice{
 				// Legacy identifier from Aerion; persisted, do not rename.
 				ID:    "aerion-mail",
-				Label: "MailPong – Google",
+				Label: "Mailven – Google",
 			})
 		}
 	}
@@ -186,7 +186,7 @@ func (a *App) GetOAuthCredsChoices(configID, extensionID string) (OAuthCredsChoi
 	// Determine the Current selection from credStore state.
 	out.Current = a.resolveCurrentChoice(configID)
 	// Independent of the active choice — the row may exist while the
-	// user is currently routed to MailPong-shipped or MailPong-mail.
+	// user is currently routed to Mailven-shipped or Mailven-mail.
 	out.HasUserOverride = a.credStore != nil && a.credStore.HasUserClientCreds(configID)
 
 	// Fingerprint of whatever currently resolves.
@@ -291,20 +291,20 @@ func providerFromConfigID(configID string) string {
 // shippedLabelForSlot returns the user-visible label for the slot's own
 // shipped option. Google extension slots are the un-Google-verified test
 // clients (broader scopes than the mail-app's verified client) — labeled
-// "MailPong – Google (Testing)" so users understand they may see Google's
+// "Mailven – Google (Testing)" so users understand they may see Google's
 // unverified-app warning during OAuth consent. Once Google verifies the
 // mail project for the extension scopes, the default switches to
-// "MailPong – Google" (the aerion-mail choice — mail's verified client).
+// "Mailven – Google" (the aerion-mail choice — mail's verified client).
 func shippedLabelForSlot(configID string) string {
 	switch configID {
 	case "google-contacts", "google-calendar":
-		return "MailPong – Google (Testing)"
+		return "Mailven – Google (Testing)"
 	case "google-mail":
-		return "MailPong – Google"
+		return "Mailven – Google"
 	case "microsoft-mail", "microsoft-contacts", "microsoft-calendar":
-		return "MailPong – Microsoft"
+		return "Mailven – Microsoft"
 	}
-	return "MailPong – Default"
+	return "Mailven – Default"
 }
 
 // SetOAuthCreds saves user-supplied OAuth client credentials for the given
@@ -333,7 +333,7 @@ func (a *App) ClearOAuthCreds(configID string) error {
 // (mail accounts + standalone contacts sources) that match the given OAuth
 // provider. Used by the Contacts extension's write-access picker to let the
 // user attach a write grant to one of their EXISTING reads, rather than
-// adding a new account from inside the extension (which MailPong's design
+// adding a new account from inside the extension (which Mailven's design
 // forbids — new accounts always come through core setup paths).
 //
 // Wails-bound. Returns an empty slice when nothing matches — the picker

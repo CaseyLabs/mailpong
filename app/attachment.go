@@ -9,12 +9,12 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/caseylabs/mailpong/internal/email"
-	"github.com/caseylabs/mailpong/internal/logging"
-	"github.com/caseylabs/mailpong/internal/message"
-	"github.com/caseylabs/mailpong/internal/pgp"
-	"github.com/caseylabs/mailpong/internal/platform"
-	"github.com/caseylabs/mailpong/internal/smime"
+	"github.com/caseylabs/mailven/internal/email"
+	"github.com/caseylabs/mailven/internal/logging"
+	"github.com/caseylabs/mailven/internal/message"
+	"github.com/caseylabs/mailven/internal/pgp"
+	"github.com/caseylabs/mailven/internal/platform"
+	"github.com/caseylabs/mailven/internal/smime"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 

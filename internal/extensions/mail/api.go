@@ -3,12 +3,12 @@ package mail
 import (
 	"fmt"
 
-	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
-	"github.com/caseylabs/mailpong/internal/folder"
-	"github.com/caseylabs/mailpong/internal/message"
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
+	"github.com/caseylabs/mailven/internal/folder"
+	"github.com/caseylabs/mailven/internal/message"
 )
 
-// API implements coreapi.Mail by wrapping MailPong's existing message and folder
+// API implements coreapi.Mail by wrapping Mailven's existing message and folder
 // stores. Read methods are fully implemented in Phase 1; mutators return
 // ErrUnimplemented until a Phase 2+ consumer needs them.
 type API struct {
@@ -121,7 +121,7 @@ func (a *API) AppendMessage(accountID string, folderID string, raw []byte, flags
 }
 
 // SubscribeToMailEvents is scaffolded; needs an event-bus wiring (Phase 2+)
-// that fans MailPong's existing sync events out to extension subscribers.
+// that fans Mailven's existing sync events out to extension subscribers.
 func (a *API) SubscribeToMailEvents(types []coreapi.MailEventType) (<-chan coreapi.MailEvent, coreapi.Unsubscribe, error) {
 	return nil, func() {}, coreapi.ErrUnimplemented
 }

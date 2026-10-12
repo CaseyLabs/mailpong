@@ -5,17 +5,17 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/logging"
 )
 
 const (
-	launchAgentLabel = "io.github.caseylabs.MailPong"
+	launchAgentLabel = "io.github.caseylabs.Mailven"
 	launchAgentPlist = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
 	<key>Label</key>
-	<string>io.github.caseylabs.MailPong</string>
+	<string>io.github.caseylabs.Mailven</string>
 	<key>ProgramArguments</key>
 	<array>
 		<string>%s</string>
@@ -103,7 +103,7 @@ func (m *darwinAutostartManager) launchAgentsDir() (string, error) {
 func (m *darwinAutostartManager) execCommand() string {
 	exe, err := os.Executable()
 	if err != nil {
-		return "mailpong"
+		return "mailven"
 	}
 	return exe
 }

@@ -4,7 +4,7 @@ sidebar_position: 4
 
 # Custom Google OAuth Credentials
 
-MailPong ships with no Google OAuth credentials, so Gmail OAuth, the Calendar extension and the Contacts extension all need an OAuth client that you create. (Gmail also works without OAuth, using an [app password](/docs/getting-started/first-account/gmail).) This guide walks you through creating a Google Cloud project and using its OAuth Client ID and Secret for **everything in one shot** — Gmail, the [Calendar extension](/docs/features/extensions/calendar), and the [Contacts extension](/docs/features/extensions/contacts).
+Mailven ships with no Google OAuth credentials, so Gmail OAuth, the Calendar extension and the Contacts extension all need an OAuth client that you create. (Gmail also works without OAuth, using an [app password](/docs/getting-started/first-account/gmail).) This guide walks you through creating a Google Cloud project and using its OAuth Client ID and Secret for **everything in one shot** — Gmail, the [Calendar extension](/docs/features/extensions/calendar), and the [Contacts extension](/docs/features/extensions/contacts).
 
 :::note Why you need this
 - Your mail, calendar, and contacts all flow through your own Google Cloud project, which you control.
@@ -16,13 +16,13 @@ MailPong ships with no Google OAuth credentials, so Gmail OAuth, the Calendar ex
 1. Go to the [Google Cloud Console](https://console.cloud.google.com) and sign in with your Google account
 2. Click the **project picker** at the top of the page (next to the Google Cloud logo)
 3. Click **New Project**
-4. Enter a project name (e.g. "MailPong") — the organization/location can be left as-is for personal accounts
+4. Enter a project name (e.g. "Mailven") — the organization/location can be left as-is for personal accounts
 5. Click **Create**
 6. Once created, make sure the new project is selected in the project picker
 
 ## 2. Enable the APIs
 
-MailPong talks to Gmail over IMAP/SMTP, but the Calendar and Contacts extensions use Google's APIs, which must be enabled per project:
+Mailven talks to Gmail over IMAP/SMTP, but the Calendar and Contacts extensions use Google's APIs, which must be enabled per project:
 
 1. In the console, go to **APIs & Services → Library**
 2. Search for and **Enable** each of the following:
@@ -34,7 +34,7 @@ MailPong talks to Gmail over IMAP/SMTP, but the Calendar and Contacts extensions
 
 1. Go to **APIs & Services → OAuth consent screen** (Google may also call this **Google Auth Platform**)
 2. If prompted, click **Get started** and fill in:
-   - **App name**: e.g. "MailPong"
+   - **App name**: e.g. "Mailven"
    - **User support email**: your email address
    - **Audience**: **External**
    - **Contact information**: your email address
@@ -48,7 +48,7 @@ Under **Audience**, click **Publish app** to move the app from **Testing** to **
 Google expires the refresh tokens of apps left in **Testing** status after 7 days, which would force you to re-authorize every week. Publishing avoids this. Your app remains private to your project — publishing does not list it anywhere.
 :::
 
-Since the app is published without going through Google's verification process, you will see a "This app isn't verified" warning when authorizing — this is the same warning described in the [Gmail Setup Security Note](/docs/getting-started/first-account/gmail#security-note), except this time the unverified app is your own project. Click **Advanced → Go to MailPong (unsafe) → Allow** to proceed.
+Since the app is published without going through Google's verification process, you will see a "This app isn't verified" warning when authorizing — this is the same warning described in the [Gmail Setup Security Note](/docs/getting-started/first-account/gmail#security-note), except this time the unverified app is your own project. Click **Advanced → Go to Mailven (unsafe) → Allow** to proceed.
 
 You can also add your own Google accounts as test users under **Audience → Test users**.
 
@@ -75,12 +75,12 @@ You can also add your own Google accounts as test users under **Audience → Tes
 1. Go to **APIs & Services → Credentials** (or **Google Auth Platform → Clients**)
 2. Click **Create Credentials → OAuth client ID** (or **Create client**)
 3. For **Application type**, select **Desktop app**
-4. Enter a name (e.g. "MailPong Desktop") and click **Create**
-5. Copy the **Client ID** and **Client Secret** shown — you'll paste both into MailPong next
+4. Enter a name (e.g. "Mailven Desktop") and click **Create**
+5. Copy the **Client ID** and **Client Secret** shown — you'll paste both into Mailven next
 
-## 6. Configure MailPong — Mail
+## 6. Configure Mailven — Mail
 
-1. In MailPong, open **Settings → Accounts** (tab)
+1. In Mailven, open **Settings → Accounts** (tab)
 2. Scroll to the bottom where **OAuth Credentials** is located and expand it
 3. Under **Google Mail**, select **Custom** from the dropdown menu
 4. Copy and paste the **Client ID** and **Client Secret** into their respective fields and save

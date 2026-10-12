@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/logging"
 	"github.com/rs/zerolog"
 )
 
@@ -74,7 +74,7 @@ func (e *ErrGoogleEtagMismatch) Error() string {
 // ----- API shapes ------------------------------------------------------------
 
 // googlePerson is the write-shape for the People API Person resource. Fields
-// that aren't currently surfaced by contact.Record are omitted; if MailPong
+// that aren't currently surfaced by contact.Record are omitted; if Mailven
 // adds them later, extend here and in google_convert.go.
 type googlePerson struct {
 	ResourceName   string                `json:"resourceName,omitempty"`

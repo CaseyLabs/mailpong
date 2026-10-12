@@ -1,6 +1,6 @@
 <script lang="ts">
   // OAuthCredsSlotEditor — single-slot OAuth credential editor primitive.
-  // Used by MailPong core's "OAuth Credentials (advanced)" section (Settings →
+  // Used by Mailven core's "OAuth Credentials (advanced)" section (Settings →
   // Accounts) AND by each extension's settings dialog.
   //
   // Props:
@@ -9,7 +9,7 @@
   //   extensionID         — the manifest id of the consuming extension
   //                         (e.g., "contacts", "calendar"). Omit (or pass "")
   //                         for core/mail's settings UI — then the backend
-  //                         skips the manifest lookup and the "MailPong mail
+  //                         skips the manifest lookup and the "Mailven mail
   //                         client" option never appears.
   //   label               — display name (e.g., "Google Mail")
   //   secretRequired      — whether the slot needs a client_secret (true for
@@ -23,8 +23,8 @@
   //                           the edit form.
   //     - "aerion-shipped"  — the slot's own shipped client (compiled in via
   //                           the extension's .env / Makefile ldflags). Labeled
-  //                           by the backend per slot ("MailPong - Google",
-  //                           "MailPong - Microsoft", "MailPong testing", etc.).
+  //                           by the backend per slot ("Mailven - Google",
+  //                           "Mailven - Microsoft", "Mailven testing", etc.).
   //     - "aerion-mail"     — reuse the core mail OAuth slot for scopes the
   //                           extension manifest declares as core-routable
   //                           (first_party_uses_core_for_scopes).
@@ -72,7 +72,7 @@
 
   // Status badge driven by the currently-selected mode rather than two
   // independent has* booleans. Maps to the same three visual states the
-  // previous version had: Custom / MailPong / Not configured.
+  // previous version had: Custom / Mailven / Not configured.
   function statusBadgeKind(): 'custom' | 'aerion' | 'unset' {
     if (loading) return 'unset'
     if (mode === 'custom' && choices?.hasUserOverride) return 'custom'

@@ -74,6 +74,14 @@ cleanup here, so it can be done once the fork is independent.
 
 None open.
 
+### Packaging
+
+- **P1 low** `internal/oauth2/config.go:62`: the Flatpak shim path
+  `/app/lib/mailven/mailven-creds` is not installed by any Flatpak manifest, so
+  Flatpak builds never load shim credentials. Pre-existing; install the shim there or drop the path.
+- **P2 low** `build/README.md:10`, `Makefile`: macOS scripts hard-code `Mailven.app` while Wails
+  names the bundle from `wails.json` `name` (`mailven`); works only on case-insensitive volumes.
+
 ### Dependencies
 
 - **D2 low** `frontend/package.json`: TypeScript is held at 6.0.x.

@@ -5,11 +5,11 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/caseylabs/mailpong/internal/account"
-	"github.com/caseylabs/mailpong/internal/database"
-	"github.com/caseylabs/mailpong/internal/draft"
-	"github.com/caseylabs/mailpong/internal/folder"
-	"github.com/caseylabs/mailpong/internal/smtp"
+	"github.com/caseylabs/mailven/internal/account"
+	"github.com/caseylabs/mailven/internal/database"
+	"github.com/caseylabs/mailven/internal/draft"
+	"github.com/caseylabs/mailven/internal/folder"
+	"github.com/caseylabs/mailven/internal/smtp"
 )
 
 // TestSyncToIMAPFailureKeepsServerCopy checks that a failed sync leaves the

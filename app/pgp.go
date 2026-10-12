@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/caseylabs/mailpong/internal/logging"
-	"github.com/caseylabs/mailpong/internal/pgp"
+	"github.com/caseylabs/mailven/internal/logging"
+	"github.com/caseylabs/mailven/internal/pgp"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 

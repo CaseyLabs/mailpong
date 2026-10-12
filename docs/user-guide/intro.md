@@ -5,9 +5,9 @@ slug: /intro
 
 # Introduction
 
-MailPong is an open source desktop email client that turns email threads into combined chats: like a Messenger app for your mailbox. It is alpha software, derived from [Aerion](https://github.com/hkdb/aerion) by [@hkdb](https://github.com/hkdb) and independently maintained. It is not an official Aerion release.
+Mailven is an open source desktop email client that turns email threads into combined chats: like a Messenger app for your mailbox. It is alpha software, derived from [Aerion](https://github.com/hkdb/aerion) by [@hkdb](https://github.com/hkdb) and independently maintained. It is not an official Aerion release.
 
-## Why MailPong?
+## Why Mailven?
 
 The Linux desktop has long needed a proper email client. The existing options each have their drawbacks:
 
@@ -16,11 +16,11 @@ The Linux desktop has long needed a proper email client. The existing options ea
 - **Mailspring** - Built on Electron, which means heavy resource consumption
 - **Evolution** - Feels like it's still stuck in 1999
 
-Aerion was created to fill this gap, and MailPong builds on it with a chat-style interface: a standalone, lightweight email client that just works.
+Aerion was created to fill this gap, and Mailven builds on it with a chat-style interface: a standalone, lightweight email client that just works.
 
 ## Design Goals
 
-MailPong keeps Aerion's five core principles:
+Mailven keeps Aerion's five core principles:
 
 1. **Resource Efficiency** - Minimal CPU, RAM, and battery consumption
 2. **Modern UX** - Clean, intuitive interface with dark mode support
@@ -30,19 +30,19 @@ MailPong keeps Aerion's five core principles:
 
 ## Technology
 
-MailPong is built with [Wails](https://wails.io) and [Svelte](https://svelte.dev), not Electron. This means native performance with a modern web-based UI, without the memory overhead of running a full Chromium instance.
+Mailven is built with [Wails](https://wails.io) and [Svelte](https://svelte.dev), not Electron. This means native performance with a modern web-based UI, without the memory overhead of running a full Chromium instance.
 
-MailPong has not been through Google's CASA security assessment. The CASA Tier 2 certification belongs to the upstream Aerion project and does not apply to MailPong.
+Mailven has not been through Google's CASA security assessment. The CASA Tier 2 certification belongs to the upstream Aerion project and does not apply to Mailven.
 
 ## Platform Support
 
-While Linux is a first-class citizen, MailPong also runs on:
+While Linux is a first-class citizen, Mailven also runs on:
 
 - **Linux** - Flatpak (local build) or binary
 - **macOS** - Native .app bundle
 - **Windows** - Executable or installer
 
-MailPong has no published releases yet; build it from source (see [Installation](./getting-started/installation/index.md)).
+Mailven has no published releases yet; build it from source (see [Installation](./getting-started/installation/index.md)).
 
 ## Features at a Glance
 
@@ -63,12 +63,12 @@ MailPong has no published releases yet; build it from source (see [Installation]
 
 ## Open Source
 
-MailPong is licensed under Apache 2.0. You can view the source code, report issues, and contribute at [github.com/caseylabs/mailpong](https://github.com/caseylabs/mailpong). Version numbering continues from the Aerion code base: "MailPong 0.4.0" is a MailPong version.
+Mailven is licensed under Apache 2.0. You can view the source code, report issues, and contribute at [github.com/CaseyLabs/mailven](https://github.com/CaseyLabs/mailven). Version numbering continues from the Aerion code base: "Mailven 0.4.0" is a Mailven version.
 
 #### Sponsorship
 
-MailPong has no sponsors. The upstream Aerion project is sponsored by its own team; that sponsorship doesn't extend to MailPong.
+Mailven has no sponsors. The upstream Aerion project is sponsored by its own team; that sponsorship doesn't extend to Mailven.
 
 #### Aerion Contributors
 
-MailPong exists because of the work of the Aerion project: its author [@hkdb](https://github.com/hkdb), the issue and translation contributors listed in the [Aerion README](https://github.com/hkdb/aerion), and everyone who contributed code. See [NOTICE](https://github.com/caseylabs/mailpong/blob/main/NOTICE).
+Mailven exists because of the work of the Aerion project: its author [@hkdb](https://github.com/hkdb), the issue and translation contributors listed in the [Aerion README](https://github.com/hkdb/aerion), and everyone who contributed code. See [NOTICE](https://github.com/CaseyLabs/mailven/blob/main/NOTICE).

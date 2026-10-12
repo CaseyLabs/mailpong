@@ -46,7 +46,7 @@ type AuthScope struct {
 // client library directly (which is acceptable for first-party extensions
 // living in the same Go module).
 //
-// If/when community extensions land, these become MailPong-defined facades.
+// If/when community extensions land, these become Mailven-defined facades.
 type IMAPClient = any
 type SMTPClient = any
 

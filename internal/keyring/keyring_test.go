@@ -10,7 +10,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestServiceName(t *testing.T) {
-	if serviceName != "mailpong" {
-		t.Errorf("serviceName = %q, want %q", serviceName, "mailpong")
+	if serviceName != "mailven" {
+		t.Errorf("serviceName = %q, want %q", serviceName, "mailven")
 	}
 }

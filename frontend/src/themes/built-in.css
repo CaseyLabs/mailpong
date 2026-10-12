@@ -3,7 +3,7 @@
    - Dark: Polar Night (nord0-3) as bg, Snow Storm (nord4-6) as text
    - Light: Snow Storm as bg, Polar Night as text
    Frost (nord7-10) drives accents in both. Avatars use Aurora + Frost (9 colors).
-   MailPong-specific override: --ring matches --primary per MailPong convention. */
+   Mailven-specific override: --ring matches --primary per Mailven convention. */
 @layer base {
   /* Light (Nord) — Snow Storm bg, Polar Night text. nord10 (darker Frost) as
      primary for sufficient contrast on light bg. */

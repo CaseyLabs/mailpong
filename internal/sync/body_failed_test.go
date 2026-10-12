@@ -7,7 +7,7 @@ import "testing"
 // deferring to a future sync cycle when the response looks truncated.
 //
 // All sizes in bytes. maxMessageSize is the production constant — picking
-// inputs around it directly verifies the "MailPong-side cap is not a server
+// inputs around it directly verifies the "Mailven-side cap is not a server
 // truncation" branch.
 func TestShouldChargeFailure(t *testing.T) {
 	cases := []struct {
@@ -23,7 +23,7 @@ func TestShouldChargeFailure(t *testing.T) {
 			wantedCharge: true,
 		},
 		{
-			name:         "received hit MailPong's cap: charge (intentional truncation, retry won't help)",
+			name:         "received hit Mailven's cap: charge (intentional truncation, retry won't help)",
 			received:     maxMessageSize,
 			reported:     maxMessageSize + 50_000_000,
 			wantedCharge: true,

@@ -1,4 +1,4 @@
-// Package smtp provides SMTP client functionality for MailPong
+// Package smtp provides SMTP client functionality for Mailven
 package smtp
 
 import "errors"

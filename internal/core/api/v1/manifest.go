@@ -24,7 +24,7 @@ type Manifest struct {
 // the Auth Broker. For each requested scope:
 //
 //   - If the scope is listed in FirstPartyUsesCoreForScopes, the broker routes
-//     through MailPong core's mail OAuth (<provider>-mail client config). This
+//     through Mailven core's mail OAuth (<provider>-mail client config). This
 //     reuses the user's existing mail consent — no new OAuth prompt — but it's
 //     only viable when the mail OAuth grant already covers that scope (e.g.,
 //     contacts.readonly is on the mail grant for Google).
@@ -44,7 +44,7 @@ type Manifest struct {
 // is unconditionally honored.
 type ManifestOAuth struct {
 	// FirstPartyUsesCoreForScopes lists the scope strings (exact match) that
-	// should route through MailPong core's mail OAuth instead of the extension's
+	// should route through Mailven core's mail OAuth instead of the extension's
 	// own client config. See gate above.
 	FirstPartyUsesCoreForScopes []string `json:"first_party_uses_core_for_scopes,omitempty"`
 }
@@ -77,7 +77,7 @@ type Capability = string
 // directly (they're separate subprocesses), but their Register handshake
 // over IPC will mirror these two methods.
 //
-// Register is called once per MailPong process lifetime, at startup, regardless
+// Register is called once per Mailven process lifetime, at startup, regardless
 // of whether the extension is currently enabled. This matches the
 // architecture-doc rule that descriptive UI registrations (rail tab, hooks)
 // persist across enable/disable cycles. Active behaviors that depend on

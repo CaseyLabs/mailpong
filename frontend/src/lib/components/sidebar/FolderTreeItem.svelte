@@ -63,7 +63,7 @@
   let isDragOver = $state(false)
 
   function hasMessagesPayload(e: DragEvent): boolean {
-    return !!e.dataTransfer?.types.includes('application/x-mailpong-messages')
+    return !!e.dataTransfer?.types.includes('application/x-mailven-messages')
   }
 
   function handleDragEnter(e: DragEvent) {
@@ -84,7 +84,7 @@
 
   async function handleDrop(e: DragEvent) {
     isDragOver = false
-    const raw = e.dataTransfer?.getData('application/x-mailpong-messages')
+    const raw = e.dataTransfer?.getData('application/x-mailven-messages')
     if (!raw || !tree.folder) return
     e.preventDefault()
 

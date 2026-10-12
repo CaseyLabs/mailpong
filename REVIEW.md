@@ -17,5 +17,5 @@ Repo-specific rules for code review. General conventions live in `AGENTS.md`.
 ## Skip
 
 - Generated files: `frontend/wailsjs/`, `frontend/dist/`.
-- Non-English locale files under `*/i18n/locales/`. MailPong updates English only, so missing or stale translations are expected.
+- Non-English locale files under `*/i18n/locales/`. Mailven updates English only, so missing or stale translations are expected.
 - Formatting that `gofmt` or ESLint already enforces.

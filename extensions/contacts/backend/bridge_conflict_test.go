@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
 )
 
 func TestEmitConflict(t *testing.T) {

@@ -1,7 +1,7 @@
 package backend
 
 // PartStat is the iCalendar PARTSTAT enum (RFC 5545 § 3.2.12). Stored on
-// Attendee. The MailPong in-memory enum mirrors the wire-format strings so
+// Attendee. The Mailven in-memory enum mirrors the wire-format strings so
 // translation to/from ICS is identity; provider-specific translation (Google
 // "needsAction|declined|tentative|accepted", Graph "none|organizer|
 // tentativelyAccepted|accepted|declined|notResponded") happens in

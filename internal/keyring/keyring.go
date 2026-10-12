@@ -7,7 +7,7 @@ import (
 	gokeyring "github.com/zalando/go-keyring"
 )
 
-const serviceName = "mailpong"
+const serviceName = "mailven"
 
 // Keyring provides secure credential storage
 type Keyring struct{}

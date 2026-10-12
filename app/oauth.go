@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/account"
-	"github.com/caseylabs/mailpong/internal/certificate"
-	"github.com/caseylabs/mailpong/internal/credentials"
-	"github.com/caseylabs/mailpong/internal/imap"
-	"github.com/caseylabs/mailpong/internal/logging"
-	"github.com/caseylabs/mailpong/internal/oauth2"
-	"github.com/caseylabs/mailpong/internal/platform"
+	"github.com/caseylabs/mailven/internal/account"
+	"github.com/caseylabs/mailven/internal/certificate"
+	"github.com/caseylabs/mailven/internal/credentials"
+	"github.com/caseylabs/mailven/internal/imap"
+	"github.com/caseylabs/mailven/internal/logging"
+	"github.com/caseylabs/mailven/internal/oauth2"
+	"github.com/caseylabs/mailven/internal/platform"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -257,7 +257,7 @@ func (a *App) CompleteOAuthAccountSetup(provider, email, accountName, displayNam
 
 // StartCustomOAuthFlow initiates an OAuth2 authorization flow for a user-supplied
 // ("bring your own app") provider — used when adding a generic IMAP account with OAuth.
-// MailPong ships no credentials for custom providers, so the caller passes the
+// Mailven ships no credentials for custom providers, so the caller passes the
 // authorization + token endpoints, scopes, and client credentials. Emits the same
 // oauth:started / oauth:success / oauth:error events as StartOAuthFlow, so the frontend
 // reuses its existing OAuth UI. On success, CompleteCustomOAuthAccountSetup persists the

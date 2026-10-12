@@ -22,7 +22,7 @@
 
   // Inline image type - for images pasted/dropped into the editor
   interface InlineImage {
-    cid: string  // Content-ID (e.g., "image1@mailpong")
+    cid: string  // Content-ID (e.g., "image1@mailven")
     dataUrl: string  // Full data URL for display in editor
     contentType: string
     data: string  // Base64 data only (without data URL prefix)
@@ -1610,7 +1610,7 @@
   // Generate a unique Content-ID for inline images
   function generateCID(): string {
     inlineImageCounter++
-    return `image${inlineImageCounter}-${Date.now()}@mailpong`
+    return `image${inlineImageCounter}-${Date.now()}@mailven`
   }
 
   // Handle an inline image file (from paste or drop)
@@ -1814,7 +1814,7 @@
   // claim them as file drops (which would make the chip's dragend think a
   // successful move happened and remove it from the source field).
   function isRecipientChipDrag(e: DragEvent): boolean {
-    return !!e.dataTransfer?.types.includes('application/x-mailpong-recipient')
+    return !!e.dataTransfer?.types.includes('application/x-mailven-recipient')
   }
 
   function handleDragOver(e: DragEvent) {
@@ -2329,7 +2329,7 @@
       <AlertDialog.Description>
         <p class="mb-3">{$_('composer.flatpakDndDescription')}</p>
         <p class="mb-2">{$_('composer.flatpakDndGrantExample')}</p>
-        <code class="block bg-muted px-3 py-2 rounded text-sm font-mono mb-3 select-all overflow-x-auto">flatpak override --user --filesystem=home io.github.caseylabs.MailPong</code>
+        <code class="block bg-muted px-3 py-2 rounded text-sm font-mono mb-3 select-all overflow-x-auto">flatpak override --user --filesystem=home io.github.caseylabs.Mailven</code>
         <p class="mb-3 text-sm text-destructive">{$_('composer.flatpakDndSecurityWarning')}</p>
         <p class="text-sm text-muted-foreground">{$_('composer.flatpakDndAlternative')}</p>
       </AlertDialog.Description>

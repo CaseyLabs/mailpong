@@ -160,7 +160,7 @@
     </div>
   {/if}
 
-  <!-- MailPong core OAuth credentials (advanced, collapsed by default) -->
+  <!-- Mailven core OAuth credentials (advanced, collapsed by default) -->
   <CoreOAuthSection />
 </div>
 

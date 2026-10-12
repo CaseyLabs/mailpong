@@ -26,13 +26,13 @@
           max: 3,
           reason: 'Microsoft Contacts supports up to 3 addresses.',
         },
-        // Microsoft has 1 native URL slot (businessHomePage). MailPong's
+        // Microsoft has 1 native URL slot (businessHomePage). Mailven's
         // sidecar persists the rest, so the user isn't blocked, but show
         // an info note so they know what other clients will see.
         urls: {
           kind: 'info',
           message:
-            'Only the first URL is visible in Outlook.com / other Microsoft clients. Additional URLs persist in MailPong only.',
+            'Only the first URL is visible in Outlook.com / other Microsoft clients. Additional URLs persist in Mailven only.',
         },
         impps: { kind: 'none' },
       }

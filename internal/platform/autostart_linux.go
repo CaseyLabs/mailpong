@@ -7,18 +7,18 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/logging"
 	"github.com/godbus/dbus/v5"
 )
 
 const (
-	autostartFilename = "io.github.caseylabs.MailPong.desktop"
+	autostartFilename = "io.github.caseylabs.Mailven.desktop"
 	desktopEntryTmpl  = `[Desktop Entry]
 Type=Application
-Name=MailPong
-Comment=MailPong Email Client
+Name=Mailven
+Comment=Mailven Email Client
 Exec=%s
-Icon=io.github.caseylabs.MailPong
+Icon=io.github.caseylabs.Mailven
 Terminal=false
 Categories=Network;Email;
 X-GNOME-Autostart-enabled=true
@@ -83,7 +83,7 @@ func (m *linuxAutostartManager) portalRequestBackground(autostart bool) error {
 	}
 
 	// Generate handle token so we know the request object path in advance.
-	handleToken := fmt.Sprintf("mailpong_%d", time.Now().UnixNano())
+	handleToken := fmt.Sprintf("mailven_%d", time.Now().UnixNano())
 
 	// Compute expected request path from our unique bus name and handle token.
 	// Unique name is like ":1.42" → remove ":" and replace "." with "_" → "1_42"
@@ -115,7 +115,7 @@ func (m *linuxAutostartManager) portalRequestBackground(autostart bool) error {
 		"handle_token": dbus.MakeVariant(handleToken),
 		"reason":       dbus.MakeVariant("Start automatically on login and sync email in the background"),
 		"autostart":    dbus.MakeVariant(autostart),
-		"commandline":  dbus.MakeVariant([]string{"mailpong"}),
+		"commandline":  dbus.MakeVariant([]string{"mailven"}),
 	}
 
 	obj := conn.Object("org.freedesktop.portal.Desktop", "/org/freedesktop/portal/desktop")
@@ -231,7 +231,7 @@ func (m *linuxAutostartManager) autostartDir() (string, error) {
 func (m *linuxAutostartManager) execCommand() string {
 	exe, err := os.Executable()
 	if err != nil {
-		return "mailpong"
+		return "mailven"
 	}
 	return exe
 }

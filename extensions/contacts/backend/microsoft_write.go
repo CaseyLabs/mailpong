@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/logging"
 	"github.com/rs/zerolog"
 )
 
@@ -93,7 +93,7 @@ type msContact struct {
 	// IMAddresses is a string[] (no protocol field). Encoded "protocol:handle"
 	// stays as a single string round-trip — converter strips/restores the prefix
 	// at the field boundary so the user's protocol metadata is preserved when
-	// the record stays inside MailPong's data model.
+	// the record stays inside Mailven's data model.
 	IMAddresses []string `json:"imAddresses,omitempty"`
 
 	Categories []string `json:"categories,omitempty"`

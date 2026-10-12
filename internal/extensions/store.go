@@ -1,4 +1,4 @@
-// Package extensions provides infrastructure for MailPong's first-party
+// Package extensions provides infrastructure for Mailven's first-party
 // extension system. The per-extension Store opens an isolated SQLite file
 // per extension under <dataDir>/extensions/<name>/data.db and exposes a
 // scoped KV namespace alongside whatever extension-specific tables the
@@ -13,8 +13,8 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/caseylabs/mailpong/internal/database"
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/database"
+	"github.com/caseylabs/mailven/internal/logging"
 
 	"github.com/rs/zerolog"
 )

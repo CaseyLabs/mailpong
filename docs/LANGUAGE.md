@@ -1,6 +1,6 @@
 # Localization architecture
 
-MailPong's interface is English-only. The i18n machinery from Aerion is kept so a locale could be added later, and email content is unaffected: messages in any language, charset and script are parsed, displayed and sent as before. That handling lives in the Go backend (`internal/sync/parse.go`, `internal/smtp`, ...) and does not use the UI locale files.
+Mailven's interface is English-only. The i18n machinery from Aerion is kept so a locale could be added later, and email content is unaffected: messages in any language, charset and script are parsed, displayed and sent as before. That handling lives in the Go backend (`internal/sync/parse.go`, `internal/smtp`, ...) and does not use the UI locale files.
 
 ## How strings work
 

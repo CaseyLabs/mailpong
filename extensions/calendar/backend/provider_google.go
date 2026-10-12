@@ -4,7 +4,7 @@ package backend
 //
 // Implements the Provider interface for Google Calendar (API v3) using
 // coreapi.Auth's OAuth-vended *http.Client. Translation between Google's
-// event JSON and MailPong's ICS blob lives in provider_google_translate.go.
+// event JSON and Mailven's ICS blob lives in provider_google_translate.go.
 //
 // Storage model unchanged from CalDAV: events.ics_blob holds a single-VEVENT
 // VCALENDAR per row, event_recurrence_overrides holds per-instance overrides.
@@ -35,7 +35,7 @@ import (
 
 	"github.com/google/uuid"
 
-	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
 )
 
 const (
@@ -479,7 +479,7 @@ func (p googleProvider) PushEvent(ctx context.Context, src Source, cal Calendar,
 }
 
 // googleEventToAttendees converts the Google response's attendees +
-// organizer fields into MailPong's shape. Reuses the existing translation
+// organizer fields into Mailven's shape. Reuses the existing translation
 // by going through the ICS round-trip — same path sync uses — so the
 // PartStat / Role / CUType normalization stays in one place.
 //
@@ -684,7 +684,7 @@ func (p googleProvider) pushThisAndFuture(ctx context.Context, client *http.Clie
 	}
 
 	// POST new series.
-	newUID := uuid.NewString() + "@mailpong-google"
+	newUID := uuid.NewString() + "@mailven-google"
 	newICS, serr := serializeVEVENT(newUID, payload.In)
 	if serr != nil {
 		return PushInstanceResult{}, fmt.Errorf("serialize new series: %w", serr)

@@ -3,7 +3,7 @@
 package platform
 
 import (
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/logging"
 )
 
 // WindowsPowerMonitor monitors power state on Windows

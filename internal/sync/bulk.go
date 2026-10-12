@@ -10,7 +10,7 @@ import (
 	"github.com/emersion/go-imap/v2/imapclient"
 	"github.com/emersion/go-message/textproto"
 
-	"github.com/caseylabs/mailpong/internal/message"
+	"github.com/caseylabs/mailven/internal/message"
 )
 
 // bulkHeaderFields are the headers classifyBulk reads; the backfill fetches

@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/logging"
 )
 
 // WindowsThemeMonitor is a stub for Windows (frontend uses matchMedia fallback)

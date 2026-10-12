@@ -5,14 +5,14 @@ pagination_next: features/overview
 
 # Other Email Providers
 
-MailPong supports many email providers beyond Gmail and Outlook. This guide covers setup for pre-configured providers and manual configuration.
+Mailven supports many email providers beyond Gmail and Outlook. This guide covers setup for pre-configured providers and manual configuration.
 
 ## Pre-Configured Providers
 
 These providers have built-in server settings. You just need to provide your credentials.
 
 :::note
-Providers marked with 🧪 have not yet been tested. They should work based on their documented settings, but please [report any issues](https://github.com/caseylabs/mailpong/issues) you encounter.
+Providers marked with 🧪 have not yet been tested. They should work based on their documented settings, but please [report any issues](https://github.com/CaseyLabs/mailven/issues) you encounter.
 :::
 
 ### Yahoo Mail 🧪
@@ -36,7 +36,7 @@ Providers marked with 🧪 have not yet been tested. They should work based on t
 ProtonMail requires Proton Bridge for third-party email clients.
 
 1. Install and configure [Proton Bridge](https://proton.me/mail/bridge)
-2. <a href="proton-cert" target="_blank">Install your Proton Bridge certificate</a> on your system (Skip this step if you only want MailPong to recognize this cert)
+2. <a href="proton-cert" target="_blank">Install your Proton Bridge certificate</a> on your system (Skip this step if you only want Mailven to recognize this cert)
 3. Click **+ Add Account** in the sidebar
 4. Select **ProtonMail Bridge** from the provider screen
 5. Enter your ProtonMail address
@@ -132,7 +132,7 @@ Contact your email provider or system administrator for the correct server setti
 
 ## Testing Your Connection
 
-After entering your settings, MailPong will attempt to connect to the server. If the connection fails:
+After entering your settings, Mailven will attempt to connect to the server. If the connection fails:
 
 1. Double-check the server hostname and port
 2. Verify your username and password

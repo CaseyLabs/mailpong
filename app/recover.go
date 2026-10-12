@@ -3,7 +3,7 @@ package app
 import (
 	"runtime/debug"
 
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/logging"
 )
 
 // recoverPanic is a deferred helper that catches panics in background goroutines

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/caseylabs/mailpong/internal/imap"
+	"github.com/caseylabs/mailven/internal/imap"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 

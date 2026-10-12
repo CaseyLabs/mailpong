@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/caseylabs/mailpong/internal/cid"
+	"github.com/caseylabs/mailven/internal/cid"
 )
 
 func TestSanitizeAttachmentFilename(t *testing.T) {

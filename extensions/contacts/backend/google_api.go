@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/carddav"
-	"github.com/caseylabs/mailpong/internal/contact"
-	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/carddav"
+	"github.com/caseylabs/mailven/internal/contact"
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
+	"github.com/caseylabs/mailven/internal/logging"
 	"github.com/google/uuid"
 )
 

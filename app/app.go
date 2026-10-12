@@ -11,36 +11,36 @@ import (
 	goSync "sync"
 	"time"
 
-	extcalendarbe "github.com/caseylabs/mailpong/extensions/calendar/backend"
-	extcontactsbe "github.com/caseylabs/mailpong/extensions/contacts/backend"
-	"github.com/caseylabs/mailpong/internal/account"
-	"github.com/caseylabs/mailpong/internal/appstate"
-	"github.com/caseylabs/mailpong/internal/carddav"
-	"github.com/caseylabs/mailpong/internal/certificate"
-	"github.com/caseylabs/mailpong/internal/contact"
-	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
-	"github.com/caseylabs/mailpong/internal/credentials"
-	"github.com/caseylabs/mailpong/internal/database"
-	"github.com/caseylabs/mailpong/internal/draft"
-	extauth "github.com/caseylabs/mailpong/internal/extensions/auth"
-	extcompose "github.com/caseylabs/mailpong/internal/extensions/compose"
-	extmail "github.com/caseylabs/mailpong/internal/extensions/mail"
-	extui "github.com/caseylabs/mailpong/internal/extensions/ui"
-	"github.com/caseylabs/mailpong/internal/folder"
-	"github.com/caseylabs/mailpong/internal/gmailapi"
-	"github.com/caseylabs/mailpong/internal/imap"
-	"github.com/caseylabs/mailpong/internal/ipc"
-	"github.com/caseylabs/mailpong/internal/kit/davutil"
-	"github.com/caseylabs/mailpong/internal/logging"
-	"github.com/caseylabs/mailpong/internal/message"
-	"github.com/caseylabs/mailpong/internal/notification"
-	"github.com/caseylabs/mailpong/internal/oauth2"
-	"github.com/caseylabs/mailpong/internal/pgp"
-	"github.com/caseylabs/mailpong/internal/platform"
-	"github.com/caseylabs/mailpong/internal/settings"
-	"github.com/caseylabs/mailpong/internal/smime"
-	"github.com/caseylabs/mailpong/internal/sync"
-	"github.com/caseylabs/mailpong/internal/undo"
+	extcalendarbe "github.com/caseylabs/mailven/extensions/calendar/backend"
+	extcontactsbe "github.com/caseylabs/mailven/extensions/contacts/backend"
+	"github.com/caseylabs/mailven/internal/account"
+	"github.com/caseylabs/mailven/internal/appstate"
+	"github.com/caseylabs/mailven/internal/carddav"
+	"github.com/caseylabs/mailven/internal/certificate"
+	"github.com/caseylabs/mailven/internal/contact"
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
+	"github.com/caseylabs/mailven/internal/credentials"
+	"github.com/caseylabs/mailven/internal/database"
+	"github.com/caseylabs/mailven/internal/draft"
+	extauth "github.com/caseylabs/mailven/internal/extensions/auth"
+	extcompose "github.com/caseylabs/mailven/internal/extensions/compose"
+	extmail "github.com/caseylabs/mailven/internal/extensions/mail"
+	extui "github.com/caseylabs/mailven/internal/extensions/ui"
+	"github.com/caseylabs/mailven/internal/folder"
+	"github.com/caseylabs/mailven/internal/gmailapi"
+	"github.com/caseylabs/mailven/internal/imap"
+	"github.com/caseylabs/mailven/internal/ipc"
+	"github.com/caseylabs/mailven/internal/kit/davutil"
+	"github.com/caseylabs/mailven/internal/logging"
+	"github.com/caseylabs/mailven/internal/message"
+	"github.com/caseylabs/mailven/internal/notification"
+	"github.com/caseylabs/mailven/internal/oauth2"
+	"github.com/caseylabs/mailven/internal/pgp"
+	"github.com/caseylabs/mailven/internal/platform"
+	"github.com/caseylabs/mailven/internal/settings"
+	"github.com/caseylabs/mailven/internal/smime"
+	"github.com/caseylabs/mailven/internal/sync"
+	"github.com/caseylabs/mailven/internal/undo"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -320,7 +320,7 @@ type App struct {
 	wakeSyncing     bool                   // guards syncAfterWake against concurrent calls
 	syncMu          goSync.Mutex           // protects sync maps
 
-	// Suppresses the IDLE echo of our own flag writes: when MailPong STOREs a flag
+	// Suppresses the IDLE echo of our own flag writes: when Mailven STOREs a flag
 	// change it stamps the account here, so the incoming IDLE FETCH echo of that
 	// same change doesn't trigger a re-sync (only other clients' changes do).
 	ownFlagMu       goSync.Mutex
@@ -407,14 +407,14 @@ type StartupDialogInfo struct {
 // Other backends show the URL as selectable plain text and use the
 // ActionURL field to drive an "Open Docs" button.
 func StartupDialogInfoFor(err error) StartupDialogInfo {
-	const docsRollbackURL = "https://github.com/caseylabs/mailpong/blob/main/docs/SQL_ROLLBACK.md"
+	const docsRollbackURL = "https://github.com/CaseyLabs/mailven/blob/main/docs/SQL_ROLLBACK.md"
 
 	var schemaTooNew *database.ErrSchemaTooNew
 	if errors.As(err, &schemaTooNew) {
 		text := fmt.Sprintf(
-			"MailPong cannot open your database because its schema (version %d) is newer "+
-				"than this build of MailPong supports (max version %d).\n\n"+
-				"This usually means you downgraded MailPong. To recover, either reinstall "+
+			"Mailven cannot open your database because its schema (version %d) is newer "+
+				"than this build of Mailven supports (max version %d).\n\n"+
+				"This usually means you downgraded Mailven. To recover, either reinstall "+
 				"the newer version, or follow the rollback instructions to bring your "+
 				"database back to version %d:\n\n"+
 				"%s",
@@ -422,15 +422,15 @@ func StartupDialogInfoFor(err error) StartupDialogInfo {
 			docsRollbackURL,
 		)
 		return StartupDialogInfo{
-			Title:       "MailPong could not start",
+			Title:       "Mailven could not start",
 			Text:        text,
 			ActionLabel: "Open Docs",
 			ActionURL:   docsRollbackURL,
 		}
 	}
 	return StartupDialogInfo{
-		Title: "MailPong could not start",
-		Text:  fmt.Sprintf("MailPong could not start.\n\nDetails: %v", err),
+		Title: "Mailven could not start",
+		Text:  fmt.Sprintf("Mailven could not start.\n\nDetails: %v", err),
 	}
 }
 
@@ -504,7 +504,7 @@ func (a *App) Preflight() error {
 
 	// Wire user-picked slot aliases into the oauth2 resolver chain. When the
 	// user has chosen a non-default shipped option for a given config id
-	// (e.g., contacts settings → "MailPong mail client" reroutes google-contacts
+	// (e.g., contacts settings → "Mailven mail client" reroutes google-contacts
 	// onto google-mail), the resolver consults this hook after the user-
 	// override step and before the provider chain.
 	oauth2.SlotAliasLookup = func(configID string) (string, bool) {
@@ -877,7 +877,7 @@ func (a *App) Startup(ctx context.Context) {
 	// Initialize autostart manager
 	a.autostartMgr = platform.NewAutostartManager()
 
-	log.Info().Msg("MailPong started successfully")
+	log.Info().Msg("Mailven started successfully")
 }
 
 // IsReady reports whether Startup has fully completed. The frontend calls
@@ -1119,7 +1119,7 @@ func (a *App) Shutdown(ctx context.Context) {
 		log.Info().Msg("Database closed")
 	}
 
-	log.Info().Msg("MailPong shutdown complete")
+	log.Info().Msg("Mailven shutdown complete")
 }
 
 // updateDBConnectionPool scales the database connection pool based on account count.

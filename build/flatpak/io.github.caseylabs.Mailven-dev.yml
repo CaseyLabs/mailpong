@@ -1,8 +1,8 @@
-app-id: io.github.caseylabs.MailPong
+app-id: io.github.caseylabs.Mailven
 runtime: org.gnome.Platform
 runtime-version: '50'
 sdk: org.gnome.Sdk
-command: mailpong
+command: mailven
 
 finish-args:
   # Network access for email sync
@@ -18,39 +18,39 @@ finish-args:
   - --system-talk-name=org.freedesktop.login1
 
 modules:
-  - name: mailpong
+  - name: mailven
     buildsystem: simple
     build-commands:
       # Install pre-built binary from host
-      - install -Dm755 build/bin/mailpong /app/bin/mailpong
+      - install -Dm755 build/bin/mailven /app/bin/mailven
 
       # Install desktop file with correct app ID
-      - install -Dm644 build/linux/io.github.caseylabs.MailPong.desktop /app/share/applications/io.github.caseylabs.MailPong.desktop
-      - desktop-file-edit --set-key=Icon --set-value=io.github.caseylabs.MailPong /app/share/applications/io.github.caseylabs.MailPong.desktop
-      - desktop-file-edit --set-key=Exec --set-value='mailpong %U' /app/share/applications/io.github.caseylabs.MailPong.desktop
+      - install -Dm644 build/linux/io.github.caseylabs.Mailven.desktop /app/share/applications/io.github.caseylabs.Mailven.desktop
+      - desktop-file-edit --set-key=Icon --set-value=io.github.caseylabs.Mailven /app/share/applications/io.github.caseylabs.Mailven.desktop
+      - desktop-file-edit --set-key=Exec --set-value='mailven %U' /app/share/applications/io.github.caseylabs.Mailven.desktop
 
       # Install themed icons (32-256 + scalable). A lone 256 is skipped by
       # hicolor MinSize=64 at small lookup sizes (#395).
       - |
         for sz in 32 48 64 128 256; do
-          install -Dm644 "build/linux/icons/${sz}x${sz}/io.github.caseylabs.MailPong.png" \
-            "/app/share/icons/hicolor/${sz}x${sz}/apps/io.github.caseylabs.MailPong.png"
+          install -Dm644 "build/linux/icons/${sz}x${sz}/io.github.caseylabs.Mailven.png" \
+            "/app/share/icons/hicolor/${sz}x${sz}/apps/io.github.caseylabs.Mailven.png"
         done
-      - install -Dm644 build/linux/icons/scalable/io.github.caseylabs.MailPong.svg /app/share/icons/hicolor/scalable/apps/io.github.caseylabs.MailPong.svg
+      - install -Dm644 build/linux/icons/scalable/io.github.caseylabs.Mailven.svg /app/share/icons/hicolor/scalable/apps/io.github.caseylabs.Mailven.svg
 
       # Install metainfo (AppStream metadata)
-      - install -Dm644 build/flatpak/io.github.caseylabs.MailPong.metainfo.xml /app/share/metainfo/io.github.caseylabs.MailPong.metainfo.xml
+      - install -Dm644 build/flatpak/io.github.caseylabs.Mailven.metainfo.xml /app/share/metainfo/io.github.caseylabs.Mailven.metainfo.xml
 
     # Copy only the packaging inputs, never the whole checkout: it holds
     # .env files and the generated OAuth credentials, and flatpak-builder
     # keeps a copy of every source under .flatpak-builder/build/.
     sources:
       - type: file
-        path: ../bin/mailpong
+        path: ../bin/mailven
         dest: build/bin
       - type: dir
         path: ../linux
         dest: build/linux
       - type: file
-        path: io.github.caseylabs.MailPong.metainfo.xml
+        path: io.github.caseylabs.Mailven.metainfo.xml
         dest: build/flatpak

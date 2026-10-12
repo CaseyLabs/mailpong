@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/email"
-	"github.com/caseylabs/mailpong/internal/message"
-	"github.com/caseylabs/mailpong/internal/pgp"
-	"github.com/caseylabs/mailpong/internal/smime"
+	"github.com/caseylabs/mailven/internal/email"
+	"github.com/caseylabs/mailven/internal/message"
+	"github.com/caseylabs/mailven/internal/pgp"
+	"github.com/caseylabs/mailven/internal/smime"
 	gomessage "github.com/emersion/go-message"
 )
 

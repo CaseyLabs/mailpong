@@ -1,9 +1,9 @@
 <script lang="ts">
   // CoreOAuthSection — Settings → Accounts disclosure section for
-  // MailPong CORE's OAuth client credentials (google-mail, microsoft-mail).
+  // Mailven CORE's OAuth client credentials (google-mail, microsoft-mail).
   //
   // COLLAPSED by default — this is advanced power-user territory. Most users
-  // never expand it; MailPong ships verified mail creds out of the box.
+  // never expand it; Mailven ships verified mail creds out of the box.
   //
   // Per-extension OAuth slots (google-contacts, microsoft-contacts, etc.)
   // live inside that extension's own settings dialog, NOT here.
@@ -39,7 +39,7 @@
         Override the OAuth Client ID and Secret used for adding Google and Microsoft
         email accounts. Most users should leave these on the shipped defaults.
         Use your own credentials if your organization requires it, or to bypass
-        MailPong's quota / verification status.
+        Mailven's quota / verification status.
       </p>
       <OAuthCredsSlotEditor
         configID="google-mail"

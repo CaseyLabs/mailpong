@@ -7,7 +7,7 @@ import (
 
 func TestDebugModeDefault(t *testing.T) {
 	// Ensure the env var is not set so we only test the default flag value
-	t.Setenv("MAILPONG_DEBUG", "")
+	t.Setenv("MAILVEN_DEBUG", "")
 
 	if DebugMode() {
 		t.Error("DebugMode() = true, want false by default")
@@ -15,14 +15,14 @@ func TestDebugModeDefault(t *testing.T) {
 }
 
 func TestDebugModeEnvVar(t *testing.T) {
-	t.Setenv("MAILPONG_DEBUG", "1")
+	t.Setenv("MAILVEN_DEBUG", "1")
 
 	if !DebugMode() {
-		t.Error("DebugMode() = false, want true when MAILPONG_DEBUG=1")
+		t.Error("DebugMode() = false, want true when MAILVEN_DEBUG=1")
 	}
 
 	// Verify env var was actually set (sanity check)
-	if os.Getenv("MAILPONG_DEBUG") != "1" {
-		t.Error("MAILPONG_DEBUG env var not set correctly")
+	if os.Getenv("MAILVEN_DEBUG") != "1" {
+		t.Error("MAILVEN_DEBUG env var not set correctly")
 	}
 }

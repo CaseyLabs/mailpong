@@ -1,8 +1,8 @@
 # Context
 context
-mailpong
-mailpong.exe
-mailpong-creds
+mailven
+mailven.exe
+/mailven-creds
 IDEAS.md
 
 # Wails build artifacts
@@ -15,7 +15,7 @@ build/linux/AppDir
 .flatpak-builder/
 build-dir/
 repo/
-build/flatpak/flathub/io.github.caseylabs.MailPong.yml.backup
+build/flatpak/flathub/io.github.caseylabs.Mailven.yml.backup
 
 # Frontend
 frontend/node_modules/

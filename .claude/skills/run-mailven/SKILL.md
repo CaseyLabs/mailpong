@@ -1,11 +1,11 @@
 ---
-name: run-mailpong
-description: Run, start, launch, and drive the MailPong desktop email client for manual UI verification — start the dev server, open it in Chrome, click through Mail/Contacts/Calendar, read UI or store state, take screenshots, then stop it cleanly. Use when asked to run MailPong, verify a UI change in the running app, or screenshot it.
+name: run-mailven
+description: Run, start, launch, and drive the Mailven desktop email client for manual UI verification — start the dev server, open it in Chrome, click through Mail/Contacts/Calendar, read UI or store state, take screenshots, then stop it cleanly. Use when asked to run Mailven, verify a UI change in the running app, or screenshot it.
 ---
 
-MailPong is a Wails v2 app (Go backend, Svelte 5 frontend). `make dev` serves the
+Mailven is a Wails v2 app (Go backend, Svelte 5 frontend). `make dev` serves the
 frontend with the Go bindings at `http://localhost:34115`. An agent drives that
-URL in Chrome with the Claude-in-Chrome tools. `.claude/skills/run-mailpong/dev.sh`
+URL in Chrome with the Claude-in-Chrome tools. `.claude/skills/run-mailven/dev.sh`
 starts, waits for and stops the dev session. All paths are relative to the repo
 root.
 
@@ -17,12 +17,12 @@ The toolchain is installed. Run `cd frontend && npm ci` first if
 ## Run (agent path)
 
 ```bash
-.claude/skills/run-mailpong/dev.sh start   # make dev in its own session; prints the log path
-.claude/skills/run-mailpong/dev.sh wait    # polls http://localhost:34115 for HTTP 200 (first build takes ~1 min); fails early if make dev exits
+.claude/skills/run-mailven/dev.sh start   # make dev in its own session; prints the log path
+.claude/skills/run-mailven/dev.sh wait    # polls http://localhost:34115 for HTTP 200 (first build takes ~1 min); fails early if make dev exits
 ```
 
 The Go backend logs only fatal errors unless debug mode is on. To read sync,
-IDLE or shutdown lines in the log, start with `MAILPONG_DEBUG=1 .claude/skills/run-mailpong/dev.sh start`.
+IDLE or shutdown lines in the log, start with `MAILVEN_DEBUG=1 .claude/skills/run-mailven/dev.sh start`.
 The log has ANSI colors, so strip them (`sed 's/\x1b\[[0-9;]*m//g'`) before grepping.
 
 `make dev` also opens a native app window on the user's desktop. Ignore it and
@@ -70,7 +70,7 @@ with `ui.collapsedSidebars`. Restore the user's original state afterwards.
 When finished, put back anything you changed (see Gotchas), close the tab, then:
 
 ```bash
-.claude/skills/run-mailpong/dev.sh stop    # kills wails, vite and the app, then reverts mode-only changes in frontend/wailsjs/runtime
+.claude/skills/run-mailven/dev.sh stop    # kills wails, vite and the app, then reverts mode-only changes in frontend/wailsjs/runtime
 ```
 
 ## Gotchas
@@ -173,7 +173,7 @@ showing through) don't reproduce in Chrome; check `main.go` window options for
 those.
 
 If the page loses its copy of the starting state, read the saved state directly:
-`sqlite3 -readonly ~/.local/share/mailpong/mailpong.db "select value from app_state where key='ui_state'"`.
+`sqlite3 -readonly ~/.local/share/mailven/mailven.db "select value from app_state where key='ui_state'"`.
 
 ## Playwright checks (local and cloud)
 
@@ -186,22 +186,22 @@ if [ "$CLAUDE_CODE_REMOTE" = true ] || [ -d /opt/node-tools/node_modules/playwri
 
 | | Local (desktop) | Cloud |
 |---|---|---|
-| Playwright module | `~/.cache/mailpong-upnote-ui/node_modules/playwright` (1.63.0) | `/opt/node-tools/node_modules/playwright` |
+| Playwright module | `~/.cache/mailven-upnote-ui/node_modules/playwright` (1.63.0) | `/opt/node-tools/node_modules/playwright` |
 | Chromium | Playwright's own, no `executablePath` | `/opt/pw-browsers/chromium` |
 | Display for `dev.sh start` | the real desktop | `Xvfb :99 -screen 0 1600x1000x24`, `DISPLAY=:99`, `PATH=$PATH:$HOME/go/bin` |
 
 `pw.js` does this selection and exports `launch()`. `$PLAYWRIGHT_MODULE` and
 `$PLAYWRIGHT_CHROMIUM` override the paths. If the module is missing it exits
 with the reinstall command
-(`npm install --prefix ~/.cache/mailpong-upnote-ui --no-save playwright@1.63.0`;
+(`npm install --prefix ~/.cache/mailven-upnote-ui --no-save playwright@1.63.0`;
 never add Playwright to `frontend/package.json`).
 
 ```bash
 # cloud only: (Xvfb :99 -screen 0 1600x1000x24 &)  and  export PATH=$PATH:$HOME/go/bin DISPLAY=:99
-.claude/skills/run-mailpong/dev.sh start          # run_in_background; then dev.sh wait
-python3 .claude/skills/run-mailpong/serve-fakes.py   # run_in_background
-node .claude/skills/run-mailpong/headless-shot.js "$SCRATCH"          # ss.png plus vc-<theme>-<state>.png
-node .claude/skills/run-mailpong/ui-matrix.js "$SCRATCH" <prefix>     # the full matrix
+.claude/skills/run-mailven/dev.sh start          # run_in_background; then dev.sh wait
+python3 .claude/skills/run-mailven/serve-fakes.py   # run_in_background
+node .claude/skills/run-mailven/headless-shot.js "$SCRATCH"          # ss.png plus vc-<theme>-<state>.png
+node .claude/skills/run-mailven/ui-matrix.js "$SCRATCH" <prefix>     # the full matrix
 ```
 
 `headless-shot.js` dismisses the first-run dialogs, enables Contacts and
@@ -224,7 +224,7 @@ Back-to-back runs on an unchanged tree differ by up to about 200 pixels per
 image (relative times in the fake data, and a 9x9 px spot at the window
 edge), so treat an AE under about 300 as unchanged. Before and after must
 come from the same environment. The local `before` set lives in
-`~/.cache/mailpong-upnote-ui/before/`; the cloud container is fresh each
+`~/.cache/mailven-upnote-ui/before/`; the cloud container is fresh each
 session, so rebuild it from the clean checkout first.
 
 - It sets `locale: 'en-GB'` so times are 24-hour, as in the old screenshot.

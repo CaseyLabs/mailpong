@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-const appName = "mailpong"
+const appName = "mailven"
 
 // Paths holds the application data paths
 type Paths struct {
@@ -69,8 +69,8 @@ func getDarwinPaths() (*Paths, error) {
 		return nil, err
 	}
 
-	appSupport := filepath.Join(home, "Library", "Application Support", "MailPong")
-	caches := filepath.Join(home, "Library", "Caches", "MailPong")
+	appSupport := filepath.Join(home, "Library", "Application Support", "Mailven")
+	caches := filepath.Join(home, "Library", "Caches", "Mailven")
 
 	return &Paths{
 		Config: appSupport,
@@ -102,9 +102,9 @@ func getWindowsPaths() (*Paths, error) {
 	}
 
 	return &Paths{
-		Config: filepath.Join(appData, "MailPong"),
-		Data:   filepath.Join(appData, "MailPong"),
-		Cache:  filepath.Join(localAppData, "MailPong", "Cache"),
+		Config: filepath.Join(appData, "Mailven"),
+		Data:   filepath.Join(appData, "Mailven"),
+		Cache:  filepath.Join(localAppData, "Mailven", "Cache"),
 	}, nil
 }
 
@@ -174,7 +174,7 @@ func (p *Paths) EnsureDirectories() error {
 
 // DatabasePath returns the path to the main database
 func (p *Paths) DatabasePath() string {
-	return filepath.Join(p.Data, "mailpong.db")
+	return filepath.Join(p.Data, "mailven.db")
 }
 
 // ContactsDatabasePath returns the path to the contacts database

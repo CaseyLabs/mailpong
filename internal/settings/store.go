@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/caseylabs/mailpong/internal/database"
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/database"
+	"github.com/caseylabs/mailven/internal/logging"
 	"github.com/rs/zerolog"
 	_ "modernc.org/sqlite"
 )
@@ -601,7 +601,7 @@ func (s *Store) SetTermsAccepted(accepted bool) error {
 	return s.Set(KeyTermsAccepted, value)
 }
 
-// GetRunBackground returns whether MailPong should keep running when the window is closed
+// GetRunBackground returns whether Mailven should keep running when the window is closed
 func (s *Store) GetRunBackground() (bool, error) {
 	value, err := s.Get(KeyRunBackground)
 	if err != nil {
@@ -610,7 +610,7 @@ func (s *Store) GetRunBackground() (bool, error) {
 	return value == "true", nil
 }
 
-// SetRunBackground sets whether MailPong should keep running when the window is closed
+// SetRunBackground sets whether Mailven should keep running when the window is closed
 func (s *Store) SetRunBackground(enabled bool) error {
 	value := "false"
 	if enabled {
@@ -619,7 +619,7 @@ func (s *Store) SetRunBackground(enabled bool) error {
 	return s.Set(KeyRunBackground, value)
 }
 
-// GetStartHidden returns whether MailPong should start with the window hidden
+// GetStartHidden returns whether Mailven should start with the window hidden
 func (s *Store) GetStartHidden() (bool, error) {
 	value, err := s.Get(KeyStartHidden)
 	if err != nil {
@@ -628,7 +628,7 @@ func (s *Store) GetStartHidden() (bool, error) {
 	return value == "true", nil
 }
 
-// SetStartHidden sets whether MailPong should start with the window hidden
+// SetStartHidden sets whether Mailven should start with the window hidden
 func (s *Store) SetStartHidden(enabled bool) error {
 	value := "false"
 	if enabled {
@@ -637,7 +637,7 @@ func (s *Store) SetStartHidden(enabled bool) error {
 	return s.Set(KeyStartHidden, value)
 }
 
-// GetAutostart returns whether MailPong should start on login
+// GetAutostart returns whether Mailven should start on login
 func (s *Store) GetAutostart() (bool, error) {
 	value, err := s.Get(KeyAutostart)
 	if err != nil {
@@ -646,7 +646,7 @@ func (s *Store) GetAutostart() (bool, error) {
 	return value == "true", nil
 }
 
-// SetAutostart sets whether MailPong should start on login
+// SetAutostart sets whether Mailven should start on login
 func (s *Store) SetAutostart(enabled bool) error {
 	value := "false"
 	if enabled {
@@ -936,7 +936,7 @@ func (s *Store) SetAlwaysLoadImages(enabled bool) error {
 }
 
 // GetDarkMailContent returns whether email content should be visually darkened
-// while MailPong is in dark mode. Off by default.
+// while Mailven is in dark mode. Off by default.
 func (s *Store) GetDarkMailContent() (bool, error) {
 	value, err := s.Get(KeyDarkMailContent)
 	if err != nil {
@@ -955,7 +955,7 @@ func (s *Store) SetDarkMailContent(enabled bool) error {
 }
 
 // GetDarkComposerBody returns whether the composer message body should use a
-// dark background while MailPong is in dark mode. Off by default (white body).
+// dark background while Mailven is in dark mode. Off by default (white body).
 func (s *Store) GetDarkComposerBody() (bool, error) {
 	value, err := s.Get(KeyDarkComposerBody)
 	if err != nil {

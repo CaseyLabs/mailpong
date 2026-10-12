@@ -1,20 +1,20 @@
-# PLAN: Assess and design MailPong's Wails v2 -> v3 migration
+# PLAN: Assess and design Mailven's Wails v2 -> v3 migration
 
 **Status:** Proposed. Analysis and design only; **migration implementation is not authorized**.
-**Repository:** `https://github.com/CaseyLabs/mailpong`
+**Repository:** `https://github.com/CaseyLabs/mailven`
 **Intended path:** `plans/wails-v3/PLAN.md` (not the existing root `PLAN.md`)
 **Prepared:** 2026-10-11
 **Decision required:** GO / DEFER / NO-GO, with evidence and an implementation-ready blueprint.
 
 ## Objective
 
-Determine whether and how to migrate MailPong from Wails v2 to Wails v3, using GTK4 + WebKitGTK 6.0 on Linux, without compromising email correctness, local data, credentials, packaging, or supported platforms. Produce a reviewable **migration design and execution plan**, not a migrated application.
+Determine whether and how to migrate Mailven from Wails v2 to Wails v3, using GTK4 + WebKitGTK 6.0 on Linux, without compromising email correctness, local data, credentials, packaging, or supported platforms. Produce a reviewable **migration design and execution plan**, not a migrated application.
 
 The output must answer:
 
-1. What concrete MailPong problems would v3 solve? Which benefits are independent of GTK4 or the Wails upgrade?
+1. What concrete Mailven problems would v3 solve? Which benefits are independent of GTK4 or the Wails upgrade?
 2. How invasive is the migration, including extensions, generated bindings, Svelte, detached composers, desktop integration and distribution?
-3. Is the target v3 release and Linux backend ready enough, or should MailPong remain on v2 temporarily?
+3. Is the target v3 release and Linux backend ready enough, or should Mailven remain on v2 temporarily?
 4. What is the safest implementation sequence, with measurable acceptance criteria, rollback points and a realistic risk/effort assessment?
 
 ### Current starting point (revalidate in M0)
@@ -50,7 +50,7 @@ If a prototype or other implementation is needed to answer a question, describe 
 - Use the latest **official** Claude Code and Wails documentation at execution time. Consult exact pinned v3 API references/source if docs and examples conflict. Record the URL, release/tag/date and verification method for conclusions; mark unknowns explicitly. Wails docs occasionally contain sample versions older than the latest release: examples are not version pin recommendations.
 - Planning deliverables may be edited under `plans/wails-v3/` only. Inspect `git status --short`, do not overwrite uncommitted work, and follow repository commit conventions for documentation changes. Never silently perform implementation because the research identifies an obvious fix.
 - When a check needs credentials, live accounts, destructive actions, package installs, CI minutes, platform hardware or a GUI unavailable locally: record it as **not run**, with a precise proposed validation method. Do not fabricate output or substitute an unrelated test.
-- Security/data invariant: preserve MailPong's existing application IDs, data directories, database schema/migration semantics, stored credentials, OAuth flows, mailbox integrity, encryption compatibility and isolation from Aerion. Never print or embed secrets, `.env` contents or private messages in artifacts.
+- Security/data invariant: preserve Mailven's existing application IDs, data directories, database schema/migration semantics, stored credentials, OAuth flows, mailbox integrity, encryption compatibility and isolation from Aerion. Never print or embed secrets, `.env` contents or private messages in artifacts.
 - The existing `/project-finish-milestone` skill may be used for checks and independent acceptance review; ensure that any automated commit/merge/push behavior is limited to the documentation-only branch according to repo policy. **No migration implementation is authorized by this plan.**
 
 ### Durable deliverables
@@ -59,11 +59,11 @@ If a prototype or other implementation is needed to answer a question, describe 
 2. `plans/wails-v3/ASSESSMENT.md`: evidence-backed current state, API mapping, risk register, alternatives, known unknowns and test matrix. Update it incrementally, without duplicating long content in this file.
 3. `plans/wails-v3/MIGRATION_BLUEPRINT.md`: proposed phased implementation plan, exact file groups, sequencing, verification gates, platform matrix, deployment safeguards and rollback. Create only after completing the assessment milestones.
 
-Keep documents compact and actionable. Use tables where useful. Every claim about MailPong should point to a `path:line`, symbol or reproducible command; every Wails API claim should link to documentation or a versioned source file. Do not treat untested projections as facts.
+Keep documents compact and actionable. Use tables where useful. Every claim about Mailven should point to a `path:line`, symbol or reproducible command; every Wails API claim should link to documentation or a versioned source file. Do not treat untested projections as facts.
 
 ## Source priorities
 
-1. Current local MailPong checkout and its build scripts/tests; `git log` and `git status` for state.
+1. Current local Mailven checkout and its build scripts/tests; `git log` and `git status` for state.
 2. Official Wails: [v2 -> v3 migration](https://v3.wails.io/migration/v2-to-v3/), [v3 docs](https://v3.wails.io/), [Wails releases](https://github.com/wailsapp/wails/releases), [Wails issues/milestones](https://github.com/wailsapp/wails/milestones) and the matching tagged source.
 3. Official [GTK4](https://docs.gtk.org/gtk4/), [WebKitGTK](https://webkitgtk.org/), [Flatpak](https://docs.flatpak.org/) and [xdg-desktop-portal](https://flatpak.github.io/xdg-desktop-portal/) documentation.
 4. Official [Claude Code best practices](https://code.claude.com/docs/en/best-practices), particularly explore -> plan -> implement, bounded context, evidence-based verification, and subagents for isolated investigation.
@@ -78,7 +78,7 @@ Keep documents compact and actionable. Use tables where useful. Every claim abou
 - Confirm checkout, clean/dirty state, current branch and HEAD; inspect the existing root `PLAN.md` only enough to identify outstanding obligations that could affect this migration. Never replace it.
 - Check `go.mod`, `wails.json`, `Makefile`, frontend dependencies, CI workflows and Flatpak manifests. Record **actual** dependency versions, CLI/toolchain availability, packaging targets and current known issues.
 - Capture existing test/build commands and distinguish runnable checks from those requiring GUI, platform-specific hardware or credentials. Check `ISSUES.md` for relevant known regressions.
-- Identify the baseline's safe test data strategy: isolated `$HOME`/`XDG_*` dirs, separate keyring/session and fake or dedicated test mail accounts; do not launch MailPong against personal user data.
+- Identify the baseline's safe test data strategy: isolated `$HOME`/`XDG_*` dirs, separate keyring/session and fake or dedicated test mail accounts; do not launch Mailven against personal user data.
 
 **Deliverable:** `ASSESSMENT.md` sections `Baseline` and `Assumptions / test environment`.
 
@@ -101,12 +101,12 @@ Keep documents compact and actionable. Use tables where useful. Every claim abou
 
 **Acceptance criteria**
 - [ ] Source links and check dates support each version/support claim; prerelease target is pinned for repeatability if subsequently prototyped.
-- [ ] v3 readiness includes blockers that could affect MailPong, and a supported/unsupported/unknown classification for needed APIs.
+- [ ] v3 readiness includes blockers that could affect Mailven, and a supported/unsupported/unknown classification for needed APIs.
 - [ ] Engine improvements are separated from framework/API improvements; no unsourced performance promises.
 
 **Validation:** Cross-check release/tag, documentation and issue status against official sources; record uncertainty where they disagree.
 
-#### M2. Inventory every MailPong v2 dependency and behavior
+#### M2. Inventory every Mailven v2 dependency and behavior
 
 **Tasks**
 - Search Go files for `/wails/v2`, `wails.Run`, `wailsRuntime`, lifecycle hooks, dialogs, windows, clipboard, file drop, native integration, events, service bindings and shutdown behavior. Inspect relevant usages rather than merely counting imports.
@@ -169,7 +169,7 @@ Keep documents compact and actionable. Use tables where useful. Every claim abou
 **Tasks**
 - Create a reproducible **v2 baseline vs proposed v3** test matrix with commands, fixtures, expected outcome, platform and pass/fail rule. Test with synthetic accounts/mail and isolated data directories.
 - Minimum functional flows: initial launch, account creation/auth, IMAP sync and background resume, thread display, sent/replied mail, draft persistence/recovery, attachment save/open, clipboard, Tiptap typing/paste, notifications, `mailto:`, single instance, multi-window lifecycle, calendar/contacts extensions, settings, themes, restore/maximize, and shutdown.
-- UI acceptance on both dark/light themes, both wide/narrow layouts, **Accounts column expanded and collapsed**, on KDE Plasma Wayland and, where possible, GNOME. Prefer existing `.claude/skills/run-mailpong` tooling; document what cannot be automated.
+- UI acceptance on both dark/light themes, both wide/narrow layouts, **Accounts column expanded and collapsed**, on KDE Plasma Wayland and, where possible, GNOME. Prefer existing `.claude/skills/run-mailven` tooling; document what cannot be automated.
 - Baseline performance measurements using identical fixtures: cold/warm launch, time to usable UI, idle process-tree RSS/CPU, scroll smoothness/input responsiveness, multiple composer overhead, long-session stability. Repeat measurements (e.g., 5 runs); define measurement method and regression investigation thresholds, not unsupported guaranteed improvements.
 - Include security/data integrity checks: byte-for-byte data preservation where applicable, no implicit migrations, keyring and secrets isolation, WebKit policy for untrusted HTML, no loss of drafts/sent messages, and no effects on Aerion installations.
 
@@ -227,7 +227,7 @@ Keep documents compact and actionable. Use tables where useful. Every claim abou
 
 ## Decision criteria
 
-**Recommend GO only if** the necessary v3 desktop APIs exist and are usable, MailPong's core workflows can be preserved, GTK4/Flatpak/toolchain compatibility has a credible validation path, cross-platform distribution is feasible, and no known blocker threatens secrets, emails, drafts or database integrity. A GO may be conditional on a narrow spike.
+**Recommend GO only if** the necessary v3 desktop APIs exist and are usable, Mailven's core workflows can be preserved, GTK4/Flatpak/toolchain compatibility has a credible validation path, cross-platform distribution is feasible, and no known blocker threatens secrets, emails, drafts or database integrity. A GO may be conditional on a narrow spike.
 
 **Recommend DEFER if** support gaps are likely transient (e.g., beta Linux regression, packaging breakage, missing GUI test infrastructure), or if parity would jeopardize an imminent release. Identify objective revisit triggers and the minimal v2 maintenance alternative.
 
@@ -241,7 +241,7 @@ Tick a milestone only after its acceptance criteria are evidenced. Keep entries 
 
 - [ ] M0. Repository preflight and safe v2 baseline
 - [ ] M1. Verify Wails v3 and GTK4/WebKitGTK 6.0 readiness
-- [ ] M2. Inventory every MailPong v2 dependency and behavior
+- [ ] M2. Inventory every Mailven v2 dependency and behavior
 - [ ] M3. Design backend, frontend and multi-window migration
 - [ ] M4. Platform, GTK4, Flatpak and packaging feasibility
 - [ ] M5. Define a regression, performance and security test plan

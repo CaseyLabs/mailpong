@@ -66,7 +66,7 @@
   // Disable write access on a source. Pure flag flip via
   // SetContactSourceWritable(id, false) — works for all three external
   // source types. Note: for Google/Microsoft this does NOT revoke the OAuth
-  // token at the provider; it just stops MailPong from using it. If the user
+  // token at the provider; it just stops Mailven from using it. If the user
   // re-enables later, the existing token is reused if still valid, so the
   // write-access picker won't need to re-grant. To fully revoke, the user
   // goes to the provider's account settings.

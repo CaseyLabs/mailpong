@@ -3,8 +3,8 @@
   //
   // Microsoft's constraint is `info` (not hard cap): Graph only stores one
   // URL natively (`businessHomePage`), but the backend persists the full
-  // list via the ms_field_sidecar so the second+ URLs round-trip in MailPong.
-  // Show an info note so users know what non-MailPong clients will see.
+  // list via the ms_field_sidecar so the second+ URLs round-trip in Mailven.
+  // Show an info note so users know what non-Mailven clients will see.
 
   import { _ } from 'svelte-i18n'
   import { Input } from '$lib/components/ui/input'

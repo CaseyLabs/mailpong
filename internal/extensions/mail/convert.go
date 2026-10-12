@@ -3,9 +3,9 @@ package mail
 import (
 	"encoding/json"
 
-	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
-	"github.com/caseylabs/mailpong/internal/folder"
-	"github.com/caseylabs/mailpong/internal/message"
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
+	"github.com/caseylabs/mailven/internal/folder"
+	"github.com/caseylabs/mailven/internal/message"
 )
 
 // fromHeader converts a stored MessageHeader into the API-surface Message.

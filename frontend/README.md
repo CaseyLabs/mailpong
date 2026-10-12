@@ -1,4 +1,4 @@
-# MailPong Frontend
+# Mailven Frontend
 
 The desktop UI uses Svelte 5, TypeScript, Vite, and Tailwind CSS. Follow the downstream workflow and coding conventions in [CONTRIBUTING.md](../CONTRIBUTING.md).
 

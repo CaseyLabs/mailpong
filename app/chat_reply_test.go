@@ -6,13 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/account"
-	"github.com/caseylabs/mailpong/internal/database"
-	"github.com/caseylabs/mailpong/internal/draft"
-	"github.com/caseylabs/mailpong/internal/message"
-	"github.com/caseylabs/mailpong/internal/settings"
-	"github.com/caseylabs/mailpong/internal/smtp"
-	"github.com/caseylabs/mailpong/internal/undo"
+	"github.com/caseylabs/mailven/internal/account"
+	"github.com/caseylabs/mailven/internal/database"
+	"github.com/caseylabs/mailven/internal/draft"
+	"github.com/caseylabs/mailven/internal/message"
+	"github.com/caseylabs/mailven/internal/settings"
+	"github.com/caseylabs/mailven/internal/smtp"
+	"github.com/caseylabs/mailven/internal/undo"
 )
 
 func TestChatTextToHTML(t *testing.T) {

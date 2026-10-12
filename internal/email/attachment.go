@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/caseylabs/mailpong/internal/message"
+	"github.com/caseylabs/mailven/internal/message"
 	gomessage "github.com/emersion/go-message"
 	"github.com/google/uuid"
 	"github.com/teamwork/tnef"

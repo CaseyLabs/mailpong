@@ -1,15 +1,15 @@
 name: Question
-description: What would you like to know about MailPong?
+description: What would you like to know about Mailven?
 body:
   - type: textarea
     id: description
     attributes:
       label: Description
-      description: What would you like to know about MailPong?
+      description: What would you like to know about Mailven?
     validations:
       required: true
   - type: textarea
     id: context
     attributes:
       label: Context
-      description: Include the MailPong commit, platform, examples, or alternatives when relevant. Remove credentials and private mail data.
+      description: Include the Mailven commit, platform, examples, or alternatives when relevant. Remove credentials and private mail data.

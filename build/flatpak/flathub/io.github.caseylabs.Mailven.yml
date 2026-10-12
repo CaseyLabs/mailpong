@@ -1,11 +1,11 @@
-app-id: io.github.caseylabs.MailPong
+app-id: io.github.caseylabs.Mailven
 runtime: org.gnome.Platform
 runtime-version: '50'
 sdk: org.gnome.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.golang
   - org.freedesktop.Sdk.Extension.node24
-command: mailpong
+command: mailven
 
 finish-args:
   # Network access for email sync
@@ -21,17 +21,17 @@ finish-args:
   - --system-talk-name=org.freedesktop.login1
 
 modules:
-  - name: mailpong
+  - name: mailven
     buildsystem: simple
     build-options:
       append-path: /usr/lib/sdk/golang/bin:/usr/lib/sdk/node24/bin
       env:
         GOROOT: /usr/lib/sdk/golang
-        GOPATH: /run/build/mailpong/go
-        GOCACHE: /run/build/mailpong/go-cache
+        GOPATH: /run/build/mailven/go
+        GOCACHE: /run/build/mailven/go-cache
         GO111MODULE: 'on'
         CGO_ENABLED: '1'
-        npm_config_cache: /run/build/mailpong/flatpak-node/npm-cache
+        npm_config_cache: /run/build/mailven/flatpak-node/npm-cache
         npm_config_offline: 'true'
 
     build-commands:
@@ -44,30 +44,30 @@ modules:
       # Build the Go binary using vendored modules. No OAuth credentials are
       # bundled (D3); users enter their own in Settings.
       # Tags: desktop (Wails runtime), webkit2_41 (GTK webkit API), production (embedded assets)
-      - go build -mod=vendor -tags desktop,webkit2_41,production -ldflags "-w -s" -o mailpong
+      - go build -mod=vendor -tags desktop,webkit2_41,production -ldflags "-w -s" -o mailven
 
       # Install binary
-      - install -Dm755 mailpong /app/bin/mailpong
+      - install -Dm755 mailven /app/bin/mailven
 
       # Install desktop file with correct app ID
-      - install -Dm644 build/linux/io.github.caseylabs.MailPong.desktop /app/share/applications/io.github.caseylabs.MailPong.desktop
+      - install -Dm644 build/linux/io.github.caseylabs.Mailven.desktop /app/share/applications/io.github.caseylabs.Mailven.desktop
 
       # Install themed icons with correct app ID (32-256 + scalable). A lone
       # 256 is skipped by hicolor MinSize=64 at small lookup sizes (#395).
       - |
         for sz in 32 48 64 128 256; do
-          install -Dm644 "build/linux/icons/${sz}x${sz}/io.github.caseylabs.MailPong.png" \
-            "/app/share/icons/hicolor/${sz}x${sz}/apps/io.github.caseylabs.MailPong.png"
+          install -Dm644 "build/linux/icons/${sz}x${sz}/io.github.caseylabs.Mailven.png" \
+            "/app/share/icons/hicolor/${sz}x${sz}/apps/io.github.caseylabs.Mailven.png"
         done
-      - install -Dm644 build/linux/icons/scalable/io.github.caseylabs.MailPong.svg /app/share/icons/hicolor/scalable/apps/io.github.caseylabs.MailPong.svg
+      - install -Dm644 build/linux/icons/scalable/io.github.caseylabs.Mailven.svg /app/share/icons/hicolor/scalable/apps/io.github.caseylabs.Mailven.svg
 
       # Install metainfo (AppStream metadata)
-      - install -Dm644 build/flatpak/io.github.caseylabs.MailPong.metainfo.xml /app/share/metainfo/io.github.caseylabs.MailPong.metainfo.xml
+      - install -Dm644 build/flatpak/io.github.caseylabs.Mailven.metainfo.xml /app/share/metainfo/io.github.caseylabs.Mailven.metainfo.xml
 
     sources:
       # Application source code (tag and commit updated by calculate-hashes.sh)
       - type: git
-        url: https://github.com/caseylabs/mailpong.git
+        url: https://github.com/CaseyLabs/mailven.git
         tag: v0.4.0
         commit: 0000000000000000000000000000000000000000  # set by calculate-hashes.sh at release
 

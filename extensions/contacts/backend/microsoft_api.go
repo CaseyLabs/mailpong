@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/carddav"
-	"github.com/caseylabs/mailpong/internal/contact"
-	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/carddav"
+	"github.com/caseylabs/mailven/internal/contact"
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
+	"github.com/caseylabs/mailven/internal/logging"
 	"github.com/google/uuid"
 )
 
@@ -170,7 +170,7 @@ func (a *API) createMicrosoftContact(input coreapi.ContactCreateInput, email str
 // updateMicrosoftContact PATCHes the existing contact under rec.ID. Sends the
 // full intended record state — Graph treats missing scalar fields as
 // "unchanged" and replaces multi-value arrays wholesale, which matches
-// MailPong's "patch is full state" semantics from applyContactPatchToRecord.
+// Mailven's "patch is full state" semantics from applyContactPatchToRecord.
 //
 // No etag gate (Graph contacts don't enforce). Photo handling is a separate
 // PATCH /photo/$value after the main update; photo-step failure is non-fatal.

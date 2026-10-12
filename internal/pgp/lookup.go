@@ -1,7 +1,7 @@
 package pgp
 
 import (
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/logging"
 )
 
 // LookupKeyResult contains the result of a unified key lookup.

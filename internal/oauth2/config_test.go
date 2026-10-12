@@ -3,7 +3,7 @@ package oauth2
 import "testing"
 
 // A Microsoft-only generated file must still mark the credentials compiled,
-// so init() doesn't let the mailpong-creds shim replace them.
+// so init() doesn't let the mailven-creds shim replace them.
 func TestSetCredentialsMarksCompiled(t *testing.T) {
 	vars := []*string{&GoogleClientID, &GoogleClientSecret, &MicrosoftClientID, &GoogleTestingClientID, &GoogleTestingClientSecret}
 	saved := make([]string, len(vars))

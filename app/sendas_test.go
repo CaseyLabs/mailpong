@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/account"
-	"github.com/caseylabs/mailpong/internal/database"
-	"github.com/caseylabs/mailpong/internal/gmailapi"
+	"github.com/caseylabs/mailven/internal/account"
+	"github.com/caseylabs/mailven/internal/database"
+	"github.com/caseylabs/mailven/internal/gmailapi"
 )
 
 func newSendAsOps(t *testing.T, imapHost string, auth account.AuthType) (*composeOps, *account.Account) {

@@ -1,8 +1,8 @@
 package backend
 
 import (
-	"github.com/caseylabs/mailpong/internal/contact"
-	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
+	"github.com/caseylabs/mailven/internal/contact"
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
 )
 
 // fromLocal converts a core contact.Contact into the API-surface Contact.

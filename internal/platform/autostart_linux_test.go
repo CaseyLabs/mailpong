@@ -7,7 +7,7 @@ import (
 )
 
 func TestLinuxAutostartFilename(t *testing.T) {
-	if autostartFilename != "io.github.caseylabs.MailPong.desktop" {
+	if autostartFilename != "io.github.caseylabs.Mailven.desktop" {
 		t.Errorf("autostartFilename = %q", autostartFilename)
 	}
 }

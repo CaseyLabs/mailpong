@@ -3,9 +3,9 @@ package app
 import (
 	"strings"
 
-	"github.com/caseylabs/mailpong/internal/account"
-	"github.com/caseylabs/mailpong/internal/contact"
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/account"
+	"github.com/caseylabs/mailven/internal/contact"
+	"github.com/caseylabs/mailven/internal/logging"
 )
 
 // ============================================================================

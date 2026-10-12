@@ -5,8 +5,8 @@ package main
 import (
 	"os"
 
-	"github.com/caseylabs/mailpong/app"
-	"github.com/caseylabs/mailpong/internal/platform"
+	"github.com/caseylabs/mailven/app"
+	"github.com/caseylabs/mailven/internal/platform"
 )
 
 // runPreflight performs pre-Wails startup checks (paths, DB open, migrations,

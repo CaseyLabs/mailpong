@@ -12,7 +12,7 @@ import (
 // OAuth app" generic-IMAP accounts work long-term. Unlike oauth_user_creds.go (which
 // holds project-level client_id/secret overrides keyed by config SLOT), this stores the
 // FULL provider definition — authorization + token endpoints, scopes, and client
-// credentials — for a single ACCOUNT whose OAuth provider is not one MailPong ships
+// credentials — for a single ACCOUNT whose OAuth provider is not one Mailven ships
 // (oauth_tokens.provider == "custom").
 //
 // It exists because oauth2.GetProvider("custom") intentionally fails: the refresh and

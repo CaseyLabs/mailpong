@@ -6,12 +6,12 @@ import (
 
 	"golang.org/x/sys/windows/registry"
 
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/logging"
 )
 
 const (
 	registryKeyPath = `Software\Microsoft\Windows\CurrentVersion\Run`
-	registryValue   = "MailPong"
+	registryValue   = "Mailven"
 )
 
 // windowsAutostartManager manages Windows autostart via the registry.
@@ -22,7 +22,7 @@ func NewAutostartManager() AutostartManager {
 	return &windowsAutostartManager{}
 }
 
-// Enable adds a registry entry to start MailPong on login.
+// Enable adds a registry entry to start Mailven on login.
 func (m *windowsAutostartManager) Enable() error {
 	log := logging.WithComponent("autostart")
 
@@ -79,7 +79,7 @@ func (m *windowsAutostartManager) IsEnabled() bool {
 func (m *windowsAutostartManager) execCommand() string {
 	exe, err := os.Executable()
 	if err != nil {
-		return "mailpong.exe"
+		return "mailven.exe"
 	}
 	return exe
 }

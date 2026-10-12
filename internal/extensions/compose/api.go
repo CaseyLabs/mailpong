@@ -4,7 +4,7 @@ import (
 	"net/url"
 	"strings"
 
-	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
 )
 
 // Launcher is the slim interface this package needs from the app layer. The

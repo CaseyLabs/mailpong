@@ -15,8 +15,8 @@ import (
 
 	"github.com/emersion/go-webdav"
 
-	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
-	"github.com/caseylabs/mailpong/internal/kit/davutil"
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
+	"github.com/caseylabs/mailven/internal/kit/davutil"
 )
 
 // caldavProvider — Provider impl for SourceTypeCalDAV.

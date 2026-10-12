@@ -1659,7 +1659,7 @@
       <AlertDialog.Title>{$_('attachment.flatpakOpenTitle')}</AlertDialog.Title>
       <AlertDialog.Description>
         <p class="mb-3">{flatpakFsDialogContext === 'saveAll' ? $_('attachment.flatpakSaveAllDescription') : $_('attachment.flatpakOpenDescription')}</p>
-        <pre class="mb-3 rounded bg-muted p-2 text-sm overflow-x-auto"><code>flatpak override --user --filesystem=home io.github.caseylabs.MailPong</code></pre>
+        <pre class="mb-3 rounded bg-muted p-2 text-sm overflow-x-auto"><code>flatpak override --user --filesystem=home io.github.caseylabs.Mailven</code></pre>
         <p class="mb-3 text-sm text-destructive">{$_('attachment.flatpakOpenSecurityWarning')}</p>
         <p class="text-sm text-muted-foreground">{flatpakFsDialogContext === 'saveAll' ? $_('attachment.flatpakSaveAllAlternative') : $_('attachment.flatpakOpenAlternative')}</p>
       </AlertDialog.Description>

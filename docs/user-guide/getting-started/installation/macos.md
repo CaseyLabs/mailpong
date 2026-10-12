@@ -5,31 +5,31 @@ pagination_next: getting-started/verify
 
 # macOS
 
-MailPong has no published releases yet, so build it from source. You need Go 1.26, Node.js 24, the [Wails v2 CLI](https://wails.io/docs/gettingstarted/installation) and the Xcode command line tools.
+Mailven has no published releases yet, so build it from source. You need Go 1.26, Node.js 24, the [Wails v2 CLI](https://wails.io/docs/gettingstarted/installation) and the Xcode command line tools.
 
 1. Clone and build:
 
 ```bash
-git clone https://github.com/caseylabs/mailpong.git
-cd mailpong
+git clone https://github.com/CaseyLabs/mailven.git
+cd mailven
 make build
 ```
 
-2. The result is `build/bin/MailPong.app`. Run `make install-darwin` to copy it to your Applications folder, or drag it there yourself.
+2. The result is `build/bin/Mailven.app`. Run `make install-darwin` to copy it to your Applications folder, or drag it there yourself.
 3. The app you build is not signed or notarized, so macOS may show a security warning on first launch.
 
 ## Bypassing Gatekeeper
 
 If macOS blocks the app:
 
-1. Right-click (or Control-click) on `MailPong.app`
+1. Right-click (or Control-click) on `Mailven.app`
 2. Select "Open" from the context menu
 3. Click "Open" in the dialog that appears
 
 Alternatively, run this command:
 
 ```bash
-xattr -cr /Applications/MailPong.app
+xattr -cr /Applications/Mailven.app
 ```
 
-Your data is stored in `~/Library/Application Support/MailPong` and `~/Library/Caches/MailPong`.
+Your data is stored in `~/Library/Application Support/Mailven` and `~/Library/Caches/Mailven`.

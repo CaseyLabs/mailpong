@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/caseylabs/mailpong/extensions/calendar"
-	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
+	"github.com/caseylabs/mailven/extensions/calendar"
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
 )
 
 // Extension is the Calendar extension's lifecycle handle. Tiny — just the
@@ -35,7 +35,7 @@ func (e *Extension) Manifest() coreapi.Manifest { return e.manifest }
 // CalDAV setup goes through the standalone "Add CalDAV source" dialog,
 // not through this account-setup-hook path.
 //
-// Runs once per MailPong process lifetime at App.Startup, regardless of
+// Runs once per Mailven process lifetime at App.Startup, regardless of
 // enabled state — descriptive registrations persist across enable/disable
 // cycles. The frontend filters by enabled state at render time.
 func (e *Extension) Register(core coreapi.Core) (coreapi.Unregister, error) {

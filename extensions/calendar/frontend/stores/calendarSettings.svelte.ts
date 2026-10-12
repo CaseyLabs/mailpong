@@ -22,9 +22,9 @@ import { calendarSources } from '$extensions/calendar/frontend/stores/calendarSo
 // @ts-ignore - wailsjs bindings
 import { Calendar_SetDisplayTimezone } from '$wailsjs/go/app/App.js'
 
-const STORAGE_KEY_TZ        = 'mailpong:calendar:displayTimezone'
-const STORAGE_KEY_GLOBAL    = 'mailpong:calendar:globalDefaultCalendarId'
-const STORAGE_KEY_PROVIDER  = 'mailpong:calendar:providerDefaults'
+const STORAGE_KEY_TZ        = 'mailven:calendar:displayTimezone'
+const STORAGE_KEY_GLOBAL    = 'mailven:calendar:globalDefaultCalendarId'
+const STORAGE_KEY_PROVIDER  = 'mailven:calendar:providerDefaults'
 
 let displayTimezone = $state<string>('')
 let globalDefault = $state<string>('')

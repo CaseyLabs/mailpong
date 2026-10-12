@@ -9,9 +9,9 @@ import (
 )
 
 // Build-time OAuth credentials. `make` writes them from .env into the
-// gitignored credentials_gen.go (build tag mailpong_creds) so they never appear
+// gitignored credentials_gen.go (build tag mailven_creds) so they never appear
 // on a command line; see build/gencreds.go. If that file is not compiled in,
-// they are loaded from the mailpong-creds shim binary.
+// they are loaded from the mailven-creds shim binary.
 var (
 	// GoogleClientID is the OAuth2 client ID for Google/Gmail (Mail-scoped project).
 	// Same client also backs first-party extensions' Google flows for any scopes
@@ -34,10 +34,10 @@ var (
 	// verified for (e.g., contacts.readwrite, full Calendar). Single un-
 	// Google-verified test client backs both google-contacts and
 	// google-calendar slots. Surfaced in the picker as
-	// "MailPong – Google (Testing)" so users understand the verification
+	// "Mailven – Google (Testing)" so users understand the verification
 	// status before consenting. When the mail project eventually gets
 	// verified with these scopes, the default in the picker UI switches
-	// to "MailPong – Google" (which reuses GoogleClientID via a manifest-
+	// to "Mailven – Google" (which reuses GoogleClientID via a manifest-
 	// declared scope route) and this slot becomes a fallback.
 	GoogleTestingClientID string
 
@@ -59,12 +59,12 @@ func init() {
 func loadFromShim() {
 	// Search for the shim binary in known locations
 	paths := []string{
-		"/app/lib/mailpong/mailpong-creds", // Flatpak
+		"/app/lib/mailven/mailven-creds", // Flatpak
 	}
 
 	// Also check next to the main binary
 	if exe, err := os.Executable(); err == nil {
-		paths = append(paths, filepath.Join(filepath.Dir(exe), "mailpong-creds"))
+		paths = append(paths, filepath.Join(filepath.Dir(exe), "mailven-creds"))
 	}
 
 	for _, p := range paths {
@@ -85,7 +85,7 @@ func loadFromShim() {
 }
 
 // setCredentials assigns the build-time credential variables from a map keyed
-// like the mailpong-creds shim's JSON output. Missing keys clear the variable.
+// like the mailven-creds shim's JSON output. Missing keys clear the variable.
 // It returns true so generated code can call it from a package-level var
 // initializer, which runs before init().
 func setCredentials(creds map[string]string) bool {

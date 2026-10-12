@@ -1,8 +1,8 @@
 package sync
 
 import (
-	"github.com/caseylabs/mailpong/internal/account"
-	"github.com/caseylabs/mailpong/internal/folder"
+	"github.com/caseylabs/mailven/internal/account"
+	"github.com/caseylabs/mailven/internal/folder"
 )
 
 // inboxSnapshot records an inbox's highest stored UID and UIDVALIDITY before

@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"syscall"
 
-	"github.com/caseylabs/mailpong/internal/platform"
+	"github.com/caseylabs/mailven/internal/platform"
 )
 
 // UnixServer implements the Server interface using Unix domain sockets.

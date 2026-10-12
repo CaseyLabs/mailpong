@@ -95,19 +95,19 @@ jobs:
           else
             LINUX_ARCH=aarch64
           fi
-          cp build/bin/mailpong "build/bin/mailpong-${VERSION}-linux-${LINUX_ARCH}"
-          mv build/bin/mailpong "build/bin/mailpong-binary-${{ matrix.arch }}.bin"
+          cp build/bin/mailven "build/bin/mailven-${VERSION}-linux-${LINUX_ARCH}"
+          mv build/bin/mailven "build/bin/mailven-binary-${{ matrix.arch }}.bin"
 
           # Create distribution tarball (complete package for manual installation)
-          APP_ID=io.github.caseylabs.MailPong
+          APP_ID=io.github.caseylabs.Mailven
           mkdir -p dist-package
-          cp "build/bin/mailpong-${VERSION}-linux-${LINUX_ARCH}" dist-package/mailpong
+          cp "build/bin/mailven-${VERSION}-linux-${LINUX_ARCH}" dist-package/mailven
           cp build/linux/install.sh build/linux/uninstall.sh dist-package/
           cp build/linux/${APP_ID}.desktop dist-package/
           # 256 at tarball root; sized copies + scalable SVG live under icons/
           # so install.sh can fill hicolor. Keep sizes in sync with ICON_SIZES
           # in Makefile/install.sh.
-          cp build/linux/mailpong.png dist-package/${APP_ID}.png
+          cp build/linux/mailven.png dist-package/${APP_ID}.png
           for sz in 32 48 64 128 256; do
             mkdir -p dist-package/icons/${sz}x${sz}
             cp build/linux/icons/${sz}x${sz}/${APP_ID}.png dist-package/icons/${sz}x${sz}/
@@ -117,7 +117,7 @@ jobs:
           cp LICENSE dist-package/
           cp NOTICE THIRD_PARTY_NOTICES.md dist-package/
 
-          tar czf "mailpong-linux-${{ matrix.arch }}.tar.gz" -C dist-package .
+          tar czf "mailven-linux-${{ matrix.arch }}.tar.gz" -C dist-package .
           rm -rf dist-package
 
       - name: Build (macOS)
@@ -127,8 +127,8 @@ jobs:
         run: |
           make build
           cd build/bin
-          zip -r MailPong-darwin-${{ matrix.arch }}.zip MailPong.app
-          rm -rf MailPong.app
+          zip -r Mailven-darwin-${{ matrix.arch }}.zip Mailven.app
+          rm -rf Mailven.app
 
       - name: Build (Windows)
         if: matrix.platform == 'windows'
@@ -137,16 +137,16 @@ jobs:
           GOARCH: ${{ matrix.arch }}
         run: |
           make build-windows-installer
-          Move-Item build/bin/mailpong.exe build/bin/MailPong-windows-${{ matrix.arch }}.exe
-          Move-Item build/bin/mailpong-${{ matrix.arch }}-installer.exe build/bin/MailPong-windows-setup-${{ matrix.arch }}.exe
+          Move-Item build/bin/mailven.exe build/bin/Mailven-windows-${{ matrix.arch }}.exe
+          Move-Item build/bin/mailven-${{ matrix.arch }}-installer.exe build/bin/Mailven-windows-setup-${{ matrix.arch }}.exe
 
       - uses: actions/upload-artifact@v7
         with:
-          name: mailpong-${{ matrix.platform }}-${{ matrix.arch }}
+          name: mailven-${{ matrix.platform }}-${{ matrix.arch }}
           path: |
-            build/bin/mailpong-*
-            build/bin/MailPong-*
-            mailpong-*.tar.gz
+            build/bin/mailven-*
+            build/bin/Mailven-*
+            mailven-*.tar.gz
           retention-days: 7
 
   build-flatpak:
@@ -168,7 +168,7 @@ jobs:
       - name: Download the Linux binary built by this run
         uses: actions/download-artifact@v7
         with:
-          name: mailpong-linux-${{ matrix.go_arch }}
+          name: mailven-linux-${{ matrix.go_arch }}
           path: linux-build
 
       - name: Install dependencies
@@ -205,20 +205,20 @@ jobs:
           # The checkout manifest packages the binary built above, so it works
           # for dry runs and tags alike (no pinned tag or commit needed).
           mkdir -p build/bin
-          cp linux-build/build/bin/mailpong-binary-${{ matrix.go_arch }}.bin build/bin/mailpong
-          chmod +x build/bin/mailpong
+          cp linux-build/build/bin/mailven-binary-${{ matrix.go_arch }}.bin build/bin/mailven
+          chmod +x build/bin/mailven
 
           rm -rf .flatpak-builder
           flatpak-builder --user --force-clean --repo=repo \
             --install-deps-from=flathub \
-            build-dir build/flatpak/io.github.caseylabs.MailPong-dev.yml
+            build-dir build/flatpak/io.github.caseylabs.Mailven-dev.yml
 
-          flatpak build-bundle repo "build/bin/MailPong-${VERSION}-${{ matrix.arch }}.flatpak" io.github.caseylabs.MailPong
+          flatpak build-bundle repo "build/bin/Mailven-${VERSION}-${{ matrix.arch }}.flatpak" io.github.caseylabs.Mailven
 
       - uses: actions/upload-artifact@v7
         with:
-          name: mailpong-flatpak-${{ matrix.arch }}
-          path: build/bin/MailPong-*.flatpak
+          name: mailven-flatpak-${{ matrix.arch }}
+          path: build/bin/Mailven-*.flatpak
           retention-days: 7
 
   release:
@@ -236,7 +236,7 @@ jobs:
       - uses: actions/download-artifact@v7
         with:
           path: artifacts
-          pattern: mailpong-*
+          pattern: mailven-*
           merge-multiple: true
 
       - name: Create draft prerelease
@@ -245,7 +245,7 @@ jobs:
           if ! gh release view "$TAG_NAME" >/dev/null 2>&1; then
             gh release create "$TAG_NAME" \
               --draft --prerelease --verify-tag \
-              --title "MailPong $TAG_NAME" \
+              --title "Mailven $TAG_NAME" \
               --notes "Draft. Review the assets, then publish manually. See CHANGELOG.md."
           fi
 

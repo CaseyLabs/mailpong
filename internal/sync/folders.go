@@ -7,8 +7,8 @@ import (
 	"strings"
 	gosync "sync"
 
-	"github.com/caseylabs/mailpong/internal/folder"
-	imapPkg "github.com/caseylabs/mailpong/internal/imap"
+	"github.com/caseylabs/mailven/internal/folder"
+	imapPkg "github.com/caseylabs/mailven/internal/imap"
 )
 
 // folderStatusResult holds the result of a parallel STATUS fetch

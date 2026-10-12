@@ -1,11 +1,11 @@
-app-id: io.github.caseylabs.MailPong
+app-id: io.github.caseylabs.Mailven
 runtime: org.gnome.Platform
 runtime-version: '50'
 sdk: org.gnome.Sdk
 sdk-extensions:
   - org.freedesktop.Sdk.Extension.golang
   - org.freedesktop.Sdk.Extension.node24
-command: mailpong
+command: mailven
 
 finish-args:
   # Network access for email sync
@@ -21,27 +21,27 @@ finish-args:
   - --system-talk-name=org.freedesktop.login1
 
 modules:
-  - name: mailpong
+  - name: mailven
     buildsystem: simple
     build-options:
       append-path: /usr/lib/sdk/golang/bin:/usr/lib/sdk/node24/bin
       env:
         GOROOT: /usr/lib/sdk/golang
-        GOPATH: /run/build/mailpong/go
-        GOCACHE: /run/build/mailpong/go-cache
+        GOPATH: /run/build/mailven/go
+        GOCACHE: /run/build/mailven/go-cache
         GO111MODULE: 'on'
         CGO_ENABLED: '1'
         # Use direct mode for reliability
         GOPROXY: 'direct'
         GOSUMDB: 'off'
         NODE_ENV: production
-        npm_config_cache: /run/build/mailpong/npm-cache
+        npm_config_cache: /run/build/mailven/npm-cache
 
     build-commands:
       # Install Wails CLI
       - |
-        export PATH=$PATH:/run/build/mailpong/go/bin
-        export GOPATH=/run/build/mailpong/go
+        export PATH=$PATH:/run/build/mailven/go/bin
+        export GOPATH=/run/build/mailven/go
         go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
       # Install frontend dependencies
@@ -53,30 +53,30 @@ modules:
       # Build the application
       # Note: OAuth credentials should be configured via Flathub secrets if needed
       - |
-        export PATH=$PATH:/run/build/mailpong/go/bin
-        /run/build/mailpong/go/bin/wails build -tags webkit2_41,linux,production -o mailpong
+        export PATH=$PATH:/run/build/mailven/go/bin
+        /run/build/mailven/go/bin/wails build -tags webkit2_41,linux,production -o mailven
 
       # Install the binary
-      - install -Dm755 build/bin/mailpong /app/bin/mailpong
+      - install -Dm755 build/bin/mailven /app/bin/mailven
 
       # Install desktop file with correct app ID
-      - install -Dm644 build/linux/io.github.caseylabs.MailPong.desktop /app/share/applications/io.github.caseylabs.MailPong.desktop
+      - install -Dm644 build/linux/io.github.caseylabs.Mailven.desktop /app/share/applications/io.github.caseylabs.Mailven.desktop
 
       # Update desktop file Icon and Exec fields
-      - desktop-file-edit --set-key=Icon --set-value=io.github.caseylabs.MailPong /app/share/applications/io.github.caseylabs.MailPong.desktop
-      - desktop-file-edit --set-key=Exec --set-value=mailpong /app/share/applications/io.github.caseylabs.MailPong.desktop
+      - desktop-file-edit --set-key=Icon --set-value=io.github.caseylabs.Mailven /app/share/applications/io.github.caseylabs.Mailven.desktop
+      - desktop-file-edit --set-key=Exec --set-value=mailven /app/share/applications/io.github.caseylabs.Mailven.desktop
 
       # Install themed icons with correct app ID (32-256 + scalable). A lone
       # 256 is skipped by hicolor MinSize=64 at small lookup sizes (#395).
       - |
         for sz in 32 48 64 128 256; do
-          install -Dm644 "build/linux/icons/${sz}x${sz}/io.github.caseylabs.MailPong.png" \
-            "/app/share/icons/hicolor/${sz}x${sz}/apps/io.github.caseylabs.MailPong.png"
+          install -Dm644 "build/linux/icons/${sz}x${sz}/io.github.caseylabs.Mailven.png" \
+            "/app/share/icons/hicolor/${sz}x${sz}/apps/io.github.caseylabs.Mailven.png"
         done
-      - install -Dm644 build/linux/icons/scalable/io.github.caseylabs.MailPong.svg /app/share/icons/hicolor/scalable/apps/io.github.caseylabs.MailPong.svg
+      - install -Dm644 build/linux/icons/scalable/io.github.caseylabs.Mailven.svg /app/share/icons/hicolor/scalable/apps/io.github.caseylabs.Mailven.svg
 
       # Install metainfo (AppStream metadata)
-      - install -Dm644 build/flatpak/io.github.caseylabs.MailPong.metainfo.xml /app/share/metainfo/io.github.caseylabs.MailPong.metainfo.xml
+      - install -Dm644 build/flatpak/io.github.caseylabs.Mailven.metainfo.xml /app/share/metainfo/io.github.caseylabs.Mailven.metainfo.xml
 
     sources:
       # Local source for development builds (make flatpak-dev)

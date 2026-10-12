@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/draft"
-	"github.com/caseylabs/mailpong/internal/message"
+	"github.com/caseylabs/mailven/internal/draft"
+	"github.com/caseylabs/mailven/internal/message"
 )
 
 type mockCommand struct {

@@ -292,7 +292,7 @@ func wrapICS(body string) string {
 	var b strings.Builder
 	b.WriteString("BEGIN:VCALENDAR\r\n")
 	b.WriteString("VERSION:2.0\r\n")
-	b.WriteString("PRODID:-//MailPong//Test//EN\r\n")
+	b.WriteString("PRODID:-//Mailven//Test//EN\r\n")
 	for _, line := range strings.Split(body, "\n") {
 		b.WriteString(strings.TrimRight(line, "\r"))
 		b.WriteString("\r\n")

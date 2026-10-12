@@ -28,10 +28,10 @@
     }
   })
 
-  const PRIVACY_URL = 'https://github.com/caseylabs/mailpong/blob/main/docs/PRIVACY.md'
+  const PRIVACY_URL = 'https://github.com/CaseyLabs/mailven/blob/main/docs/PRIVACY.md'
   const AERION_URL = 'https://github.com/hkdb/aerion'
   const AUTHOR_URL = 'https://github.com/hkdb'
-  const TERMS_URL = 'https://github.com/caseylabs/mailpong/blob/main/docs/TERMS.md'
+  const TERMS_URL = 'https://github.com/CaseyLabs/mailven/blob/main/docs/TERMS.md'
 
   function openWebsite() {
     if (appInfo?.website) {

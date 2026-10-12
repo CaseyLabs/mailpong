@@ -122,13 +122,13 @@
     "delete": {
       "title": "Delete this contact?",
       "descriptionLocal": "{name} will be removed from your local contacts. Mail you've already sent to this address is not affected.",
-      "descriptionCardDAV": "{name} will be removed from this address book on the server. This cannot be undone from MailPong."
+      "descriptionCardDAV": "{name} will be removed from this address book on the server. This cannot be undone from Mailven."
     },
     "settings": {
       "title": "Contacts settings",
       "description": "Configure OAuth credentials for the Contacts extension. Read access rides on your mail account's existing permission; these creds power WRITE operations (edit / create / delete) against Google or Microsoft sources.",
       "oauthHeading": "OAuth Credentials",
-      "oauthDescription": "Each slot ships with MailPong's verified credentials when available; switch to Custom to supply your own project's Client ID and Secret.",
+      "oauthDescription": "Each slot ships with Mailven's verified credentials when available; switch to Custom to supply your own project's Client ID and Secret.",
       "googleLabel": "Google Contacts",
       "microsoftLabel": "Microsoft Contacts",
       "writeAccessHeading": "Write Access",

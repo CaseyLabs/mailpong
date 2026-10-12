@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/contact"
-	"github.com/caseylabs/mailpong/internal/database"
+	"github.com/caseylabs/mailven/internal/contact"
+	"github.com/caseylabs/mailven/internal/database"
 )
 
 func openCardDAVTestDB(t *testing.T) *database.DB {

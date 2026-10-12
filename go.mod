@@ -1,4 +1,4 @@
-module github.com/caseylabs/mailpong
+module github.com/caseylabs/mailven
 
 go 1.26.0
 

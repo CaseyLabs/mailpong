@@ -4,10 +4,10 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/caseylabs/mailpong/internal/account"
-	"github.com/caseylabs/mailpong/internal/database"
-	"github.com/caseylabs/mailpong/internal/draft"
-	"github.com/caseylabs/mailpong/internal/smtp"
+	"github.com/caseylabs/mailven/internal/account"
+	"github.com/caseylabs/mailven/internal/database"
+	"github.com/caseylabs/mailven/internal/draft"
+	"github.com/caseylabs/mailven/internal/smtp"
 )
 
 func TestDraftPersistsSenderIdentity(t *testing.T) {

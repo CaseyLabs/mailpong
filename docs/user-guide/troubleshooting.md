@@ -4,7 +4,7 @@ sidebar_position: 8
 
 # Troubleshooting
 
-Solutions for common issues with MailPong.
+Solutions for common issues with Mailven.
 
 ## Connection Issues
 
@@ -30,8 +30,8 @@ For Gmail and Outlook accounts:
 
 - Ensure you're using the correct security setting (SSL/TLS vs STARTTLS)
 - Check that the server hostname matches the certificate
-- For self-hosted servers, ensure the certificate is valid. If the server uses a self-signed certificate, MailPong shows its details when you test a mail account or add a CardDAV or CalDAV source; accept it once or always to trust it for that exact host
-- With STARTTLS selected, sending fails if the server doesn't offer STARTTLS; MailPong won't fall back to an unencrypted connection. Use SSL/TLS if the server supports it
+- For self-hosted servers, ensure the certificate is valid. If the server uses a self-signed certificate, Mailven shows its details when you test a mail account or add a CardDAV or CalDAV source; accept it once or always to trust it for that exact host
+- With STARTTLS selected, sending fails if the server doesn't offer STARTTLS; Mailven won't fall back to an unencrypted connection. Use SSL/TLS if the server supports it
 
 ## Sync Problems
 
@@ -39,7 +39,7 @@ For Gmail and Outlook accounts:
 
 If emails you expect to see aren't showing up:
 
-1. **Check sync period** - By default, MailPong syncs the last 180 days
+1. **Check sync period** - By default, Mailven syncs the last 180 days
    - Go to **Settings > Accounts > Edit** to change this
 2. **Check the folder** - Ensure you're looking in the correct folder
 3. **Wait for sync** - Large mailboxes can take time to sync initially
@@ -77,7 +77,7 @@ Some servers handle sent mail differently:
 
 ### OAuth not working
 
-MailPong has no bundled Google or Microsoft OAuth credentials and is not verified by Google, so Google shows an "app isn't verified" warning for your own OAuth client until you publish it (see [Custom Google OAuth Credentials](/docs/getting-started/first-account/google-oauth-credentials)). If OAuth keeps failing, app passwords may be a viable workaround. However, prior to authenticating with your App Password, verify that your network is safe and that you are in fact connecting to Google's infrastructure.
+Mailven has no bundled Google or Microsoft OAuth credentials and is not verified by Google, so Google shows an "app isn't verified" warning for your own OAuth client until you publish it (see [Custom Google OAuth Credentials](/docs/getting-started/first-account/google-oauth-credentials)). If OAuth keeps failing, app passwords may be a viable workaround. However, prior to authenticating with your App Password, verify that your network is safe and that you are in fact connecting to Google's infrastructure.
 
 The app password method:
 
@@ -121,40 +121,40 @@ sudo dnf install webkit2gtk4.1
 sudo pacman -S webkit2gtk-4.1
 ```
 
-If libwebkit2gtk is already installed and MailPong still won't start, try one of the following commands:
+If libwebkit2gtk is already installed and Mailven still won't start, try one of the following commands:
 
 **Flatpak**
 
 ```bash
-flatpak run --env=WEBKIT_DISABLE_DMABUF_RENDERER=1 io.github.caseylabs.MailPong
+flatpak run --env=WEBKIT_DISABLE_DMABUF_RENDERER=1 io.github.caseylabs.Mailven
 ```
 
 ```bash
-flatpak run --env=WEBKIT_DISABLE_COMPOSITING_MODE=1 io.github.caseylabs.MailPong
+flatpak run --env=WEBKIT_DISABLE_COMPOSITING_MODE=1 io.github.caseylabs.Mailven
 ```
 
 ```bash
-flatpak run --env=LIBGL_ALWAYS_SOFTWARE=1 io.github.caseylabs.MailPong
+flatpak run --env=LIBGL_ALWAYS_SOFTWARE=1 io.github.caseylabs.Mailven
 ```
 
 After figuring out which works, to make the workaround permanent, for example, if DMABUF was the issue:
 
 ```bash
-flatpak override --user --env=WEBKIT_DISABLE_DMABUF_RENDERER=1 io.github.caseylabs.MailPong
+flatpak override --user --env=WEBKIT_DISABLE_DMABUF_RENDERER=1 io.github.caseylabs.Mailven
 ```
 
 **Binary**
 
 ```bash
-WEBKIT_DISABLE_DMABUF_RENDERER=1 mailpong
+WEBKIT_DISABLE_DMABUF_RENDERER=1 mailven
 ```
 
 ```bash
-WEBKIT_DISABLE_COMPOSITING_MODE=1 mailpong
+WEBKIT_DISABLE_COMPOSITING_MODE=1 mailven
 ```
 
 ```bash
-LIBGL_ALWAYS_SOFTWARE=1 mailpong
+LIBGL_ALWAYS_SOFTWARE=1 mailven
 ```
 
 After figuring out which works, to make the workaround permanent, for example, if DMABUF was the issue:
@@ -173,22 +173,22 @@ Try the workarounds in the above section.
 
 Ensure you have a notification daemon running. On GNOME, notifications work automatically. On other desktops, you may need to install and configure a notification daemon.
 
-Also, if you don't have desktop portal installed on your system or launch MailPong from the terminal, you may want to launch MailPong with the `-dbus-notify` flag so that it sends notifications directly to dbus.
+Also, if you don't have desktop portal installed on your system or launch Mailven from the terminal, you may want to launch Mailven with the `-dbus-notify` flag so that it sends notifications directly to dbus.
 
 ## macOS-Specific Issues
 
 ### "App is damaged" or "can't be opened" error
 
-This happens because MailPong isn't signed with an Apple Developer certificate.
+This happens because Mailven isn't signed with an Apple Developer certificate.
 
 **Solution 1:** Right-click and Open
-1. Right-click (or Control-click) on MailPong.app
+1. Right-click (or Control-click) on Mailven.app
 2. Select "Open"
 3. Click "Open" in the dialog
 
 **Solution 2:** Remove quarantine attribute
 ```bash
-xattr -cr /Applications/MailPong.app
+xattr -cr /Applications/Mailven.app
 ```
 
 ## Windows-Specific Issues
@@ -198,15 +198,15 @@ xattr -cr /Applications/MailPong.app
 This usually indicates a WebView2 issue:
 
 1. Download the latest [WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) from Microsoft
-2. Install it and restart MailPong
+2. Install it and restart Mailven
 
 ### Installation blocked by SmartScreen
 
 Click "More info" and then "Run anyway" to proceed with installation.
 
-### Antivirus blocking MailPong
+### Antivirus blocking Mailven
 
-Some antivirus software may flag MailPong as suspicious (common for new applications). Add an exception for MailPong in your antivirus settings.
+Some antivirus software may flag Mailven as suspicious (common for new applications). Add an exception for Mailven in your antivirus settings.
 
 ## Contact Sync Issues
 
@@ -234,21 +234,21 @@ Some antivirus software may flag MailPong as suspicious (common for new applicat
 
 ### Produce debug logs for further investigator with the maintainer
 
-To produce logs for the maintainer, run one of the following command to launch MailPong:
+To produce logs for the maintainer, run one of the following command to launch Mailven:
 
 Windows, Mac, Linux binary:
 
 ```bash
-mailpong --debug
+mailven --debug
 
 ```
 Linux Flatpak:
 
 ```bash
-flatpak run --env=MAILPONG_DEBUG=1 io.github.caseylabs.MailPong
+flatpak run --env=MAILVEN_DEBUG=1 io.github.caseylabs.Mailven
 
 ```
-Logs print to the terminal you launched from. To save them to a file instead, add `> mailpong-debug.log 2>&1` to the end of the command, reproduce the issue, then quit MailPong.
+Logs print to the terminal you launched from. To save them to a file instead, add `> mailven-debug.log 2>&1` to the end of the command, reproduce the issue, then quit Mailven.
 
 Copy only the portion that relates to your issue and be sure to redact any potentially personally identifiable information as needed.
 
@@ -256,10 +256,10 @@ Copy only the portion that relates to your issue and be sure to redact any poten
 
 If your issue isn't covered here:
 
-1. Check the [GitHub Issues](https://github.com/caseylabs/mailpong/issues) for similar reports (if the problem also happens in upstream Aerion, say so)
+1. Check the [GitHub Issues](https://github.com/CaseyLabs/mailven/issues) for similar reports (if the problem also happens in upstream Aerion, say so)
 2. Open a new issue with:
    - Your operating system and version
-   - MailPong version
+   - Mailven version
    - Steps to reproduce the problem
    - Any error messages you see
    - Relevant log files (see [FAQ](/docs/faq#where-are-log-files-located) for locations)

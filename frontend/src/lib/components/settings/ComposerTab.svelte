@@ -41,7 +41,7 @@
     onSpellcheckLanguagesChange,
   }: Props = $props()
 
-  // Dictionaries MailPong ships, with their native display names.
+  // Dictionaries Mailven ships, with their native display names.
   const dictLanguages = SPELLCHECK_DICTS.map((code) => ({
     code,
     name: DICT_NAMES[code] ?? supportedLocales.find((l) => l.code === code)?.name ?? code,

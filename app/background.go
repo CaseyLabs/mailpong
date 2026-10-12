@@ -7,13 +7,13 @@ import (
 	goSync "sync"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/folder"
-	"github.com/caseylabs/mailpong/internal/imap"
-	"github.com/caseylabs/mailpong/internal/logging"
-	"github.com/caseylabs/mailpong/internal/message"
-	"github.com/caseylabs/mailpong/internal/notification"
-	"github.com/caseylabs/mailpong/internal/platform"
-	"github.com/caseylabs/mailpong/internal/sync"
+	"github.com/caseylabs/mailven/internal/folder"
+	"github.com/caseylabs/mailven/internal/imap"
+	"github.com/caseylabs/mailven/internal/logging"
+	"github.com/caseylabs/mailven/internal/message"
+	"github.com/caseylabs/mailven/internal/notification"
+	"github.com/caseylabs/mailven/internal/platform"
+	"github.com/caseylabs/mailven/internal/sync"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -228,7 +228,7 @@ func (a *App) processIdleEvents(ctx context.Context) {
 				// only, matching IDLE's scope.
 				acctID := event.AccountID
 				// Ignore the echo of our OWN flag writes so reading mail in
-				// MailPong doesn't trigger a self-inflicted sync; only other
+				// Mailven doesn't trigger a self-inflicted sync; only other
 				// clients' changes re-sync.
 				if a.recentOwnFlagChange(acctID) {
 					log.Debug().Str("accountID", acctID).Msg("Ignoring IDLE flag echo of our own change")
@@ -390,19 +390,19 @@ const idleFlagResyncDebounce = 1 * time.Second
 // deletion reconcile.
 const idleExpungeDebounce = 1 * time.Second
 
-// ownFlagEchoSuppress is how long after MailPong writes a flag change we treat an
+// ownFlagEchoSuppress is how long after Mailven writes a flag change we treat an
 // incoming IDLE flag notification as the echo of our own change (and ignore it),
-// so reading mail in MailPong doesn't trigger a self-inflicted re-sync.
+// so reading mail in Mailven doesn't trigger a self-inflicted re-sync.
 const ownFlagEchoSuppress = 5 * time.Second
 
-// noteOwnFlagChange records that MailPong just STOREd a flag change for an account.
+// noteOwnFlagChange records that Mailven just STOREd a flag change for an account.
 func (a *App) noteOwnFlagChange(accountID string) {
 	a.ownFlagMu.Lock()
 	a.ownFlagChangeAt[accountID] = time.Now()
 	a.ownFlagMu.Unlock()
 }
 
-// recentOwnFlagChange reports whether MailPong wrote a flag change for the account
+// recentOwnFlagChange reports whether Mailven wrote a flag change for the account
 // within the suppression window — used to skip the IDLE flag echo of our own change.
 func (a *App) recentOwnFlagChange(accountID string) bool {
 	a.ownFlagMu.Lock()
@@ -411,7 +411,7 @@ func (a *App) recentOwnFlagChange(accountID string) bool {
 	return ok && time.Since(t) < ownFlagEchoSuppress
 }
 
-// ownExpungeEchoSuppress is how long after MailPong runs its own move/delete IMAP
+// ownExpungeEchoSuppress is how long after Mailven runs its own move/delete IMAP
 // operation we treat incoming IDLE EXPUNGE/EXISTS notifications as echoes of
 // that operation and DEFER the inbox reconcile they would trigger. During a
 // rapid-delete burst the reconcile's remote UID snapshot can race a still-in-
@@ -422,7 +422,7 @@ func (a *App) recentOwnFlagChange(accountID string) bool {
 // past slow operations.
 const ownExpungeEchoSuppress = 5 * time.Second
 
-// noteOwnExpunge records that MailPong just ran (or is running) a move/delete
+// noteOwnExpunge records that Mailven just ran (or is running) a move/delete
 // IMAP operation for an account.
 func (a *App) noteOwnExpunge(accountID string) {
 	a.ownFlagMu.Lock()
@@ -430,7 +430,7 @@ func (a *App) noteOwnExpunge(accountID string) {
 	a.ownFlagMu.Unlock()
 }
 
-// recentOwnExpunge reports whether MailPong ran a move/delete IMAP operation for
+// recentOwnExpunge reports whether Mailven ran a move/delete IMAP operation for
 // the account within the suppression window.
 func (a *App) recentOwnExpunge(accountID string) bool {
 	a.ownFlagMu.Lock()
@@ -694,7 +694,7 @@ func (a *App) sendSystemNotification(info sync.NewMailInfo, subject, fromName, f
 func (a *App) initNotifications(ctx context.Context) {
 	log := logging.WithComponent("app.notify")
 
-	a.notifier = notification.New("MailPong", a.useDirectDBus)
+	a.notifier = notification.New("Mailven", a.useDirectDBus)
 
 	// Set click handler. Dispatcher routes based on which NotificationData
 	// fields are populated: ExtensionID set → extension click (raise window

@@ -1,8 +1,8 @@
 package app
 
 import (
-	"github.com/caseylabs/mailpong/internal/certificate"
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/certificate"
+	"github.com/caseylabs/mailven/internal/logging"
 )
 
 // ============================================================================

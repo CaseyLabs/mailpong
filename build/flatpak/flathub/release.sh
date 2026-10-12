@@ -1,12 +1,12 @@
 #!/bin/bash
-# Copy MailPong files to Flathub repository for submission/update
-# Usage: ./release.sh /path/to/flathub/io.github.caseylabs.MailPong
+# Copy Mailven files to Flathub repository for submission/update
+# Usage: ./release.sh /path/to/flathub/io.github.caseylabs.Mailven
 
 set -e
 
 if [ -z "$1" ]; then
     echo "Usage: $0 <flathub-repo-path>"
-    echo "Example: $0 ~/flathub/io.github.caseylabs.MailPong"
+    echo "Example: $0 ~/flathub/io.github.caseylabs.Mailven"
     exit 1
 fi
 
@@ -21,7 +21,7 @@ fi
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 echo "=========================================="
-echo "MailPong Flathub Release Helper"
+echo "Mailven Flathub Release Helper"
 echo "=========================================="
 echo "Source: $SCRIPT_DIR"
 echo "Target: $FLATHUB_DIR"
@@ -35,9 +35,9 @@ echo ""
 
 # Copy manifest
 echo "Copying manifest..."
-cp "${SCRIPT_DIR}/io.github.caseylabs.MailPong.yml" \
-   "${FLATHUB_DIR}/io.github.caseylabs.MailPong.yml"
-echo "   io.github.caseylabs.MailPong.yml"
+cp "${SCRIPT_DIR}/io.github.caseylabs.Mailven.yml" \
+   "${FLATHUB_DIR}/io.github.caseylabs.Mailven.yml"
+echo "   io.github.caseylabs.Mailven.yml"
 
 # Copy Go module vendoring sources
 echo "Copying Go module sources..."

@@ -69,10 +69,10 @@ func (s *PipeServer) createPipeName() (string, error) {
 		return "", fmt.Errorf("failed to get current user: %w", err)
 	}
 
-	// Use \\.\pipe\mailpong-{username} format
+	// Use \\.\pipe\mailven-{username} format
 	// Sanitize backslashes from domain-joined usernames (e.g., DOMAIN\user)
 	sanitized := strings.ReplaceAll(currentUser.Username, `\`, "_")
-	pipeName := fmt.Sprintf(`\\.\pipe\mailpong-%s`, sanitized)
+	pipeName := fmt.Sprintf(`\\.\pipe\mailven-%s`, sanitized)
 
 	return pipeName, nil
 }

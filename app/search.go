@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/message"
-	"github.com/caseylabs/mailpong/internal/sync"
+	"github.com/caseylabs/mailven/internal/message"
+	"github.com/caseylabs/mailven/internal/sync"
 )
 
 // ============================================================================

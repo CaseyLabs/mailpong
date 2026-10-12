@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/account"
-	"github.com/caseylabs/mailpong/internal/certificate"
-	"github.com/caseylabs/mailpong/internal/logging"
-	"github.com/caseylabs/mailpong/internal/settings"
-	"github.com/caseylabs/mailpong/internal/smtp"
+	"github.com/caseylabs/mailven/internal/account"
+	"github.com/caseylabs/mailven/internal/certificate"
+	"github.com/caseylabs/mailven/internal/logging"
+	"github.com/caseylabs/mailven/internal/settings"
+	"github.com/caseylabs/mailven/internal/smtp"
 )
 
 // ============================================================================
@@ -185,12 +185,12 @@ func (a *App) SetTermsAccepted(accepted bool) error {
 	return a.settingsStore.SetTermsAccepted(accepted)
 }
 
-// GetRunBackground returns whether MailPong keeps running when the window is closed
+// GetRunBackground returns whether Mailven keeps running when the window is closed
 func (a *App) GetRunBackground() (bool, error) {
 	return a.settingsStore.GetRunBackground()
 }
 
-// SetRunBackground sets whether MailPong keeps running when the window is closed.
+// SetRunBackground sets whether Mailven keeps running when the window is closed.
 // Disabling also force-disables start_hidden.
 func (a *App) SetRunBackground(enabled bool) error {
 	if err := a.settingsStore.SetRunBackground(enabled); err != nil {
@@ -202,12 +202,12 @@ func (a *App) SetRunBackground(enabled bool) error {
 	return nil
 }
 
-// GetStartHidden returns whether MailPong starts with the window hidden
+// GetStartHidden returns whether Mailven starts with the window hidden
 func (a *App) GetStartHidden() (bool, error) {
 	return a.settingsStore.GetStartHidden()
 }
 
-// SetStartHidden sets whether MailPong starts with the window hidden.
+// SetStartHidden sets whether Mailven starts with the window hidden.
 // Enabling also force-enables run_background (start hidden requires background mode).
 func (a *App) SetStartHidden(enabled bool) error {
 	if enabled {
@@ -218,12 +218,12 @@ func (a *App) SetStartHidden(enabled bool) error {
 	return a.settingsStore.SetStartHidden(enabled)
 }
 
-// GetAutostart returns whether MailPong starts on login
+// GetAutostart returns whether Mailven starts on login
 func (a *App) GetAutostart() (bool, error) {
 	return a.settingsStore.GetAutostart()
 }
 
-// SetAutostart sets whether MailPong starts on login.
+// SetAutostart sets whether Mailven starts on login.
 // Manages the XDG autostart .desktop file or Flatpak Background portal.
 func (a *App) SetAutostart(enabled bool) error {
 	// Check current value to avoid unnecessary OS-level changes
@@ -443,7 +443,7 @@ func (a *App) SetAlwaysLoadImages(enabled bool) error {
 }
 
 // GetDarkMailContent returns whether email content should be visually darkened
-// while MailPong is in dark mode.
+// while Mailven is in dark mode.
 func (a *App) GetDarkMailContent() (bool, error) {
 	return a.settingsStore.GetDarkMailContent()
 }
@@ -454,7 +454,7 @@ func (a *App) SetDarkMailContent(enabled bool) error {
 }
 
 // GetDarkComposerBody returns whether the composer message body should use a
-// dark background while MailPong is in dark mode.
+// dark background while Mailven is in dark mode.
 func (a *App) GetDarkComposerBody() (bool, error) {
 	return a.settingsStore.GetDarkComposerBody()
 }

@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/logging"
 	"github.com/godbus/dbus/v5"
 	"github.com/rs/zerolog"
 )
@@ -156,7 +156,7 @@ func (n *linuxNotifier) Stop() {
 func (n *linuxNotifier) generateNotificationID() string {
 	n.mu.Lock()
 	n.idCounter++
-	id := fmt.Sprintf("mailpong-notification-%d-%d", time.Now().Unix(), n.idCounter)
+	id := fmt.Sprintf("mailven-notification-%d-%d", time.Now().Unix(), n.idCounter)
 	n.mu.Unlock()
 	return id
 }

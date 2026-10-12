@@ -7,16 +7,16 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/account"
-	"github.com/caseylabs/mailpong/internal/draft"
-	"github.com/caseylabs/mailpong/internal/folder"
-	"github.com/caseylabs/mailpong/internal/imap"
-	"github.com/caseylabs/mailpong/internal/keylock"
-	"github.com/caseylabs/mailpong/internal/logging"
-	"github.com/caseylabs/mailpong/internal/message"
-	"github.com/caseylabs/mailpong/internal/pgp"
-	"github.com/caseylabs/mailpong/internal/smime"
-	"github.com/caseylabs/mailpong/internal/smtp"
+	"github.com/caseylabs/mailven/internal/account"
+	"github.com/caseylabs/mailven/internal/draft"
+	"github.com/caseylabs/mailven/internal/folder"
+	"github.com/caseylabs/mailven/internal/imap"
+	"github.com/caseylabs/mailven/internal/keylock"
+	"github.com/caseylabs/mailven/internal/logging"
+	"github.com/caseylabs/mailven/internal/message"
+	"github.com/caseylabs/mailven/internal/pgp"
+	"github.com/caseylabs/mailven/internal/smime"
+	"github.com/caseylabs/mailven/internal/smtp"
 	goImap "github.com/emersion/go-imap/v2"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -831,7 +831,7 @@ func (a *App) GetDraft(id string) (*smtp.ComposeMessage, error) {
 		return a.draftToComposeMessage(d), nil
 	}
 
-	// No draft found - this might be a draft that was created outside MailPong
+	// No draft found - this might be a draft that was created outside Mailven
 	// (e.g., from webmail). Build a ComposeMessage from the message itself.
 	log.Debug().Str("messageID", id).Msg("No local draft found, building from message")
 	return a.messageToComposeMessage(msg), nil

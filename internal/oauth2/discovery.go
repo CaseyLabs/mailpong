@@ -12,7 +12,7 @@ import (
 )
 
 // OIDCDiscovery is the subset of an OpenID Connect / OAuth 2.0 Authorization Server
-// Metadata document that MailPong needs to build a custom ("bring your own app") flow.
+// Metadata document that Mailven needs to build a custom ("bring your own app") flow.
 // Field names use the document's snake_case keys (OIDC Discovery / RFC 8414).
 type OIDCDiscovery struct {
 	AuthorizationEndpoint string `json:"authorization_endpoint"`
@@ -29,7 +29,7 @@ var discoveryPaths = []string{
 }
 
 // DiscoverOIDC fetches OAuth/OIDC server metadata for the given issuer URL and returns
-// the endpoints MailPong needs. The issuer must be https (loopback hosts are allowed for
+// the endpoints Mailven needs. The issuer must be https (loopback hosts are allowed for
 // self-hosted testing). Returns an error if neither well-known path yields a document
 // with both an authorization and a token endpoint.
 func DiscoverOIDC(ctx context.Context, issuer string) (OIDCDiscovery, error) {

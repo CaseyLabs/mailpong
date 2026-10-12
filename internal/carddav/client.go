@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/kit/davutil"
-	"github.com/caseylabs/mailpong/internal/logging"
+	"github.com/caseylabs/mailven/internal/kit/davutil"
+	"github.com/caseylabs/mailven/internal/logging"
 	"github.com/emersion/go-vcard"
 	"github.com/emersion/go-webdav"
 	"github.com/emersion/go-webdav/carddav"

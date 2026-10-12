@@ -31,7 +31,7 @@ import (
 	"context"
 	"errors"
 
-	coreapi "github.com/caseylabs/mailpong/internal/core/api/v1"
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
 )
 
 // Provider is the per-source-type abstraction. Implementations are NOT

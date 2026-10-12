@@ -2,19 +2,19 @@
 
 ## Reporting a Vulnerability
 
-MailPong is alpha software maintained by volunteers. There is **no response-time guarantee**.
+Mailven is alpha software maintained by volunteers. There is **no response-time guarantee**.
 
-Do not post vulnerability details, credentials, or private mail data in public issues. Use GitHub private vulnerability reporting: open the **Security** tab of [caseylabs/mailpong](https://github.com/caseylabs/mailpong/security) and choose **Report a vulnerability**.
+Do not post vulnerability details, credentials, or private mail data in public issues. Use GitHub private vulnerability reporting: open the **Security** tab of [caseylabs/mailven](https://github.com/CaseyLabs/mailven/security) and choose **Report a vulnerability**.
 
 Include the affected version or commit, impact, reproduction steps, and a minimal proof of concept with sensitive data removed. State whether the issue also reproduces on upstream Aerion, if known.
 
-For vulnerabilities that exist only in upstream Aerion, follow [upstream's security policy](https://github.com/hkdb/aerion/security/policy). Upstream's contact address and response commitments apply to upstream, not to MailPong.
+For vulnerabilities that exist only in upstream Aerion, follow [upstream's security policy](https://github.com/hkdb/aerion/security/policy). Upstream's contact address and response commitments apply to upstream, not to Mailven.
 
 ## Security Best Practices for Users
 
 ### OAuth Credentials
 
-If you are compiling MailPong from source:
+If you are compiling Mailven from source:
 
 1. **Never commit OAuth credentials** to version control
 2. Use the `.env.example` file as a template and create your own `.env` file
@@ -24,7 +24,7 @@ If you are compiling MailPong from source:
 
 ### Email Security
 
-- MailPong stores emails locally on your device
+- Mailven stores emails locally on your device
 - Use strong passwords for your email accounts
 - Enable 2FA/MFA on your email accounts where possible
 - For Gmail/Google Workspace: Use App-Specific Passwords or OAuth
@@ -37,7 +37,7 @@ If you are compiling MailPong from source:
 
 ## Security Features
 
-MailPong includes the following security measures:
+Mailven includes the following security measures:
 
 - **HTML Sanitization**: All HTML email content is sanitized before display to prevent XSS attacks
 - **OAuth 2.0**: Secure authentication for Gmail and other OAuth-supporting providers
@@ -46,5 +46,5 @@ MailPong includes the following security measures:
 
 ## Known Limitations
 
-- MailPong is currently in early stage active development
+- Mailven is currently in early stage active development
 - Use at your own risk for sensitive communications

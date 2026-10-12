@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/database"
+	"github.com/caseylabs/mailven/internal/database"
 	"github.com/google/uuid"
 )
 

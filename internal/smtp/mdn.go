@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/message"
+	"github.com/caseylabs/mailven/internal/message"
 )
 
 // MDNDisposition represents the disposition type for an MDN
@@ -76,7 +76,7 @@ func BuildMDN(originalMsg *message.Message, fromName, fromEmail string, disposit
 	buf.WriteString(fmt.Sprintf("--%s\r\n", boundary))
 	buf.WriteString("Content-Type: message/disposition-notification\r\n")
 	buf.WriteString("\r\n")
-	fmt.Fprintf(&buf, "Reporting-UA: MailPong/%s\r\n", ClientVersion)
+	fmt.Fprintf(&buf, "Reporting-UA: Mailven/%s\r\n", ClientVersion)
 	if originalMsg.MessageID != "" {
 		buf.WriteString(fmt.Sprintf("Original-Message-ID: %s\r\n", originalMsg.MessageID))
 	}
@@ -91,7 +91,7 @@ func BuildMDN(originalMsg *message.Message, fromName, fromEmail string, disposit
 	return buf.Bytes(), nil
 }
 
-// ClientVersion is the MailPong release version reported in the MDN
+// ClientVersion is the Mailven release version reported in the MDN
 // Reporting-UA field. The app sets it at startup.
 var ClientVersion = "dev"
 

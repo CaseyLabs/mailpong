@@ -4,10 +4,10 @@
 extern void goNotificationCallback(char *accountId, char *folderId, char *threadId);
 
 // Delegate that handles notification interactions and foreground presentation
-@interface MailPongNotificationDelegate : NSObject <UNUserNotificationCenterDelegate>
+@interface MailvenNotificationDelegate : NSObject <UNUserNotificationCenterDelegate>
 @end
 
-@implementation MailPongNotificationDelegate
+@implementation MailvenNotificationDelegate
 
 - (void)userNotificationCenter:(UNUserNotificationCenter *)center
 didReceiveNotificationResponse:(UNNotificationResponse *)response
@@ -40,7 +40,7 @@ didReceiveNotificationResponse:(UNNotificationResponse *)response
 
 @end
 
-static MailPongNotificationDelegate *notifDelegate = nil;
+static MailvenNotificationDelegate *notifDelegate = nil;
 
 // setupNotifications initializes UNUserNotificationCenter and requests authorization.
 // Dispatches to the main queue since UNUserNotificationCenter delegate must be
@@ -48,16 +48,16 @@ static MailPongNotificationDelegate *notifDelegate = nil;
 void setupNotifications(void) {
     dispatch_async(dispatch_get_main_queue(), ^{
         UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
-        notifDelegate = [[MailPongNotificationDelegate alloc] init];
+        notifDelegate = [[MailvenNotificationDelegate alloc] init];
         center.delegate = notifDelegate;
 
         [center requestAuthorizationWithOptions:(UNAuthorizationOptionAlert | UNAuthorizationOptionSound)
                               completionHandler:^(BOOL granted, NSError *error) {
             if (error != nil) {
-                NSLog(@"[MailPong] Notification authorization error: %@", error);
+                NSLog(@"[Mailven] Notification authorization error: %@", error);
                 return;
             }
-            NSLog(@"[MailPong] Notification authorization granted: %d", granted);
+            NSLog(@"[Mailven] Notification authorization granted: %d", granted);
         }];
     });
 }
@@ -95,7 +95,7 @@ void showNotification(const char *title, const char *body,
             addNotificationRequest:request
              withCompletionHandler:^(NSError *error) {
                 if (error != nil) {
-                    NSLog(@"[MailPong] Failed to deliver notification: %@", error);
+                    NSLog(@"[Mailven] Failed to deliver notification: %@", error);
                 }
             }];
     });

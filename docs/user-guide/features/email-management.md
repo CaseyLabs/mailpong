@@ -4,14 +4,14 @@ sidebar_position: 2
 
 # Email Management
 
-MailPong provides essential tools to manage your email efficiently.
+Mailven provides essential tools to manage your email efficiently.
 
 ## Chat Mail
 
 The mail section shows email as chats. Each chat is one email thread, listed by the people in it with their avatar and the subject; a long subject wraps onto a second line. Subjects in the chat list and chat view leave out reply and forward prefixes such as "Re:" and "Fwd:". Turn off **Hide message preview** in Settings to also show the latest line. An unread chat has a bold title and a dot; the chat list and chat view show no unread counts, while the folder sidebar keeps them.
 
 - **List header** - The scope menu (all inboxes, one account's inbox, or the folder sidebar) sits on the left, with **Refresh** and **Compose** on the right; in a narrow list Compose shows its icon only. Below them are **Search chats** and the filters. Hover **Refresh** to see when the accounts last synced.
-- **List filters** - A single row of text tabs: All, Unread, Low priority, and Snoozed. The active tab is bold with an underline. Low priority and Snoozed are unavailable while searching. Under All, pinned chats come first, then Chats, then a **Low priority** group for newsletters and bulk mail. Each group lists all its rows; **Show fewer** below a group trims it to its first three (plus the open chat if it is further down), and **N more** (or **Show more**) brings the rest back. Click a group's header to collapse or expand it. MailPong remembers each group's state across restarts; Low priority starts collapsed. The Low priority header also offers **Archive all** (undoable) and **Mark all read**.
+- **List filters** - A single row of text tabs: All, Unread, Low priority, and Snoozed. The active tab is bold with an underline. Low priority and Snoozed are unavailable while searching. Under All, pinned chats come first, then Chats, then a **Low priority** group for newsletters and bulk mail. Each group lists all its rows; **Show fewer** below a group trims it to its first three (plus the open chat if it is further down), and **N more** (or **Show more**) brings the rest back. Click a group's header to collapse or expand it. Mailven remembers each group's state across restarts; Low priority starts collapsed. The Low priority header also offers **Archive all** (undoable) and **Mark all read**.
 - **Thread view** - Messages appear as chat bubbles, with your replies on the right. Quoted history and signatures are hidden behind a faint "⋯" marker at the end of the text. Newsletters and other rich mail show as cards that expand into the full message; encrypted or signed mail, and any message after **Show original**, renders in full. A valid signature or encryption shows as a small badge in the message's meta line; problems such as an unknown signer or a bad signature show as a colored banner above the message.
 - **Reply box** - A reply box stays docked at the bottom of the open chat. Typed text is saved as a draft. A line above the field shows "Reply to:" and who gets the reply: **All** followed by how many people that reaches (hover for addresses), or the sender's name. Click it to switch between the two; when both reach the same person it just shows the name. Then comes "Topic:" and the subject, cut short when it is long, and on the right "from" the alias you send as, or the account name in the unified inbox. Below it, one rounded field holds **Attach**, the text, **Open in full composer**, and **Send**, which fills in once there is something to send. A "⋯" marker at the end of a message shows or hides its quoted text.
 - **Top bar** - One row. The left side names the chat's people (the first six, then "+N"; hover for addresses), with the subject below, or, in a sender chat with more than one subject, how many subjects and messages it holds. The right side holds **Compose** (when the open chat covers the list in a medium-width window), **Archive**, **Delete**, Snooze, Pin, and the ⋯ menu. The ⋯ menu holds Forward, Spam, and Mark read/unread, plus Reply and Reply All in a single-message chat; otherwise reply from the reply box or a message. **Open in full composer** is an icon button in the reply box and moves the reply box's draft to the full composer. On a narrow pane the labelled buttons show icons only and Pin moves into the ⋯ menu. **Delete** always acts on the whole chat.
@@ -113,7 +113,7 @@ Then apply any action - it will apply to all selected messages.
 
 ## Swipe Gestures
 
-MailPong has some basic swipe gestures:
+Mailven has some basic swipe gestures:
 
 - Right: select message
 - Left: delete message
@@ -159,9 +159,9 @@ If you need to see only messages that are either unread, starred, or with attach
 
 ### Automatic Sync
 
-MailPong periodically checks for new mail. The sync interval can be adjusted in settings.
+Mailven periodically checks for new mail. The sync interval can be adjusted in settings.
 
-MailPong also holds IDLE connections for push e-mail: one on the Inbox and one on the Sent folder per account. New e-mail in the Inbox triggers a sync of that account's core folders, and mail sent from another client shows up in Sent (and its chat) within seconds.
+Mailven also holds IDLE connections for push e-mail: one on the Inbox and one on the Sent folder per account. New e-mail in the Inbox triggers a sync of that account's core folders, and mail sent from another client shows up in Sent (and its chat) within seconds.
 
 ### Manual Sync
 
@@ -193,7 +193,7 @@ Adjust how much space each message takes in the list:
 
 ## Remote Images
 
-For privacy, MailPong blocks remote images in emails by default. These images can be used to track when you open an email.
+For privacy, Mailven blocks remote images in emails by default. These images can be used to track when you open an email.
 
 To load images in a specific message:
 - Click the small **Load Images** button above the message body or press `Ctrl+L`
@@ -206,7 +206,7 @@ To always load images from a sender:
 
 ## Tracking Element Removal
 
-MailPong automatically removes common tracking elements from emails:
+Mailven automatically removes common tracking elements from emails:
 - Tracking pixels (1x1 invisible images)
 - Known tracking parameters in links
 

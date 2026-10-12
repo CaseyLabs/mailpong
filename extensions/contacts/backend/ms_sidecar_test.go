@@ -3,7 +3,7 @@ package backend
 import (
 	"testing"
 
-	"github.com/caseylabs/mailpong/internal/contact"
+	"github.com/caseylabs/mailven/internal/contact"
 )
 
 // Bug M-C step 2: sidecar persists email types + URL list across calls.

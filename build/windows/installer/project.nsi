@@ -32,9 +32,9 @@ Unicode true
 ####
 ## Include the wails tools
 ####
-; Fixed uninstall key so MailPong never collides with an Aerion install
+; Fixed uninstall key so Mailven never collides with an Aerion install
 ; (the Wails default would be "<CompanyName><ProductName>").
-!define UNINST_KEY_NAME "MailPong"
+!define UNINST_KEY_NAME "Mailven"
 !include "wails_tools.nsh"
 
 # The version information for this two must consist of 4 parts
@@ -102,7 +102,7 @@ Section
     !insertmacro wails.associateFiles
     !insertmacro wails.associateCustomProtocols
 
-    ; Register as a Windows Mail client so MailPong appears in
+    ; Register as a Windows Mail client so Mailven appears in
     ; Settings → Default Apps → Email (alongside Outlook/Thunderbird).
     SetRegView 64
     WriteRegStr HKLM "SOFTWARE\Clients\Mail\${INFO_PRODUCTNAME}" "" "${INFO_PRODUCTNAME}"

@@ -1,11 +1,11 @@
-# Contributing to MailPong
+# Contributing to Mailven
 
-MailPong is an independent project derived from [Aerion](https://github.com/hkdb/aerion). This repository is the home of MailPong; it is not a fork of Aerion on GitHub. Aerion's own contribution rules apply only to submissions made to Aerion.
+Mailven is an independent project derived from [Aerion](https://github.com/hkdb/aerion). This repository is the home of Mailven; it is not a fork of Aerion on GitHub. Aerion's own contribution rules apply only to submissions made to Aerion.
 
 ## Workflow
 
 - Keep changes focused and explain their purpose.
-- Use [MailPong's issues](https://github.com/caseylabs/mailpong/issues) for bugs, ideas, and questions. If a bug also exists in Aerion, mention it; upstream fixes may be cherry-picked (see below).
+- Use [Mailven's issues](https://github.com/CaseyLabs/mailven/issues) for bugs, ideas, and questions. If a bug also exists in Aerion, mention it; upstream fixes may be cherry-picked (see below).
 - Base changes on `main` unless the task specifies another target.
 - Describe the behavior change, relevant issues, checks performed, and known limitations. Include screenshots for visible UI changes when useful.
 - Use descriptive commit messages with prefixes such as `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, and `chore:`.
@@ -15,8 +15,8 @@ MailPong is an independent project derived from [Aerion](https://github.com/hkdb
 Use Go 1.26, Node.js 24 (matching CI), and the Wails v2 CLI. On Linux, install GTK 3 and WebKitGTK 4.1 development libraries.
 
 ```bash
-git clone https://github.com/caseylabs/mailpong.git
-cd mailpong
+git clone https://github.com/CaseyLabs/mailven.git
+cd mailven
 go mod download
 cd frontend
 npm ci
@@ -27,7 +27,7 @@ make dev
 
 For OAuth testing, copy `.env.example` to `.env` and configure your own credentials. `.env.local` overrides `.env`. Do not commit credentials or include private mail data in logs or issues.
 
-`make dev` uses the same data directory (`~/.local/share/mailpong` on Linux) and OS keyring as a native build. Refresh tokens belong to the OAuth client that issued them, so after the client ID in `.env`/`.env.local` changes, or for accounts added by a build with other credentials, sync fails with `token refresh failed: unauthorized_client`. Re-authorize the account once in the dev app (edit it in Settings → Accounts, then **Re-authorize**) to fix it.
+`make dev` uses the same data directory (`~/.local/share/mailven` on Linux) and OS keyring as a native build. Refresh tokens belong to the OAuth client that issued them, so after the client ID in `.env`/`.env.local` changes, or for accounts added by a build with other credentials, sync fails with `token refresh failed: unauthorized_client`. Re-authorize the account once in the dev app (edit it in Settings → Accounts, then **Re-authorize**) to fix it.
 
 `make dev` always renders the Dark theme, whatever theme is saved in Settings. Theme choices are still saved and apply in production builds.
 
@@ -50,6 +50,6 @@ The UI is English-only; see [docs/LANGUAGE.md](docs/LANGUAGE.md) for how strings
 
 ## Aerion Upstream and License
 
-Upstream Aerion fixes can be cherry-picked into MailPong. In a clone that lacks the remote, run `git remote add upstream https://github.com/hkdb/aerion.git`, then `git fetch upstream` and `git cherry-pick <commit>`. Renamed paths and identifiers can make these conflict, so resolve them by hand. For changes meant for Aerion itself, consult Aerion's current contribution rules separately.
+Upstream Aerion fixes can be cherry-picked into Mailven. In a clone that lacks the remote, run `git remote add upstream https://github.com/hkdb/aerion.git`, then `git fetch upstream` and `git cherry-pick <commit>`. Renamed paths and identifiers can make these conflict, so resolve them by hand. For changes meant for Aerion itself, consult Aerion's current contribution rules separately.
 
 Replace "Aerion" only where it names this app. Keep it in attribution, history, `LICENSE`, `archive/`, statements of origin, and the persisted legacy identifiers listed in [AGENTS.md](AGENTS.md). Preserve the repository's Apache License 2.0 terms and the [NOTICE](NOTICE).

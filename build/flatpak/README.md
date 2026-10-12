@@ -1,11 +1,11 @@
-# Flatpak Packaging for MailPong
+# Flatpak Packaging for Mailven
 
-This directory contains files for building and distributing MailPong as a Flatpak.
+This directory contains files for building and distributing Mailven as a Flatpak.
 
 ## Files
 
-- `io.github.caseylabs.MailPong-dev.yml` - Dev manifest (packages pre-built host binary, no compilation)
-- `io.github.caseylabs.MailPong.metainfo.xml` - AppStream metadata
+- `io.github.caseylabs.Mailven-dev.yml` - Dev manifest (packages pre-built host binary, no compilation)
+- `io.github.caseylabs.Mailven.metainfo.xml` - AppStream metadata
 - `build-flatpak.sh` - Dev build script (uses `-dev.yml`; `--install` also installs the result)
 - `build-local.sh` - From-source local build script (uses flathub manifest, which builds its pinned release rather than this checkout)
 - `test-build.sh` - CI build test script (Docker container)
@@ -47,7 +47,7 @@ The local-checkout build also needs the host build prerequisites listed in [the 
 
 ### Build and install this checkout
 
-This builds the Linux binary on the host, packages it with the local dev manifest, installs it into your user Flatpak scope, and writes a bundle to `build/bin/MailPong-dev.flatpak`.
+This builds the Linux binary on the host, packages it with the local dev manifest, installs it into your user Flatpak scope, and writes a bundle to `build/bin/Mailven-dev.flatpak`.
 
 ```bash
 make flatpak-install
@@ -56,7 +56,7 @@ make flatpak-install
 Run the installed app with:
 
 ```bash
-flatpak run io.github.caseylabs.MailPong
+flatpak run io.github.caseylabs.Mailven
 ```
 
 `make flatpak-dev` runs the same local-checkout build but only writes the bundle; it does not install it.
@@ -87,13 +87,13 @@ sudo dnf install libappstream-glib  # Fedora
 sudo apt install appstream-util      # Ubuntu/Debian
 
 # Validate (from project root)
-appstream-util validate build/flatpak/io.github.caseylabs.MailPong.metainfo.xml
+appstream-util validate build/flatpak/io.github.caseylabs.Mailven.metainfo.xml
 ```
 
 Validate the desktop file:
 
 ```bash
-desktop-file-validate build/linux/io.github.caseylabs.MailPong.desktop
+desktop-file-validate build/linux/io.github.caseylabs.Mailven.desktop
 ```
 
 ## Submitting to Flathub

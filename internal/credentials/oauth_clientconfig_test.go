@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/caseylabs/mailpong/internal/database"
+	"github.com/caseylabs/mailven/internal/database"
 )
 
 func newTestStore(t *testing.T) (*Store, *database.DB) {
