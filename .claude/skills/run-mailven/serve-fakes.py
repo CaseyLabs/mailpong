@@ -1,4 +1,4 @@
-# Serves this directory on 127.0.0.1:8765 so the dev page can fetch screenshot-fakes.js.
+# Serves this directory on 127.0.0.1:8765 so the dev page can fetch the fake scripts (screenshot-fakes.js, composer-fakes.js).
 import functools, http.server, pathlib
 
 class Handler(http.server.SimpleHTTPRequestHandler):

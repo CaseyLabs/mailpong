@@ -125,13 +125,10 @@ When finished, put back anything you changed (see Gotchas), close the tab, then:
   because its exit animation waits on a frame. The dialog guard stays on and
   swallows keyboard shortcuts, so reload the page (and reinstall any binding
   fakes) after closing a dialog.
-- **Faking the composer.** The composer needs `GetAllAccountIdentities`
-  (`[{ account: {id, name, email, noOutgoingServer: false}, identities: [...] }]`)
-  or From stays empty. `SaveDraft` must return `{ draft: { id, syncStatus } }`;
-  any other shape leaves no draft ID, and the main-window composer then sends
-  at once without the undo delay. A detached-composer page (`/composer.html`)
-  has no `window.runtime` or `window.go.app.App` of its own: install both as
-  `Proxy` fakes in `addInitScript`. Scope locators to
+- **Faking the composer.** Use `composer-fakes.js` (see
+  [Composer and undo-send checks](#composer-and-undo-send-checks)) rather than
+  hand-written fakes: a `SaveDraft` of the wrong shape makes the composer send
+  at once with no undo, which looks like an app bug. Scope locators to
   `getByRole('region', { name: 'Email composer' })` (the chat reply box has
   its own **Send**) and pick the editor with `[contenteditable=true]:visible`.
 - **Stores can be driven from the page.** `await import('/src/lib/stores/settings.svelte.ts')`
@@ -247,6 +244,24 @@ session, so rebuild it from the clean checkout first.
   properties of null (reading 'nodes')` from the Svelte copy bundled in `/wails/ipc.js`.
 - On a cold Vite the faked chat rows can mount more than 8 s after load; in your own
   scripts wait for `.chat-row` (`frame.waitForSelector`) rather than a fixed delay.
+
+### Composer and undo-send checks
+
+```bash
+node .claude/skills/run-mailven/undo-send-check.js "$SCRATCH"   # dev server and serve-fakes.py running; about a minute
+```
+
+It prints PASS/FAIL for chat reply undo, the main composer's Undo toast, and
+the detached composer's countdown (Undo, Send now), each with the fake binding
+log, and exits non-zero on a failure. Chat screenshots cover the Accounts
+column both ways.
+
+For your own composer checks, use `composer-fakes.js`. Its header gives both
+uses: `__installComposerFakes(w)` after `__installFakes(w)` in the main
+window, or `page.addInitScript({ path })` before `/composer.html`, which in
+a browser has no `window.go` or `window.runtime` of its own. Every faked call
+lands in `w.__log`. Queued sends fire after `w.__sendDelay` ms (default
+10000) through `send:finished`. Nothing is sent or saved.
 
 ## Retaking the README screenshot
 
