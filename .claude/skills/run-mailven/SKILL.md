@@ -125,6 +125,15 @@ When finished, put back anything you changed (see Gotchas), close the tab, then:
   because its exit animation waits on a frame. The dialog guard stays on and
   swallows keyboard shortcuts, so reload the page (and reinstall any binding
   fakes) after closing a dialog.
+- **Faking the composer.** The composer needs `GetAllAccountIdentities`
+  (`[{ account: {id, name, email, noOutgoingServer: false}, identities: [...] }]`)
+  or From stays empty. `SaveDraft` must return `{ draft: { id, syncStatus } }`;
+  any other shape leaves no draft ID, and the main-window composer then sends
+  at once without the undo delay. A detached-composer page (`/composer.html`)
+  has no `window.runtime` or `window.go.app.App` of its own: install both as
+  `Proxy` fakes in `addInitScript`. Scope locators to
+  `getByRole('region', { name: 'Email composer' })` (the chat reply box has
+  its own **Send**) and pick the editor with `[contenteditable=true]:visible`.
 - **Stores can be driven from the page.** `await import('/src/lib/stores/settings.svelte.ts')`
   returns the app's own module instance, so its setters (for example
   `setChatAutoAdvance`) change the running app. They also save the setting, so

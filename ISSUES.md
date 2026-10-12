@@ -23,8 +23,7 @@ has not yet been confirmed against the code.
   account's last sync error lives only in memory, so it is lost on restart
   (contact sources keep theirs in `contact_sources.last_error`). Persisting it
   needs a schema migration for an `accounts.last_sync_error` column.
-
-- **A5 low** `internal/sync/fetch.go:259` and `:815`: cancelling a sync (found
+- **A6 low** `internal/sync/fetch.go:259` and `:815`: cancelling a sync (found
   in the 2026-10-12 Flatpak debug log) logs four warnings: "Failed to read
   body literal" (`use of closed network connection`), "Incomplete message
   body, not storing", "Body literal ended early" and "Batch fetch failed with
@@ -101,4 +100,5 @@ has not yet been confirmed against the code.
 
 Format: `- symptom: workaround (count)`. Promote to AGENTS.md or a skill and delete the line when a problem recurs or proves costly.
 
-- None yet.
+- Claude-in-Chrome tab stops answering (CDP timeout) during a long UI check: switch to the headless Playwright path (`pw.js`) (1)
+- `rm` in the agent shell is a confirming wrapper that aborts when non-interactive: use `git rm` for tracked files, `command rm` otherwise (1)
