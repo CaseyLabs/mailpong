@@ -24,6 +24,13 @@ has not yet been confirmed against the code.
   (contact sources keep theirs in `contact_sources.last_error`). Persisting it
   needs a schema migration for an `accounts.last_sync_error` column.
 
+- **A5 low** `internal/sync/fetch.go:259` and `:815`: cancelling a sync (found
+  in the 2026-10-12 Flatpak debug log) logs four warnings: "Failed to read
+  body literal" (`use of closed network connection`), "Incomplete message
+  body, not storing", "Body literal ended early" and "Batch fetch failed with
+  non-connection error" (`context canceled`). Nothing is wrong, but an
+  intentional cancel should log at debug, not warn, so real warnings stand out.
+
 ### Contacts
 
 - **C12 medium** contacts backend: EXT_RULES R1, R2, R5 and R6 (see A4).
