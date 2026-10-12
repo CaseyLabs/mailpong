@@ -56,6 +56,13 @@ DESTDIR ?=
 # Platform detection
 UNAME_S := $(shell uname -s)
 
+# Wails names the macOS bundle from wails.json, including case.
+WAILS_APP_NAME := $(shell awk -F '"' '/^[[:space:]]*"name"[[:space:]]*:/ {print $$4; exit}' wails.json)
+ifeq ($(strip $(WAILS_APP_NAME)),)
+$(error Cannot read the app name from wails.json)
+endif
+MACOS_BUNDLE := $(WAILS_APP_NAME).app
+
 # Default target
 all: build
 
@@ -74,10 +81,10 @@ build: credentials
 	fi
 	@wails build -tags $(BUILD_TAGS)
 ifeq ($(UNAME_S),Darwin)
-	@echo "Bundling LICENSE, NOTICE and THIRD_PARTY_NOTICES.md into Mailven.app..."
-	cp LICENSE NOTICE THIRD_PARTY_NOTICES.md build/bin/Mailven.app/Contents/Resources/
-	@echo "Ad-hoc signing Mailven.app (required for macOS notifications)..."
-	codesign --force --deep --sign - build/bin/Mailven.app
+	@echo "Bundling LICENSE, NOTICE and THIRD_PARTY_NOTICES.md into $(MACOS_BUNDLE)..."
+	cp LICENSE NOTICE THIRD_PARTY_NOTICES.md build/bin/$(MACOS_BUNDLE)/Contents/Resources/
+	@echo "Ad-hoc signing $(MACOS_BUNDLE) (required for macOS notifications)..."
+	codesign --force --deep --sign - build/bin/$(MACOS_BUNDLE)
 endif
 
 # Build for Linux specifically
@@ -244,14 +251,14 @@ uninstall-linux:
 
 # Install Mailven on macOS
 install-darwin: build
-	@echo "Installing Mailven.app to /Applications..."
-	@if [ -d "/Applications/Mailven.app" ]; then \
+	@echo "Installing $(MACOS_BUNDLE) to /Applications..."
+	@if [ -d "/Applications/$(MACOS_BUNDLE)" ]; then \
 		echo "Removing existing installation..."; \
-		rm -rf "/Applications/Mailven.app"; \
+		rm -rf "/Applications/$(MACOS_BUNDLE)"; \
 	fi
-	cp -R "build/bin/Mailven.app" "/Applications/"
+	cp -R "build/bin/$(MACOS_BUNDLE)" "/Applications/"
 	@echo "Re-signing installed copy..."
-	codesign --force --deep --sign - "/Applications/Mailven.app"
+	codesign --force --deep --sign - "/Applications/$(MACOS_BUNDLE)"
 	@echo ""
 	@echo "Installation complete!"
 	@echo "Mailven is now available in /Applications."
@@ -259,7 +266,7 @@ install-darwin: build
 # Uninstall Mailven from macOS
 uninstall-darwin:
 	@echo "Uninstalling Mailven from /Applications..."
-	rm -rf "/Applications/Mailven.app"
+	rm -rf "/Applications/$(MACOS_BUNDLE)"
 	@echo "Uninstallation complete!"
 
 ## Windows Installation

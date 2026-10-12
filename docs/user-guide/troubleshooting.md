@@ -186,13 +186,13 @@ Also, if you don't have desktop portal installed on your system or launch Mailve
 This happens because Mailven isn't signed with an Apple Developer certificate.
 
 **Solution 1:** Right-click and Open
-1. Right-click (or Control-click) on Mailven.app
+1. Right-click (or Control-click) on mailven.app
 2. Select "Open"
 3. Click "Open" in the dialog
 
 **Solution 2:** Remove quarantine attribute
 ```bash
-xattr -cr /Applications/Mailven.app
+xattr -cr /Applications/mailven.app
 ```
 
 ## Windows-Specific Issues

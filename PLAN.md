@@ -4,7 +4,6 @@
 Review and fix every finding in ISSUES.md on separate branches. Run `codex review --base main` (the CLI `/review` equivalent) and resolve findings before each squash merge and push. Preserve unrelated commits and files.
 
 ## Milestones
-- P1/P2: correct Flatpak shim and case-sensitive macOS bundle paths. Validate packaging commands without installing.
 - M14: preserve the reply-target draft link when splitting stale sender chats. Validate database and app regression tests.
 - A4/C12: enforce extension boundaries for contacts, using coreapi and generic kit only. Validate extension contracts and full Go tests.
 - C17: structured DAV certificate errors, background prompts, and trusted-certificate management. Validate DAV tests, frontend checks, and UI.
@@ -13,7 +12,6 @@ Review and fix every finding in ISSUES.md on separate branches. Run `codex revie
 - Recurring tooling: incorporate reliable alternatives in current guidance and clear obsolete tallies.
 
 ## Progress
-- [ ] P1/P2
 - [ ] M14
 - [ ] A4/C12
 - [ ] C17
@@ -30,3 +28,5 @@ Review and fix every finding in ISSUES.md on separate branches. Run `codex revie
 
 ## Outcomes & Retrospective
 A6: focused and full sync tests passed; `codex review --base main` caught a connection cleanup gap, fixed; repeat review passed. Review logs: `/tmp/mailven-issues-review/A6*.log`.
+
+P1/P2: OAuth tests and Darwin dry runs passed; final `codex review --base main` passed after correcting remaining guide paths and removing the Node dependency from uninstall. Logs: `/tmp/mailven-issues-review/P*.log`.

@@ -57,12 +57,9 @@ func init() {
 }
 
 func loadFromShim() {
-	// Search for the shim binary in known locations
-	paths := []string{
-		"/app/lib/mailven/mailven-creds", // Flatpak
-	}
-
-	// Also check next to the main binary
+	// The optional shim lives next to the main binary, including /app/bin
+	// in Flatpak builds. No manifest installs a /app/lib/mailven shim.
+	var paths []string
 	if exe, err := os.Executable(); err == nil {
 		paths = append(paths, filepath.Join(filepath.Dir(exe), "mailven-creds"))
 	}

@@ -122,5 +122,4 @@ See [`flathub/README.md`](flathub/README.md) for complete Flathub submission ins
 The manifests bundle no OAuth credentials. A maintainer who wants Flatpak builds
 with built-in Google or Microsoft sign-in can add a `type: file` source that
 downloads a credentials binary from a release and an `install -Dm755` build
-command for it, the way earlier Aerion manifests did. Nothing here ships one
-today.
+command for it, the way earlier Aerion manifests did. Install it next to the app as `/app/bin/mailven-creds`, where the runtime looks for it. Nothing here ships one today.

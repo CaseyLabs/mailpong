@@ -38,8 +38,8 @@ build with `make build`.
 
 Mailven installs next to Aerion without sharing any of its state:
 
-- macOS: bundle ID `io.github.caseylabs.Mailven`, app `Mailven.app` (Wails names the bundle after
-  the `wails.json` `name`; macOS volumes are case-insensitive by default, so `make` uses `Mailven.app`).
+- macOS: bundle ID `io.github.caseylabs.Mailven`, app `mailven.app` (Wails names the bundle after
+  the `wails.json` `name`; the Makefile derives the same spelling for case-sensitive volumes).
 - Windows: install directory `Program Files\Mailven`, uninstall key `HKLM\Software\Microsoft\Windows\CurrentVersion\Uninstall\Mailven`
   (fixed by `UNINST_KEY_NAME` in `installer/project.nsi`), installer `build/bin/mailven-<arch>-installer.exe`.
 - Code signing (Windows Authenticode) and macOS notarization are not set up yet; macOS builds are only
