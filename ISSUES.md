@@ -19,12 +19,6 @@ has not yet been confirmed against the code.
   imports: EXT_RULES R1, R2 and R5. The bridge gets a token closure and the
   core DB, and the extension imports `internal/*`. This is architectural
   (see C12).
-- **A6 low** `internal/sync/fetch.go:259` and `:815`: cancelling a sync (found
-  in the 2026-10-12 Flatpak debug log) logs four warnings: "Failed to read
-  body literal" (`use of closed network connection`), "Incomplete message
-  body, not storing", "Body literal ended early" and "Batch fetch failed with
-  non-connection error" (`context canceled`). Nothing is wrong, but an
-  intentional cancel should log at debug, not warn, so real warnings stand out.
 
 ### Contacts
 

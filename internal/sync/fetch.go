@@ -214,7 +214,7 @@ func (e *Engine) fetchMessageBodiesBatch(ctx context.Context, client *imapclient
 		// Check for cancellation between messages
 		if ctx.Err() != nil {
 			fetchCmd.Close()
-			e.log.Warn().
+			e.log.Debug().
 				Int("fetched", len(results)).
 				Int("requested", len(uidToMessageID)).
 				Msg("Fetch cancelled, returning partial results")
@@ -253,6 +253,11 @@ func (e *Engine) fetchMessageBodiesBatch(ctx context.Context, client *imapclient
 				if data.Literal != nil {
 					rawBytes, readErr = readLiteral(data.Literal, maxMessageSize)
 					if readErr != nil {
+						if err := ctx.Err(); err != nil {
+							client.Close()
+							e.log.Debug().Err(err).Msg("Body fetch cancelled during literal read")
+							return results, err
+						}
 						e.log.Warn().
 							Err(readErr).
 							Uint32("uid", uint32(fetchedUID)).
@@ -348,6 +353,12 @@ func (e *Engine) fetchMessageBodiesBatch(ctx context.Context, client *imapclient
 		}
 	}
 
+	if err := ctx.Err(); err != nil {
+		client.Close()
+		e.log.Debug().Err(err).Msg("Body fetch cancelled")
+		return results, err
+	}
+
 	if streamBroken {
 		e.log.Warn().
 			Int("fetched", len(results)).
@@ -361,6 +372,10 @@ func (e *Engine) fetchMessageBodiesBatch(ctx context.Context, client *imapclient
 	}
 
 	if err := fetchCmd.Close(); err != nil {
+		if cancelErr := ctx.Err(); cancelErr != nil {
+			e.log.Debug().Err(cancelErr).Msg("Body fetch cancelled while closing command")
+			return results, cancelErr
+		}
 		e.log.Warn().Err(err).
 			Int("fetched", len(results)).
 			Int("requested", len(uidToMessageID)).
@@ -776,6 +791,11 @@ func (e *Engine) FetchBodiesInBackground(ctx context.Context, accountID, folderI
 
 		// Step 4: Fetch bodies via IMAP - single round-trip for all messages in batch
 		bodies, fetchErr := e.fetchMessageBodiesBatch(ctx, conn.Client().RawClient(), uidToMessageID)
+		if err := ctx.Err(); err != nil {
+			e.log.Debug().Err(err).Msg("Batch body fetch cancelled")
+			e.pool.Discard(conn)
+			return err
+		}
 		if errors.Is(fetchErr, errStreamBroken) {
 			// Keep the partial results (retrying would refetch the cut
 			// message) and continue on a fresh connection.

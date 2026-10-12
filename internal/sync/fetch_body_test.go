@@ -2,9 +2,11 @@ package sync
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"github.com/rs/zerolog"
 	"net"
 	"strings"
 	"testing"
@@ -74,5 +76,43 @@ func TestFetchMessageBodiesBatch_IncompleteBodies(t *testing.T) {
 		if !tc.wantIncomplete && !strings.Contains(r.BodyText, "hello") {
 			t.Errorf("uid %d body text = %q, want the message body", tc.uid, r.BodyText)
 		}
+	}
+}
+
+func TestFetchMessageBodiesBatch_CancellationDoesNotWarn(t *testing.T) {
+	for _, cancelDuringRead := range []bool{false, true} {
+		t.Run(fmt.Sprint(cancelDuringRead), func(t *testing.T) {
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			clientConn, serverConn := net.Pipe()
+			client := imapclient.New(clientConn, nil)
+			t.Cleanup(func() { client.Close() })
+			go func() {
+				defer serverConn.Close()
+				fmt.Fprint(serverConn, "* OK [CAPABILITY IMAP4rev1] ready\r\n")
+				if _, err := bufio.NewReader(serverConn).ReadString('\n'); err != nil {
+					return
+				}
+				if cancelDuringRead {
+					fmt.Fprint(serverConn, "* 1 FETCH (UID 1 RFC822.SIZE 100 BODY[] {100}\r\nFrom: a@exa")
+				}
+				cancel()
+			}()
+			if !cancelDuringRead {
+				cancel()
+			}
+			var logs bytes.Buffer
+			e := &Engine{log: zerolog.New(&logs)}
+			results, err := e.fetchMessageBodiesBatch(ctx, client, map[uint32]string{1: "cancelled"})
+			if !errors.Is(err, context.Canceled) {
+				t.Fatalf("error = %v, want context.Canceled", err)
+			}
+			if len(results) != 0 {
+				t.Fatalf("cancelled body returned: %v", results)
+			}
+			if strings.Contains(logs.String(), `"level":"warn"`) || strings.Contains(logs.String(), `"level":"error"`) {
+				t.Fatalf("cancellation logged a warning/error: %s", &logs)
+			}
+		})
 	}
 }
