@@ -46,6 +46,10 @@ If emails you expect to see aren't showing up:
 4. **Sync Folder** - Right-click the folder in the sidebar and choose **Sync Folder**
 5. **Force Re-sync** - If that doesn't help, right-click the folder and choose **Force Re-sync**
 
+### "Sync error" under an account
+
+When an account's sync fails, a red **Sync error** line appears under its name in the sidebar. Click it to open the sync status dialog, which shows the full error and, for sign-in failures, a short explanation. Choose **Edit account** there to re-authorize the account or change its OAuth client. Hover over the line to see the raw error as a tooltip. The error clears after the next successful sync and is not kept when Mailven restarts.
+
 ### Slow initial sync
 
 First-time sync of large mailboxes can take several minutes. The sync progress is shown in the status bar. Let it complete before expecting all messages.

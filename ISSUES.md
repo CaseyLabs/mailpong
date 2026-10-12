@@ -19,6 +19,10 @@ has not yet been confirmed against the code.
   imports: EXT_RULES R1, R2 and R5. The bridge gets a token closure and the
   core DB, and the extension imports `internal/*`. This is architectural
   (see C12).
+- **A5 low** `frontend/src/lib/stores/accounts.svelte.ts` `syncErrors`: a mail
+  account's last sync error lives only in memory, so it is lost on restart
+  (contact sources keep theirs in `contact_sources.last_error`). Persisting it
+  needs a schema migration for an `accounts.last_sync_error` column.
 
 ### Contacts
 
