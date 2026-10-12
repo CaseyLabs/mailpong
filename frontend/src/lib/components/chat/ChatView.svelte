@@ -73,18 +73,19 @@
   const target = $derived(replyTarget(thread.messages, myEmails))
   // The account's identity addresses, which PrepareReply leaves out of a
   // reply; null until loaded.
-  let identities = $state<{ email: string; isDefault: boolean }[] | null>(null)
+  let identities = $state<{ email: string; name: string; isDefault: boolean }[] | null>(null)
   const identityEmails = $derived(identities ? new Set(identities.map((id) => id.email.trim().toLowerCase())) : null)
   const recipients = $derived(target ? replyRecipients(thread.messages, target.messageId, identityEmails ?? myEmails) : null)
   const targetMessage = $derived(target ? thread.messages.find((m) => m.id === target.messageId) : undefined)
   const replySubject = $derived(displaySubject(targetMessage?.subject))
+  // The non-default identity the reply goes out from, else ''.
+  const alias = $derived(targetMessage && identities ? replyAlias(targetMessage, identities) : '')
+  const account = $derived(accountStore.accounts.find((a) => a.account.id === accountId)?.account)
   // The alias the reply goes out from, else the account in the unified inbox.
-  const replyFrom = $derived.by(() => {
-    const alias = targetMessage && identities ? replyAlias(targetMessage, identities) : ''
-    if (alias) return alias
-    if (!showAccount) return ''
-    return accountStore.accounts.find((a) => a.account.id === accountId)?.account.name || ''
-  })
+  const replyFrom = $derived(alias || (showAccount ? account?.name || '' : ''))
+  // Me as a pending reply's avatar shows: the identity it goes out from, else the account.
+  const sender = $derived(identities?.find((id) => (alias ? id.email.trim() === alias : id.isDefault)))
+  const me = $derived(sender ? { name: sender.name, email: sender.email } : { name: account?.name || '', email: account?.email || '' })
   const composer = new ComposerState({ target: () => target, recipients: () => recipients })
   // The docked composer shows its own draft; hide draft copies while it has one.
   const shown = $derived(composer.draftId ? thread.messages.filter((m) => !m.isDraft) : thread.messages)
@@ -129,7 +130,7 @@
     let stale = false
     GetIdentities(account)
       .then((ids) => {
-        if (!stale) identities = ids.map((id) => ({ email: id.email, isDefault: id.isDefault }))
+        if (!stale) identities = ids.map((id) => ({ email: id.email, name: id.name, isDefault: id.isDefault }))
       })
       .catch((err) => {
         if (!stale) console.error('Failed to load identities:', err)
@@ -180,7 +181,7 @@
   })
 
   $effect(() => {
-    void contactPhotos.ensure(people.map((p) => p.email).concat(thread.messages.map((m) => m.fromEmail)))
+    void contactPhotos.ensure(people.map((p) => p.email).concat(thread.messages.map((m) => m.fromEmail), me.email))
   })
 
   $effect(() => {
@@ -364,6 +365,7 @@
           {items}
           {thread}
           {composer}
+          {me}
           accountId={accountId ?? ''}
           folderId={folderId ?? ''}
           folderType={effectiveFolderType}

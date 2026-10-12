@@ -175,9 +175,17 @@ When ready to send:
 
 The message will be sent through your email provider's SMTP server.
 
+### Undo Send
+
+Every send waits 10 seconds before it goes out, so you can take it back:
+
+- **Main window** - The composer closes at once and a "Sending in 10 seconds" notice appears with **Undo**. Undo reopens the message as you left it (in its own window if another composer is open).
+- **Pop-out composer** - The window stays open and counts down in its header, with **Undo** to return to editing and **Send now** to skip the wait.
+- **Quitting** - Messages still waiting are sent before Mailven closes.
+
 ### Send Confirmation
 
-After sending, a brief confirmation appears. If sending fails, you'll see an error message with details.
+Once the message goes out, a brief confirmation appears. If sending fails, you'll see an error message, and the message is kept in Drafts.
 
 ## Signatures
 

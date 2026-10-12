@@ -1046,6 +1046,14 @@ export function ProcessSMIMEMessage(arg1) {
   return window['go']['app']['App']['ProcessSMIMEMessage'](arg1);
 }
 
+export function QueueChatReply(arg1) {
+  return window['go']['app']['App']['QueueChatReply'](arg1);
+}
+
+export function QueueMessage(arg1, arg2, arg3) {
+  return window['go']['app']['App']['QueueMessage'](arg1, arg2, arg3);
+}
+
 export function QuitApp() {
   return window['go']['app']['App']['QuitApp']();
 }
@@ -1148,10 +1156,6 @@ export function SearchConversations(arg1, arg2, arg3, arg4, arg5, arg6) {
 
 export function SearchUnifiedInbox(arg1, arg2, arg3, arg4) {
   return window['go']['app']['App']['SearchUnifiedInbox'](arg1, arg2, arg3, arg4);
-}
-
-export function SendChatReply(arg1) {
-  return window['go']['app']['App']['SendChatReply'](arg1);
 }
 
 export function SendMessage(arg1, arg2) {
@@ -1448,6 +1452,10 @@ export function Trash(arg1) {
 
 export function Undo() {
   return window['go']['app']['App']['Undo']();
+}
+
+export function UndoSend(arg1) {
+  return window['go']['app']['App']['UndoSend'](arg1);
 }
 
 export function UnsnoozeChat(arg1, arg2) {

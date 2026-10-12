@@ -586,6 +586,28 @@ func (a *App) SendMessage(accountID string, msg smtp.ComposeMessage) error {
 	return nil
 }
 
+// QueueMessage queues a message to send after the undo delay and returns the
+// send ID for UndoSend. Its draft, if any, is deleted once the message is
+// sent and kept when sending fails. The send:finished event reports the
+// outcome.
+func (a *App) QueueMessage(accountID string, msg smtp.ComposeMessage, draftID string) string {
+	return a.sendQueue.add(func() (string, error) {
+		if draftID != "" {
+			// Keep a background draft upload from racing the send.
+			a.cancelDraftSync(draftID)
+		}
+		if err := a.SendMessage(accountID, msg); err != nil {
+			return draftID, err
+		}
+		if draftID != "" {
+			if err := a.DeleteDraft(draftID); err != nil {
+				sendLog().Warn().Err(err).Str("draftID", draftID).Msg("Failed to delete draft after send")
+			}
+		}
+		return "", nil
+	})
+}
+
 // handleExternalMailto handles a mailto URL received from a second instance.
 // Routes to inline or detached composer based on the mailto_mode setting.
 func (a *App) handleExternalMailto(rawURL string) {

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Mailven is a Messenger-style email client, that simplifies your inbox by turning emails into combined chats with the clutter removed.
+Mailven is a Messenger-style email client. It simplifies your inbox by turning emails into chats with the clutter removed.
 
 ![Mailven chat mail view](docs/ss.png)
 

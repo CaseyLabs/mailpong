@@ -60,6 +60,19 @@ export function formatTime(date: Date): string {
 }
 
 /**
+ * Format a chat bubble's timestamp
+ * - Today: clock time (formatTime)
+ * - This year: "Oct 26 10:30"
+ * - Older: "Oct 26, 2025 10:30"
+ */
+export function formatStamp(date: Date): string {
+  if (isToday(date)) {
+    return formatTime(date)
+  }
+  return `${format(date, isThisYear(date) ? 'MMM d' : 'MMM d, yyyy')} ${formatTime(date)}`
+}
+
+/**
  * Format a date for chat list rows
  * - Today: clock time (formatTime)
  * - Yesterday: "Yesterday"

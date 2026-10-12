@@ -541,6 +541,10 @@ export function ProcessPGPMessage(arg1:string):Promise<app.PGPViewResult>;
 
 export function ProcessSMIMEMessage(arg1:string):Promise<app.SMIMEViewResult>;
 
+export function QueueChatReply(arg1:app.ChatReply):Promise<string>;
+
+export function QueueMessage(arg1:string,arg2:smtp.ComposeMessage,arg3:string):Promise<string>;
+
 export function QuitApp():Promise<void>;
 
 export function ReadFileAsAttachment(arg1:string):Promise<app.ComposerAttachment>;
@@ -592,8 +596,6 @@ export function SearchContacts(arg1:string,arg2:number):Promise<Array<contact.Co
 export function SearchConversations(arg1:string,arg2:string,arg3:string,arg4:number,arg5:number,arg6:string):Promise<Array<message.ConversationSearchResult>>;
 
 export function SearchUnifiedInbox(arg1:string,arg2:number,arg3:number,arg4:string):Promise<Array<message.ConversationSearchResult>>;
-
-export function SendChatReply(arg1:app.ChatReply):Promise<void>;
 
 export function SendMessage(arg1:string,arg2:smtp.ComposeMessage):Promise<void>;
 
@@ -742,6 +744,8 @@ export function TestSMTPConnection(arg1:string,arg2:number,arg3:string,arg4:stri
 export function Trash(arg1:Array<string>):Promise<boolean>;
 
 export function Undo():Promise<string>;
+
+export function UndoSend(arg1:string):Promise<boolean>;
 
 export function UnsnoozeChat(arg1:string,arg2:string):Promise<void>;
 

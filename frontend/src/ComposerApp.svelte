@@ -31,6 +31,7 @@
 
   // Close request state - triggers Composer's close dialog
   let closeRequested = $state(false)
+  let composer = $state<ReturnType<typeof Composer>>()
 
   // Dynamic title parts from Composer
   let titleTo = $state('')
@@ -95,11 +96,13 @@
     })
 
     // Listen for shutdown request from main window
-    EventsOn('app:shutdown', (_reason: string) => {
+    EventsOn('app:shutdown', async (_reason: string) => {
       addToast({
         type: 'info',
         message: $_('toast.mainWindowClosing'),
       })
+      // A message counting down to send goes out first.
+      await composer?.flushSend()
       // Give user a moment to see the toast, then close
       setTimeout(() => {
         CloseWindow()
@@ -260,6 +263,7 @@
       </div>
     {:else if composeMode}
       <Composer
+        bind:this={composer}
         accountId={composeMode.accountId}
         initialMessage={initialMessage}
         draftId={composeMode.draftId || null}

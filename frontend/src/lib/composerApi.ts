@@ -20,6 +20,12 @@ export interface ComposerApi {
   /** Send a composed email */
   sendMessage: (accountId: string, message: smtp.ComposeMessage) => Promise<void>
 
+  /**
+   * Queue a message to send after the undo delay; returns the send ID for
+   * undoSend in $lib/stores/sendQueue (main window only).
+   */
+  queueMessage?: (accountId: string, message: smtp.ComposeMessage, draftId: string) => Promise<string>
+
   /** Search contacts for autocomplete */
   searchContacts: (query: string, limit: number) => Promise<contact.Contact[]>
 
@@ -131,6 +137,11 @@ export function createMainWindowApi(): ComposerApi {
     sendMessage: async (accountId: string, message: smtp.ComposeMessage) => {
       const { SendMessage } = await import('../../wailsjs/go/app/App.js')
       return SendMessage(accountId, message)
+    },
+
+    queueMessage: async (accountId: string, message: smtp.ComposeMessage, draftId: string) => {
+      const { QueueMessage } = await import('../../wailsjs/go/app/App.js')
+      return QueueMessage(accountId, message, draftId)
     },
 
     searchContacts: async (query: string, limit: number) => {

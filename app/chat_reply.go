@@ -39,9 +39,30 @@ type ChatDraft struct {
 // Chat reply API - Exposed to frontend via Wails bindings
 // ============================================================================
 
-// SendChatReply sends a chat reply, deletes its draft, and syncs Sent so the
+// QueueChatReply queues a chat reply to send after the undo delay and returns
+// the send ID for UndoSend. The send:finished event reports the outcome; a
+// failed reply without a draft is saved as one, whose ID the event carries.
+func (a *App) QueueChatReply(r ChatReply) (string, error) {
+	if chatReplyEmpty(r) {
+		return "", fmt.Errorf("chat reply is empty")
+	}
+	return a.sendQueue.add(func() (string, error) {
+		err := a.sendChatReply(r)
+		if err == nil || r.DraftID != "" {
+			return r.DraftID, err
+		}
+		// Keep the unsent reply so it survives a restart.
+		draftID, saveErr := a.SaveChatDraft(r)
+		if saveErr != nil {
+			sendLog().Warn().Err(saveErr).Msg("Failed to save unsent chat reply")
+		}
+		return draftID, err
+	}), nil
+}
+
+// sendChatReply sends a chat reply, deletes its draft, and syncs Sent so the
 // reply joins the thread.
-func (a *App) SendChatReply(r ChatReply) error {
+func (a *App) sendChatReply(r ChatReply) error {
 	if chatReplyEmpty(r) {
 		return fmt.Errorf("chat reply is empty")
 	}

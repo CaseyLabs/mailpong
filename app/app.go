@@ -359,6 +359,7 @@ type App struct {
 	// Chat snooze wake-up timer (app/chat.go)
 	chatStateMu   goSync.Mutex  // serializes pin/snooze read-modify-write
 	chatFlushed   chan struct{} // signaled by ChatDraftsFlushed during shutdown
+	sendQueue     *sendQueue    // sends waiting out the undo delay (app/send_queue.go)
 	snoozeMu      goSync.Mutex
 	snoozeTimer   *time.Timer
 	snoozeStopped bool
@@ -741,6 +742,7 @@ func (a *App) Startup(ctx context.Context) {
 	// Initialize undo stack (max 50 commands, 30 second timeout)
 	a.undoStack = undo.NewStack(50, 30*time.Second)
 	a.chatFlushed = make(chan struct{}, 1)
+	a.sendQueue = newSendQueue(sendDelay, func(r SendResult) { wailsRuntime.EventsEmit(a.ctx, "send:finished", r) })
 
 	// OAuth2 manager was constructed earlier (before the Auth Broker, which
 	// captures it). See the earlier guarded init above for the rationale.
@@ -927,7 +929,7 @@ func (a *App) BeforeClose(ctx context.Context) bool {
 	go func() {
 		defer recoverPanic("app", "shutdown")
 		time.Sleep(150 * time.Millisecond)
-		a.waitChatDraftsFlushed()
+		a.finishBeforeQuit()
 		wailsRuntime.Quit(a.ctx)
 	}()
 
@@ -982,7 +984,7 @@ func (a *App) CloseWindow() {
 	go func() {
 		defer recoverPanic("app", "shutdown")
 		time.Sleep(150 * time.Millisecond)
-		a.waitChatDraftsFlushed()
+		a.finishBeforeQuit()
 		wailsRuntime.Quit(a.ctx)
 	}()
 }
@@ -1002,7 +1004,7 @@ func (a *App) QuitApp() {
 	go func() {
 		defer recoverPanic("app", "shutdown")
 		time.Sleep(150 * time.Millisecond)
-		a.waitChatDraftsFlushed()
+		a.finishBeforeQuit()
 		wailsRuntime.Quit(a.ctx)
 	}()
 }
@@ -1034,6 +1036,13 @@ func (a *App) InitiateShutdown() {
 // Shutdown is called when the app is closing
 func (a *App) Shutdown(ctx context.Context) {
 	log := logging.WithComponent("app")
+
+	// Sends still waiting out the undo delay go out now (InitiateShutdown and
+	// OS-initiated quits skip finishBeforeQuit). The frontend is gone, so
+	// results aren't reported.
+	if a.sendQueue != nil {
+		a.sendQueue.flush(sendFlushWait, true)
+	}
 
 	// Broadcast shutdown to all composer windows
 	if a.ipcServer != nil {

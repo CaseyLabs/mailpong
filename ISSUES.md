@@ -77,6 +77,12 @@ has not yet been confirmed against the code.
   shows the account label (or nothing) while the reply goes out from the
   alias. Fix with a binding that returns the resolved identity.
 
+- **M16 low** `frontend/src/lib/components/chat/chatComposerState.svelte.ts`
+  `edit`: moving a failed reply back into a reply box that already has its
+  own draft keeps the box's draft and drops the reference to the reply's
+  saved draft (`p.reply.draftId`). That draft stays behind in Drafts. Fix by
+  deleting it, or by merging into it, when the box keeps its own draft.
+
 ### Packaging
 
 - **P1 low** `internal/oauth2/config.go:62`: the Flatpak shim path

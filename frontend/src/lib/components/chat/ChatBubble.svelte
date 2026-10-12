@@ -19,7 +19,7 @@
   import ChatSecurityBanners from './ChatSecurityBanners.svelte'
   import { securityStatus, TONES } from './chatSecurity'
   import { linkify, parseRecipients, displayName, displaySubject, type ReplyMode, type ThreadItem } from './chatFormat'
-  import { formatTime } from '$lib/utils/date'
+  import { formatStamp } from '$lib/utils/date'
   import type { ChatThread } from './chatThread.svelte'
 
 
@@ -73,14 +73,16 @@
   const bodyText = $derived(pgp?.bodyText ?? smime?.bodyText ?? msg.bodyText)
   const decryptedAttachments = $derived(pgp?.attachments ?? smime?.attachments)
   const hasAttachments = $derived(msg.hasAttachments || (decryptedAttachments?.length ?? 0) > 0)
-  // Bubbles keep actions beside them; wide cards and bodies overlay the corner.
-  const actionsPos = $derived(mode === 'bubble' ? `top-0 ${item.mine ? 'right-full mr-1' : 'left-full ml-1'}` : 'top-1.5 right-1.5 rounded-md bg-background/90 shadow-sm')
+  // Bubbles keep actions on their right; on my messages they sit past the
+  // message column and my avatar (gap-2 + w-8). Wide cards and bodies overlay the corner.
+  const anchorColumn = $derived(mode === 'bubble' && item.mine)
+  const actionsPos = $derived(mode === 'bubble' ? `top-0 left-full ${item.mine ? 'ml-11' : 'ml-1'}` : 'top-1.5 right-1.5 rounded-md bg-background/90 shadow-sm')
   const canDarken = $derived(getDarkMailContent() && getIsDarkActive())
   const darken = $derived(canDarken && !darkOverride)
 
   const senderName = $derived(msg.fromName || msg.fromEmail || $_('viewer.unknown'))
   const photo = $derived(contactPhotos.get(msg.fromEmail))
-  const time = $derived(formatTime(item.date))
+  const time = $derived(formatStamp(item.date))
   const security = $derived(securityStatus(msg, thread, $_))
   const badges = $derived(security.filter((l) => l.badge))
   const recipientsTitle = $derived(
@@ -131,6 +133,14 @@
   {/each}
 {/snippet}
 
+{#snippet avatar(show: boolean)}
+  <div class="w-8 shrink-0" aria-hidden="true">
+    {#if show && item.groupStart}
+      <Avatar email={msg.fromEmail} name={msg.fromName} size={32} photoData={photo?.data} photoMediaType={photo?.mediaType} />
+    {/if}
+  </div>
+{/snippet}
+
 {#snippet emailBody()}
   <div class="p-3 bg-background text-foreground">
     <EmailBody
@@ -158,7 +168,7 @@
   {onReply}
 >
   <div
-    class="group flex gap-2 {wide ? 'mx-auto w-full max-w-(--chat-stream) px-4' : 'w-full px-6'} {item.groupStart ? (mode === 'full' && !item.newDay && !item.subject ? 'mt-3 pt-3 border-t border-border' : 'mt-3') : 'mt-0.5'} {item.mine ? 'flex-row-reverse' : ''}"
+    class="group flex gap-2 {wide ? 'mx-auto w-full max-w-(--chat-stream) px-4' : 'w-full px-6'} {item.groupStart ? (mode === 'full' && !item.newDay && !item.subject ? 'mt-3 pt-3 border-t border-border' : 'mt-3') : 'mt-0.5'}"
     data-message-id={msg.id}
     tabindex="-1"
     role="article"
@@ -166,16 +176,11 @@
     onfocus={() => onFocusChange(true)}
     onblur={() => onFocusChange(false)}
   >
-    <!-- Avatar column (others only); spacer keeps grouped bubbles aligned -->
-    {#if !item.mine}
-      <div class="w-8 shrink-0" aria-hidden="true">
-        {#if item.groupStart}
-          <Avatar email={msg.fromEmail} name={msg.fromName} size={32} photoData={photo?.data} photoMediaType={photo?.mediaType} />
-        {/if}
-      </div>
-    {/if}
+    <!-- Avatar column: theirs on the left, mine on the right of the message.
+         Spacers keep every bubble on one left edge. -->
+    {@render avatar(!item.mine)}
 
-    <div class="flex flex-col min-w-0 {mode === 'bubble' ? 'max-w-[min(75%,var(--chat-bubble))]' : 'flex-1'} {item.mine ? 'items-end' : 'items-start'}">
+    <div class="flex flex-col min-w-0 {mode === 'bubble' ? 'max-w-[min(75%,var(--chat-bubble))]' : 'flex-1'} items-start">
       {#if item.groupStart || badges.length > 0}
         <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-1 mb-0.5 text-xs text-fg-tertiary" title={item.groupStart ? recipientsTitle : undefined}>
           {#if item.groupStart}
@@ -192,11 +197,13 @@
         </div>
       {/if}
 
-      <div class="flex flex-col gap-1.5 w-full {item.mine ? 'items-end' : 'items-start'}">
+      <div class="flex flex-col gap-1.5 w-full items-start">
         <ChatSecurityBanners {msg} {thread} lines={security} />
 
+        <!-- My bubble actions anchor to this column-wide box, so they clear my avatar however narrow the bubble -->
+        <div class="flex flex-col items-start w-full {anchorColumn ? 'relative' : ''}">
         <div
-          class="relative w-full rounded-2xl group-focus-visible:ring-2 group-focus-visible:ring-primary/40 {mode === 'bubble' && !bare ? (item.mine ? 'w-auto bg-bubble-own text-foreground rounded-br-md' : 'w-auto bg-muted text-foreground rounded-bl-md') : ''}"
+          class="{anchorColumn ? '' : 'relative'} w-full rounded-2xl group-focus-visible:ring-2 group-focus-visible:ring-primary/40 {mode === 'bubble' && !bare ? (item.mine ? 'w-auto bg-bubble-own text-foreground rounded-br-md' : 'w-auto bg-muted text-foreground rounded-bl-md') : ''}"
         >
           {#if notFetched && thread.bodyErrors.has(msg.id)}
             <div class="flex items-center gap-2 px-3.5 py-2 text-sm text-muted-foreground bg-muted rounded-2xl">
@@ -250,7 +257,7 @@
               <DropdownMenu.Trigger class="p-1 rounded hover:bg-muted" title={$_('chat.messageActions')} aria-label={$_('chat.messageActions')}>
                 <Icon icon="mdi:dots-horizontal" class="w-4 h-4 text-muted-foreground" />
               </DropdownMenu.Trigger>
-              <DropdownMenu.Content align={item.mine ? 'end' : 'start'}>
+              <DropdownMenu.Content align={mode === 'bubble' ? 'start' : 'end'}>
                 <DropdownMenu.Item onSelect={() => reply('reply')}><Icon icon="mdi:reply" class="w-4 h-4 mr-2" />{$_('viewer.reply')}</DropdownMenu.Item>
                 <DropdownMenu.Item onSelect={() => reply('reply-all')}><Icon icon="mdi:reply-all" class="w-4 h-4 mr-2" />{$_('viewer.replyAll')}</DropdownMenu.Item>
                 <DropdownMenu.Item onSelect={() => reply('forward')}><Icon icon="mdi:share" class="w-4 h-4 mr-2" />{$_('viewer.forward')}</DropdownMenu.Item>
@@ -270,6 +277,7 @@
               </DropdownMenu.Content>
             </DropdownMenu.Root>
           </div>
+        </div>
         </div>
 
         {#if hasAttachments}
@@ -296,5 +304,7 @@
         {/if}
       </div>
     </div>
+
+    {#if item.mine}{@render avatar(true)}{/if}
   </div>
 </MessageContextMenu>

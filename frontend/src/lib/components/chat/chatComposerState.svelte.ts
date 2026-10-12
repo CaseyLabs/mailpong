@@ -1,9 +1,11 @@
 // ChatComposer — state for the docked reply box: text, reply-all choice and
 // attachments per chat, debounced draft autosave (restored when the chat is
 // reopened), and sends shown as pending bubbles until the thread has them.
+// Sends wait out the backend's undo delay; Undo puts the reply back in the box.
 
 // @ts-ignore - wailsjs path
-import { SaveChatDraft, GetChatDraft, SendChatReply, ReleaseChatDraft, PickAttachmentFiles } from '../../../../wailsjs/go/app/App'
+import { SaveChatDraft, GetChatDraft, QueueChatReply, ReleaseChatDraft, PickAttachmentFiles } from '../../../../wailsjs/go/app/App'
+import { UNDO_SEND_MS, undoSend, whenSent } from '$lib/stores/sendQueue'
 import { app, smtp } from '../../../../wailsjs/go/models'
 import type { Person, ReplyRecipients, ReplyTarget } from './chatFormat'
 
@@ -16,9 +18,12 @@ export interface PendingSend {
   key: string
   text: string
   attachmentNames: string[]
-  status: 'sending' | 'sent' | 'failed'
+  status: 'queued' | 'sent' | 'failed'
   error: string
+  // While queued: when the send goes out. Once sent: when it went.
   sentAt: number
+  // Backend send ID while queued, for undo.
+  sendId: string
   reply: app.ChatReply
 }
 
@@ -201,9 +206,10 @@ export class ChatComposer {
       key: snap.key,
       text: snap.text.trim(),
       attachmentNames: snap.attachments.map((a) => a.filename),
-      status: 'sending',
+      status: 'queued',
       error: '',
       sentAt: Date.now(),
+      sendId: '',
       reply,
     }
     this.pending = [...this.pending, p]
@@ -214,7 +220,21 @@ export class ChatComposer {
     void this.#deliver(id)
   }
 
-  // edit moves a failed send back into the box.
+  // undo stops a queued send and puts it back in the box; it does nothing
+  // once the send has started.
+  async undo(id: number) {
+    const p = this.pending.find((x) => x.id === id)
+    if (!p?.sendId || p.status !== 'queued' || p.key !== this.key) return
+    if (!(await undoSend(p.sendId))) return
+    // Switched chats while cancelling: keep the text as a failed bubble there.
+    if (p.key !== this.key) {
+      this.pending = this.pending.map((x) => (x.id === id ? { ...x, status: 'failed' } : x))
+      return
+    }
+    this.edit(id)
+  }
+
+  // edit moves a failed or undone send back into the box.
   edit(id: number) {
     const p = this.pending.find((x) => x.id === id)
     if (!p || p.key !== this.key) return
@@ -258,22 +278,24 @@ export class ChatComposer {
     }
     const p = this.pending.find((x) => x.id === id)
     if (!p) return
-    update({ status: 'sending', error: '' })
+    update({ status: 'queued', error: '', sentAt: Date.now() + UNDO_SEND_MS, sendId: '' })
+    let error: string
     try {
-      await SendChatReply(p.reply)
-      update({ status: 'sent', sentAt: Date.now() })
+      const sendId: string = await QueueChatReply(p.reply)
+      update({ sendId })
+      const r = await whenSent(sendId)
+      error = r.error
+      // The backend saves an unsent reply without a draft as one.
+      if (r.draftId) p.reply.draftId = r.draftId
     } catch (err) {
-      console.error('Chat reply failed:', err)
-      update({ status: 'failed', error: String(err) })
-      // Keep an unsaved reply as a draft so it survives a restart.
-      if (!p.reply.draftId) {
-        try {
-          p.reply.draftId = await SaveChatDraft(p.reply)
-        } catch (saveErr) {
-          console.error('Failed to save unsent chat reply:', saveErr)
-        }
-      }
+      error = String(err)
     }
+    if (error) {
+      console.error('Chat reply failed:', error)
+      update({ status: 'failed', error, sendId: '' })
+      return
+    }
+    update({ status: 'sent', sentAt: Date.now(), sendId: '' })
   }
 
   async #save(snap: Snapshot) {

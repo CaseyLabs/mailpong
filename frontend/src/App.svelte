@@ -576,6 +576,19 @@
     }
   }
 
+  // Undo on a queued send: reopen the message from its draft. A composer
+  // already open keeps its place, so the message opens in a window.
+  function handleUndoSend(accountId: string, message: smtp.ComposeMessage, draftId: string) {
+    if (showComposer) {
+      OpenComposerWindow(accountId, '', '', draftId, '')
+      return
+    }
+    composerAccountId = accountId
+    composerInitialMessage = message
+    composerDraftId = draftId
+    showComposer = true
+  }
+
   // Open a chat draft handed over by the docked chat composer's Expand
   function handleExpandChatDraft(draftId: string) {
     const accountId = resolveAccountId(selectedConversationAccountId) || resolveAccountId(selectedAccountId)
@@ -1631,6 +1644,7 @@
         imagesLoaded={composerImagesLoaded}
         onClose={closeComposer}
         onSent={closeComposer}
+        onUndoSend={handleUndoSend}
       />
     </div>
   </div>

@@ -53,6 +53,7 @@
   import Switch from '$lib/components/ui/switch/Switch.svelte'
   import { ThreeOptionDialog } from '$lib/components/ui/confirm-dialog'
   import { addToast } from '$lib/stores/toast'
+  import { queueWithUndo, SendCountdown } from './undoSend.svelte'
   import SendAsWarning from './SendAsWarning.svelte'
   import { getComposerFormat, getDarkComposerBody } from '$lib/stores/settings.svelte'
   import { getIsDarkActive } from '$lib/stores/theme.svelte'
@@ -86,9 +87,11 @@
     onTitleChange?: (to: string, subject: string) => void
     /** Whether remote images were loaded in the viewer before reply/forward */
     imagesLoaded?: boolean
+    /** Main window: Undo on a queued send hands the message back (with the draft holding it) */
+    onUndoSend?: (accountId: string, message: smtp.ComposeMessage, draftId: string) => void
   }
 
-  let { accountId, initialMessage = null, draftId = null, messageId = null, onClose, onSent, api: propApi, isDetached = false, closeRequested = false, onCloseHandled, onTitleChange, imagesLoaded = false }: Props = $props()
+  let { accountId, initialMessage = null, draftId = null, messageId = null, onClose, onSent, api: propApi, isDetached = false, closeRequested = false, onCloseHandled, onTitleChange, imagesLoaded = false, onUndoSend }: Props = $props()
 
   // Get API from context, props, or create default main window API
   const contextApi = getContext<ComposerApi | undefined>(COMPOSER_API_KEY)
@@ -624,13 +627,14 @@
   let savingComplete: Promise<void> = Promise.resolve()
 
   // Actually save the draft. Returns false only when the save failed.
-  async function saveDraft(): Promise<boolean> {
+  // forSend saves while a send is claimed, so the queued message has a draft.
+  async function saveDraft(forSend = false): Promise<boolean> {
     // Wait out an in-flight save rather than dropping this one, so the
     // newest edits still get saved. No await sits between this loop and
     // isSaving = true, so concurrent callers can't both start a save.
     while (isSaving) await savingComplete
 
-    if (discarding || sending) return true
+    if (discarding || (sending && !forSend)) return true
     if (!hasContent()) return true
 
     // Check again for content changes before saving
@@ -1293,13 +1297,27 @@
     await doSend()
   }
 
+  // Detached window: the countdown before a send goes out, with Undo.
+  const countdown = new SendCountdown()
+  let sendDone: Promise<void> = Promise.resolve()
+
+  /** Sends a message counting down now; resolves when the send is done. */
+  export function flushSend(): Promise<void> {
+    countdown.sendNow()
+    return sendDone
+  }
+
   // Actually send the message (called directly or after confirmation)
-  async function doSend() {
+  function doSend(): Promise<void> {
     // Claim the send before any await so a second Ctrl+Enter or click can't
     // start another one.
-    if (sending) return
+    if (sending) return sendDone
     sending = true
+    sendDone = sendClaimed()
+    return sendDone
+  }
 
+  async function sendClaimed() {
     // Cancel any pending draft save
     if (saveTimeoutId) {
       clearTimeout(saveTimeoutId)
@@ -1307,9 +1325,23 @@
     }
 
     try {
+      if (isDetached && !(await countdown.run())) {
+        scheduleDraftSave() // edits made during the countdown
+        return
+      }
       // Wait for any in-flight draft save to complete before sending
       await savingComplete
       const message = buildMessage()
+      // Main window: queue behind the undo delay. That needs a draft to hold
+      // the message; without one, send at once.
+      if (api.queueMessage && onUndoSend && (await saveDraft(true)) && currentDraftId) {
+        await queueWithUndo(api.queueMessage, activeAccountId, message, currentDraftId, onUndoSend)
+        // The queue owns the draft now; closing must not touch it.
+        currentDraftId = null
+        onSent?.()
+        onClose?.()
+        return
+      }
       await api.sendMessage(activeAccountId, message)
 
       // Delete the draft on successful send (fire-and-forget - don't block UI)
@@ -1355,6 +1387,12 @@
   let closeCancelledSave = false
 
   function handleClose() {
+    // Closing during the send countdown sends now; the window closes once sent.
+    if (countdown.seconds > 0) {
+      countdown.sendNow()
+      onCloseHandled?.()
+      return
+    }
     // Cancel any pending draft save
     closeCancelledSave = saveTimeoutId !== null
     if (saveTimeoutId) {
@@ -1960,6 +1998,22 @@
           {/if}
         </button>
       {/if}
+      {#if countdown.seconds > 0}
+        <span class="text-sm text-muted-foreground" role="status">{$_('composer.sendingIn', { values: { seconds: countdown.seconds } })}</span>
+        <button
+          onclick={() => countdown.undo()}
+          class="px-3 py-1.5 text-sm font-medium text-primary hover:bg-muted rounded-md transition-colors"
+        >
+          {$_('composer.undo')}
+        </button>
+        <button
+          onclick={() => countdown.sendNow()}
+          class="px-4 py-1.5 text-sm font-medium text-primary-foreground bg-primary hover:bg-primary/90 rounded-md transition-colors flex items-center gap-2"
+        >
+          <Icon icon="mdi:send" class="w-4 h-4" />
+          {$_('composer.sendNow')}
+        </button>
+      {:else}
       <button
         onclick={handleClose}
         disabled={poppingOut}
@@ -1983,6 +2037,7 @@
           {$_('composer.send')}
         {/if}
       </button>
+      {/if}
     </div>
   </div>
 

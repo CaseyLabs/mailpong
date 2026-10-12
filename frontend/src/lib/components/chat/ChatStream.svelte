@@ -1,18 +1,19 @@
 <script lang="ts">
   // ChatStream — the messages of a chat: day / subject headings, bubbles and
-  // pending replies in a centred --chat-column (theirs on the left, mine on
-  // the right); email cards stay in a narrower centred --chat-stream column.
+  // pending replies in a centred --chat-column, all on the left with my avatar
+  // after my messages; email cards stay in a narrower centred --chat-stream column.
   import ChatBubble from './ChatBubble.svelte'
   import ChatDaySeparator from './ChatDaySeparator.svelte'
   import ChatPendingBubble from './ChatPendingBubble.svelte'
   import type { ChatThread } from './chatThread.svelte'
   import type { ChatComposer } from './chatComposerState.svelte'
-  import type { ReplyMode, ThreadItem } from './chatFormat'
+  import type { Person, ReplyMode, ThreadItem } from './chatFormat'
 
   interface Props {
     items: ThreadItem[]
     thread: ChatThread
     composer: ChatComposer
+    me: Person
     accountId: string
     folderId: string
     folderType: string
@@ -26,7 +27,7 @@
   }
 
   let {
-    items, thread, composer, accountId, folderId, folderType, imagesLoaded,
+    items, thread, composer, me, accountId, folderId, folderType, imagesLoaded,
     onFocusChange, onReply, onComposeToAddress, onEditDraft, onActionComplete, onOpenLink,
   }: Props = $props()
 </script>
@@ -53,6 +54,6 @@
     />
   {/each}
   {#each composer.pendingHere as p (p.id)}
-    <ChatPendingBubble pending={p} onRetry={() => composer.retry(p.id)} onEdit={() => composer.edit(p.id)} />
+    <ChatPendingBubble pending={p} {me} onRetry={() => composer.retry(p.id)} onEdit={() => composer.edit(p.id)} onUndo={() => void composer.undo(p.id)} />
   {/each}
 </div>

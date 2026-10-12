@@ -1,23 +1,43 @@
 <script lang="ts">
   // ChatPendingBubble — a reply sent from the docked composer, shown until
-  // the synced thread holds it. Failed sends offer Retry and Edit.
+  // the synced thread holds it. Queued sends count down with Undo; failed
+  // sends offer Retry and Edit.
   import Icon from '@iconify/svelte'
   import { _ } from '$lib/i18n'
+  import Avatar from '$lib/components/kit/Avatar.svelte'
+  import { contactPhotos } from '$lib/stores/contactPhotos.svelte'
   import type { PendingSend } from './chatComposerState.svelte'
+  import type { Person } from './chatFormat'
 
   interface Props {
     pending: PendingSend
+    // The sender, for the avatar on the right.
+    me: Person
     onRetry: () => void
     onEdit: () => void
+    onUndo: () => void
   }
 
-  let { pending, onRetry, onEdit }: Props = $props()
+  let { pending, me, onRetry, onEdit, onUndo }: Props = $props()
+
+  const photo = $derived(contactPhotos.get(me.email))
+
+  let now = $state(Date.now())
+  $effect(() => {
+    if (pending.status !== 'queued') return
+    const t = setInterval(() => (now = Date.now()), 250)
+    return () => clearInterval(t)
+  })
+  // Seconds left before a queued send goes out; 0 once it is sending.
+  const secondsLeft = $derived(pending.status === 'queued' ? Math.max(0, Math.ceil((pending.sentAt - now) / 1000)) : 0)
 </script>
 
-<div class="flex flex-row-reverse w-full px-6 mt-3" role="status">
-  <div class="flex flex-col items-end gap-1 max-w-[min(75%,var(--chat-bubble))]">
+<!-- Laid out like ChatBubble's own messages: left spacer, bubble, avatar -->
+<div class="flex gap-2 w-full px-6 mt-3" role="status">
+  <div class="w-8 shrink-0" aria-hidden="true"></div>
+  <div class="flex flex-col items-start gap-1 min-w-0 max-w-[min(75%,var(--chat-bubble))]">
     <div
-      class="px-3.5 py-2 text-[1rem] leading-[1.45] whitespace-pre-wrap wrap-anywhere rounded-2xl rounded-br-md bg-bubble-own text-foreground {pending.status === 'sending' ? 'opacity-70' : ''} {pending.status === 'failed' ? 'ring-2 ring-destructive' : ''}"
+      class="px-3.5 py-2 text-[1rem] leading-[1.45] whitespace-pre-wrap wrap-anywhere rounded-2xl rounded-br-md bg-bubble-own text-foreground {pending.status === 'queued' ? 'opacity-70' : ''} {pending.status === 'failed' ? 'ring-2 ring-destructive' : ''}"
     >
       {pending.text}
       {#each pending.attachmentNames as name (name)}
@@ -25,7 +45,10 @@
       {/each}
     </div>
     <div class="flex items-center gap-2 px-1 text-xs text-muted-foreground">
-      {#if pending.status === 'sending'}
+      {#if pending.status === 'queued' && secondsLeft > 0 && pending.sendId}
+        <Icon icon="mdi:timer-sand" class="w-3.5 h-3.5" />{$_('chat.sendingIn', { values: { seconds: secondsLeft } })}
+        <button class="text-primary hover:underline" onclick={onUndo}>{$_('chat.undo')}</button>
+      {:else if pending.status === 'queued'}
         <Icon icon="mdi:loading" class="w-3.5 h-3.5 animate-spin" />{$_('chat.sending')}
       {:else if pending.status === 'sent'}
         <Icon icon="mdi:check" class="w-3.5 h-3.5" />{$_('chat.sent')}
@@ -35,5 +58,8 @@
         <button class="text-primary hover:underline" onclick={onEdit}>{$_('chat.editReply')}</button>
       {/if}
     </div>
+  </div>
+  <div class="w-8 shrink-0" aria-hidden="true">
+    <Avatar email={me.email} name={me.name} size={32} photoData={photo?.data} photoMediaType={photo?.mediaType} />
   </div>
 </div>
