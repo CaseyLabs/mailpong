@@ -52,7 +52,7 @@ First-time sync of large mailboxes can take several minutes. The sync progress i
 
 ### Sync appears stuck
 
-If a sync seems to be stuck or unresponsive, click the sync icon at the top of the message list and choose **Cancel sync** in the sync status dialog (or click the sync button in the bottom left corner to stop it directly), then click again to restart the sync.
+If a sync seems to be stuck or unresponsive, click the sync icon at the top of the message list or the sync button in the bottom left corner and choose **Cancel sync** in the sync status dialog, then click again to restart the sync.
 
 ### Sent messages not appearing in Sent folder
 

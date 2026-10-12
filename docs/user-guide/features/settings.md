@@ -30,27 +30,11 @@ Choose your visual theme:
 - **Light (Blue)** - Always use light theme with blue accent
 - **Light (Orange)** - Always use light theme with orange accent
 - **Light (Balanced)** - A less bright light mode with gray accent
-- **Adwaita (Light)** - Adwaita light theme colors
-- **Breeze (Light)** - Breeze light theme colors
-- **Catppuccin (Latte)** - Catppuccin Latte theme colors
-- **Github (Light)** - Github light theme colors
 - **Nord (Light)** - Nord light theme colors
-- **Pop! (Light)** - Pop!/Cosmic light theme colors
-- **VS Code (Light)** - VS Code light theme colors
-- **Yaru (Light)** - Yaru light theme colors
 - **Dark** - Always use default dark theme (Purple accent)
 - **Dark (Gray)** - Always use Gray on gray dark theme
 - **Dark (Balanced)** - A slightly lighter dark mode with gray accent
-- **Adwaita (Dark)** - Adwaita dark theme colors
-- **Breeze (Dark)** - Breeze dark theme colors
-- **Catppuccin (Frappe)** - Catppuccin Frappe theme colors
-- **Catppuccin (Macchiato)** - Catppuccin Macchiato theme colors
-- **Catppuccin (Mocha)** - Catppuccin Mocha theme colors
-- **Github (Dark)** - Github dark theme colors
 - **Nord (Dark)** (Default) - Nord dark theme colors
-- **Pop! (Dark)** - Pop!/Cosmic dark theme colors
-- **VS Code (Dark)** - VS Code dark theme colors
-- **Yaru (Dark)** - Yaru dark theme colors
 
 ### Dark mail content
 

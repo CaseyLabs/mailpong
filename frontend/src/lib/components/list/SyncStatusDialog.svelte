@@ -1,5 +1,5 @@
 <script lang="ts">
-  // SyncStatusDialog — opened by the message list's Sync button while a sync
+  // SyncStatusDialog — opened by the chat list and sidebar Sync buttons while a sync
   // is running: per-account progress, any sync errors, and a cancel action.
   import Icon from '@iconify/svelte'
   import { _ } from '$lib/i18n'

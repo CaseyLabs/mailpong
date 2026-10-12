@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SyncStatusDialog from '../list/SyncStatusDialog.svelte'
   import Icon from '@iconify/svelte'
   import { onMount } from 'svelte'
   import AccountSection from './AccountSection.svelte'
@@ -252,8 +253,17 @@
     }
   }
 
+  let syncStatusOpen = $state(false)
+
+  // The Sync button: start a sync, or while one runs open its status dialog,
+  // where it can be cancelled.
+  function onSyncButton() {
+    if (accountStore.isAnySyncing) syncStatusOpen = true
+    else void syncAllAccounts()
+  }
+
   // Cancel all running syncs
-  export async function cancelSync() {
+  async function cancelSync() {
     try {
       await accountStore.cancelAllSyncs()
     } catch (err) {
@@ -261,13 +271,9 @@
     }
   }
 
-  // Toggle sync (start if not running, cancel if running) - for keyboard shortcut
-  export async function toggleSync() {
-    if (accountStore.isAnySyncing) {
-      await cancelSync()
-    } else {
-      await syncAllAccounts()
-    }
+  // Keyboard shortcut: same as the Sync button
+  export function toggleSync() {
+    onSyncButton()
   }
 
   // Build flat list of all navigable folders including Unified Inbox
@@ -603,8 +609,8 @@
     {#snippet leading()}
       <button
         class="flex-1 min-w-0 flex items-end gap-2 hover:text-foreground transition-colors text-left"
-        onclick={accountStore.isAnySyncing ? cancelSync : syncAllAccounts}
-        title={$_(accountStore.isAnySyncing ? 'sidebar.clickToCancel' : 'sidebar.syncAllAccounts')}
+        onclick={onSyncButton}
+        title={$_(accountStore.isAnySyncing ? 'sidebar.clickForSyncStatus' : 'sidebar.syncAllAccounts')}
       >
         <Icon
           icon="mdi:sync"
@@ -642,3 +648,5 @@
     setFocusedPane('messageList')
   }}
 />
+
+<SyncStatusDialog bind:open={syncStatusOpen} busy={accountStore.isAnySyncing} onCancelSync={cancelSync} />

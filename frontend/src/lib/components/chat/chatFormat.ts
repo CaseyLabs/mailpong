@@ -85,8 +85,7 @@ export function myAddresses(accounts: AccountWithFolders[]): Set<string> {
 }
 
 // People in the thread other than me, in first-appearance order, each under
-// their latest real display name. Falls back
-// to recipients when every message is mine (e.g. a Sent-only thread).
+// their latest real display name. Falls back to recipients when every message is mine (e.g. a Sent-only thread).
 export function threadPeople(messages: messageModels.Message[], myEmails: Set<string>): Person[] {
   const seen = new Map<string, Person>()
   const people: Person[] = []

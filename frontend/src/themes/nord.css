@@ -32,7 +32,6 @@
     --ring: 213 32% 52%;                   /* nord10 */
     /* Avatar palette: Aurora (5) + Frost (4). Most colors are lightness 52-73%,
        dark text gives better contrast than white. */
-    --avatar-fg: 220 16% 22%;              /* nord0 */
     --avatar-1:  354 39% 56%;              /* nord11 red */
     --avatar-2:  14 51% 63%;               /* nord12 orange #D08770 */
     --avatar-3:  40 70% 73%;               /* nord13 yellow #EBCB8B */
@@ -75,7 +74,6 @@
     --input: 220 17% 36%;                  /* nord3 */
     --ring: 193 43% 67%;                   /* nord8 */
     /* Avatar palette: same 9 Aurora + Frost colors as Nord Light. */
-    --avatar-fg: 220 16% 22%;              /* nord0 — dark text */
     --avatar-1:  354 39% 56%;              /* nord11 red */
     --avatar-2:  14 51% 63%;               /* nord12 orange */
     --avatar-3:  40 70% 73%;               /* nord13 yellow */

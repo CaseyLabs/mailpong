@@ -140,6 +140,21 @@ func TestSetGetMessageListDensity(t *testing.T) {
 	}
 }
 
+// A theme saved before its family was removed reads as the default.
+func TestGetThemeModeRemovedThemeFallsBack(t *testing.T) {
+	store := NewStore(openTestDB(t))
+	if err := store.Set(KeyThemeMode, "dracula"); err != nil {
+		t.Fatal(err)
+	}
+	got, err := store.GetThemeMode()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != DefaultThemeMode {
+		t.Errorf("got %q, want %q", got, DefaultThemeMode)
+	}
+}
+
 func TestSetGetThemeMode(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -154,6 +169,9 @@ func TestSetGetThemeMode(t *testing.T) {
 		{name: "dark", mode: "dark"},
 		{name: "dark-gray", mode: "dark-gray"},
 		{name: "dark-balanced", mode: "dark-balanced"},
+		{name: "nord-light", mode: "nord-light"},
+		{name: "nord-dark", mode: "nord-dark"},
+		{name: "removed theme", mode: "dracula", wantErr: true},
 		{name: "invalid", mode: "invalid", wantErr: true},
 	}
 

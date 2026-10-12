@@ -12,15 +12,6 @@
 
 @import './themes/_defaults.css';
 @import './themes/built-in.css';
-@import './themes/adwaita.css';
-@import './themes/breeze.css';
-@import './themes/catppuccin.css';
-@import './themes/dracula.css';
-@import './themes/github.css';
 @import './themes/nord.css';
-@import './themes/pop.css';
-@import './themes/tokyo-night.css';
-@import './themes/vs-code.css';
-@import './themes/yaru.css';
 @import './themes/_status.css';
 @import './themes/_utilities.css';

@@ -48,7 +48,6 @@
     "offline": "Offline",
     "notSynced": "Not synced",
     "synced": "Synced {time}",
-    "clickToCancel": "Click to cancel sync",
     "clickForSyncStatus": "Click for sync status",
     "syncStatusTitle": "Sync status",
     "syncFinished": "Sync finished",

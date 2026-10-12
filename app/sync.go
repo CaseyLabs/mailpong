@@ -443,12 +443,6 @@ func (a *App) pendingSlotLocked(key string) *syncSlot {
 	return nil
 }
 
-// folderBusyLocked reports whether a sync holds key (see pendingSlotLocked).
-// The caller holds syncMu.
-func (a *App) folderBusyLocked(key string) bool {
-	return a.pendingSlotLocked(key) != nil
-}
-
 // beginFolderSync claims the sync slot for key unless a sync already holds
 // it. release cancels ctx and frees the slot if this call still owns it.
 func (a *App) beginFolderSync(key string) (ctx context.Context, release func(), ok bool) {
@@ -457,7 +451,7 @@ func (a *App) beginFolderSync(key string) (ctx context.Context, release func(), 
 	if a.shuttingDown {
 		return nil, nil, false
 	}
-	if a.folderBusyLocked(key) {
+	if a.pendingSlotLocked(key) != nil {
 		return nil, nil, false
 	}
 	ctx, release = a.registerFolderSyncLocked(key)
@@ -544,7 +538,7 @@ func (a *App) trackSync() (done func(), ok bool) {
 func (a *App) trackSyncUnlessBusy(key string) (done func(), busy bool) {
 	a.syncMu.Lock()
 	defer a.syncMu.Unlock()
-	if !a.shuttingDown && a.folderBusyLocked(key) {
+	if !a.shuttingDown && a.pendingSlotLocked(key) != nil {
 		return nil, true
 	}
 	done, _ = a.trackSyncLocked()

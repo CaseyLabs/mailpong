@@ -19,10 +19,6 @@ has not yet been confirmed against the code.
   imports: EXT_RULES R1, R2 and R5. The bridge gets a token closure and the
   core DB, and the extension imports `internal/*`. This is architectural
   (see C12).
-- **A6 decision** `frontend/src/App.svelte`: Terms of Use are recorded as
-  accepted at startup without being shown, and builds missing OAuth
-  credentials give no warning before sign-in fails. Intentional per commit
-  14c80d1; confirm as a product and legal decision, then delete this entry.
 
 ### Contacts
 
@@ -40,12 +36,6 @@ has not yet been confirmed against the code.
   `certificate.Transport` and return it structurally from the DAV bindings,
   replacing the frontend's error-string regex and the second `Probe` request
   (which also misses certificates only discovery redirects reach).
-
-### Mail sync
-
-- **M14 low** Sidebar sync button and Ctrl+Shift+A cancel syncs directly,
-  while the `ChatList` header sync button opens the status dialog. Decide
-  whether the sidebar should match.
 
 ### Chat list
 
@@ -96,15 +86,6 @@ is kept or left untouched only to keep upstream merges clean. Record each such
 cleanup here, so it can be done once the fork is independent.
 
 None open.
-
-### Themes
-
-- **T1 low** non-Nord themes: the owner plans to keep only Nord (Light and
-  Dark) now that the calmer chat view has landed, so contrast checks cover
-  Nord only. Until then, the soft-tint avatars miss 4.5:1 in places
-  (Catppuccin, VS Code Dark), and own bubbles fall back to a 20% primary tint
-  because only Nord defines `--bubble-own`. Each theme's `--avatar-fg` is
-  still defined but no longer read; drop it with the themes.
 
 ### Dependencies
 

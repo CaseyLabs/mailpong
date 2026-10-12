@@ -16,14 +16,9 @@ export type MessageListDensity = 'micro' | 'compact' | 'standard' | 'large'
 export type MessageListSortOrder = 'newest' | 'oldest'
 export type ThemeMode =
   | 'system'
-  | 'light' | 'light-blue' | 'light-orange' | 'light-balanced' | 'adwaita-light' | 'breeze-light'
-  | 'dark' | 'dark-gray' | 'dark-balanced' | 'adwaita-dark' | 'breeze-dark'
-  | 'catppuccin-latte' | 'catppuccin-frappe' | 'catppuccin-macchiato' | 'catppuccin-mocha'
-  | 'dracula' | 'github-light' | 'github-dark' | 'github-soft-dark' | 'tokyo-night'
+  | 'light' | 'light-blue' | 'light-orange' | 'light-balanced'
+  | 'dark' | 'dark-gray' | 'dark-balanced'
   | 'nord-light' | 'nord-dark'
-  | 'pop-light' | 'pop-dark'
-  | 'yaru-light' | 'yaru-dark'
-  | 'vs-code-light' | 'vs-code-dark'
 
 // Mirrors the default in internal/settings/store.go.
 export const DEFAULT_THEME: ThemeMode = 'nord-dark'

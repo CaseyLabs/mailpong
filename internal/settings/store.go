@@ -91,35 +91,16 @@ const DefaultMessageListSortOrder = SortOrderNewest
 
 // Theme mode values
 const (
-	ThemeModeSystem              = "system"
-	ThemeModeLight               = "light"                // Default light purple
-	ThemeModeLightBlue           = "light-blue"           // New
-	ThemeModeLightOrange         = "light-orange"         // New
-	ThemeModeLightBalanced       = "light-balanced"       // New
-	ThemeModeAdwaitaLight        = "adwaita-light"        // Adwaita Light
-	ThemeModeBreezeLight         = "breeze-light"         // Breeze Light
-	ThemeModeDark                = "dark"                 // Default dark purple
-	ThemeModeDarkGray            = "dark-gray"            // New
-	ThemeModeDarkBalanced        = "dark-balanced"        // New
-	ThemeModeAdwaitaDark         = "adwaita-dark"         // Adwaita Dark
-	ThemeModeBreezeDark          = "breeze-dark"          // Breeze Dark
-	ThemeModeCatppuccinLatte     = "catppuccin-latte"     // Catppuccin Latte
-	ThemeModeCatppuccinFrappe    = "catppuccin-frappe"    // Catppuccin Frappé
-	ThemeModeCatppuccinMacchiato = "catppuccin-macchiato" // Catppuccin Macchiato
-	ThemeModeCatppuccinMocha     = "catppuccin-mocha"     // Catppuccin Mocha
-	ThemeModeDracula             = "dracula"              // Dracula
-	ThemeModeGithubLight         = "github-light"         // GitHub Light
-	ThemeModeGithubDark          = "github-dark"          // GitHub Dark
-	ThemeModeGithubSoftDark      = "github-soft-dark"     // GitHub Soft Dark
-	ThemeModeTokyoNight          = "tokyo-night"          // Tokyo Night
-	ThemeModeNordLight           = "nord-light"           // Nord Light
-	ThemeModeNordDark            = "nord-dark"            // Nord Dark
-	ThemeModePopLight            = "pop-light"            // Pop! Light
-	ThemeModePopDark             = "pop-dark"             // Pop! Dark
-	ThemeModeYaruLight           = "yaru-light"           // Yaru Light
-	ThemeModeYaruDark            = "yaru-dark"            // Yaru Dark
-	ThemeModeVSCodeLight         = "vs-code-light"        // VS Code Light
-	ThemeModeVSCodeDark          = "vs-code-dark"         // VS Code Dark
+	ThemeModeSystem        = "system"
+	ThemeModeLight         = "light"          // Default light purple
+	ThemeModeLightBlue     = "light-blue"     // New
+	ThemeModeLightOrange   = "light-orange"   // New
+	ThemeModeLightBalanced = "light-balanced" // New
+	ThemeModeDark          = "dark"           // Default dark purple
+	ThemeModeDarkGray      = "dark-gray"      // New
+	ThemeModeDarkBalanced  = "dark-balanced"  // New
+	ThemeModeNordLight     = "nord-light"     // Nord Light
+	ThemeModeNordDark      = "nord-dark"      // Nord Dark
 )
 
 // DefaultThemeMode is the default theme mode
@@ -543,13 +524,24 @@ func (s *Store) SetMessageListSortOrder(sortOrder string) error {
 	return s.Set(KeyMessageListSortOrder, sortOrder)
 }
 
-// GetThemeMode returns the current theme mode setting
+// validThemeMode reports whether mode names a shipped theme.
+func validThemeMode(mode string) bool {
+	switch mode {
+	case ThemeModeSystem, ThemeModeLight, ThemeModeLightBlue, ThemeModeLightOrange, ThemeModeLightBalanced,
+		ThemeModeDark, ThemeModeDarkGray, ThemeModeDarkBalanced, ThemeModeNordLight, ThemeModeNordDark:
+		return true
+	}
+	return false
+}
+
+// GetThemeMode returns the current theme mode setting. A stored theme that is
+// no longer shipped (removed families such as Dracula) reads as the default.
 func (s *Store) GetThemeMode() (string, error) {
 	value, err := s.Get(KeyThemeMode)
 	if err != nil {
 		return DefaultThemeMode, err
 	}
-	if value == "" {
+	if !validThemeMode(value) {
 		return DefaultThemeMode, nil
 	}
 	return value, nil
@@ -557,18 +549,10 @@ func (s *Store) GetThemeMode() (string, error) {
 
 // SetThemeMode sets the theme mode
 func (s *Store) SetThemeMode(mode string) error {
-	switch mode {
-	case ThemeModeSystem, ThemeModeLight, ThemeModeLightBlue, ThemeModeLightOrange, ThemeModeLightBalanced,
-		ThemeModeAdwaitaLight, ThemeModeBreezeLight,
-		ThemeModeDark, ThemeModeDarkGray, ThemeModeDarkBalanced, ThemeModeAdwaitaDark, ThemeModeBreezeDark,
-		ThemeModeCatppuccinLatte, ThemeModeCatppuccinFrappe, ThemeModeCatppuccinMacchiato, ThemeModeCatppuccinMocha,
-		ThemeModeDracula, ThemeModeGithubLight, ThemeModeGithubDark, ThemeModeGithubSoftDark, ThemeModeTokyoNight,
-		ThemeModeNordLight, ThemeModeNordDark, ThemeModePopLight, ThemeModePopDark,
-		ThemeModeVSCodeLight, ThemeModeVSCodeDark, ThemeModeYaruLight, ThemeModeYaruDark:
-		return s.Set(KeyThemeMode, mode)
-	default:
-		return fmt.Errorf("invalid theme mode: %s (must be 'system', 'light', 'light-blue', 'light-orange', 'light-balanced', 'adwaita-light', 'breeze-light', 'dark', 'dark-gray', 'dark-balanced', 'adwaita-dark', 'breeze-dark', 'catppuccin-latte', 'catppuccin-frappe', 'catppuccin-macchiato', 'catppuccin-mocha', 'dracula', 'github-light', 'github-dark', 'github-soft-dark', 'tokyo-night', 'nord-light', 'nord-dark', 'pop-light', 'pop-dark', 'vs-code-light', 'vs-code-dark', 'yaru-light', or 'yaru-dark')", mode)
+	if !validThemeMode(mode) {
+		return fmt.Errorf("invalid theme mode: %s (must be 'system', 'light', 'light-blue', 'light-orange', 'light-balanced', 'dark', 'dark-gray', 'dark-balanced', 'nord-light', or 'nord-dark')", mode)
 	}
+	return s.Set(KeyThemeMode, mode)
 }
 
 // GetShowTitleBar returns whether the title bar should be shown

@@ -1,7 +1,7 @@
 /* Avatar circle utility classes — read theme-defined --avatar-* variables.
    Used by getAvatarColor() in conversation/message components. The fill is an
    opaque 30% tint over the background (stacked group avatars must not show
-   through each other); --avatar-fg is no longer read but stays in the themes. */
+   through each other). */
 .avatar-1  { background-color: color-mix(in srgb, hsl(var(--avatar-1)) 30%, hsl(var(--background))); color: hsl(var(--foreground)); }
 .avatar-2  { background-color: color-mix(in srgb, hsl(var(--avatar-2)) 30%, hsl(var(--background))); color: hsl(var(--foreground)); }
 .avatar-3  { background-color: color-mix(in srgb, hsl(var(--avatar-3)) 30%, hsl(var(--background))); color: hsl(var(--foreground)); }

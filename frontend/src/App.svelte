@@ -900,7 +900,7 @@
           return
         case 'a':
           if (e.shiftKey) {
-            // Ctrl-Shift-A: Toggle sync all accounts (start sync or cancel if already running)
+            // Ctrl-Shift-A: sync all accounts, or open the sync status dialog if a sync is running
             e.preventDefault()
             sidebarRef?.toggleSync()
             return
