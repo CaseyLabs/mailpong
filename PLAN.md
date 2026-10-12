@@ -4,14 +4,12 @@
 Review and fix every finding in ISSUES.md on separate branches. Run `codex review --base main` (the CLI `/review` equivalent) and resolve findings before each squash merge and push. Preserve unrelated commits and files.
 
 ## Milestones
-- A4/C12: enforce extension boundaries for contacts, using coreapi and generic kit only. Validate extension contracts and full Go tests.
 - C17: structured DAV certificate errors, background prompts, and trusted-certificate management. Validate DAV tests, frontend checks, and UI.
 - S6: validate certificate revocation with privacy preference. Validate generated certificate/CRL cases and settings UI.
 - D2: verify published TypeScript tooling compatibility; upgrade only if supported. Validate lint, check, and build.
 - Recurring tooling: incorporate reliable alternatives in current guidance and clear obsolete tallies.
 
 ## Progress
-- [ ] A4/C12
 - [ ] C17
 - [ ] S6
 - [ ] D2
@@ -30,3 +28,5 @@ A6: focused and full sync tests passed; `codex review --base main` caught a conn
 P1/P2: OAuth tests and Darwin dry runs passed; final `codex review --base main` passed after correcting remaining guide paths and removing the Node dependency from uninstall. Logs: `/tmp/mailven-issues-review/P*.log`.
 
 M14: default/startup and existing split regression cases passed; `make test` passed; `codex review --base main` passed. Logs: `/tmp/mailven-issues-review/M14*.log`.
+
+A4/C12: Contacts production imports now use SDK/kit only; shared mirror service is restricted to Contacts; sidecar ownership and legacy credentials preserved. `make test`, `make lint`, independent acceptance review, simplify, and final `codex review --base main` passed. Logs: `/tmp/mailven-issues-review/contacts-*.log`.

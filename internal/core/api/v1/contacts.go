@@ -159,6 +159,8 @@ type ContactSource struct {
 // go through their per-extension OAuth slot (granted via the write-access
 // account picker flow).
 type Contacts interface {
+	// Data returns the host-owned contact mirror service consumed by the Contacts extension.
+	Data() ContactData
 	SearchContacts(query string, limit int) ([]Contact, error)
 	GetContact(emailOrID string) (*Contact, error)
 	ListContacts(filter ContactFilter) ([]Contact, error)

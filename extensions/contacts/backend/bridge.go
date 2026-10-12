@@ -5,11 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/caseylabs/mailven/internal/carddav"
-	"github.com/caseylabs/mailven/internal/contact"
 	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
-	"github.com/caseylabs/mailven/internal/database"
-	"github.com/caseylabs/mailven/internal/platform"
 )
 
 // ContactsBridge is the Wails-bindable surface for the Contacts extension. It's
@@ -52,37 +48,17 @@ type ContactsBridgeDeps struct {
 	// (lightweight invariant — disabled calls short-circuit before any work).
 	SettingsStore SettingsStore
 
-	// Paths gives the bridge access to the OS-appropriate data directory
-	// for opening the extension's per-extension SQLite. Read at init time.
-	Paths *platform.Paths
-
-	// DB is the shared application database. Used to construct the
-	// Contacts-specific stores at init time.
-	DB *database.DB
+	// DataDir is the host data root; the extension owns its sidecar DB.
+	DataDir string
 
 	// Emitter forwards `contacts:*` Wails events to the frontend. Captured
 	// here so the bridge doesn't have to reach back into the host for ctx
 	// every time it needs to publish a conflict event.
 	Emitter EventEmitter
 
-	// Core is the coreapi.Core handle the bridge uses to call host-owned
-	// cross-extension surfaces:
-	//   - Source-management methods (ListSources, LinkAccountSource) that
-	//     back the extension's sidebar + account-setup hook.
-	//   - Storage().HostSecrets() — read-only access to core-managed
-	//     CardDAV passwords, since the contacts extension's writes need
-	//     the password but core owns the credential lifecycle (Pattern B
-	//     per docs/EXTENSIONS.md).
+	// Core exposes source management and shared mirror operations;
+	// provider ETags and field sidecars stay in this extension.
 	Core coreapi.Core
-
-	// GetStandaloneSourceToken returns a valid OAuth access token for a
-	// standalone contacts-only OAuth source (account_id IS NULL). Mirrors
-	// the host getter the carddav syncer uses for the read path; the
-	// contacts API uses it for the write path so create/update/delete work
-	// on standalone Google/Microsoft sources just like they do on
-	// account-linked ones. Nil-safe (writes to standalone sources then
-	// error with a clear message).
-	GetStandaloneSourceToken func(sourceID string) (string, error)
 }
 
 // SettingsStore is the narrow interface the bridge needs from the host's
@@ -138,19 +114,22 @@ func (b *ContactsBridge) gateEnabled() bool {
 // (and the disabled call still short-circuits before reaching here).
 func (b *ContactsBridge) ensureInit() error {
 	b.initOnce.Do(func() {
-		if b.deps.DB == nil || b.deps.Paths == nil {
-			b.initErr = errors.New("contacts.ContactsBridge: missing DB or Paths in deps")
+		if b.deps.Core == nil || b.deps.DataDir == "" {
+			b.initErr = errors.New("contacts.ContactsBridge: missing Core or DataDir in deps")
 			return
 		}
-		contactStore := contact.NewStore(b.deps.DB.DB)
-		carddavStore := carddav.NewStore(b.deps.DB.DB)
-		extStore, err := NewStore(b.deps.Paths.Data)
+		data := b.deps.Core.Contacts().Data()
+		if data == nil {
+			b.initErr = coreapi.ErrCapabilityDenied
+			return
+		}
+		extStore, err := NewStore(b.deps.DataDir)
 		if err != nil {
 			b.initErr = err
 			return
 		}
-		b.api = NewAPI(contactStore, carddavStore, extStore, b.deps.Core, b.deps.DB.DB)
-		b.api.SetStandaloneSourceTokenGetter(b.deps.GetStandaloneSourceToken)
+		b.api = NewAPI(data, extStore, b.deps.Core)
+
 	})
 	return b.initErr
 }

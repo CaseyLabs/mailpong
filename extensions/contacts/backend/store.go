@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailven/internal/extensions"
+	extensions "github.com/caseylabs/mailven/internal/kit/extensionstore"
 )
 
 // migrations is the per-extension migration sequence for the Contacts
@@ -85,8 +85,7 @@ type Store struct {
 
 // NewStore opens the Contacts extension's isolated SQLite DB at
 // <dataDir>/extensions/contacts/data.db and applies any pending migrations.
-// Called from App.Startup eagerly (whether or not the extension is enabled)
-// so the schema stays valid across enable/disable cycles.
+// Called lazily from ContactsBridge.ensureInit after the enabled gate.
 func NewStore(dataDir string) (*Store, error) {
 	s, err := extensions.OpenStore(dataDir, "contacts", migrations)
 	if err != nil {

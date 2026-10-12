@@ -74,7 +74,7 @@ func (a *App) AddContactSource(config carddav.SourceConfig) (*carddav.Source, er
 
 	// Store password in credential store (use CardDAV-specific method)
 	if config.Password != "" {
-		if err := a.credStore.SetCardDAVPassword(source.ID, config.Password); err != nil {
+		if err := carddav.NewPasswordStore(a.db.DB, a.credStore).SetPassword(source.ID, config.Password); err != nil {
 			// Rollback source creation
 			a.carddavStore.DeleteSource(source.ID)
 			return nil, fmt.Errorf("failed to store password: %w", err)
@@ -107,7 +107,7 @@ func (a *App) UpdateContactSource(id string, config carddav.SourceConfig) error 
 
 	// Update password if provided (use CardDAV-specific method)
 	if config.Password != "" {
-		if err := a.credStore.SetCardDAVPassword(id, config.Password); err != nil {
+		if err := carddav.NewPasswordStore(a.db.DB, a.credStore).SetPassword(id, config.Password); err != nil {
 			return fmt.Errorf("failed to update password: %w", err)
 		}
 	}
@@ -186,7 +186,7 @@ func (a *App) DeleteContactSource(id string) error {
 	if source != nil {
 		switch source.Type {
 		case carddav.SourceTypeCardDAV:
-			a.credStore.DeleteCardDAVPassword(id)
+			carddav.NewPasswordStore(a.db.DB, a.credStore).DeletePassword(id)
 		case carddav.SourceTypeGoogle, carddav.SourceTypeMicrosoft:
 			// Only delete OAuth tokens for standalone sources (not linked to an account)
 			if source.AccountID == nil || *source.AccountID == "" {

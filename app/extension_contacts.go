@@ -31,26 +31,10 @@ func (a *App) initContactsExtension() {
 
 	a.ContactsBridge = extcontactsbe.NewContactsBridge(extcontactsbe.ContactsBridgeDeps{
 		SettingsStore: a.settingsStore,
-		Paths:         a.paths,
-		DB:            a.db,
+		DataDir:       a.paths.Data,
 		Emitter:       emit,
-		// CardDAV passwords flow through Core.Storage().HostSecrets()
-		// (Pattern B — core owns the lifecycle; extension reads). No
-		// per-credential closure injection needed; the bridge constructs
-		// the right key prefix when reading.
-		//
-		// Core gives the bridge access to host-owned cross-extension
-		// surfaces — Contacts().ListSources() and LinkAccountSource()
-		// back the sidebar + account-setup hook flows; Storage().HostSecrets()
-		// backs CardDAV writes.
+		// All shared contact data and authentication flow through the SDK.
 		Core: contactsCore,
-		// Mirrors what the carddav syncer gets via SetTokenGetters — the
-		// same proactively-refreshing token accessor for standalone
-		// contacts-only OAuth sources, now reused on the write side so
-		// create/update/delete succeed regardless of whether the user
-		// linked the source to an email account or set it up via the
-		// contacts-only OAuth flow.
-		GetStandaloneSourceToken: a.getValidContactSourceOAuthToken,
 	})
 	a.contactsExt.AttachBridge(a.ContactsBridge)
 

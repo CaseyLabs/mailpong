@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailven/internal/logging"
 	"github.com/rs/zerolog"
 )
 
@@ -50,7 +49,7 @@ type GoogleContactsWriter struct {
 func NewGoogleContactsWriter(httpClient *http.Client) *GoogleContactsWriter {
 	return &GoogleContactsWriter{
 		httpClient: httpClient,
-		log:        logging.WithComponent("google-contacts-write"),
+		log:        zerolog.Nop(),
 		apiBase:    googleAPIBase,
 	}
 }
@@ -74,7 +73,7 @@ func (e *ErrGoogleEtagMismatch) Error() string {
 // ----- API shapes ------------------------------------------------------------
 
 // googlePerson is the write-shape for the People API Person resource. Fields
-// that aren't currently surfaced by contact.Record are omitted; if Mailven
+// that aren't currently surfaced by coreapi.ContactRecord are omitted; if Mailven
 // adds them later, extend here and in google_convert.go.
 type googlePerson struct {
 	ResourceName   string                `json:"resourceName,omitempty"`

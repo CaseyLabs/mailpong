@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
 	"github.com/caseylabs/mailven/internal/logging"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog"
@@ -23,7 +24,7 @@ import (
 // ErrContactExists is returned by Create when the email is already present
 // in the unified schema (under any record). The frontend maps this to a
 // "this contact already exists" message and offers the Edit flow instead.
-var ErrContactExists = errors.New("contact already exists")
+var ErrContactExists = coreapi.ErrContactExists
 
 // Store handles contact storage and retrieval against the unified
 // contact-record schema. The filesystem-based VCardScanner is held as an

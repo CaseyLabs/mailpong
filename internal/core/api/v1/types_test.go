@@ -58,6 +58,8 @@ func (stubComposer) OpenComposer(ComposeRequest) error { return ErrUnimplemented
 
 type stubContacts struct{}
 
+func (stubContacts) Data() ContactData { return nil }
+
 func (stubContacts) SearchContacts(string, int) ([]Contact, error) { return nil, ErrUnimplemented }
 func (stubContacts) GetContact(string) (*Contact, error)           { return nil, ErrUnimplemented }
 func (stubContacts) ListContacts(ContactFilter) ([]Contact, error) { return nil, ErrUnimplemented }

@@ -8,17 +8,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailven/internal/carddav"
-	"github.com/caseylabs/mailven/internal/contact"
 	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
-	"github.com/caseylabs/mailven/internal/logging"
 	"github.com/google/uuid"
 )
 
 // google_api.go holds the Phase 2b.3 Google People API write path — the
 // extension's side of the create/update/delete/list-addressbooks flow.
 // google_write.go is the low-level HTTP client; google_convert.go is the
-// Person ↔ contact.Record mapping. This file glues those to api.go's
+// Person ↔ coreapi.ContactRecord mapping. This file glues those to api.go's
 // source-type dispatch and to the local DB.
 //
 // Why split: api.go is already large, and Track C will mirror this file as
@@ -56,11 +53,11 @@ const googleCallTimeout = 45 * time.Second
 //     reads find this contact.
 //  6. Persist contact_records + carddav_record_state in one transaction.
 //  7. SetETag on the per-extension store so the next update can use it.
-func (a *API) createGoogleContact(input coreapi.ContactCreateInput, email string, source *carddav.Source) (string, error) {
+func (a *API) createGoogleContact(input coreapi.ContactCreateInput, email string, source *coreapi.ContactDAVSource) (string, error) {
 	if a.core == nil {
 		return "", fmt.Errorf("contacts.createGoogleContact: core not wired")
 	}
-	if a.db == nil {
+	if a.data == nil {
 		return "", fmt.Errorf("contacts.createGoogleContact: db not wired")
 	}
 	if a.extStore == nil {
@@ -86,8 +83,9 @@ func (a *API) createGoogleContact(input coreapi.ContactCreateInput, email string
 	ctx, cancel := context.WithTimeout(context.Background(), googleCallTimeout)
 	defer cancel()
 
-	log := logging.WithComponent("google-contacts-write")
+	log := a.logger()
 	writer := NewGoogleContactsWriter(httpClient)
+	writer.log = a.logger()
 
 	name := strings.TrimSpace(input.Name)
 	if name == "" {
@@ -134,23 +132,8 @@ func (a *API) createGoogleContact(input coreapi.ContactCreateInput, email string
 	persisted.PhotoMediaType = rec.PhotoMediaType
 	persisted.PhotoURL = rec.PhotoURL
 
-	tx, err := a.db.Begin()
-	if err != nil {
-		return "", fmt.Errorf("contacts.createGoogleContact: begin tx: %w", err)
-	}
-	defer func() { _ = tx.Rollback() }()
-
-	if err := contact.UpsertRecordTx(tx, persisted); err != nil {
-		return "", fmt.Errorf("contacts.createGoogleContact: upsert local record: %w", err)
-	}
-	if _, err := tx.Exec(`
-		INSERT INTO carddav_record_state (record_id, addressbook_id, href, etag, synced_at)
-		VALUES (?, ?, ?, ?, ?)
-	`, recordID, addressbookID, created.ResourceName, "", time.Now()); err != nil {
-		return "", fmt.Errorf("contacts.createGoogleContact: insert record_state: %w", err)
-	}
-	if err := tx.Commit(); err != nil {
-		return "", fmt.Errorf("contacts.createGoogleContact: commit: %w", err)
+	if err := a.data.SaveProviderRecord(persisted, addressbookID, created.ResourceName, true); err != nil {
+		return "", fmt.Errorf("contacts: save created provider record: %w", err)
 	}
 
 	if etag := etagFromPerson(created); etag != "" {
@@ -184,11 +167,11 @@ func (a *API) createGoogleContact(input coreapi.ContactCreateInput, email string
 //
 // Photos are handled separately after the main PATCH. Photo-step failure is
 // non-fatal (the contact itself is saved; just the avatar didn't change).
-func (a *API) updateGoogleContact(rec *contact.Record) error {
+func (a *API) updateGoogleContact(rec *coreapi.ContactRecord) error {
 	if a.core == nil {
 		return fmt.Errorf("contacts.updateGoogleContact: core not wired")
 	}
-	if a.db == nil {
+	if a.data == nil {
 		return fmt.Errorf("contacts.updateGoogleContact: db not wired")
 	}
 	if a.extStore == nil {
@@ -213,8 +196,9 @@ func (a *API) updateGoogleContact(rec *contact.Record) error {
 	ctx, cancel := context.WithTimeout(context.Background(), googleCallTimeout)
 	defer cancel()
 
-	log := logging.WithComponent("google-contacts-write")
+	log := a.logger()
 	writer := NewGoogleContactsWriter(httpClient)
+	writer.log = a.logger()
 
 	// The writer's UpdateContact does its own GET-then-PATCH and uses the
 	// freshly-fetched etag from that GET — the caller's etag parameter is
@@ -253,20 +237,8 @@ func (a *API) updateGoogleContact(rec *contact.Record) error {
 	persisted.PhotoMediaType = rec.PhotoMediaType
 	persisted.PhotoURL = rec.PhotoURL
 
-	tx, err := a.db.Begin()
-	if err != nil {
-		return fmt.Errorf("contacts.updateGoogleContact: begin tx: %w", err)
-	}
-	defer func() { _ = tx.Rollback() }()
-
-	if err := contact.UpsertRecordTx(tx, persisted); err != nil {
-		return fmt.Errorf("contacts.updateGoogleContact: upsert local record: %w", err)
-	}
-	if _, err := tx.Exec(`UPDATE carddav_record_state SET synced_at = ? WHERE record_id = ?`, time.Now(), rec.ID); err != nil {
-		return fmt.Errorf("contacts.updateGoogleContact: touch record_state: %w", err)
-	}
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("contacts.updateGoogleContact: commit: %w", err)
+	if err := a.data.SaveProviderRecord(persisted, persisted.SourceRef, "", false); err != nil {
+		return fmt.Errorf("contacts: save updated provider record: %w", err)
 	}
 
 	if newEtag := etagFromPerson(updated); newEtag != "" {
@@ -293,11 +265,11 @@ func (a *API) updateGoogleContact(rec *contact.Record) error {
 // deleteGoogleContact removes the contact from Google and cascades the local
 // rows via the contact_records FK. extStore.DeleteETag drops the version
 // stamp.
-func (a *API) deleteGoogleContact(rec *contact.Record) error {
+func (a *API) deleteGoogleContact(rec *coreapi.ContactRecord) error {
 	if a.core == nil {
 		return fmt.Errorf("contacts.deleteGoogleContact: core not wired")
 	}
-	if a.db == nil {
+	if a.data == nil {
 		return fmt.Errorf("contacts.deleteGoogleContact: db not wired")
 	}
 
@@ -319,14 +291,15 @@ func (a *API) deleteGoogleContact(rec *contact.Record) error {
 	ctx, cancel := context.WithTimeout(context.Background(), googleCallTimeout)
 	defer cancel()
 
-	log := logging.WithComponent("google-contacts-write")
+	log := a.logger()
 	writer := NewGoogleContactsWriter(httpClient)
+	writer.log = a.logger()
 
 	if err := writer.DeleteContact(ctx, resourceName); err != nil {
 		return fmt.Errorf("contacts.deleteGoogleContact: %w", err)
 	}
 
-	if _, err := a.db.Exec(`DELETE FROM contact_records WHERE id = ?`, rec.ID); err != nil {
+	if err := a.localStore.DeleteRecord(rec.ID); err != nil {
 		return fmt.Errorf("contacts.deleteGoogleContact: cascade delete record %s: %w", rec.ID, err)
 	}
 	if a.extStore != nil {
@@ -349,7 +322,7 @@ func (a *API) deleteGoogleContact(rec *contact.Record) error {
 // Read-scope only — covered by the existing first_party_uses_core_for_scopes
 // manifest entry, so this call doesn't trigger consent even on a fresh
 // read-only source.
-func (a *API) listGoogleAddressbooks(source *carddav.Source) ([]coreapi.Addressbook, error) {
+func (a *API) listGoogleAddressbooks(source *coreapi.ContactDAVSource) ([]coreapi.Addressbook, error) {
 	if source == nil {
 		return nil, nil
 	}
@@ -365,6 +338,7 @@ func (a *API) listGoogleAddressbooks(source *carddav.Source) ([]coreapi.Addressb
 	defer cancel()
 
 	writer := NewGoogleContactsWriter(httpClient)
+	writer.log = a.logger()
 	groups, err := writer.ListContactGroups(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("contacts.listGoogleAddressbooks: %w", err)
@@ -411,11 +385,11 @@ func (a *API) firstAddressbookForSource(sourceID string) (string, error) {
 	return "", fmt.Errorf("source %s has no addressbook; run a sync first", sourceID)
 }
 
-// googleSourceAndHrefForRecord loads the carddav.Source AND the Google
+// googleSourceAndHrefForRecord loads the coreapi.ContactDAVSource AND the Google
 // resourceName (stored as carddav_record_state.href for OAuth-synced
 // records) for an existing record. Used by Update + Delete to validate the
 // source is writable AND get the API target.
-func (a *API) googleSourceAndHrefForRecord(rec *contact.Record) (*carddav.Source, string, error) {
+func (a *API) googleSourceAndHrefForRecord(rec *coreapi.ContactRecord) (*coreapi.ContactDAVSource, string, error) {
 	if rec == nil || rec.SourceRef == "" {
 		return nil, "", fmt.Errorf("record has no addressbook reference")
 	}
@@ -428,7 +402,7 @@ func (a *API) googleSourceAndHrefForRecord(rec *contact.Record) (*carddav.Source
 	}
 
 	var href string
-	err = a.db.QueryRow(`SELECT href FROM carddav_record_state WHERE record_id = ?`, rec.ID).Scan(&href)
+	href, err = a.data.ProviderRecordHref(rec.ID)
 	if err != nil {
 		return nil, "", fmt.Errorf("lookup record_state for %s: %w", rec.ID, err)
 	}

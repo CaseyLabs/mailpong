@@ -653,7 +653,7 @@ func (a *App) Startup(ctx context.Context) {
 	go a.db.StartCheckpointRoutine(ctx)
 
 	// Initialize CardDAV syncer and scheduler
-	a.carddavSyncer = carddav.NewSyncer(a.carddavStore, a.credStore)
+	a.carddavSyncer = carddav.NewSyncer(a.carddavStore, carddav.NewPasswordStore(a.db.DB, a.credStore))
 	a.carddavScheduler = carddav.NewScheduler(a.carddavSyncer, a.carddavStore)
 
 	// Initialize the OAuth2 manager BEFORE constructing the Auth Broker — the

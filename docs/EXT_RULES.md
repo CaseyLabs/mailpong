@@ -50,7 +50,7 @@ Companion docs:
 ## 3 · Data ownership
 
 - **R10.** Each extension owns its per-extension SQLite, opened via
-  `internal/extensions.OpenStore(dataDir, name, migrations)` at
+  `internal/kit/extensionstore.OpenStore(dataDir, name, migrations)` at
   `<dataDir>/extensions/<name>/data.db`. Schema migrations are
   extension-owned (live in `extensions/<name>/backend/store.go`).
 - **R11.** Per-extension SQLite is opened LAZILY inside the bridge's

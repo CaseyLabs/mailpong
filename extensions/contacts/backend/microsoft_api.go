@@ -5,12 +5,8 @@ import (
 	"encoding/base64"
 	"fmt"
 	"strings"
-	"time"
 
-	"github.com/caseylabs/mailven/internal/carddav"
-	"github.com/caseylabs/mailven/internal/contact"
 	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
-	"github.com/caseylabs/mailven/internal/logging"
 	"github.com/google/uuid"
 )
 
@@ -51,11 +47,11 @@ const microsoftReadScope = "https://graph.microsoft.com/Contacts.Read"
 //  5. Persist contact_records + carddav_record_state in one transaction.
 //  6. Store the @odata.etag on the per-extension store (informational; not
 //     enforced on subsequent updates).
-func (a *API) createMicrosoftContact(input coreapi.ContactCreateInput, email string, source *carddav.Source) (string, error) {
+func (a *API) createMicrosoftContact(input coreapi.ContactCreateInput, email string, source *coreapi.ContactDAVSource) (string, error) {
 	if a.core == nil {
 		return "", fmt.Errorf("contacts.createMicrosoftContact: core not wired")
 	}
-	if a.db == nil {
+	if a.data == nil {
 		return "", fmt.Errorf("contacts.createMicrosoftContact: db not wired")
 	}
 	if a.extStore == nil {
@@ -78,8 +74,9 @@ func (a *API) createMicrosoftContact(input coreapi.ContactCreateInput, email str
 	ctx, cancel := context.WithTimeout(context.Background(), googleCallTimeout)
 	defer cancel()
 
-	log := logging.WithComponent("microsoft-contacts-write")
+	log := a.logger()
 	writer := NewMicrosoftContactsWriter(httpClient)
+	writer.log = a.logger()
 
 	name := strings.TrimSpace(input.Name)
 	if name == "" {
@@ -118,23 +115,8 @@ func (a *API) createMicrosoftContact(input coreapi.ContactCreateInput, email str
 	persisted.Source = "carddav"
 	persisted.SourceRef = addressbookID
 
-	tx, err := a.db.Begin()
-	if err != nil {
-		return "", fmt.Errorf("contacts.createMicrosoftContact: begin tx: %w", err)
-	}
-	defer func() { _ = tx.Rollback() }()
-
-	if err := contact.UpsertRecordTx(tx, persisted); err != nil {
-		return "", fmt.Errorf("contacts.createMicrosoftContact: upsert local record: %w", err)
-	}
-	if _, err := tx.Exec(`
-		INSERT INTO carddav_record_state (record_id, addressbook_id, href, etag, synced_at)
-		VALUES (?, ?, ?, ?, ?)
-	`, recordID, addressbookID, created.ID, "", time.Now()); err != nil {
-		return "", fmt.Errorf("contacts.createMicrosoftContact: insert record_state: %w", err)
-	}
-	if err := tx.Commit(); err != nil {
-		return "", fmt.Errorf("contacts.createMicrosoftContact: commit: %w", err)
+	if err := a.data.SaveProviderRecord(persisted, addressbookID, created.ID, true); err != nil {
+		return "", fmt.Errorf("contacts: save created provider record: %w", err)
 	}
 
 	// Etag stored for telemetry/future-use only; Graph doesn't enforce on
@@ -174,11 +156,11 @@ func (a *API) createMicrosoftContact(input coreapi.ContactCreateInput, email str
 //
 // No etag gate (Graph contacts don't enforce). Photo handling is a separate
 // PATCH /photo/$value after the main update; photo-step failure is non-fatal.
-func (a *API) updateMicrosoftContact(rec *contact.Record) error {
+func (a *API) updateMicrosoftContact(rec *coreapi.ContactRecord) error {
 	if a.core == nil {
 		return fmt.Errorf("contacts.updateMicrosoftContact: core not wired")
 	}
-	if a.db == nil {
+	if a.data == nil {
 		return fmt.Errorf("contacts.updateMicrosoftContact: db not wired")
 	}
 	if a.extStore == nil {
@@ -203,8 +185,9 @@ func (a *API) updateMicrosoftContact(rec *contact.Record) error {
 	ctx, cancel := context.WithTimeout(context.Background(), googleCallTimeout)
 	defer cancel()
 
-	log := logging.WithComponent("microsoft-contacts-write")
+	log := a.logger()
 	writer := NewMicrosoftContactsWriter(httpClient)
+	writer.log = a.logger()
 	contactReq := recordToMicrosoftContact(rec, log)
 
 	updated, err := writer.UpdateContact(ctx, contactID, contactReq)
@@ -222,20 +205,8 @@ func (a *API) updateMicrosoftContact(rec *contact.Record) error {
 	persisted.Source = "carddav"
 	persisted.SourceRef = rec.SourceRef
 
-	tx, err := a.db.Begin()
-	if err != nil {
-		return fmt.Errorf("contacts.updateMicrosoftContact: begin tx: %w", err)
-	}
-	defer func() { _ = tx.Rollback() }()
-
-	if err := contact.UpsertRecordTx(tx, persisted); err != nil {
-		return fmt.Errorf("contacts.updateMicrosoftContact: upsert local record: %w", err)
-	}
-	if _, err := tx.Exec(`UPDATE carddav_record_state SET synced_at = ? WHERE record_id = ?`, time.Now(), rec.ID); err != nil {
-		return fmt.Errorf("contacts.updateMicrosoftContact: touch record_state: %w", err)
-	}
-	if err := tx.Commit(); err != nil {
-		return fmt.Errorf("contacts.updateMicrosoftContact: commit: %w", err)
+	if err := a.data.SaveProviderRecord(persisted, persisted.SourceRef, "", false); err != nil {
+		return fmt.Errorf("contacts: save updated provider record: %w", err)
 	}
 
 	if updated.ETag != "" {
@@ -268,11 +239,11 @@ func (a *API) updateMicrosoftContact(rec *contact.Record) error {
 // deleteMicrosoftContact removes the contact from Graph and cascades the
 // local rows via the contact_records FK. extStore.DeleteETag drops the
 // stored version stamp.
-func (a *API) deleteMicrosoftContact(rec *contact.Record) error {
+func (a *API) deleteMicrosoftContact(rec *coreapi.ContactRecord) error {
 	if a.core == nil {
 		return fmt.Errorf("contacts.deleteMicrosoftContact: core not wired")
 	}
-	if a.db == nil {
+	if a.data == nil {
 		return fmt.Errorf("contacts.deleteMicrosoftContact: db not wired")
 	}
 
@@ -294,14 +265,15 @@ func (a *API) deleteMicrosoftContact(rec *contact.Record) error {
 	ctx, cancel := context.WithTimeout(context.Background(), googleCallTimeout)
 	defer cancel()
 
-	log := logging.WithComponent("microsoft-contacts-write")
+	log := a.logger()
 	writer := NewMicrosoftContactsWriter(httpClient)
+	writer.log = a.logger()
 
 	if err := writer.DeleteContact(ctx, contactID); err != nil {
 		return fmt.Errorf("contacts.deleteMicrosoftContact: %w", err)
 	}
 
-	if _, err := a.db.Exec(`DELETE FROM contact_records WHERE id = ?`, rec.ID); err != nil {
+	if err := a.localStore.DeleteRecord(rec.ID); err != nil {
 		return fmt.Errorf("contacts.deleteMicrosoftContact: cascade delete record %s: %w", rec.ID, err)
 	}
 	if a.extStore != nil {
@@ -325,7 +297,7 @@ func (a *API) deleteMicrosoftContact(rec *contact.Record) error {
 // Read-scope only — covered by the existing first_party_uses_core_for_scopes
 // manifest entry, so this call doesn't trigger consent even on a fresh
 // read-only source.
-func (a *API) listMicrosoftAddressbooks(source *carddav.Source) ([]coreapi.Addressbook, error) {
+func (a *API) listMicrosoftAddressbooks(source *coreapi.ContactDAVSource) ([]coreapi.Addressbook, error) {
 	if source == nil {
 		return nil, nil
 	}
@@ -341,6 +313,7 @@ func (a *API) listMicrosoftAddressbooks(source *carddav.Source) ([]coreapi.Addre
 	defer cancel()
 
 	writer := NewMicrosoftContactsWriter(httpClient)
+	writer.log = a.logger()
 	folders, err := writer.ListContactFolders(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("contacts.listMicrosoftAddressbooks: %w", err)
@@ -367,11 +340,11 @@ func (a *API) listMicrosoftAddressbooks(source *carddav.Source) ([]coreapi.Addre
 	return out, nil
 }
 
-// microsoftSourceAndHrefForRecord loads the carddav.Source AND the Graph
+// microsoftSourceAndHrefForRecord loads the coreapi.ContactDAVSource AND the Graph
 // contact id (stored as carddav_record_state.href for OAuth-synced records)
 // for an existing record. Used by Update + Delete to validate the source is
 // writable AND get the API target. Mirrors googleSourceAndHrefForRecord.
-func (a *API) microsoftSourceAndHrefForRecord(rec *contact.Record) (*carddav.Source, string, error) {
+func (a *API) microsoftSourceAndHrefForRecord(rec *coreapi.ContactRecord) (*coreapi.ContactDAVSource, string, error) {
 	if rec == nil || rec.SourceRef == "" {
 		return nil, "", fmt.Errorf("record has no addressbook reference")
 	}
@@ -384,7 +357,7 @@ func (a *API) microsoftSourceAndHrefForRecord(rec *contact.Record) (*carddav.Sou
 	}
 
 	var href string
-	err = a.db.QueryRow(`SELECT href FROM carddav_record_state WHERE record_id = ?`, rec.ID).Scan(&href)
+	href, err = a.data.ProviderRecordHref(rec.ID)
 	if err != nil {
 		return nil, "", fmt.Errorf("lookup record_state for %s: %w", rec.ID, err)
 	}

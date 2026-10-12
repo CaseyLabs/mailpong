@@ -80,7 +80,7 @@ Full architectural rationale lives in `context/EXTENSION_ARCHITECTURE.md` (an Ae
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
-**The rule**: `extensions/<name>/` for things users toggle on/off. `internal/extensions/` for host scaffolding that always runs (UI registry, Auth Broker, Mail/Composer wrappers, per-extension Store wiring).
+**The rule**: `extensions/<name>/` for things users toggle on/off. `internal/extensions/` for host scaffolding that always runs (UI registry, Auth Broker, Mail/Composer wrappers); generic per-extension SQLite lives in `internal/kit/extensionstore/`.
 
 **Where to put each piece of code:**
 
@@ -314,8 +314,8 @@ import (
 func (a *App) initContactsExtension() {
     a.ContactsBridge = extcontactsbe.NewContactsBridge(extcontactsbe.ContactsBridgeDeps{
         SettingsStore: a.settingsStore,
-        Paths:         a.paths,
-        DB:            a.db,
+        DataDir:       a.paths.Data,
+        Core:          newCoreForExtension(a, a.contactsExt),
         Emitter: func(eventName string, payload any) {
             wailsRuntime.EventsEmit(a.ctx, eventName, payload)
         },
@@ -597,10 +597,14 @@ Phase 1 impl ([`internal/extensions/compose/api.go`](../internal/extensions/comp
 
 ### `Contacts`
 
+The Contacts bridge consumes `Core.Contacts().Data()` for host-owned records, source metadata, atomic provider mirror writes, DAV operations, and authenticated source HTTP clients. ETags and Microsoft field extras stay in the extension's sidecar store. The bridge receives a plain data-directory string and opens that store lazily using `internal/kit/extensionstore`. Standalone OAuth tokens stay in the host; legacy CardDAV passwords retain their existing keyring keys and encrypted fallback column through generic credential primitives.
+
 [`internal/core/api/v1/contacts.go`](../internal/core/api/v1/contacts.go)
 
 ```go
 type Contacts interface {
+    Data() ContactData // host-owned mirror operations, scoped to Contacts
+
     // Contact CRUD (consumed by the Contacts extension's own Bridge)
     SearchContacts(query string, limit int) ([]Contact, error)
     GetContact(emailOrID string) (*Contact, error)
@@ -915,10 +919,10 @@ Use `errors.Is(err, coreapi.ErrXxx)` for sentinel matching. `ErrAdditionalConsen
 
 ## Per-extension storage
 
-Package: [`internal/extensions/`](../internal/extensions/) (files [`store.go`](../internal/extensions/store.go) and [`kv.go`](../internal/extensions/kv.go)).
+Package: [`internal/kit/extensionstore/`](../internal/kit/extensionstore/) (files [`store.go`](../internal/kit/extensionstore/store.go) and [`kv.go`](../internal/kit/extensionstore/kv.go)).
 
 ```go
-import "github.com/caseylabs/mailven/internal/extensions"
+import extensions "github.com/caseylabs/mailven/internal/kit/extensionstore"
 
 func NewStore(dataDir string) (*extensions.Store, error) {
     return extensions.OpenStore(dataDir, "myextension", []extensions.Migration{
@@ -949,7 +953,7 @@ kv := store.KV()           // coreapi.KVStore backed by ext_kv table
 
 **Lifecycle:** Per the architecture doc, stores open EAGERLY at `App.Startup`, regardless of whether the extension is currently enabled. This keeps schemas valid across enable/disable cycles — users can disable, the migrations stay applied, re-enabling is instantaneous.
 
-**KV namespace:** [`internal/extensions/kv.go`](../internal/extensions/kv.go) implements `coreapi.KVStore` backed by the `ext_kv` table. Use it for sync tokens, view prefs, anything that doesn't warrant its own table. `Get` returns `("", nil)` for missing keys (no error). `Delete` is idempotent. `List(prefix)` returns sorted keys; `prefix=""` returns all.
+**KV namespace:** [`internal/kit/extensionstore/kv.go`](../internal/kit/extensionstore/kv.go) implements `coreapi.KVStore` backed by the `ext_kv` table. Use it for sync tokens, view prefs, anything that doesn't warrant its own table. `Get` returns `("", nil)` for missing keys (no error). `Delete` is idempotent. `List(prefix)` returns sorted keys; `prefix=""` returns all.
 
 ---
 
@@ -1300,7 +1304,7 @@ When you ADD a method to an interface in `coreapi`, update `stubCore` in the sam
 
 ### Real-store integration tests
 
-[`internal/extensions/store_test.go`](../internal/extensions/store_test.go), [`internal/extensions/auth/broker_test.go`](../internal/extensions/auth/broker_test.go): open a real SQLite via `t.TempDir()` + `database.Open`, exercise the API, assert on results. No mocking of the credentials store or DB.
+[`internal/kit/extensionstore/store_test.go`](../internal/kit/extensionstore/store_test.go), [`internal/extensions/auth/broker_test.go`](../internal/extensions/auth/broker_test.go): open a real SQLite via `t.TempDir()` + `database.Open`, exercise the API, assert on results. No mocking of the credentials store or DB.
 
 ### Auth broker test pattern
 
@@ -2184,7 +2188,7 @@ These are non-negotiable and apply equally to first-party and (hypothetical) thi
 
 Extensions interact with Mailven exclusively through the `coreapi.Core` surfaces listed in [§ `coreapi` reference](#coreapi-reference). They:
 
-- DO NOT import any package from `internal/` outside `internal/extensions/` (and only the store/kv helpers there) and `internal/core/api/v1/`.
+- DO NOT import any package from `internal/` outside `internal/core/api/v1/` and the generic `internal/kit/*` utilities.
 - DO NOT call functions in `app/`, `internal/account/`, `internal/folder/`, `internal/message/`, `internal/draft/`, `internal/contact/`, `internal/carddav/`, `internal/imap/`, `internal/smtp/`, `internal/oauth2/`, `internal/credentials/`, etc., directly.
 - DO NOT query, read, or write any table in Mailven's main database (`mailven.db`). The accounts/folders/messages/contacts/drafts tables are core-owned and off-limits.
 - DO NOT shell out, monkey-patch, or use `reflect`/build-tag tricks to do any of the above indirectly.
@@ -2193,7 +2197,7 @@ The Contacts extension *is allowed* to receive a `*database.DB` handle to Mailve
 
 **2. If the extension needs persistence, it brings its own database.**
 
-Per-extension SQLite is the only persistence path. Use [`internal/extensions.OpenStore`](../internal/extensions/store.go) (see [§ Per-extension storage](#per-extension-storage)). That opens `<dataDir>/extensions/<name>/data.db`, applies the extension's own migrations, and gives back a `*sql.DB` scoped to that file only. Tiny config (sync tokens, view prefs) can go in the auto-created `ext_kv` table via `coreapi.Storage.KV`.
+Per-extension SQLite is the only persistence path. Use [`internal/kit/extensionstore.OpenStore`](../internal/kit/extensionstore/store.go) (see [§ Per-extension storage](#per-extension-storage)). That opens `<dataDir>/extensions/<name>/data.db`, applies the extension's own migrations, and gives back a `*sql.DB` scoped to that file only. Tiny config (sync tokens, view prefs) can go in the auto-created `ext_kv` table via `coreapi.Storage.KV`.
 
 If the extension wants to read or write data Mailven itself owns (e.g., list messages, insert a contact, move a message), the only legitimate path is calling the relevant `coreapi` interface method — and only if that method already exists and is implemented. If it doesn't exist or returns `ErrUnimplemented`, see [§ Requesting a new extension API](#requesting-a-new-extension-api) below.
 

@@ -1,17 +1,16 @@
 package backend
 
 import (
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
 	"strings"
-
-	"github.com/caseylabs/mailven/internal/contact"
 )
 
 // sidecarFromRecord extracts the email-type map + full URL list from a
-// contact.Record into a MSSidecar suitable for SetMSSidecar. Mirrors the
+// coreapi.ContactRecord into a MSSidecar suitable for SetMSSidecar. Mirrors the
 // fields Microsoft Graph's contact schema can't represent natively (no per-
 // email type field; only one URL slot). Address keys are lowercased and
 // trimmed for case-insensitive matching on subsequent reads.
-func sidecarFromRecord(rec *contact.Record) MSSidecar {
+func sidecarFromRecord(rec *coreapi.ContactRecord) MSSidecar {
 	side := MSSidecar{
 		EmailTypes: map[string]string{},
 		URLs:       []MSSidecarURL{},
@@ -45,7 +44,7 @@ func sidecarFromRecord(rec *contact.Record) MSSidecar {
 // Email match is by lowercase address. URLs are wholesale-replaced when
 // src has any (the user's intent is the authoritative ordered list); when
 // src has none we keep whatever Graph returned (single businessHomePage).
-func applyMSExtrasToRecord(dst, src *contact.Record) {
+func applyMSExtrasToRecord(dst, src *coreapi.ContactRecord) {
 	if dst == nil || src == nil {
 		return
 	}
@@ -68,7 +67,7 @@ func applyMSExtrasToRecord(dst, src *contact.Record) {
 	}
 
 	if len(src.URLs) > 0 {
-		dst.URLs = append([]contact.RecordURL{}, src.URLs...)
+		dst.URLs = append([]coreapi.ContactRecordURL{}, src.URLs...)
 	}
 
 	// Photo bytes never come back in Graph's POST/PATCH contact response —
@@ -90,7 +89,7 @@ func applyMSExtrasToRecord(dst, src *contact.Record) {
 // the Record (user deleted one via Outlook.com) are silently skipped. URLs
 // from the sidecar replace whatever was on the Record because the sidecar
 // IS the authoritative list (it's where the multi-URL intent lives).
-func applyMSSidecarToRecord(rec *contact.Record, side MSSidecar) {
+func applyMSSidecarToRecord(rec *coreapi.ContactRecord, side MSSidecar) {
 	if rec == nil {
 		return
 	}
@@ -103,9 +102,9 @@ func applyMSSidecarToRecord(rec *contact.Record, side MSSidecar) {
 		}
 	}
 	if len(side.URLs) > 0 {
-		rec.URLs = make([]contact.RecordURL, 0, len(side.URLs))
+		rec.URLs = make([]coreapi.ContactRecordURL, 0, len(side.URLs))
 		for _, u := range side.URLs {
-			rec.URLs = append(rec.URLs, contact.RecordURL{URL: u.URL, URLType: u.Type})
+			rec.URLs = append(rec.URLs, coreapi.ContactRecordURL{URL: u.URL, URLType: u.Type})
 		}
 	}
 }

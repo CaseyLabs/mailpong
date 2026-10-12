@@ -2,14 +2,14 @@ package backend
 
 import (
 	"fmt"
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
 	"strconv"
 	"strings"
 
-	"github.com/caseylabs/mailven/internal/contact"
 	"github.com/rs/zerolog"
 )
 
-// google_convert.go: maps between contact.Record (the unified Mailven shape) and
+// google_convert.go: maps between coreapi.ContactRecord (the unified Mailven shape) and
 // googlePerson (the People API request/response shape). Re-implemented inside
 // the extension package on purpose — the host-side READ parser in
 // internal/contact/google_sync.go is search-only (just resourceName + names +
@@ -23,7 +23,7 @@ import (
 //
 // rec is read-only here. Caller is responsible for building rec from the patch
 // before calling (UpdateContact) or from CreateContactInput (CreateContact).
-func recordToGooglePerson(rec *contact.Record, log zerolog.Logger) *googlePerson {
+func recordToGooglePerson(rec *coreapi.ContactRecord, log zerolog.Logger) *googlePerson {
 	if rec == nil {
 		return &googlePerson{}
 	}
@@ -130,18 +130,18 @@ func recordToGooglePerson(rec *contact.Record, log zerolog.Logger) *googlePerson
 }
 
 // googlePersonToRecord maps a Person from a response back into a partial
-// contact.Record. Used by the API layer after CreateContact/UpdateContact to
+// coreapi.ContactRecord. Used by the API layer after CreateContact/UpdateContact to
 // reconcile the local row with the server's accepted state. Caller is
 // responsible for stitching id/source/source_ref onto the result.
 //
 // IMPORTANT: this is NOT round-trip lossless. Google strips unknown fields,
 // re-normalizes phone/address formatting, and may add default types — so the
 // returned Record reflects the server's view, not the original request.
-func googlePersonToRecord(p *googlePerson) *contact.Record {
+func googlePersonToRecord(p *googlePerson) *coreapi.ContactRecord {
 	if p == nil {
 		return nil
 	}
-	rec := &contact.Record{}
+	rec := &coreapi.ContactRecord{}
 
 	if len(p.Names) > 0 {
 		n := p.Names[0]
@@ -166,7 +166,7 @@ func googlePersonToRecord(p *googlePerson) *contact.Record {
 		if e.Value == "" {
 			continue
 		}
-		rec.Emails = append(rec.Emails, contact.RecordEmail{
+		rec.Emails = append(rec.Emails, coreapi.ContactRecordEmail{
 			Email:     strings.ToLower(strings.TrimSpace(e.Value)),
 			EmailType: mapTypeFromGoogle(e.Type),
 			IsPrimary: e.Metadata != nil && e.Metadata.Primary,
@@ -176,14 +176,14 @@ func googlePersonToRecord(p *googlePerson) *contact.Record {
 		if ph.Value == "" {
 			continue
 		}
-		rec.Phones = append(rec.Phones, contact.RecordPhone{
+		rec.Phones = append(rec.Phones, coreapi.ContactRecordPhone{
 			Number:    ph.Value,
 			PhoneType: mapTypeFromGoogle(ph.Type),
 			IsPrimary: ph.Metadata != nil && ph.Metadata.Primary,
 		})
 	}
 	for _, a := range p.Addresses {
-		rec.Addresses = append(rec.Addresses, contact.RecordAddress{
+		rec.Addresses = append(rec.Addresses, coreapi.ContactRecordAddress{
 			AddrType: mapTypeFromGoogle(a.Type),
 			Street:   a.StreetAddress,
 			City:     a.City,
@@ -196,7 +196,7 @@ func googlePersonToRecord(p *googlePerson) *contact.Record {
 		if u.Value == "" {
 			continue
 		}
-		rec.URLs = append(rec.URLs, contact.RecordURL{URL: u.Value, URLType: mapTypeFromGoogle(u.Type)})
+		rec.URLs = append(rec.URLs, coreapi.ContactRecordURL{URL: u.Value, URLType: mapTypeFromGoogle(u.Type)})
 	}
 	for _, im := range p.IMClients {
 		if im.Username == "" {
@@ -206,7 +206,7 @@ func googlePersonToRecord(p *googlePerson) *contact.Record {
 		if im.Protocol != "" {
 			handle = im.Protocol + ":" + im.Username
 		}
-		rec.IMPPs = append(rec.IMPPs, contact.RecordIMPP{Handle: handle, IMPPType: mapTypeFromGoogle(im.Type)})
+		rec.IMPPs = append(rec.IMPPs, coreapi.ContactRecordIMPP{Handle: handle, IMPPType: mapTypeFromGoogle(im.Type)})
 	}
 	return rec
 }
@@ -220,7 +220,7 @@ func googlePersonToRecord(p *googlePerson) *contact.Record {
 // before the patch — extra round-trip per update. We prefer "send the whole
 // known state" because Mailven's ContactPatch already collapses partial edits
 // into a full intended state via applyContactPatchToRecord.
-func fieldMaskForRecord(rec *contact.Record) string {
+func fieldMaskForRecord(rec *coreapi.ContactRecord) string {
 	if rec == nil {
 		return ""
 	}

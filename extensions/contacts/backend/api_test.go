@@ -10,55 +10,17 @@ import (
 
 	"github.com/caseylabs/mailven/internal/carddav"
 	"github.com/caseylabs/mailven/internal/contact"
+	"github.com/caseylabs/mailven/internal/contactdata"
 	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
 	"github.com/caseylabs/mailven/internal/credentials"
 	"github.com/caseylabs/mailven/internal/database"
 )
 
-// fakeCore is the minimal coreapi.Core fake the contacts tests need: it
-// exposes only Storage().HostSecrets() (backed by a real credentials.Store)
-// because that's the only Core method the CardDAV write path touches. All
-// other methods return zero values — tests that need them would extend
-// this fake. The internal/credentials import is fine in test code; the
-// no-internal-imports rule applies to production extension code only.
-type fakeCore struct{ creds *credentials.Store }
-
-func (f fakeCore) Mail() coreapi.Mail                   { return nil }
-func (f fakeCore) Composer() coreapi.Composer           { return nil }
-func (f fakeCore) Contacts() coreapi.Contacts           { return nil }
-func (f fakeCore) Auth() coreapi.Auth                   { return nil }
-func (f fakeCore) Notifications() coreapi.Notifications { return nil }
-func (f fakeCore) UI() coreapi.UI                       { return nil }
-func (f fakeCore) Storage() coreapi.Storage             { return fakeStorage(f) }
-func (f fakeCore) Events() coreapi.EventBus             { return nil }
-func (f fakeCore) Log() coreapi.Logger                  { return nil }
-func (f fakeCore) HTML() coreapi.HTML                   { return nil }
-func (f fakeCore) Extension(id string) (any, bool)      { return nil, false }
-
-type fakeStorage struct{ creds *credentials.Store }
-
-func (f fakeStorage) KV(extensionID string) coreapi.KVStore { return nil }
-func (f fakeStorage) Secrets(extensionID string) coreapi.Secrets {
-	return nil
-}
-func (f fakeStorage) HostSecrets() coreapi.HostSecrets {
-	return fakeHostSecrets(f)
-}
-
-type fakeHostSecrets struct{ creds *credentials.Store }
-
-func (f fakeHostSecrets) Get(key string) (string, error) {
-	if strings.HasPrefix(key, "carddav:") {
-		return f.creds.GetCardDAVPassword(strings.TrimPrefix(key, "carddav:"))
-	}
-	return "", errors.New("fakeHostSecrets: unsupported prefix")
-}
-
 // setupAPIWithCreds builds an API plus a real credentials.Store so the
 // CardDAV write paths (which read passwords via core.Storage().HostSecrets())
 // can be exercised end-to-end. The plain setupAPI passes core=nil since most
 // tests don't touch the write path.
-func setupAPIWithCreds(t *testing.T) (*API, *contact.Store, *carddav.Store, *credentials.Store) {
+func setupAPIWithCreds(t *testing.T) (*API, *contact.Store, *carddav.Store, *carddav.PasswordStore) {
 	t.Helper()
 	tmp := t.TempDir()
 	path := filepath.Join(tmp, "test.db")
@@ -73,11 +35,18 @@ func setupAPIWithCreds(t *testing.T) (*API, *contact.Store, *carddav.Store, *cre
 
 	localStore := contact.NewStore(db.DB)
 	carddavStore := carddav.NewStore(db.DB)
-	credStore, err := credentials.NewStore(db.DB, tmp)
+	rawCreds, err := credentials.NewStore(db.DB, tmp)
 	if err != nil {
 		t.Fatalf("credentials.NewStore: %v", err)
 	}
-	return NewAPI(localStore, carddavStore, nil, fakeCore{creds: credStore}, db.DB), localStore, carddavStore, credStore
+	credStore := carddav.NewPasswordStore(db.DB, rawCreds)
+	return NewAPI(contactdata.New(localStore, carddavStore, db.DB, nil, func(source *carddav.Source) (*carddav.Client, error) {
+		password, err := credStore.GetPassword(source.ID)
+		if err != nil {
+			return nil, err
+		}
+		return carddav.NewClient(source.URL, source.Username, password)
+	}), nil, nil), localStore, carddavStore, credStore
 }
 
 func setupAPI(t *testing.T) (*API, *contact.Store, *carddav.Store) {
@@ -100,7 +69,7 @@ func setupAPI(t *testing.T) (*API, *contact.Store, *carddav.Store) {
 	// and contact.Store.Search natively walks them. The legacy SetCardDAVSearchFunc
 	// wiring was deleted from app.go + this test setup at the same time.
 
-	return NewAPI(localStore, carddavStore, nil, nil, db.DB), localStore, carddavStore
+	return NewAPI(contactdata.New(localStore, carddavStore, db.DB, nil, nil), nil, nil), localStore, carddavStore
 }
 
 func TestAPI_SearchContacts_LocalOnly(t *testing.T) {
@@ -458,7 +427,7 @@ func TestAPI_SubscribeToContactEvents_Unimplemented(t *testing.T) {
 }
 
 func TestAPI_NilStores_GracefulDegradation(t *testing.T) {
-	api := NewAPI(nil, nil, nil, nil, nil)
+	api := NewAPI(nil, nil, nil)
 	if got, err := api.SearchContacts("anything", 10); err != nil || got != nil {
 		t.Fatalf("search with nil stores: got=%v err=%v", got, err)
 	}
@@ -731,7 +700,7 @@ func TestAPI_ListContacts_LocalParentReturnsBoth(t *testing.T) {
 func seedWritableCardDAVRecord(
 	t *testing.T,
 	carddavStore *carddav.Store,
-	credStore *credentials.Store,
+	credStore *carddav.PasswordStore,
 	handler http.HandlerFunc,
 ) (server *httptest.Server, recordID, sourceID, addressbookID string) {
 	t.Helper()
@@ -753,7 +722,7 @@ func seedWritableCardDAVRecord(
 	if err != nil {
 		t.Fatalf("create addressbook: %v", err)
 	}
-	if err := credStore.SetCardDAVPassword(src.ID, "pass"); err != nil {
+	if err := credStore.SetPassword(src.ID, "pass"); err != nil {
 		t.Fatalf("set password: %v", err)
 	}
 	if err := carddavStore.UpsertContact(&carddav.Contact{

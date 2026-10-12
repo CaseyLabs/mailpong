@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailven/internal/logging"
 	"github.com/rs/zerolog"
 )
 
@@ -43,7 +42,7 @@ type MicrosoftContactsWriter struct {
 func NewMicrosoftContactsWriter(httpClient *http.Client) *MicrosoftContactsWriter {
 	return &MicrosoftContactsWriter{
 		httpClient: httpClient,
-		log:        logging.WithComponent("microsoft-contacts-write"),
+		log:        zerolog.Nop(),
 		apiBase:    microsoftGraphBase,
 	}
 }
@@ -51,7 +50,7 @@ func NewMicrosoftContactsWriter(httpClient *http.Client) *MicrosoftContactsWrite
 // ----- API shapes ------------------------------------------------------------
 
 // msContact is the write-shape for the Graph Contact resource. Fields outside
-// what contact.Record models are omitted. Note Graph's per-bucket phone
+// what coreapi.ContactRecord models are omitted. Note Graph's per-bucket phone
 // arrays (businessPhones / homePhones) vs Google's single typed-array list —
 // see microsoft_convert.go for the mapping.
 type msContact struct {
@@ -86,7 +85,7 @@ type msContact struct {
 	OtherAddress    *msPhysicalAddress `json:"otherAddress,omitempty"`
 
 	// BusinessHomePage is the single URL field on a Graph Contact. URL
-	// collections in contact.Record collapse to this — first URL wins; rest
+	// collections in coreapi.ContactRecord collapse to this — first URL wins; rest
 	// dropped with a log warn (also surfaced via toast at the UI level).
 	BusinessHomePage string `json:"businessHomePage,omitempty"`
 

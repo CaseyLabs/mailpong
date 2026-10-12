@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/caseylabs/mailven/internal/contact"
-	"github.com/caseylabs/mailven/internal/credentials"
 	"github.com/caseylabs/mailven/internal/keylock"
 	"github.com/caseylabs/mailven/internal/kit/davutil"
 	"github.com/caseylabs/mailven/internal/logging"
@@ -45,7 +44,7 @@ func retryDBOperation(operation func() error, maxRetries int, baseDelay time.Dur
 // Syncer handles syncing contacts from CardDAV/Google/Microsoft sources
 type Syncer struct {
 	store           *Store
-	credStore       *credentials.Store
+	credStore       PasswordReader
 	getAccountToken AccessTokenGetter // Gets OAuth token from linked email account
 	getSourceToken  AccessTokenGetter // Gets OAuth token from standalone contact source
 	googleSyncer    *contact.GoogleContactsSyncer
@@ -56,8 +55,12 @@ type Syncer struct {
 	sourceLocks keylock.Map[string] // serializes syncs of one source
 }
 
+type PasswordReader interface {
+	GetPassword(sourceID string) (string, error)
+}
+
 // NewSyncer creates a new contact syncer
-func NewSyncer(store *Store, credStore *credentials.Store) *Syncer {
+func NewSyncer(store *Store, credStore PasswordReader) *Syncer {
 	return &Syncer{
 		store:           store,
 		credStore:       credStore,
@@ -136,7 +139,7 @@ func (s *Syncer) cardDAVClient(source *Source) (*Client, error) {
 		return NewClientWithHTTPClient(davutil.NewBearerHTTPClient(token, 30*time.Second), source.URL)
 	}
 
-	password, err := s.credStore.GetCardDAVPassword(source.ID)
+	password, err := s.credStore.GetPassword(source.ID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get password: %w", err)
 	}

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailven/internal/extensions"
+	extensions "github.com/caseylabs/mailven/internal/kit/extensionstore"
 )
 
 // migrations is the per-extension migration sequence for the Calendar

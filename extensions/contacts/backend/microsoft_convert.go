@@ -1,21 +1,21 @@
 package backend
 
 import (
+	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
 	"strings"
 
-	"github.com/caseylabs/mailven/internal/contact"
 	"github.com/rs/zerolog"
 )
 
-// microsoft_convert.go: maps between contact.Record and msContact for the
+// microsoft_convert.go: maps between coreapi.ContactRecord and msContact for the
 // Microsoft Graph write path. Mirrors google_convert.go's shape. The mapping
 // is lossier than Google's in two places:
 //
-//   1. URLs collapse: contact.Record can carry many URLs with types; Graph's
+//   1. URLs collapse: coreapi.ContactRecord can carry many URLs with types; Graph's
 //      Contact has only `businessHomePage` (single string). On write we keep
 //      the first URL and warn via log; the rest are dropped.
 //
-//   2. Phones are bucketed: contact.Record.Phones is a single typed list;
+//   2. Phones are bucketed: coreapi.ContactRecord.Phones is a single typed list;
 //      Graph distributes into `businessPhones[]` / `homePhones[]` /
 //      `mobilePhone` (single). Phones whose type doesn't map cleanly fall
 //      into businessPhones (Graph's catch-all bucket).
@@ -29,7 +29,7 @@ import (
 // passed logger is used to warn on lossy field collapses (multi-URL, > 3
 // addresses); pass zerolog.Nop() in tests where the warning noise isn't
 // useful.
-func recordToMicrosoftContact(rec *contact.Record, log zerolog.Logger) *msContact {
+func recordToMicrosoftContact(rec *coreapi.ContactRecord, log zerolog.Logger) *msContact {
 	if rec == nil {
 		return &msContact{}
 	}
@@ -160,16 +160,16 @@ func recordToMicrosoftContact(rec *contact.Record, log zerolog.Logger) *msContac
 }
 
 // microsoftContactToRecord maps a Graph Contact response back into a partial
-// contact.Record. Used by the API layer after CreateContact / UpdateContact
+// coreapi.ContactRecord. Used by the API layer after CreateContact / UpdateContact
 // to reconcile the local row with the server's accepted state.
 //
 // NOT round-trip lossless — see recordToMicrosoftContact for the lossy
 // fields. Multi-URL records that hit the wire come back with one URL.
-func microsoftContactToRecord(c *msContact) *contact.Record {
+func microsoftContactToRecord(c *msContact) *coreapi.ContactRecord {
 	if c == nil {
 		return nil
 	}
-	rec := &contact.Record{}
+	rec := &coreapi.ContactRecord{}
 
 	rec.Fn = c.DisplayName
 	rec.NGiven = c.GivenName
@@ -191,7 +191,7 @@ func microsoftContactToRecord(c *msContact) *contact.Record {
 		if e.Address == "" {
 			continue
 		}
-		rec.Emails = append(rec.Emails, contact.RecordEmail{
+		rec.Emails = append(rec.Emails, coreapi.ContactRecordEmail{
 			Email: strings.ToLower(strings.TrimSpace(e.Address)),
 		})
 	}
@@ -204,19 +204,19 @@ func microsoftContactToRecord(c *msContact) *contact.Record {
 	// the first phone overall is set as primary (Bug M-A) — matches the
 	// convention used on write (recordToMicrosoftContact).
 	if c.MobilePhone != "" {
-		rec.Phones = append(rec.Phones, contact.RecordPhone{Number: c.MobilePhone, PhoneType: "mobile"})
+		rec.Phones = append(rec.Phones, coreapi.ContactRecordPhone{Number: c.MobilePhone, PhoneType: "mobile"})
 	}
 	for _, p := range c.HomePhones {
 		if p == "" {
 			continue
 		}
-		rec.Phones = append(rec.Phones, contact.RecordPhone{Number: p, PhoneType: "home"})
+		rec.Phones = append(rec.Phones, coreapi.ContactRecordPhone{Number: p, PhoneType: "home"})
 	}
 	for _, p := range c.BusinessPhones {
 		if p == "" {
 			continue
 		}
-		rec.Phones = append(rec.Phones, contact.RecordPhone{Number: p, PhoneType: "work"})
+		rec.Phones = append(rec.Phones, coreapi.ContactRecordPhone{Number: p, PhoneType: "work"})
 	}
 	if len(rec.Phones) > 0 {
 		rec.Phones[0].IsPrimary = true
@@ -233,14 +233,14 @@ func microsoftContactToRecord(c *msContact) *contact.Record {
 	}
 
 	if c.BusinessHomePage != "" {
-		rec.URLs = append(rec.URLs, contact.RecordURL{URL: c.BusinessHomePage, URLType: "work"})
+		rec.URLs = append(rec.URLs, coreapi.ContactRecordURL{URL: c.BusinessHomePage, URLType: "work"})
 	}
 
 	for _, h := range c.IMAddresses {
 		if h == "" {
 			continue
 		}
-		rec.IMPPs = append(rec.IMPPs, contact.RecordIMPP{Handle: h})
+		rec.IMPPs = append(rec.IMPPs, coreapi.ContactRecordIMPP{Handle: h})
 	}
 
 	if len(c.Categories) > 0 {
@@ -250,8 +250,8 @@ func microsoftContactToRecord(c *msContact) *contact.Record {
 	return rec
 }
 
-func addressFromMicrosoft(a *msPhysicalAddress, addrType string) contact.RecordAddress {
-	return contact.RecordAddress{
+func addressFromMicrosoft(a *msPhysicalAddress, addrType string) coreapi.ContactRecordAddress {
+	return coreapi.ContactRecordAddress{
 		AddrType: addrType,
 		Street:   a.Street,
 		City:     a.City,
@@ -320,12 +320,12 @@ func microsoftBirthdayToString(s string) string {
 // source order). Used on write so element 0 of Graph's emailAddresses[] is
 // the primary email — the convention non-Mailven clients use when there's no
 // per-field primary marker (Bug M-A).
-func primaryFirst(in []contact.RecordEmail) []contact.RecordEmail {
+func primaryFirst(in []coreapi.ContactRecordEmail) []coreapi.ContactRecordEmail {
 	if len(in) < 2 {
 		return in
 	}
-	var primary *contact.RecordEmail
-	out := make([]contact.RecordEmail, 0, len(in))
+	var primary *coreapi.ContactRecordEmail
+	out := make([]coreapi.ContactRecordEmail, 0, len(in))
 	for i := range in {
 		if primary == nil && in[i].IsPrimary {
 			primary = &in[i]
@@ -334,7 +334,7 @@ func primaryFirst(in []contact.RecordEmail) []contact.RecordEmail {
 		out = append(out, in[i])
 	}
 	if primary != nil {
-		return append([]contact.RecordEmail{*primary}, out...)
+		return append([]coreapi.ContactRecordEmail{*primary}, out...)
 	}
 	return in
 }
@@ -343,12 +343,12 @@ func primaryFirst(in []contact.RecordEmail) []contact.RecordEmail {
 // phone (if any) leads; remaining phones keep source order. Within a single
 // Graph bucket (homePhones, businessPhones), this means the primary entry
 // lands at index 0 of the bucket on write.
-func primaryFirstPhones(in []contact.RecordPhone) []contact.RecordPhone {
+func primaryFirstPhones(in []coreapi.ContactRecordPhone) []coreapi.ContactRecordPhone {
 	if len(in) < 2 {
 		return in
 	}
-	var primary *contact.RecordPhone
-	out := make([]contact.RecordPhone, 0, len(in))
+	var primary *coreapi.ContactRecordPhone
+	out := make([]coreapi.ContactRecordPhone, 0, len(in))
 	for i := range in {
 		if primary == nil && in[i].IsPrimary {
 			primary = &in[i]
@@ -357,7 +357,7 @@ func primaryFirstPhones(in []contact.RecordPhone) []contact.RecordPhone {
 		out = append(out, in[i])
 	}
 	if primary != nil {
-		return append([]contact.RecordPhone{*primary}, out...)
+		return append([]coreapi.ContactRecordPhone{*primary}, out...)
 	}
 	return in
 }

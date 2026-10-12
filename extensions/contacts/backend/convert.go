@@ -1,18 +1,17 @@
 package backend
 
 import (
-	"github.com/caseylabs/mailven/internal/contact"
 	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
 )
 
-// fromLocal converts a core contact.Contact into the API-surface Contact.
+// fromLocal converts a core coreapi.ContactMatch into the API-surface Contact.
 //
 // Core contacts are keyed by email, so we use the email itself as the ID. The
 // Source field (e.g. "aerion", "google", "vcard", "carddav") becomes SourceID
 // for search results where the user hasn't picked a specific source. Used by
 // the autocomplete-style per-email row paths; multi-field fromRecord is the
 // path the Contacts pane uses for its list + detail views.
-func fromLocal(c *contact.Contact) coreapi.Contact {
+func fromLocal(c *coreapi.ContactMatch) coreapi.Contact {
 	updated := c.LastUsed
 	if updated.IsZero() {
 		updated = c.CreatedAt
@@ -26,7 +25,7 @@ func fromLocal(c *contact.Contact) coreapi.Contact {
 	}
 }
 
-// fromRecord converts a contact.Record (the multi-field record-shape used by
+// fromRecord converts a coreapi.ContactRecord (the multi-field record-shape used by
 // Phase 2b.2.a's unified schema) into the API-surface coreapi.Contact. One
 // Contact per record, with all sub-tables surfaced through the rich
 // Emails/Phones/Addresses/URLs/IMPPs/Categories slices.
@@ -38,7 +37,7 @@ func fromLocal(c *contact.Contact) coreapi.Contact {
 //   - For CardDAV records: returns the addressbook-or-source id from
 //     rec.SourceRef (when available). Phase 2b.2.b refines this so the
 //     sidebar-source UUID (rather than the addressbook-id) lands here.
-func fromRecord(rec *contact.Record) coreapi.Contact {
+func fromRecord(rec *coreapi.ContactRecord) coreapi.Contact {
 	if rec == nil {
 		return coreapi.Contact{Emails: []string{}}
 	}

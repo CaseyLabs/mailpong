@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"github.com/caseylabs/mailven/internal/carddav"
 	"net/http"
 	"strings"
 
@@ -60,11 +61,12 @@ func (c *coreImpl) Composer() coreapi.Composer { return c.app.composerAPI }
 // the host has the full source CRUD already; the extension just needs a
 // read-and-link surface to drive its sidebar + account-setup hook.
 func (c *coreImpl) Contacts() coreapi.Contacts {
-	return contactsCoreImpl{app: c.app}
+	return contactsCoreImpl{app: c.app, core: c}
 }
 
 type contactsCoreImpl struct {
-	app *App
+	core *coreImpl
+	app  *App
 }
 
 // SearchContacts delegates to App.SearchContacts (the same backend mail's
@@ -413,7 +415,7 @@ func (h hostSecretsCoreImpl) Get(key string) (string, error) {
 	}
 	switch {
 	case strings.HasPrefix(key, "carddav:"):
-		return h.app.credStore.GetCardDAVPassword(strings.TrimPrefix(key, "carddav:"))
+		return carddav.NewPasswordStore(h.app.db.DB, h.app.credStore).GetPassword(strings.TrimPrefix(key, "carddav:"))
 	}
 	return "", fmt.Errorf("storage.HostSecrets: unsupported key prefix in %q", key)
 }
