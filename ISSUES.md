@@ -15,6 +15,29 @@ has not yet been confirmed against the code.
   Both tools are already current here; retain TypeScript ~6.0.3 until both accept 7.
   Recheck using the commands in `CONTRIBUTING.md`.
 
+### AI guidance portability (reviewed 2026-10-12)
+
+- **AI1 medium** `.claude/skills/`: all five project skills exist only in Claude's
+  discovery location; the repository has no `.agents/skills/` entries for Codex
+  automatic discovery. Share the skill directories through relative symlinks.
+- **AI2 medium** `.claude/skills/project-next-milestone/SKILL.md`,
+  `project-ship/SKILL.md`, `project-finish-milestone/SKILL.md`,
+  `project-handoff/SKILL.md`, and `run-mailven/SKILL.md`: workflows depend on
+  Claude-specific interpolation, dynamic command injection, slash commands,
+  named subagents, or browser tools. Merely exposing these files to Codex does
+  not provide equivalent execution. Convert shared steps to ordinary instructions
+  and explicit script calls, with small adapters for host-specific capabilities.
+- **AI3 low** `.claude/rules/working-style.md`: shared preferences such as
+  serializing builds/tests across agents and commit/PR attribution are stored
+  only in Claude rules and are not automatically loaded as Codex project rules.
+  Consolidate shared policy in `AGENTS.md`; retain only Claude-specific behavior
+  in Claude adapters. The extension rule also duplicates `AGENTS.md` guidance.
+- **AI4 medium** `.claude/skills/project-ship/SKILL.md:23` and
+  `.claude/skills/project-finish-milestone/SKILL.md:15`: merge-only-on-request and
+  the conditional simplification step conflict with `AGENTS.md`'s automatic
+  branch landing and required milestone simplification. Make shared workflows
+  defer to one authoritative project policy.
+
 ## Recurring problems
 
 None.
