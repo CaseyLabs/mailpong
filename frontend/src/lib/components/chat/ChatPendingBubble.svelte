@@ -33,7 +33,7 @@
   <div class="w-8 shrink-0" aria-hidden="true"></div>
   <div class="flex flex-col items-start gap-1 min-w-0 max-w-[min(75%,var(--chat-bubble))]">
     <div
-      class="px-3.5 py-2 text-[1rem] leading-[1.45] whitespace-pre-wrap wrap-anywhere rounded-2xl rounded-bl-md bg-bubble-own text-foreground {pending.status === 'queued' ? 'opacity-70' : ''} {pending.status === 'failed' ? 'ring-2 ring-destructive' : ''}"
+      class="px-3.5 py-2 text-[1rem] leading-[1.45] whitespace-pre-wrap wrap-anywhere rounded-2xl rounded-br-md bg-bubble-own text-foreground {pending.status === 'queued' ? 'opacity-70' : ''} {pending.status === 'failed' ? 'ring-2 ring-destructive' : ''}"
     >
       {pending.text}
       {#each pending.attachmentNames as name (name)}

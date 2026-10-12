@@ -200,7 +200,7 @@
         <ChatSecurityBanners {msg} {thread} lines={security} />
 
         <div
-          class="relative w-full rounded-2xl group-focus-visible:ring-2 group-focus-visible:ring-primary/40 {mode === 'bubble' && !bare ? `w-auto text-foreground rounded-bl-md ${item.mine ? 'bg-bubble-own' : 'bg-muted'}` : ''}"
+          class="relative w-full rounded-2xl group-focus-visible:ring-2 group-focus-visible:ring-primary/40 {mode === 'bubble' && !bare ? `w-auto text-foreground ${item.mine ? 'rounded-br-md bg-bubble-own' : 'rounded-bl-md bg-muted'}` : ''}"
         >
           {#if notFetched && thread.bodyErrors.has(msg.id)}
             <div class="flex items-center gap-2 px-3.5 py-2 text-sm text-muted-foreground bg-muted rounded-2xl">
