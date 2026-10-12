@@ -38,6 +38,7 @@ Toolchain: Go 1.26, Node.js 24 (matches CI), Wails v2 CLI. Linux needs GTK 3 and
 - Start with checks relevant to the change.
 - Run `make test` when a change affects multiple Go packages or shared behavior, or when focused checks leave unresolved risks.
 - Use table-driven Go tests for critical paths and edge cases.
+- `internal/database/database_test.go` rewinds the schema and reapplies later migrations: a new `ADD COLUMN` needs matching `DROP COLUMN` lines in its rewind blocks, and every migration must be rerunnable (`IF NOT EXISTS`, and backfills that clear their table first).
 - There is no frontend test script. For frontend changes, run `npm run lint` and `npm run check` in `frontend/`, then verify the UI with the `run-mailven` skill. In cloud sessions use the skill's headless path (Xvfb + Playwright); if no UI check can run at all, say so in the PLAN.md Progress entry and in your report.
 - Visual UI checks always cover the Mail view with the Accounts column expanded and collapsed (how-to: [Accounts column check](.claude/skills/run-mailven/SKILL.md#accounts-column-check)). Report checks you couldn't perform.
 
