@@ -1,5 +1,5 @@
 <script lang="ts">
-  // ContactList — mirrors mail's MessageList toolbar pattern:
+  // ContactList — mirrors mail's ChatList toolbar pattern:
   //
   //   [Title  |  Search input (when open)]      [Search]  [Sort]
   //
@@ -119,7 +119,7 @@
     reloadContacts()
   }
 
-  // Three-state Ctrl+S toggle (matches MessageList.toggleSearchFocus):
+  // Three-state Ctrl+S toggle (matches ChatList.toggleSearchFocus):
   //   closed                  → open + focus
   //   open but unfocused      → focus
   //   open and focused        → close
@@ -168,7 +168,7 @@
   })
 
   // Header label tracks the sidebar's selected category — mirrors mail's
-  // MessageList showing the active folder name. Local sub-sources reuse the
+  // ChatList showing the active folder name. Local sub-sources reuse the
   // sidebar i18n keys (so labels stay consistent). CardDAV sources resolve
   // to the user-given source name; unknown ids fall back to the generic
   // "Contacts" label so the header is never empty.

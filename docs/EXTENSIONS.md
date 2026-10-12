@@ -1490,7 +1490,7 @@ The kit at [`frontend/src/lib/components/kit/`](../frontend/src/lib/components/k
 
 ### Why the UI kit exists
 
-Extensions need to look and behave like the rest of MailPong — same keys, same focus rules, same scrolling, same dialog interactions. Modifying mail's code (`MessageList.svelte`, `Sidebar.svelte`, `ConversationViewer.svelte`, etc.) to share components directly carries too much regression risk to do that way. The kit is the mechanism for getting cohesion without touching mail. **It's not an alternative design — it's the necessary copy of mail's UX, made consumable by extensions.**
+Extensions need to look and behave like the rest of MailPong — same keys, same focus rules, same scrolling, same dialog interactions. Modifying mail's code (`ChatList.svelte`, `Sidebar.svelte`, `ChatView.svelte`, etc.) to share components directly carries too much regression risk to do that way. The kit is the mechanism for getting cohesion without touching mail. **It's not an alternative design — it's the necessary copy of mail's UX, made consumable by extensions.**
 
 ### The 1-for-1 rule
 
@@ -1498,7 +1498,7 @@ Every kit primitive (`Avatar`, `PaneLayout`, `ListPane`, `ListRow`, `ListHeader`
 
 **Greenfield exception (R25).** Some kit primitives have no mail equivalent — Calendar's `DetailOverlay`, for example, since mail's viewer is a flex-chain pane, not a fixed overlay. Per [`EXT_RULES.md` R25](./EXT_RULES.md), kit is an extension-driven SDK; when mail has no counterpart, the primitive is designed cleanly from the consumer's needs. The 1-for-1 rule applies to primitives that DO have a mail counterpart (`SidebarAddItem` ↔ mail's "+ Add Account" inline button, `ConfirmDialog` ↔ mail's confirms, etc.). Greenfield primitives are still bound by the kit's general conventions: theme tokens, density-aware sizing, layout-store responsive handling, `shortcuts.ts` predicates for keys, and **no imports from mail's `components/{list,sidebar,viewer}/` namespace**.
 
-**Practical consequence: read the mail equivalent before implementing a kit primitive.** Don't infer behavior. Don't reach for a generic third-party pattern. Open `MessageList.svelte` / `Sidebar.svelte` / `ConversationViewer.svelte` / the relevant `ui/` host primitive and study how it handles keyboard, focus, scroll, and edge cases. Then match that behavior in the kit.
+**Practical consequence: read the mail equivalent before implementing a kit primitive.** Don't infer behavior. Don't reach for a generic third-party pattern. Open `ChatList.svelte` / `Sidebar.svelte` / `ChatView.svelte` / the relevant `ui/` host primitive and study how it handles keyboard, focus, scroll, and edge cases. Then match that behavior in the kit.
 
 Visual consistency is also preserved at the **theme layer**. The kit's `Avatar` uses the same `.avatar-1..14` CSS classes (defined in [`frontend/src/themes/_utilities.css`](../frontend/src/themes/_utilities.css)) that mail's avatar uses, so colors match. Same applies to all theme tokens (`bg-muted`, `border-border`, `text-foreground`, `bg-accent`, `text-primary`).
 
@@ -1569,7 +1569,7 @@ Inside the kit, treat `density` as the standard prop; only override `size` when 
 - Space to toggle check (when `onToggleCheck` provided)
 - Ctrl+A to select all (when `onSelectAll` provided)
 - **Delete/Backspace** — always swallowed when the list is focused (preventDefault + stopPropagation). When `onDelete` is provided, fires it with the selected id. Always swallowing — even with no handler — prevents mail's global key handler from acting on the focused message in the background.
-- **Auto-scroll-into-view** on selection change (matches `MessageList.svelte`'s pattern). Uses `scrollIntoView({ block: 'nearest', behavior: 'smooth' })` so the row enters view but doesn't scroll if it's already visible.
+- **Auto-scroll-into-view** on selection change (matches `ChatList.svelte`'s pattern). Uses `scrollIntoView({ block: 'nearest', behavior: 'smooth' })` so the row enters view but doesn't scroll if it's already visible.
 - DOM-level focus via `tabindex=0`; registers as the focused pane's slot via `setFocusedPane(focusSlot)` when DOM-focused
 - `e.stopPropagation()` when matched so the global handler doesn't double-fire
 
@@ -1731,7 +1731,7 @@ Read-only shell — no keyboard ownership. Header is fixed; body scrolls. Empty-
 | `onToggleFocus` | `() => void?` | Called by the fullscreen toggle button OR Esc-while-focused (which exits focus rather than dismissing). |
 | `children` | `Snippet?` | The body content. Rendered inside an `overflow-y-auto` container. |
 
-**Greenfield primitive (R25)** — no mail counterpart. Mail's `ConversationViewer` is part of the 3-column flex chain, not a fixed overlay. The 1-for-1 rule's backwards-compat test does not apply here; see the [Greenfield exception in §"The 1-for-1 rule"](#the-1-for-1-rule).
+**Greenfield primitive (R25)** — no mail counterpart. Mail's `ChatView` is part of the 3-column flex chain, not a fixed overlay. The 1-for-1 rule's backwards-compat test does not apply here; see the [Greenfield exception in §"The 1-for-1 rule"](#the-1-for-1-rule).
 
 **Three positioning modes**, driven by `focused` and `isResponsive()` from `$lib/stores/layout.svelte`:
 - **Regular desktop** (`focused=false`, not responsive): `position: fixed; right:0; top:0; bottom:0; w-[340px]`. Right-anchored sidebar overlay. **No scrim** — the view underneath stays interactive, so consumers can swap the children content (e.g., select a different row in the underlying list) without dismissing the overlay.
@@ -1784,7 +1784,7 @@ Zero props. Just compose your three kit-based panes inside. Extensions don't imp
 ```
 
 Owns:
-- Toolbar wrapper styling (`flex items-center justify-between px-4 py-3 border-b border-border`) so every kit consumer's list column shares mail's `MessageList` toolbar rhythm.
+- Toolbar wrapper styling (`flex items-center justify-between px-4 py-3 border-b border-border`) so every kit consumer's list column shares mail's `ChatList` toolbar rhythm.
 - Leading `<ResponsiveSidebarToggle />` auto-included. Pass `showSidebarToggle={false}` when an outer toolbar above the list already renders one (Calendar's `AgendaView` sits under `ViewSwitcher`).
 - `<h2>` title + count badge layout.
 - Search-mode swap (when `searchMode === true`, the title area is replaced by the consumer's `search` snippet).
@@ -1952,8 +1952,8 @@ The kit reuses MailPong's existing pane-focus store at [`frontend/src/lib/stores
 | Slot | Mail occupant | Kit equivalent |
 |---|---|---|
 | `'sidebar'` | `Sidebar.svelte` (folder tree) | `SourceSidebar.svelte` |
-| `'messageList'` | `MessageList.svelte` | `ListPane.svelte` |
-| `'viewer'` | `ConversationViewer.svelte` | `DetailPane.svelte` |
+| `'messageList'` | `ChatList.svelte` | `ListPane.svelte` |
+| `'viewer'` | `ChatView.svelte` | `DetailPane.svelte` |
 
 Alt+H/L pane cycling already cycles through these three slot names — when an extension is active, the kit components take focus and the cycling works uniformly with mail.
 

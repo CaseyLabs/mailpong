@@ -20,9 +20,9 @@
 
   const { selected = false, density = 'standard', onclick, children }: Props = $props()
 
-  // Padding + gap values come straight from mail's ConversationRow.densityClasses.row
-  // (frontend/src/lib/components/list/ConversationRow.svelte:73–78). Keep them
-  // 1-for-1 with mail so a future mail-adopts-kit refactor is invisible.
+  // Padding + gap values mirror the per-density table in
+  // chat/ChatRow.svelte. Keep them close to it so a future mail-adopts-kit
+  // refactor is invisible.
   const PADDING: Record<Density, string> = {
     micro:    'px-3 py-2 gap-2',
     compact:  'px-4 py-3 gap-3',

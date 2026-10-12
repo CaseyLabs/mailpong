@@ -315,7 +315,7 @@ func (a *App) handleIdleNewMail(event imap.MailEvent) {
 				release()
 
 				// Only emit messages:updated if folder:synced wasn't already emitted
-				// (both trigger identical reloads in MessageList and ConversationViewer)
+				// (both trigger identical reloads in ChatList and ChatView)
 				if !folderSynced {
 					wailsRuntime.EventsEmit(a.ctx, "messages:updated", map[string]interface{}{
 						"accountId": event.AccountID,

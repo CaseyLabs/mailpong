@@ -129,7 +129,7 @@ export async function loadMoreContacts(): Promise<void> {
   }
 }
 
-// Focus-vs-activate split mirrors mail's MessageList behavior (and is
+// Focus-vs-activate split mirrors mail's ChatList behavior (and is
 // enforced by the kit's ListPane semantics — see ListPane.svelte's onSelect
 // and onActivate docstrings):
 //

@@ -13,7 +13,7 @@
   // props. At medium (≤1024px) and narrow (≤767px) the detail pane renders
   // as an overlay AND a back-arrow button is injected at the start of the
   // header (calls hideViewer to return to the list). Matches mail's
-  // ConversationViewer pattern at App.svelte:1488 1-for-1.
+  // ChatView back-button pattern (`showBackButton` in App.svelte).
   import { isResponsive, getResponsiveView, hideViewer } from '$lib/stores/layout.svelte'
 
   interface Props {
@@ -50,8 +50,8 @@
 
 <section class="pane-detail flex flex-col bg-surface-content {flashing ? 'pane-focus-flash' : ''} {overlay ? 'responsive-viewer-overlay' : ''} {overlay && visible ? 'responsive-viewer-visible' : ''}">
   <!--
-    Header rendering rules — matched 1-for-1 with mail's ConversationViewer
-    pattern at App.svelte:1488 (showBackButton={isResponsive()}):
+    Header rendering rules — matched 1-for-1 with mail's ChatView
+    pattern (`showBackButton` in App.svelte):
 
       - Full (>1024px): render header bar ONLY when the consumer provided a
         `header` snippet AND we're not in the empty state. No back button.

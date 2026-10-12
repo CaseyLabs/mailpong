@@ -8,7 +8,6 @@ NOTICE :: . :: Required attribution to Aerion
 THIRD_PARTY_NOTICES.md :: . :: Attribution to Aerion and upstream notices
 docs/user-guide/LICENSE :: Aerion Contributors :: Original copyright line of the Apache 2.0 text
 wails.json :: Aerion Contributors :: Original copyright holder, kept next to the MailPong one
-PLAN.md :: . :: Migration plan, a history document
 ISSUES.md :: . :: Notes about the upstream relationship
 frontend/package-lock.json :: . :: Generated lock file
 docs/SQL_ROLLBACK.md :: Aerion :: Rollback scripts were released as Aerion versions

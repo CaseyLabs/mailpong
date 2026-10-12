@@ -136,7 +136,7 @@ func (a *App) handleComposerDraftSaved(payload ipc.DraftSavedPayload) {
 		Msg("Composer saved draft notification")
 
 	// Sync the Drafts folder to pick up the newly uploaded draft.
-	// Refresh signal to the main window's MessageList rides on the folder:synced
+	// Refresh signal to the main window's ChatList rides on the folder:synced
 	// event emitted by SyncFolder — same path as the in-window save case.
 	// The notification is sent after the composer's IMAP upload completes,
 	// so we can sync immediately

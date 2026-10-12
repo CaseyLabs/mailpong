@@ -237,7 +237,7 @@ session, so rebuild it from the clean checkout first.
 
 ## Retaking the README screenshot
 
-`docs/ss.png` (1040×660, Nord Dark, mail sidebar collapsed) must show only made-up
+`docs/ss.png` (1040×660, Dark theme, mail sidebar collapsed) must show only made-up
 mail. `screenshot-fakes.js` fakes the read bindings: two accounts, a chat list
 and a short group chat. It also blocks every write binding and saves nothing.
 Edit the data there, not in the page.

@@ -74,16 +74,6 @@ has not yet been confirmed against the code.
   shows the account label (or nothing) while the reply goes out from the
   alias. Fix with a binding that returns the resolved identity.
 
-### Docs
-
-- **U4 low** `docs/EXTENSIONS.md` (the 1-for-1 rule, ~1493-1501, 1956),
-  `docs/EXT_RULES.md:123`, `frontend/src/lib/components/kit/ListRow.svelte:23`,
-  `kit/Avatar.svelte:36`, `kit/DetailPane.svelte:16,53` and
-  `app/background.go:318` still point at the deleted `MessageList`,
-  `ConversationRow` and `ConversationViewer` as the reference to match
-  (ListRow says "keep in sync" with a file that no longer exists). Repoint
-  them at the chat components or state the values inline.
-
 ### Upstream independence
 
 This fork may eventually stop tracking upstream Aerion. Until then, some code

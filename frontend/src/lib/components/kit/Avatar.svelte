@@ -32,8 +32,8 @@
   let photoFailed = $state(false)
   const showPhoto = $derived(!!photoData && !!photoMediaType && !photoFailed)
 
-  // DJB2-style hash. Bit-for-bit the same as mail's getAvatarColor() in
-  // ConversationRow.svelte:172-180 so an extension's contact and a mail
+  // DJB2-style hash. Same hash as mail's sender avatar colours
+  // (see `_utilities.css`) so an extension's contact and a mail
   // sender with the same email render the same color.
   function colorClass(seed: string): string {
     let hash = 0

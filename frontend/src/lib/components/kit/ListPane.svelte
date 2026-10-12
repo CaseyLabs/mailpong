@@ -5,7 +5,7 @@
   // doesn't double-fire.
   //
   // Key bindings come from frontend/src/lib/keyboard/shortcuts.ts — same
-  // source mail's MessageList consumes. Rebinding j/k → other keys changes
+  // source mail's ChatList consumes. Rebinding j/k → other keys changes
   // shortcuts.ts only; both sides follow.
   //
   // Pane-focus store integration: when the user clicks into the list or it
@@ -63,14 +63,14 @@
     /** Fired on Shift+J / Shift+ArrowDown to extend a multi-select range DOWN.
      *  Called with (fromId, toId) — the IDs that should be added to the
      *  consumer's checked set. Matches mail's `selectNextWithCheck` semantics
-     *  (`MessageList.svelte:1095–1116`): cursor advances one row, both the
+     *  (`ChatList.svelte`): cursor advances one row, both the
      *  previous and new rows get checked. ListPane swallows the key whether or
      *  not this handler is provided, so the event doesn't bubble to mail's
      *  window handler. */
     onRangeNext?: (fromId: string, toId: string) => void
     /** Fired on Shift+K / Shift+ArrowUp to extend a multi-select range UP.
      *  Mirror of onRangeNext (mail's `selectPreviousWithCheck`,
-     *  `MessageList.svelte:1071–1092`). */
+     *  `ChatList.svelte`). */
     onRangePrev?: (fromId: string, toId: string) => void
     /** Fired on Delete/Backspace with the currently-selected id. When provided,
      *  ListPane intercepts the key, calls preventDefault + stopPropagation, and
@@ -112,7 +112,7 @@
 
   let containerRef = $state<HTMLDivElement | null>(null)
   // Inner scrollable region — referenced so keyboard navigation can scroll the
-  // newly-selected row into view (matches MessageList's pattern).
+  // newly-selected row into view (matches ChatList's pattern).
   let scrollRegionRef = $state<HTMLDivElement | null>(null)
 
   // Take DOM focus when this slot becomes the focused pane.

@@ -4,7 +4,7 @@
   //
   //   1. The toolbar wrapper styling (border, padding, flex layout) so every
   //      extension's list column renders with the same visual rhythm as mail's
-  //      MessageList toolbar.
+  //      chat list toolbar.
   //   2. The leading <ResponsiveSidebarToggle /> — auto-included so extensions
   //      don't have to remember to place a sidebar toggle.
   //   3. The title <h2> + optional count badge layout matching mail.
@@ -23,7 +23,7 @@
   //   - The action buttons themselves (sort orders, add behavior, etc. are
   //     extension-specific).
   //
-  // Mail-side `MessageList.svelte` doesn't (yet) use this primitive — it
+  // Mail-side `ChatListHeader.svelte` doesn't (yet) use this primitive — it
   // predates the kit. If mail ever adopts the kit, this primitive is shaped
   // to be a 1-for-1 drop-in. That's the 1-for-1 kit rule applied to this
   // pattern.

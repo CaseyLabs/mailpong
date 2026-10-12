@@ -120,7 +120,7 @@ Companion docs:
 - **R25.** Kit primitives (`frontend/src/lib/components/kit/*` on the
   frontend, `internal/kit/<area>/` on the backend) are greenfield SDK —
   generic, extension-agnostic building blocks designed for extensions to
-  consume. The mail UI (`ConversationViewer`, `MessageList`, etc.) is NOT
+  consume. The mail UI (`ChatView`, `ChatList`, etc.) is NOT
   refactored to share with kit. If a kit primitive solves a mail problem,
   mail can opt in at its own pace — but the kit isn't a retrofit target.
 - **R26.** Calendar/Contacts-domain components stay in their respective
