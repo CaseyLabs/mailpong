@@ -78,6 +78,7 @@ When all of a feature's milestones are done or an audit pass is complete, land t
 
 - `PLAN.md`: guides new features. Create it when needed with Scope; Milestones, each with acceptance criteria and validation steps; and these living `##` sections: Progress (one checkbox per milestone), Surprises & Discoveries, Decision Log, and Outcomes & Retrospective. Track progress in Progress, not a separate file.
 - `ISSUES.md`: issues found that may need fixing in this or a future session. Its `## Recurring problems` section is a tally of environment and tooling problems: one line each with the symptom, the workaround, and how many times it has occurred. Check it before debugging, and bump the count when a problem recurs.
+- Record every confirmed finding you leave unfixed (review, audit, or noticed in passing) in `ISSUES.md` in the same task, with a severity, the location, and the failure. Don't leave it only in a report or commit message. Unconfirmed or style-only nits don't need an entry.
 - Promote, don't log: when a problem recurs (second occurrence) or costs a session more than a few minutes the first time, move the fix into `AGENTS.md` or the relevant skill and delete its tally line. Don't record every error.
 - Prune: when a guidance line no longer matches reality (for example, "no display in cloud"), correct or delete it in the same task.
 - Keep task-specific progress out of `AGENTS.md`.

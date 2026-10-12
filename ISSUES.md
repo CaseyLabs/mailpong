@@ -19,6 +19,15 @@ has not yet been confirmed against the code.
   imports: EXT_RULES R1, R2 and R5. The bridge gets a token closure and the
   core DB, and the extension imports `internal/*`. This is architectural
   (see C12).
+- **A5 low** Dead code after the no-startup-pop-ups change: `TermsDialog`,
+  `OAuthMissingDialog` and `WhatsNewDialog` have no references, and the Go
+  bindings `GetOAuthBuildStatus`, `Get/SetOAuthWarningDisabled` and
+  `Get/SetLastSeenVersion` have no frontend callers. Delete the components;
+  dropping the bindings needs `make generate`.
+- **A6 decision** `frontend/src/App.svelte`: Terms of Use are recorded as
+  accepted at startup without being shown, and builds missing OAuth
+  credentials give no warning before sign-in fails. Intentional per commit
+  14c80d1; confirm as a product and legal decision, then delete this entry.
 
 ### Contacts
 
@@ -44,6 +53,13 @@ has not yet been confirmed against the code.
   `CancelAllSyncs` leaves `syncContexts` before it releases, so a new sync of
   the same folder can start while the cancelled one still runs. Fix idea: treat
   a key with an unreleased slot in `cancelledSlots` as busy.
+
+- **M14 low** Sidebar sync button and Ctrl+Shift+A cancel syncs directly,
+  while the header sync buttons (`MessageList`, `ChatList`) now open the
+  status dialog. Decide whether the sidebar should match. The cancel logic is
+  also duplicated in `ChatList` (`cancelRunningSyncs`) and `MessageList`
+  (`cancelAllRunningSyncs`), with a redundant per-folder cancel; one
+  `accountStore.cancelAllSyncs()` would replace both.
 
 ### Chat list
 
