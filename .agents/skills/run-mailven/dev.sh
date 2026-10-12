@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Launch / wait for / stop Mailven's `make dev` session for agent-driven UI checks.
-# Usage (from the repo root): .claude/skills/run-mailven/dev.sh start|wait|status|stop
+# Usage (from the repo root): .agents/skills/run-mailven/dev.sh start|wait|status|stop
 set -u
 
 URL=http://localhost:34115

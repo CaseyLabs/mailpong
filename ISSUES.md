@@ -17,11 +17,7 @@ has not yet been confirmed against the code.
 
 ### AI guidance portability (reviewed 2026-10-12)
 
-- **AI1 medium** `.claude/skills/`: all five project skills exist only in Claude's
-  discovery location; the repository has no `.agents/skills/` entries for Codex
-  automatic discovery. Move implementations to `.agents/skills/` and keep thin
-  Claude discovery wrappers, as selected in PLAN.md; no symlinks or setup.
-- **AI2 medium** `.claude/skills/project-next-milestone/SKILL.md`,
+- **AI2 medium** `.agents/skills/project-next-milestone/SKILL.md`,
   `project-ship/SKILL.md`, `project-finish-milestone/SKILL.md`,
   `project-handoff/SKILL.md`, and `run-mailven/SKILL.md`: workflows depend on
   Claude-specific interpolation, dynamic command injection, slash commands,
@@ -33,15 +29,15 @@ has not yet been confirmed against the code.
   only in Claude rules and are not automatically loaded as Codex project rules.
   Consolidate shared policy in `AGENTS.md`; retain only Claude-specific behavior
   in Claude adapters. The extension rule also duplicates `AGENTS.md` guidance.
-- **AI4 medium** `.claude/skills/project-ship/SKILL.md:23` and
-  `.claude/skills/project-finish-milestone/SKILL.md:15`: merge-only-on-request and
+- **AI4 medium** `.agents/skills/project-ship/SKILL.md:23` and
+  `.agents/skills/project-finish-milestone/SKILL.md:15`: merge-only-on-request and
   the conditional simplification step conflict with `AGENTS.md`'s automatic
   branch landing and required milestone simplification. `project-handoff` also
   says never to push, conflicting with milestone push policy when applicable;
   `project-next-milestone` tells the agent to disregard requested plan mode.
   Make workflows respect runtime/user instructions and shared project policy.
 
-- **AI5 medium** `.claude/skills/project-handoff/SKILL.md:11`: commits before
+- **AI5 medium** `.agents/skills/project-handoff/SKILL.md:11`: commits before
   persisting the plan checkpoint, so the resulting commit can omit the latest
   continuation state. Its planned-work handoff reduces to a Claude slash command,
   without requiring branch/revision, dirty state, validation provenance, or

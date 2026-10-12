@@ -10,6 +10,22 @@ Mailven is an independent project derived from [Aerion](https://github.com/hkdb/
 - Describe the behavior change, relevant issues, checks performed, and known limitations. Include screenshots for visible UI changes when useful.
 - Use descriptive commit messages with prefixes such as `feat:`, `fix:`, `docs:`, `refactor:`, `test:`, and `chore:`.
 
+## AI project guidance
+
+Shared policy lives in `AGENTS.md`; `CLAUDE.md` imports it. Edit project skills
+and their resources in `.agents/skills/`. The single relative directory symlink
+`.claude/skills -> ../.agents/skills` exposes the same files to Claude Code.
+Start either CLI normally from the checkout; no plugin or custom discovery flag
+is needed. Claude uses `/skill-name`; Codex uses `$skill-name` or `/skills`.
+Keep shared workflows independent of host-specific tools and preprocessing.
+The remaining portability work and verification are tracked in `PLAN.md`.
+
+Clones must preserve Git symlinks. On Windows, enable Developer Mode or use
+appropriate privileges and clone with `git -c core.symlinks=true clone <url>`.
+Verify `.claude/skills` is a directory symlink, not a text file containing its
+target. Do not replace it with a copied skill tree. Relative links also keep
+linked Git worktrees pointing to their own skill files.
+
 ## Development Setup
 
 Use Go 1.26, Node.js 24 (matching CI), and the Wails v2 CLI. On Linux, install GTK 3 and WebKitGTK 4.1 development libraries.

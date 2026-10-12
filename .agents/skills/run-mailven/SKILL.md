@@ -7,7 +7,7 @@ Mailven is a Wails v2 app (Go backend, Svelte 5 frontend). `make dev` serves the
 frontend with the Go bindings at `http://localhost:34115`. For repeatable agent
 UI checks, drive that URL with headless Playwright
 (`pw.js`); use browser tools for interactive exploration. If a browser connector
-stops answering or times out, switch to the headless path below. `.claude/skills/run-mailven/dev.sh`
+stops answering or times out, switch to the headless path below. `.agents/skills/run-mailven/dev.sh`
 starts, waits for and stops the dev session. All paths are relative to the repo
 root.
 
@@ -19,12 +19,12 @@ The toolchain is installed. Run `cd frontend && npm ci` first if
 ## Run (agent path)
 
 ```bash
-.claude/skills/run-mailven/dev.sh start   # make dev in its own session; prints the log path
-.claude/skills/run-mailven/dev.sh wait    # polls http://localhost:34115 for HTTP 200 (first build takes ~1 min); fails early if make dev exits
+.agents/skills/run-mailven/dev.sh start   # make dev in its own session; prints the log path
+.agents/skills/run-mailven/dev.sh wait    # polls http://localhost:34115 for HTTP 200 (first build takes ~1 min); fails early if make dev exits
 ```
 
 The Go backend logs only fatal errors unless debug mode is on. To read sync,
-IDLE or shutdown lines in the log, start with `MAILVEN_DEBUG=1 .claude/skills/run-mailven/dev.sh start`.
+IDLE or shutdown lines in the log, start with `MAILVEN_DEBUG=1 .agents/skills/run-mailven/dev.sh start`.
 The log has ANSI colors, so strip them (`sed 's/\x1b\[[0-9;]*m//g'`) before grepping.
 
 `make dev` also opens a native app window on the user's desktop. Ignore it and
@@ -72,7 +72,7 @@ with `ui.collapsedSidebars`. Restore the user's original state afterwards.
 When finished, put back anything you changed (see Gotchas), close the tab, then:
 
 ```bash
-.claude/skills/run-mailven/dev.sh stop    # kills wails, vite and the app, then reverts mode-only changes in frontend/wailsjs/runtime
+.agents/skills/run-mailven/dev.sh stop    # kills wails, vite and the app, then reverts mode-only changes in frontend/wailsjs/runtime
 ```
 
 ## Gotchas
@@ -206,10 +206,10 @@ never add Playwright to `frontend/package.json`).
 
 ```bash
 # cloud only: (Xvfb :99 -screen 0 1600x1000x24 &)  and  export PATH=$PATH:$HOME/go/bin DISPLAY=:99
-.claude/skills/run-mailven/dev.sh start          # run_in_background; then dev.sh wait
-python3 .claude/skills/run-mailven/serve-fakes.py   # run_in_background
-node .claude/skills/run-mailven/headless-shot.js "$SCRATCH"          # ss.png plus vc-<theme>-<state>.png
-node .claude/skills/run-mailven/ui-matrix.js "$SCRATCH" <prefix>     # the full matrix
+.agents/skills/run-mailven/dev.sh start          # run_in_background; then dev.sh wait
+python3 .agents/skills/run-mailven/serve-fakes.py   # run_in_background
+node .agents/skills/run-mailven/headless-shot.js "$SCRATCH"          # ss.png plus vc-<theme>-<state>.png
+node .agents/skills/run-mailven/ui-matrix.js "$SCRATCH" <prefix>     # the full matrix
 ```
 
 `headless-shot.js` dismisses the first-run dialogs, enables Contacts and
@@ -256,7 +256,7 @@ session, so rebuild it from the clean checkout first.
 ### Composer and undo-send checks
 
 ```bash
-node .claude/skills/run-mailven/undo-send-check.js "$SCRATCH"   # dev server and serve-fakes.py running; about a minute
+node .agents/skills/run-mailven/undo-send-check.js "$SCRATCH"   # dev server and serve-fakes.py running; about a minute
 ```
 
 It prints PASS/FAIL for chat reply undo, the main composer's Undo toast, and

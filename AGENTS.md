@@ -18,7 +18,7 @@ Toolchain: Go 1.26, Node.js 24 (matches CI), Wails v2 CLI. Linux needs GTK 3 and
 
 - `cd frontend && npm ci`: install locked frontend dependencies.
 - `cd frontend && npm run build`: build frontend assets. Run before Go checks that include the root package if `frontend/dist/` is missing; rebuild when validating changed assets.
-- `make dev`: launch the desktop app with hot reload. It blocks; for agent-driven UI checks use `.claude/skills/run-mailven/dev.sh` instead.
+- `make dev`: launch the desktop app with hot reload. It blocks; for agent-driven UI checks use `.agents/skills/run-mailven/dev.sh` instead.
 - `make build`: production build in `build/bin/`.
 - `make generate`: regenerate Wails TypeScript bindings.
 - `make test`, `make fmt`: Go tests and formatting.
@@ -40,7 +40,7 @@ Toolchain: Go 1.26, Node.js 24 (matches CI), Wails v2 CLI. Linux needs GTK 3 and
 - Use table-driven Go tests for critical paths and edge cases.
 - `internal/database/database_test.go` rewinds the schema and reapplies later migrations: a new `ADD COLUMN` needs matching `DROP COLUMN` lines in its rewind blocks, and every migration must be rerunnable (`IF NOT EXISTS`, and backfills that clear their table first).
 - There is no frontend test script. For frontend changes, run `npm run lint` and `npm run check` in `frontend/`, then verify the UI with the `run-mailven` skill. In cloud sessions use the skill's headless path (Xvfb + Playwright); if no UI check can run at all, say so in the PLAN.md Progress entry and in your report.
-- Visual UI checks always cover the Mail view with the Accounts column expanded and collapsed (how-to: [Accounts column check](.claude/skills/run-mailven/SKILL.md#accounts-column-check)). Report checks you couldn't perform.
+- Visual UI checks always cover the Mail view with the Accounts column expanded and collapsed (how-to: [Accounts column check](.agents/skills/run-mailven/SKILL.md#accounts-column-check)). Report checks you couldn't perform.
 
 ## Documentation
 
