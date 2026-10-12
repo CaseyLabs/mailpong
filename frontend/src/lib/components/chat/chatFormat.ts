@@ -17,6 +17,10 @@ export interface Person {
 // Consecutive messages from one sender within this window share a group.
 const GROUP_WINDOW_MS = 5 * 60 * 1000
 
+// Side padding of my bubbles in the chat column: a step (1.5rem) further in
+// than others' px-6. Shared by sent and pending bubbles so they line up.
+export const MINE_BUBBLE_GUTTER = 'pl-12 pr-6'
+
 export function parseRecipients(raw: string | undefined): Person[] {
   if (!raw) return []
   try {
@@ -277,6 +281,15 @@ export function buildThreadItems(messages: messageModels.Message[], labelSubject
     prev = item
   })
   return items
+}
+
+// pendingGroupStart reports whether the first pending reply, sent by me at
+// `at`, starts a new run after `last`, following buildThreadItems' rule.
+export function pendingGroupStart(last: ThreadItem | undefined, me: Person, at: number): boolean {
+  if (!last || !last.mine) return true
+  if ((last.msg.fromEmail || '').toLowerCase() !== me.email.toLowerCase()) return true
+  if (dayKey(last.date) !== dayKey(new Date(at))) return true
+  return at - last.date.getTime() > GROUP_WINDOW_MS
 }
 
 export interface TextSegment {

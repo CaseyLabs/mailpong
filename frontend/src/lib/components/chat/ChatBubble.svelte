@@ -18,7 +18,7 @@
   import ChatRichCard from './ChatRichCard.svelte'
   import ChatSecurityBanners from './ChatSecurityBanners.svelte'
   import { securityStatus, TONES } from './chatSecurity'
-  import { linkify, parseRecipients, displayName, displaySubject, type ReplyMode, type ThreadItem } from './chatFormat'
+  import { linkify, parseRecipients, displayName, displaySubject, MINE_BUBBLE_GUTTER, type ReplyMode, type ThreadItem } from './chatFormat'
   import { formatStamp } from '$lib/utils/date'
   import type { ChatThread } from './chatThread.svelte'
 
@@ -73,10 +73,10 @@
   const bodyText = $derived(pgp?.bodyText ?? smime?.bodyText ?? msg.bodyText)
   const decryptedAttachments = $derived(pgp?.attachments ?? smime?.attachments)
   const hasAttachments = $derived(msg.hasAttachments || (decryptedAttachments?.length ?? 0) > 0)
-  // Bubbles keep actions on their right; on my messages they sit past the
-  // message column and my avatar (gap-2 + w-8). Wide cards and bodies overlay the corner.
-  const anchorColumn = $derived(mode === 'bubble' && item.mine)
-  const actionsPos = $derived(mode === 'bubble' ? `top-0 left-full ${item.mine ? 'ml-11' : 'ml-1'}` : 'top-1.5 right-1.5 rounded-md bg-background/90 shadow-sm')
+  // Bubbles keep actions on their right; wide cards and bodies overlay the corner.
+  const actionsPos = $derived(mode === 'bubble' ? 'top-0 left-full ml-1' : 'top-1.5 right-1.5 rounded-md bg-background/90 shadow-sm')
+  // My messages sit a step in from the left edge (an extra 1.5rem).
+  const gutter = $derived(wide ? (item.mine ? 'pl-10 pr-4' : 'px-4') : (item.mine ? MINE_BUBBLE_GUTTER : 'px-6'))
   const canDarken = $derived(getDarkMailContent() && getIsDarkActive())
   const darken = $derived(canDarken && !darkOverride)
 
@@ -133,9 +133,9 @@
   {/each}
 {/snippet}
 
-{#snippet avatar(show: boolean)}
+{#snippet avatar()}
   <div class="w-8 shrink-0" aria-hidden="true">
-    {#if show && item.groupStart}
+    {#if item.groupStart}
       <Avatar email={msg.fromEmail} name={msg.fromName} size={32} photoData={photo?.data} photoMediaType={photo?.mediaType} />
     {/if}
   </div>
@@ -168,7 +168,7 @@
   {onReply}
 >
   <div
-    class="group flex gap-2 {wide ? 'mx-auto w-full max-w-(--chat-stream) px-4' : 'w-full px-6'} {item.groupStart ? (mode === 'full' && !item.newDay && !item.subject ? 'mt-3 pt-3 border-t border-border' : 'mt-3') : 'mt-0.5'}"
+    class="group flex gap-2 {wide ? 'mx-auto w-full max-w-(--chat-stream)' : 'w-full'} {gutter} {item.groupStart ? (mode === 'full' && !item.newDay && !item.subject ? 'mt-3 pt-3 border-t border-border' : 'mt-3') : 'mt-0.5'}"
     data-message-id={msg.id}
     tabindex="-1"
     role="article"
@@ -176,9 +176,8 @@
     onfocus={() => onFocusChange(true)}
     onblur={() => onFocusChange(false)}
   >
-    <!-- Avatar column: theirs on the left, mine on the right of the message.
-         Spacers keep every bubble on one left edge. -->
-    {@render avatar(!item.mine)}
+    <!-- Avatar column; the spacer keeps a sender's grouped bubbles aligned -->
+    {@render avatar()}
 
     <div class="flex flex-col min-w-0 {mode === 'bubble' ? 'max-w-[min(75%,var(--chat-bubble))]' : 'flex-1'} items-start">
       {#if item.groupStart || badges.length > 0}
@@ -200,10 +199,8 @@
       <div class="flex flex-col gap-1.5 w-full items-start">
         <ChatSecurityBanners {msg} {thread} lines={security} />
 
-        <!-- My bubble actions anchor to this column-wide box, so they clear my avatar however narrow the bubble -->
-        <div class="flex flex-col items-start w-full {anchorColumn ? 'relative' : ''}">
         <div
-          class="{anchorColumn ? '' : 'relative'} w-full rounded-2xl group-focus-visible:ring-2 group-focus-visible:ring-primary/40 {mode === 'bubble' && !bare ? (item.mine ? 'w-auto bg-bubble-own text-foreground rounded-br-md' : 'w-auto bg-muted text-foreground rounded-bl-md') : ''}"
+          class="relative w-full rounded-2xl group-focus-visible:ring-2 group-focus-visible:ring-primary/40 {mode === 'bubble' && !bare ? `w-auto text-foreground rounded-bl-md ${item.mine ? 'bg-bubble-own' : 'bg-muted'}` : ''}"
         >
           {#if notFetched && thread.bodyErrors.has(msg.id)}
             <div class="flex items-center gap-2 px-3.5 py-2 text-sm text-muted-foreground bg-muted rounded-2xl">
@@ -278,7 +275,6 @@
             </DropdownMenu.Root>
           </div>
         </div>
-        </div>
 
         {#if hasAttachments}
           <AttachmentList class="w-full max-w-md" messageId={msg.id} encryptedAttachments={decryptedAttachments} />
@@ -304,7 +300,5 @@
         {/if}
       </div>
     </div>
-
-    {#if item.mine}{@render avatar(true)}{/if}
   </div>
 </MessageContextMenu>
