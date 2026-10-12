@@ -570,6 +570,7 @@
           onToggleFolderCollapse={toggleFolderCollapsed}
           onEdit={() => openEditAccount(accWithFolders.account)}
           onDelete={() => openDeleteAccount(accWithFolders.account)}
+          onShowSyncError={() => (syncStatusOpen = true)}
           onSync={() => {
             // Clear any sync error before retrying
             accountStore.clearSyncError(accWithFolders.account.id)
@@ -650,4 +651,14 @@
   }}
 />
 
-<SyncStatusDialog bind:open={syncStatusOpen} busy={accountStore.isAnySyncing} onCancelSync={cancelSync} />
+<SyncStatusDialog
+  bind:open={syncStatusOpen}
+  busy={accountStore.isAnySyncing}
+  onCancelSync={cancelSync}
+  onFixAccount={(id) => {
+    const acc = accountStore.accounts.find((a) => a.account.id === id)
+    if (!acc) return
+    syncStatusOpen = false
+    openEditAccount(acc.account)
+  }}
+/>

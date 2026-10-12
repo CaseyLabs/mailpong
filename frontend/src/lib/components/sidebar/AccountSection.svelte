@@ -21,6 +21,7 @@
     onEdit?: () => void
     onDelete?: () => void
     onSync?: () => void
+    onShowSyncError?: () => void
     collapsedFolders?: Record<string, boolean>
     onToggleFolderCollapse?: (folderId: string) => void
     onMessagesMoved?: () => void
@@ -42,6 +43,7 @@
     onEdit,
     onDelete,
     onSync,
+    onShowSyncError,
     collapsedFolders = {},
     onToggleFolderCollapse,
     onMessagesMoved,
@@ -178,10 +180,16 @@
   <!-- Sync Error — bar removed; spinner in header + phase label in bottom status convey sync state. -->
   {#if syncError}
     <div class="px-3 py-1.5">
-      <div class="flex items-center gap-2 text-destructive">
+      <button
+        type="button"
+        class="flex w-full items-center gap-2 text-left text-destructive hover:underline"
+        title={syncError.error}
+        aria-label={$_('sidebar.syncErrorShowDetails')}
+        onclick={onShowSyncError}
+      >
         <Icon icon="mdi:alert-circle" class="w-4 h-4 shrink-0" />
-        <p class="text-xs">{$_('sidebar.syncError')}</p>
-      </div>
+        <span class="text-xs">{$_('sidebar.syncError')}</span>
+      </button>
     </div>
   {/if}
 

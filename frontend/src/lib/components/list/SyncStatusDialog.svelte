@@ -13,9 +13,11 @@
     /** True while any sync (account-wide or the current folder) is running. */
     busy: boolean
     onCancelSync: () => void | Promise<void>
+    /** Opens the account editor (where it can be re-authorized or given its own OAuth client). */
+    onFixAccount?: (accountId: string) => void
   }
 
-  let { open = $bindable(false), busy, onCancelSync }: Props = $props()
+  let { open = $bindable(false), busy, onCancelSync, onFixAccount }: Props = $props()
 
   // Hold the dialog guard while open so App's shortcuts leave the buttons alone.
   $effect(() => {
@@ -42,6 +44,14 @@
       })
       .filter((r) => r.syncing || r.error)
   )
+
+  // OAuth failures get a plain-language hint above the raw error.
+  function errorHint(message: string): string {
+    const missing = /not configured \(missing client ID\)(?:: (\S+))?/.exec(message)
+    if (missing) return $_('sidebar.syncErrorOAuthNotConfigured', { values: { provider: missing[1] ?? 'this provider' } })
+    if (/unauthorized_client|invalid_grant|token refresh failed/i.test(message)) return $_('sidebar.syncErrorReauthorize')
+    return ''
+  }
 
   function phaseLabel(progress: SyncProgress | null): string {
     if (!progress) return $_('sidebar.syncing')
@@ -97,9 +107,18 @@
             {/if}
           {/if}
           {#if row.error}
-            <p class="text-xs text-destructive pl-6 break-words">
+            {@const hint = errorHint(row.error.error)}
+            {#if hint}
+              <p class="text-xs text-destructive pl-6 break-words">{hint}</p>
+            {/if}
+            <p class="text-xs text-destructive pl-6 break-words select-text">
               {#if row.errorFolder}{row.errorFolder}: {/if}{row.error.error}
             </p>
+            {#if onFixAccount}
+              <div class="pl-6">
+                <Button type="button" size="sm" variant="outline" onclick={() => onFixAccount(row.id)}>{$_('sidebar.syncErrorFixAccount')}</Button>
+              </div>
+            {/if}
           {/if}
         </li>
       {:else}
