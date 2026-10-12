@@ -15,6 +15,7 @@
   import ChatLowGroupHeader from './ChatLowGroupHeader.svelte'
   import ChatGroupHeader from './ChatGroupHeader.svelte'
   import ChatListEmpty from './ChatListEmpty.svelte'
+  import SyncStatusDialog from '../list/SyncStatusDialog.svelte'
   import { ConfirmDialog } from '$lib/components/ui/confirm-dialog'
   import { chatList, type ChatItem } from '$lib/stores/chat.svelte'
   import { accountStore } from '$lib/stores/accounts.svelte'
@@ -23,7 +24,7 @@
   import { setFocusedPane } from '$lib/stores/keyboard.svelte'
   import { getChatAutoAdvance, getChatShowLowGroup } from '$lib/stores/settings.svelte'
   import { type ChatGroup, isChatGroupExpanded, isChatGroupShowingFewer, toggleChatGroupExpanded, toggleChatGroupShowFewer } from '$lib/stores/uiState.svelte'
-  import { SyncFolder, CancelFolderSync } from '../../../../wailsjs/go/app/App'
+  import { SyncFolder } from '../../../../wailsjs/go/app/App'
   import { canToggleSenderChat, GROUP_FEWER_CAP, rowPeople, trimGroup } from './chatFormat'
   import { archiveChat, deleteMessagesPermanently, markChatUnread, type ChatRowActions, pinChat, setSenderChat, setSenderLow, snoozeChat, trashMessages, unsnoozeChat } from './chatTriage'
   import type { folder } from '../../../../wailsjs/go/models'
@@ -336,15 +337,17 @@
   )
   const syncBusy = $derived(accountStore.isAnySyncing || folderSyncing)
 
+  let syncStatusOpen = $state(false)
+  const cancelRunningSyncs = () => Promise.all([
+    folderSyncing && accountStore.cancelFolderSync(accountId!, folderId!),
+    accountStore.isAnySyncing && accountStore.cancelAllSyncs(),
+  ]).then(() => {}, (err) => console.error('Cancel sync failed:', err))
+
+  const onSyncButton = () => (syncBusy ? (syncStatusOpen = true) : toggleFolderSync())
+
   export async function toggleFolderSync() {
     try {
-      if (syncBusy) {
-        await Promise.all([
-          folderSyncing && CancelFolderSync(accountId!, folderId!),
-          accountStore.isAnySyncing && accountStore.cancelAllSyncs(),
-        ])
-        return
-      }
+      if (syncBusy) return await cancelRunningSyncs()
       if (chatList.isUnified || !accountId || !folderId) {
         await accountStore.syncAllComplete()
         return
@@ -444,7 +447,7 @@
     onBrowseFolders={handleBrowseFolders}
     onFilter={(f) => chatList.setFilter(f)}
     onQuery={(q) => chatList.setQuery(q)}
-    onSync={toggleFolderSync}
+    onSync={onSyncButton}
     {onCompose}
   />
 
@@ -484,6 +487,7 @@
   </div>
 </div>
 
+<SyncStatusDialog bind:open={syncStatusOpen} busy={syncBusy} onCancelSync={cancelRunningSyncs} />
 <ConfirmDialog
   bind:open={showDeleteConfirm}
   title={$_('dialog.deletePermanently')}

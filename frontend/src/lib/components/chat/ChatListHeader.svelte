@@ -71,7 +71,7 @@
   let syncHover = $state(0)
   const syncTitle = $derived.by(() => {
     void syncHover
-    if (syncBusy) return `${$_('sidebar.syncing')} ${$_('sidebar.clickToCancel')}`
+    if (syncBusy) return `${$_('sidebar.syncing')} ${$_('sidebar.clickForSyncStatus')}`
     const last = accountStore.lastSyncTime
     const idle = $_('sidebar.syncAllAccounts')
     return last ? `${idle}\n${$_('chat.lastSynced', { values: { time: formatDistanceToNow(last, { addSuffix: true, locale: getCurrentDateFnsLocale() }) } })}` : idle

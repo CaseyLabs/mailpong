@@ -11,6 +11,7 @@ import {
   CompleteOAuthAccountSetup,
   CompleteCustomOAuthAccountSetup,
   ReorderAccounts,
+  CancelFolderSync,
 } from '../../../wailsjs/go/app/App'
 import { account, app, folder } from '../../../wailsjs/go/models'
 // @ts-ignore - wailsjs runtime
@@ -367,10 +368,22 @@ class AccountStore {
    */
   async cancelAllSyncs(): Promise<void> {
     await CancelAllSyncs()
+    // Cancelled syncs emit no completion event, so drop their progress here
+    this.syncProgress = {}
     // Mark all accounts as not syncing
     for (const acc of this.accounts) {
       acc.syncing = false
     }
+  }
+
+  /**
+   * Cancel one folder's sync and drop its progress entry (a cancelled sync
+   * emits no completion event, so the entry would otherwise linger).
+   */
+  async cancelFolderSync(accountId: string, folderId: string): Promise<void> {
+    await CancelFolderSync(accountId, folderId)
+    delete this.syncProgress[accountId]?.[folderId]
+    this.syncProgress = { ...this.syncProgress }
   }
 
   /**

@@ -23,6 +23,7 @@
   import { GetConversations, GetConversationCount, SyncFolder, CancelFolderSync, SetMessageListSortOrder, GetUnifiedInboxConversations, GetUnifiedInboxCount, SearchConversations, SearchUnifiedInbox, GetSearchCount, GetSearchCountUnifiedInbox, GetFTSIndexStatus, IsFTSIndexing, Trash, DeletePermanently, EmptyTrash, EmptySpam, Undo, IMAPSearchFolder, FetchServerMessage } from '../../../../wailsjs/go/app/App'
   import { toasts } from '$lib/stores/toast'
   import { _ } from '$lib/i18n'
+  import SyncStatusDialog from './SyncStatusDialog.svelte'
   import { ConfirmDialog } from '$lib/components/ui/confirm-dialog'
   // @ts-ignore - wailsjs path
   import { message } from '../../../../wailsjs/go/models'
@@ -554,19 +555,30 @@
   // Header sync button: busy while any account or this folder is syncing
   const syncBusy = $derived(accountStore.isAnySyncing || syncing)
 
-  // Header sync button: sync all accounts, or cancel whatever is running
+  let syncStatusOpen = $state(false)
+
+  // Header sync button: sync all accounts, or show the status dialog while one runs
   async function toggleSyncAll() {
+    if (syncBusy) {
+      syncStatusOpen = true
+      return
+    }
     try {
-      if (!syncBusy) {
-        await accountStore.syncAllComplete()
-        return
-      }
+      await accountStore.syncAllComplete()
+    } catch (err) {
+      console.error('Sync all failed:', err)
+    }
+  }
+
+  // Cancel whatever is running (the status dialog's cancel action)
+  async function cancelAllRunningSyncs() {
+    try {
       await Promise.all([
-        syncing && cancelFolderSync(),
+        syncing && accountStore.cancelFolderSync(accountId!, folderId!),
         accountStore.isAnySyncing && accountStore.cancelAllSyncs(),
       ])
     } catch (err) {
-      console.error('Sync all failed:', err)
+      console.error('Cancel sync failed:', err)
     }
   }
 
@@ -1448,7 +1460,7 @@
       {/if}
       <button
         class="p-2 rounded-md hover:bg-muted transition-colors disabled:opacity-50"
-        title={syncBusy ? `${$_('sidebar.syncing')} ${$_('sidebar.clickToCancel')}` : $_('sidebar.syncAllAccounts')}
+        title={syncBusy ? `${$_('sidebar.syncing')} ${$_('sidebar.clickForSyncStatus')}` : $_('sidebar.syncAllAccounts')}
         aria-label={$_('sidebar.syncAllAccounts')}
         disabled={loading && !syncBusy}
         onclick={toggleSyncAll}
@@ -1810,6 +1822,8 @@
 </div>
 
 <!-- Permanent Delete Confirmation Dialog -->
+<SyncStatusDialog bind:open={syncStatusOpen} busy={syncBusy} onCancelSync={cancelAllRunningSyncs} />
+
 <ConfirmDialog
   bind:open={showDeleteConfirm}
   title={$_('dialog.deletePermanently')}
