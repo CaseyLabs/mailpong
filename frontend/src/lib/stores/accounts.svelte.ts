@@ -382,8 +382,18 @@ class AccountStore {
    */
   async cancelFolderSync(accountId: string, folderId: string): Promise<void> {
     await CancelFolderSync(accountId, folderId)
-    delete this.syncProgress[accountId]?.[folderId]
-    this.syncProgress = { ...this.syncProgress }
+    const accountProgress = this.syncProgress[accountId]
+    if (accountProgress) {
+      delete accountProgress[folderId]
+      if (Object.keys(accountProgress).length === 0) delete this.syncProgress[accountId]
+      this.syncProgress = { ...this.syncProgress }
+    }
+    // Clear the account's syncing flag once nothing else is in flight for it
+    const acc = this.accounts.find((a) => a.account.id === accountId)
+    if (acc?.syncing && !this.syncProgress[accountId]) {
+      acc.syncing = false
+      this.accounts = [...this.accounts]
+    }
   }
 
   /**

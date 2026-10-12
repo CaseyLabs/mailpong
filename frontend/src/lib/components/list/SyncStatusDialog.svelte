@@ -26,13 +26,20 @@
 
   const rows = $derived(
     accountStore.accounts
-      .map((a) => ({
-        id: a.account.id,
-        name: a.account.name,
-        syncing: a.syncing || !!accountStore.getSyncProgress(a.account.id),
-        progress: accountStore.getSyncProgress(a.account.id),
-        error: accountStore.getSyncError(a.account.id),
-      }))
+      .map((a) => {
+        const id = a.account.id
+        const progress = accountStore.getSyncProgress(id)
+        const error = accountStore.getSyncError(id)
+        return {
+          id,
+          name: a.account.name,
+          syncing: a.syncing || !!progress,
+          progress,
+          progressFolder: folderName(id, progress?.folderId ?? ''),
+          error,
+          errorFolder: error ? folderName(id, error.folderId) : '',
+        }
+      })
       .filter((r) => r.syncing || r.error)
   )
 
@@ -80,9 +87,7 @@
           {#if row.syncing}
             <p class="text-xs text-muted-foreground pl-6">
               {phaseLabel(row.progress)}
-              {#if folderName(row.id, row.progress?.folderId ?? '')}
-                · {folderName(row.id, row.progress?.folderId ?? '')}
-              {/if}
+              {#if row.progressFolder}· {row.progressFolder}{/if}
             </p>
             {#if row.progress && row.progress.phase !== 'folders' && row.progress.phase !== 'messages'}
               <div class="ml-6 h-1.5 rounded bg-muted overflow-hidden" role="progressbar"
@@ -93,7 +98,7 @@
           {/if}
           {#if row.error}
             <p class="text-xs text-destructive pl-6 break-words">
-              {#if folderName(row.id, row.error.folderId)}{folderName(row.id, row.error.folderId)}: {/if}{row.error.error}
+              {#if row.errorFolder}{row.errorFolder}: {/if}{row.error.error}
             </p>
           {/if}
         </li>

@@ -20,7 +20,7 @@
   import { cn } from '$lib/utils'
   import { Button } from '$lib/components/ui/button'
   // @ts-ignore - wailsjs bindings
-  import { GetConversations, GetConversationCount, SyncFolder, CancelFolderSync, SetMessageListSortOrder, GetUnifiedInboxConversations, GetUnifiedInboxCount, SearchConversations, SearchUnifiedInbox, GetSearchCount, GetSearchCountUnifiedInbox, GetFTSIndexStatus, IsFTSIndexing, Trash, DeletePermanently, EmptyTrash, EmptySpam, Undo, IMAPSearchFolder, FetchServerMessage } from '../../../../wailsjs/go/app/App'
+  import { GetConversations, GetConversationCount, SyncFolder, SetMessageListSortOrder, GetUnifiedInboxConversations, GetUnifiedInboxCount, SearchConversations, SearchUnifiedInbox, GetSearchCount, GetSearchCountUnifiedInbox, GetFTSIndexStatus, IsFTSIndexing, Trash, DeletePermanently, EmptyTrash, EmptySpam, Undo, IMAPSearchFolder, FetchServerMessage } from '../../../../wailsjs/go/app/App'
   import { toasts } from '$lib/stores/toast'
   import { _ } from '$lib/i18n'
   import SyncStatusDialog from './SyncStatusDialog.svelte'
@@ -537,7 +537,7 @@
     if (isUnifiedView || !accountId || !folderId) return
 
     try {
-      await CancelFolderSync(accountId, folderId)
+      await accountStore.cancelFolderSync(accountId, folderId)
     } catch (err) {
       console.error('Failed to cancel folder sync:', err)
     }
@@ -1821,9 +1821,9 @@
   </div>
 </div>
 
-<!-- Permanent Delete Confirmation Dialog -->
 <SyncStatusDialog bind:open={syncStatusOpen} busy={syncBusy} onCancelSync={cancelAllRunningSyncs} />
 
+<!-- Permanent Delete Confirmation Dialog -->
 <ConfirmDialog
   bind:open={showDeleteConfirm}
   title={$_('dialog.deletePermanently')}

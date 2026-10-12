@@ -169,7 +169,7 @@ Right-click the folder in the sidebar and select **Sync Folder**, or select the 
 
 ### Sync All Accounts
 
-Click the sync icon at the top of the message list, use the sync button in the bottom left corner of the app, or press `Ctrl + Shift + A` to sync all accounts at once. Clicking it or pressing `Ctrl + Shift + A` again while a sync is in progress will stop the sync.
+Click the sync icon at the top of the message list, use the sync button in the bottom left corner of the app, or press `Ctrl + Shift + A` to sync all accounts at once. While a sync is in progress, clicking the sync icon at the top of the message list opens a sync status dialog with each account's progress, any sync errors and a **Cancel sync** button; clicking the bottom-left sync button or pressing `Ctrl + Shift + A` again stops the sync directly.
 
 ### Force Re-sync
 
