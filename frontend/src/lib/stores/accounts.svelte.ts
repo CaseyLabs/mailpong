@@ -12,6 +12,8 @@ import {
   CompleteCustomOAuthAccountSetup,
   ReorderAccounts,
   CancelFolderSync,
+  GetSyncErrors,
+  ClearSyncError,
 } from '../../../wailsjs/go/app/App'
 import { account, app, folder } from '../../../wailsjs/go/models'
 // @ts-ignore - wailsjs runtime
@@ -66,6 +68,9 @@ class AccountStore {
   syncProgress = $state<Record<string, Record<string, SyncProgress>>>({})
   // Sync errors keyed by accountId (shows "Sync error. Try again..." message)
   syncErrors = $state<Record<string, { folderId: string; error: string }>>({})
+  // Folders that synced while load() awaited GetSyncErrors, keyed
+  // accountId\0folderId.
+  #syncedDuringLoad: Set<string> | null = null
   private eventsInitialized = false
 
   /**
@@ -121,7 +126,7 @@ class AccountStore {
     })
 
     // Listen for folder sync complete (clear progress for that specific folder)
-    EventsOn('folder:synced', (data: { accountId: string; folderId: string }) => {
+    EventsOn('folder:synced', (data: { accountId: string; folderId: string; ok?: boolean }) => {
       // Clear progress for this folder if it exists
       if (this.syncProgress[data.accountId]?.[data.folderId]) {
         delete this.syncProgress[data.accountId][data.folderId]
@@ -139,10 +144,14 @@ class AccountStore {
 
       this.syncProgress = { ...this.syncProgress }
 
-      // Clear sync error if the failed folder just synced successfully
-      if (this.syncErrors[data.accountId]?.folderId === data.folderId) {
-        delete this.syncErrors[data.accountId]
-        this.syncErrors = { ...this.syncErrors }
+      // Clear sync error if the failed folder just synced successfully; the
+      // backend has already cleared the stored copy.
+      if (data.ok !== false) {
+        this.#syncedDuringLoad?.add(`${data.accountId}\0${data.folderId}`)
+        if (this.syncErrors[data.accountId]?.folderId === data.folderId) {
+          delete this.syncErrors[data.accountId]
+          this.syncErrors = { ...this.syncErrors }
+        }
       }
 
       // Always check if we should clear the syncing flag
@@ -263,10 +272,27 @@ class AccountStore {
         lastSync: null,
       }))
 
-      // Load folders for each account in parallel
-      await Promise.all(
-        this.accounts.map((acc) => this.loadFolders(acc.account.id))
-      )
+      // Errors saved by an earlier run; newer ones from events win, and a
+      // folder that synced while the request was in flight drops its error.
+      const synced = new Set<string>()
+      this.#syncedDuringLoad = synced
+      const errorsLoaded = GetSyncErrors().then((saved) => {
+        if (this.#syncedDuringLoad === synced) this.#syncedDuringLoad = null
+        this.syncErrors = {
+          ...Object.fromEntries(
+            (saved ?? [])
+              .filter((e) => !synced.has(`${e.accountId}\0${e.folderId}`))
+              .map((e) => [e.accountId, { folderId: e.folderId, error: e.error }]),
+          ),
+          ...this.syncErrors,
+        }
+      })
+
+      // Load folders for each account in parallel with the saved errors
+      await Promise.all([
+        errorsLoaded,
+        ...this.accounts.map((acc) => this.loadFolders(acc.account.id)),
+      ])
     } catch (err) {
       this.error = err instanceof Error ? err.message : String(err)
       console.error('Failed to load accounts:', err)
@@ -608,6 +634,7 @@ class AccountStore {
     if (this.syncErrors[accountId]) {
       delete this.syncErrors[accountId]
       this.syncErrors = { ...this.syncErrors }
+      ClearSyncError(accountId, '').catch((err: unknown) => console.error('Failed to clear sync error:', err))
     }
   }
 

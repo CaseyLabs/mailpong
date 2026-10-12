@@ -4,7 +4,7 @@
 // Sends wait out the backend's undo delay; Undo puts the reply back in the box.
 
 // @ts-ignore - wailsjs path
-import { SaveChatDraft, GetChatDraft, QueueChatReply, ReleaseChatDraft, PickAttachmentFiles } from '../../../../wailsjs/go/app/App'
+import { SaveChatDraft, GetChatDraft, QueueChatReply, ReleaseChatDraft, PickAttachmentFiles, DeleteDraft } from '../../../../wailsjs/go/app/App'
 import { UNDO_SEND_MS, undoSend, whenSent } from '$lib/stores/sendQueue'
 import { app, smtp } from '../../../../wailsjs/go/models'
 import type { Person, ReplyRecipients, ReplyTarget } from './chatFormat'
@@ -72,6 +72,9 @@ export class ChatComposer {
   // Saves run one at a time so each sees the draft ID of the previous one.
   #saving: Promise<void> = Promise.resolve()
   #draftIds = new Map<string, string>()
+  // Drafts of failed sends merged into the box, deleted once a save holds
+  // their text.
+  #orphans = new Map<string, string[]>()
   #openGen = 0
 
   constructor(opts: Options) {
@@ -179,7 +182,9 @@ export class ChatComposer {
     const snap = this.#snapshot(this.#messageId)
     if (!snap) return this.#saving // thread not loaded yet: stays dirty
     this.#dirty = false
-    this.#saving = this.#saving.then(() => this.#save(snap))
+    const orphans = this.#orphans.get(snap.key) ?? []
+    this.#orphans.delete(snap.key)
+    this.#saving = this.#saving.then(() => this.#save(snap, orphans))
     return this.#saving
   }
 
@@ -242,11 +247,18 @@ export class ChatComposer {
     this.text = this.isEmpty ? p.reply.text : `${this.text}\n${p.reply.text}`
     this.attachments = [...this.attachments, ...(p.reply.attachments ?? [])]
     this.replyAllChoice = p.reply.replyAll
-    if (p.reply.draftId && !this.#draftIds.has(p.key)) {
+    const own = this.#draftIds.get(p.key)
+    if (p.reply.draftId && !own) {
       this.#draftIds.set(p.key, p.reply.draftId)
       this.draftId = p.reply.draftId
     }
     this.#changed()
+    // The box keeps its own draft: once that holds the reply's text too, the
+    // reply's draft would only linger in Drafts.
+    if (own && p.reply.draftId && p.reply.draftId !== own) {
+      this.#orphans.set(p.key, [...(this.#orphans.get(p.key) ?? []), p.reply.draftId])
+      void this.flush()
+    }
   }
 
   // prune drops sent bubbles once the thread holds a message of mine at least
@@ -298,7 +310,7 @@ export class ChatComposer {
     update({ status: 'sent', sentAt: Date.now(), sendId: '' })
   }
 
-  async #save(snap: Snapshot) {
+  async #save(snap: Snapshot, orphans: string[]) {
     try {
       const id = await SaveChatDraft(
         new app.ChatReply({ ...snap, draftId: this.#draftIds.get(snap.key) ?? '' }),
@@ -306,9 +318,13 @@ export class ChatComposer {
       if (id) this.#draftIds.set(snap.key, id)
       else this.#draftIds.delete(snap.key)
       if (snap.key === this.key) this.draftId = id
+      for (const o of orphans) {
+        DeleteDraft(o).catch((err: unknown) => console.error('Failed to delete merged chat draft:', err))
+      }
     } catch (err) {
       console.error('Failed to save chat draft:', err)
       if (snap.key === this.key) this.#dirty = true
+      if (orphans.length) this.#orphans.set(snap.key, [...orphans, ...(this.#orphans.get(snap.key) ?? [])])
     }
   }
 

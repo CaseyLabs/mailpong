@@ -49,17 +49,10 @@ func (a *App) initBackgroundSync(ctx context.Context) {
 	// Set callback for sync completion (so frontend clears progress)
 	a.syncScheduler.SetSyncCompletedCallback(func(accountID, folderID string, err error) {
 		if err != nil {
-			wailsRuntime.EventsEmit(a.ctx, "folder:syncError", map[string]interface{}{
-				"accountId": accountID,
-				"folderId":  folderID,
-				"error":     err.Error(),
-			})
+			a.emitSyncError(accountID, folderID, err.Error())
 			return
 		}
-		wailsRuntime.EventsEmit(a.ctx, "folder:synced", map[string]interface{}{
-			"accountId": accountID,
-			"folderId":  folderID,
-		})
+		a.emitFolderSynced(accountID, folderID, true)
 		folderObj, ferr := a.folderStore.Get(folderID)
 		if ferr != nil || folderObj == nil {
 			return
@@ -287,10 +280,7 @@ func (a *App) handleIdleNewMail(event imap.MailEvent) {
 		log.Error().Err(err).Str("accountID", event.AccountID).Msg("Failed to sync after IDLE notification")
 		// Emit folder:synced to clear syncing state even on error
 		if folderID != "" {
-			wailsRuntime.EventsEmit(a.ctx, "folder:synced", map[string]interface{}{
-				"accountId": event.AccountID,
-				"folderId":  folderID,
-			})
+			a.emitFolderSynced(event.AccountID, folderID, false)
 		}
 		return
 	}
@@ -334,11 +324,7 @@ func (a *App) handleIdleNewMail(event imap.MailEvent) {
 			defer func() {
 				if r := recover(); r != nil {
 					log.Error().Interface("panic", r).Str("folder", fID).Msg("IDLE body fetch goroutine panicked")
-					wailsRuntime.EventsEmit(a.ctx, "folder:syncError", map[string]interface{}{
-						"accountId": event.AccountID,
-						"folderId":  fID,
-						"error":     fmt.Sprintf("body fetch panic: %v", r),
-					})
+					a.emitSyncError(event.AccountID, fID, fmt.Sprintf("body fetch panic: %v", r))
 				}
 			}()
 
@@ -348,26 +334,16 @@ func (a *App) handleIdleNewMail(event imap.MailEvent) {
 					// Cancelled - not an error, emit synced
 					log.Debug().Str("folder", fID).Msg("IDLE body fetch cancelled")
 					folderSynced = true
-					wailsRuntime.EventsEmit(a.ctx, "folder:synced", map[string]interface{}{
-						"accountId": event.AccountID,
-						"folderId":  fID,
-					})
+					a.emitFolderSynced(event.AccountID, fID, false)
 				} else {
 					// Actual error - emit error event
 					log.Error().Err(bodyErr).Str("folder", fID).Msg("Background body fetch failed after IDLE sync")
-					wailsRuntime.EventsEmit(a.ctx, "folder:syncError", map[string]interface{}{
-						"accountId": event.AccountID,
-						"folderId":  fID,
-						"error":     bodyErr.Error(),
-					})
+					a.emitSyncError(event.AccountID, fID, bodyErr.Error())
 				}
 			} else {
 				// Success
 				folderSynced = true
-				wailsRuntime.EventsEmit(a.ctx, "folder:synced", map[string]interface{}{
-					"accountId": event.AccountID,
-					"folderId":  fID,
-				})
+				a.emitFolderSynced(event.AccountID, fID, true)
 			}
 		}(ctx, syncPeriodDays, folderID)
 	}
@@ -512,10 +488,7 @@ func (a *App) reconcileInboxFlags(accountID string, attempt int) {
 	// Always emit folder:synced: SyncFolderFlags emits the progress that drives
 	// the sidebar indicator, so we emit the matching completion (clears the bar)
 	// and reload the message list with the updated flags.
-	wailsRuntime.EventsEmit(a.ctx, "folder:synced", map[string]interface{}{
-		"accountId": accountID,
-		"folderId":  folderID,
-	})
+	a.emitFolderSynced(accountID, folderID, syncErr == nil)
 
 	if syncErr != nil {
 		log.Warn().Err(syncErr).Str("accountID", accountID).Msg("IDLE flag re-sync failed")
@@ -566,10 +539,7 @@ func (a *App) handleIdleExpunge(accountID string) {
 	// Always emit folder:synced: the sync emits progress that drives the sidebar
 	// indicator, so we emit the matching completion (clears the bar) and reload
 	// the message list with any deleted rows removed.
-	wailsRuntime.EventsEmit(a.ctx, "folder:synced", map[string]interface{}{
-		"accountId": accountID,
-		"folderId":  folderID,
-	})
+	a.emitFolderSynced(accountID, folderID, syncErr == nil)
 
 	if syncErr != nil {
 		log.Warn().Err(syncErr).Str("accountID", accountID).Msg("IDLE expunge reconcile failed")

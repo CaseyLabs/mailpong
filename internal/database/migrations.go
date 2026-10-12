@@ -1,6 +1,9 @@
 package database
 
-import "database/sql"
+import (
+	"database/sql"
+	"fmt"
+)
 
 // Migration represents a database migration
 type Migration struct {
@@ -1499,4 +1502,88 @@ var migrations = []Migration{
 			);
 		`,
 	},
+	{
+		Version: 54,
+		SQL: `
+			-- Last folder sync error per mail account and the folder it came
+			-- from, so the sidebar warning survives a restart. Empty when none.
+			ALTER TABLE accounts ADD COLUMN last_sync_error TEXT NOT NULL DEFAULT '';
+			ALTER TABLE accounts ADD COLUMN last_sync_error_folder TEXT NOT NULL DEFAULT '';
+		`,
+	},
+	{
+		Version: 55,
+		SQL:     threadStartersSQL(),
+	},
+}
+
+// ThreadKeyExpr is the normalized thread key of a messages row: row is ""
+// for the row itself, or "NEW." or "OLD." in a trigger. internal/message
+// keys chats with it, so thread_starters rows join on the same key.
+func ThreadKeyExpr(row string) string {
+	return fmt.Sprintf("REPLACE(REPLACE(COALESCE(%[1]sthread_id, %[1]sid), '<', ''), '>', '')", row)
+}
+
+// refreshThreadStarter recomputes the thread_starters row of the thread that
+// holds a trigger's NEW or OLD row.
+func refreshThreadStarter(row string) string {
+	return fmt.Sprintf(`
+				DELETE FROM thread_starters WHERE folder_id = %[1]sfolder_id AND thread_key = %[2]s;
+				INSERT INTO thread_starters (folder_id, thread_key, starter_date, starter_id, from_email)
+				SELECT folder_id, %[3]s, date, id, LOWER(COALESCE(from_email, ''))
+				FROM messages WHERE folder_id = %[1]sfolder_id AND %[3]s = %[2]s
+				ORDER BY date, id LIMIT 1;`, row, ThreadKeyExpr(row), ThreadKeyExpr(""))
+}
+
+// threadStartersSQL is migration 55.
+func threadStartersSQL() string {
+	key := ThreadKeyExpr("")
+	return `
+			-- Starter (earliest message by date, then id) of each thread per
+			-- folder, so the chat list maps threads to sender chats without a
+			-- window pass over the inbox. Kept current by the triggers below;
+			-- the index lets them find a thread's earliest message. An insert
+			-- newer than its thread's starter (most synced mail) skips the
+			-- refresh.
+			CREATE TABLE IF NOT EXISTS thread_starters (
+				folder_id TEXT NOT NULL,
+				thread_key TEXT NOT NULL,
+				starter_date DATETIME,
+				starter_id TEXT NOT NULL,
+				from_email TEXT NOT NULL,
+				PRIMARY KEY (folder_id, thread_key)
+			) WITHOUT ROWID;
+			CREATE INDEX IF NOT EXISTS idx_messages_folder_thread_key
+				ON messages(folder_id, ` + key + `, date, id);
+
+			CREATE TRIGGER IF NOT EXISTS thread_starters_insert AFTER INSERT ON messages
+			WHEN NOT EXISTS (SELECT 1 FROM thread_starters WHERE folder_id = NEW.folder_id
+				AND thread_key = ` + ThreadKeyExpr("NEW.") + `
+				AND (starter_date, starter_id) <= (NEW.date, NEW.id))
+			BEGIN` + refreshThreadStarter("NEW.") + `
+			END;
+			CREATE TRIGGER IF NOT EXISTS thread_starters_delete AFTER DELETE ON messages
+			WHEN EXISTS (SELECT 1 FROM thread_starters WHERE folder_id = OLD.folder_id
+				AND thread_key = ` + ThreadKeyExpr("OLD.") + ` AND starter_id = OLD.id)
+			BEGIN` + refreshThreadStarter("OLD.") + `
+			END;
+			CREATE TRIGGER IF NOT EXISTS thread_starters_update AFTER UPDATE OF id, folder_id, thread_id, date, from_email ON messages
+			WHEN OLD.id IS NOT NEW.id OR OLD.folder_id IS NOT NEW.folder_id OR OLD.thread_id IS NOT NEW.thread_id
+				OR OLD.date IS NOT NEW.date OR OLD.from_email IS NOT NEW.from_email
+			BEGIN` + refreshThreadStarter("OLD.") + `
+			END;
+			-- Refreshing OLD's thread covers NEW too unless the row changed thread.
+			CREATE TRIGGER IF NOT EXISTS thread_starters_update_moved AFTER UPDATE OF id, folder_id, thread_id ON messages
+			WHEN OLD.folder_id IS NOT NEW.folder_id OR ` + ThreadKeyExpr("OLD.") + ` IS NOT ` + ThreadKeyExpr("NEW.") + `
+			BEGIN` + refreshThreadStarter("NEW.") + `
+			END;
+
+			DELETE FROM thread_starters;
+			INSERT INTO thread_starters (folder_id, thread_key, starter_date, starter_id, from_email)
+			SELECT folder_id, thread_key, date, id, from_email FROM (
+				SELECT folder_id, ` + key + ` AS thread_key, date, id, LOWER(COALESCE(from_email, '')) AS from_email,
+					ROW_NUMBER() OVER (PARTITION BY folder_id, ` + key + ` ORDER BY date, id) AS rn
+				FROM messages
+			) WHERE rn = 1;
+		`
 }

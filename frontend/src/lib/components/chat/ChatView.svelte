@@ -3,9 +3,10 @@
   // bubbles with day separators. Data and side effects live in ChatThread.
   // Keeps ConversationViewer's exported ref API for App's keyboard wiring.
   import { onMount, tick, untrack } from 'svelte'
+  import { SvelteMap } from 'svelte/reactivity'
   import Icon from '@iconify/svelte'
   import { _ } from '$lib/i18n'
-  import { GetIdentities, OpenURL } from '../../../../wailsjs/go/app/App'
+  import { ChatReplyFrom, GetIdentities, OpenURL } from '../../../../wailsjs/go/app/App'
   import { ConfirmDialog } from '$lib/components/ui/confirm-dialog'
   import { toasts } from '$lib/stores/toast'
   import { setFocusedPane } from '$lib/stores/keyboard.svelte'
@@ -78,8 +79,13 @@
   const recipients = $derived(target ? replyRecipients(thread.messages, target.messageId, identityEmails ?? myEmails) : null)
   const targetMessage = $derived(target ? thread.messages.find((m) => m.id === target.messageId) : undefined)
   const replySubject = $derived(displaySubject(targetMessage?.subject))
-  // The non-default identity the reply goes out from, else ''.
-  const alias = $derived(targetMessage && identities ? replyAlias(targetMessage, identities) : '')
+  // The non-default identity the reply goes out from, else ''. The To/Cc
+  // match shows at once; Bcc and forwarding-header aliases come from the backend.
+  const addressedAlias = $derived(targetMessage && identities ? replyAlias(targetMessage, identities) : '')
+  // ChatReplyFrom results by message ID: the lookup can fetch headers over
+  // IMAP, so each message asks once per session.
+  const replyFromCache = new SvelteMap<string, string>()
+  const alias = $derived(addressedAlias || (target ? (replyFromCache.get(target.messageId) ?? '') : ''))
   const account = $derived(accountStore.accounts.find((a) => a.account.id === accountId)?.account)
   // The alias the reply goes out from, else the account in the unified inbox.
   const replyFrom = $derived(alias || (showAccount ? account?.name || '' : ''))
@@ -115,6 +121,20 @@
       composer.dispose()
       window.removeEventListener('keydown', handleKeyDown)
     }
+  })
+
+  // With one identity there is no alias to find.
+  const multiIdentity = $derived((identities?.length ?? 0) >= 2)
+  $effect(() => {
+    const messageId = target?.messageId
+    if (!messageId || addressedAlias || !multiIdentity) return
+    if (untrack(() => replyFromCache.has(messageId))) return
+    ChatReplyFrom(messageId)
+      .then((email: string) => {
+        if (replyFromCache.size >= 500) replyFromCache.clear()
+        replyFromCache.set(messageId, email)
+      })
+      .catch((err: unknown) => console.error('Failed to resolve reply identity:', err))
   })
 
   $effect(() => {

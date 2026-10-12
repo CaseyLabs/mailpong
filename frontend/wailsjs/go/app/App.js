@@ -218,6 +218,10 @@ export function ChatDraftsFlushed() {
   return window['go']['app']['App']['ChatDraftsFlushed']();
 }
 
+export function ChatReplyFrom(arg1) {
+  return window['go']['app']['App']['ChatReplyFrom'](arg1);
+}
+
 export function CheckRecipientCerts(arg1) {
   return window['go']['app']['App']['CheckRecipientCerts'](arg1);
 }
@@ -232,6 +236,10 @@ export function CheckServerCertificate(arg1) {
 
 export function ClearOAuthCreds(arg1) {
   return window['go']['app']['App']['ClearOAuthCreds'](arg1);
+}
+
+export function ClearSyncError(arg1, arg2) {
+  return window['go']['app']['App']['ClearSyncError'](arg1, arg2);
 }
 
 export function CloseWindow() {
@@ -768,6 +776,10 @@ export function GetStartHidden() {
 
 export function GetStartHiddenActive() {
   return window['go']['app']['App']['GetStartHiddenActive']();
+}
+
+export function GetSyncErrors() {
+  return window['go']['app']['App']['GetSyncErrors']();
 }
 
 export function GetSystemTheme() {

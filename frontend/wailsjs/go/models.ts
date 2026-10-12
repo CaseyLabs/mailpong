@@ -268,6 +268,22 @@ export namespace account {
 	        this.signatureSeparator = source["signatureSeparator"];
 	    }
 	}
+	export class SyncError {
+	    accountId: string;
+	    folderId: string;
+	    error: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new SyncError(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.accountId = source["accountId"];
+	        this.folderId = source["folderId"];
+	        this.error = source["error"];
+	    }
+	}
 
 }
 

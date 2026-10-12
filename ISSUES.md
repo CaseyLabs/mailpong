@@ -19,10 +19,6 @@ has not yet been confirmed against the code.
   imports: EXT_RULES R1, R2 and R5. The bridge gets a token closure and the
   core DB, and the extension imports `internal/*`. This is architectural
   (see C12).
-- **A5 low** `frontend/src/lib/stores/accounts.svelte.ts` `syncErrors`: a mail
-  account's last sync error lives only in memory, so it is lost on restart
-  (contact sources keep theirs in `contact_sources.last_error`). Persisting it
-  needs a schema migration for an `accounts.last_sync_error` column.
 - **A6 low** `internal/sync/fetch.go:259` and `:815`: cancelling a sync (found
   in the 2026-10-12 Flatpak debug log) logs four warnings: "Failed to read
   body literal" (`use of closed network connection`), "Incomplete message
@@ -49,38 +45,12 @@ has not yet been confirmed against the code.
 
 ### Chat list
 
-- **M12 low** chat list timing at 50k inbox messages with combining on
-  (`BenchmarkChatQueries`): `ListChats` takes about 300 ms and `CountChats`
-  230 ms. The sender-chat window pass in `chatKeyRows` (about 140 ms) and the
-  grouping (about 90 ms) run over the whole inbox. Fix by caching thread
-  starters in a table kept current by triggers on `messages`; the target is
-  at most 188 ms (half the 376 ms baseline). Smaller levers, either
-  combining setting: `chatGroups` joins `messages` and `folders` again
-  although the key rows already read them, so the first pass and
-  `CountChats` could carry the few columns they need instead; and each reload
-  in `frontend/src/lib/stores/chat.svelte.ts` runs `GetChats`, `GetChatCount`
-  and the Low count as separate full passes, which a `COUNT(*) OVER ()` in
-  `chatPage` and one filtered count could merge.
-
 - **M14 low** `app/chat.go` `moveStaleChatState`: splits from a changed
   combine default (`app/settings.go`) or the startup reconcile still move a
   sender chat's draft link to the newest thread, not to the thread holding its
   reply target as `splitSenderChat` does. Fix idea: give `ChatKeyMove` a
   `LinkTo` worked out in `StaleChatKeys`, and have `splitSenderChat` use the
   same planner.
-
-- **M15 low** `frontend/src/lib/components/chat/chatFormat.ts` `replyAlias`:
-  the reply box's "from" cannot see the alias that `selectReplyFromIdentity`
-  picks from forwarding headers (Delivered-To, X-Original-To,
-  X-Forwarded-For) or Bcc, which need an IMAP fetch. For such mail the line
-  shows the account label (or nothing) while the reply goes out from the
-  alias. Fix with a binding that returns the resolved identity.
-
-- **M16 low** `frontend/src/lib/components/chat/chatComposerState.svelte.ts`
-  `edit`: moving a failed reply back into a reply box that already has its
-  own draft keeps the box's draft and drops the reference to the reply's
-  saved draft (`p.reply.draftId`). That draft stays behind in Drafts. Fix by
-  deleting it, or by merging into it, when the box keeps its own draft.
 
 ### Packaging
 

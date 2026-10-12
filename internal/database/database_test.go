@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 	"path/filepath"
 	"testing"
 )
@@ -224,6 +225,12 @@ func TestMigrationV32_LocalRecordIDsRewrittenToUUIDs(t *testing.T) {
 	if _, err := db.Exec(`ALTER TABLE messages DROP COLUMN delivered_to`); err != nil {
 		t.Fatalf("drop messages.delivered_to for re-migrate: %v", err)
 	}
+	// And v54's sync error columns on accounts.
+	for _, col := range []string{"last_sync_error", "last_sync_error_folder"} {
+		if _, err := db.Exec(`ALTER TABLE accounts DROP COLUMN ` + col); err != nil {
+			t.Fatalf("drop accounts.%s for re-migrate: %v", col, err)
+		}
+	}
 
 	// Re-run migrations — migration 32 should rewrite the seeded local- id.
 	if err := db.Migrate(); err != nil {
@@ -403,6 +410,12 @@ func TestMigrationV33_CleansExistingOrphans(t *testing.T) {
 	// And v52's delivered_to on messages.
 	if _, err := db.Exec(`ALTER TABLE messages DROP COLUMN delivered_to`); err != nil {
 		t.Fatalf("drop messages.delivered_to for re-migrate: %v", err)
+	}
+	// And v54's sync error columns on accounts.
+	for _, col := range []string{"last_sync_error", "last_sync_error_folder"} {
+		if _, err := db.Exec(`ALTER TABLE accounts DROP COLUMN ` + col); err != nil {
+			t.Fatalf("drop accounts.%s for re-migrate: %v", col, err)
+		}
 	}
 
 	// Seed: orphan state row whose addressbook doesn't exist. Pre-migration,
@@ -603,6 +616,8 @@ func TestMigrationV46_ChatTriage(t *testing.T) {
 		`ALTER TABLE sender_chat DROP COLUMN combined`,
 		`ALTER TABLE identities DROP COLUMN reply_to`,
 		`ALTER TABLE messages DROP COLUMN delivered_to`,
+		`ALTER TABLE accounts DROP COLUMN last_sync_error`,
+		`ALTER TABLE accounts DROP COLUMN last_sync_error_folder`,
 		`DELETE FROM migrations WHERE version >= 46`,
 		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username)
 			VALUES ('acct-1', 'Test', 'user@example.com', 'imap.example.com', 'smtp.example.com', 'user@example.com')`,
@@ -669,6 +684,8 @@ func TestMigrationV48_SenderChat(t *testing.T) {
 		`DROP TABLE sender_chat`,
 		`ALTER TABLE identities DROP COLUMN reply_to`,
 		`ALTER TABLE messages DROP COLUMN delivered_to`,
+		`ALTER TABLE accounts DROP COLUMN last_sync_error`,
+		`ALTER TABLE accounts DROP COLUMN last_sync_error_folder`,
 		`ALTER TABLE attachments DROP COLUMN embedded`,
 		`DELETE FROM migrations WHERE version >= 48`,
 		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username)
@@ -723,6 +740,8 @@ func TestMigrationV49_EmbeddedAttachments(t *testing.T) {
 		`ALTER TABLE sender_chat DROP COLUMN combined`,
 		`ALTER TABLE identities DROP COLUMN reply_to`,
 		`ALTER TABLE messages DROP COLUMN delivered_to`,
+		`ALTER TABLE accounts DROP COLUMN last_sync_error`,
+		`ALTER TABLE accounts DROP COLUMN last_sync_error_folder`,
 		`DELETE FROM migrations WHERE version >= 49`,
 		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username)
 			VALUES ('acct-1', 'Test', 'user@example.com', 'imap.example.com', 'smtp.example.com', 'user@example.com')`,
@@ -810,6 +829,8 @@ func TestMigrationV50_SenderChatCombined(t *testing.T) {
 		`ALTER TABLE sender_chat DROP COLUMN combined`,
 		`ALTER TABLE identities DROP COLUMN reply_to`,
 		`ALTER TABLE messages DROP COLUMN delivered_to`,
+		`ALTER TABLE accounts DROP COLUMN last_sync_error`,
+		`ALTER TABLE accounts DROP COLUMN last_sync_error_folder`,
 		`DELETE FROM migrations WHERE version >= 50`,
 		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username)
 			VALUES ('acct-1', 'Test', 'user@example.com', 'imap.example.com', 'smtp.example.com', 'user@example.com')`,
@@ -846,6 +867,8 @@ func TestMigrationV51_IdentityReplyTo(t *testing.T) {
 	for _, stmt := range []string{
 		`ALTER TABLE identities DROP COLUMN reply_to`,
 		`ALTER TABLE messages DROP COLUMN delivered_to`,
+		`ALTER TABLE accounts DROP COLUMN last_sync_error`,
+		`ALTER TABLE accounts DROP COLUMN last_sync_error_folder`,
 		`DELETE FROM migrations WHERE version >= 51`,
 		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username)
 			VALUES ('acct-1', 'Test', 'user@example.com', 'imap.example.com', 'smtp.example.com', 'user@example.com')`,
@@ -877,6 +900,8 @@ func TestMigrationV52_DeliveredTo(t *testing.T) {
 
 	for _, stmt := range []string{
 		`ALTER TABLE messages DROP COLUMN delivered_to`,
+		`ALTER TABLE accounts DROP COLUMN last_sync_error`,
+		`ALTER TABLE accounts DROP COLUMN last_sync_error_folder`,
 		`DELETE FROM migrations WHERE version >= 52`,
 		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username)
 			VALUES ('acct-1', 'Test', 'user@example.com', 'imap.example.com', 'smtp.example.com', 'user@example.com')`,
@@ -900,5 +925,82 @@ func TestMigrationV52_DeliveredTo(t *testing.T) {
 	}
 	if got != nil {
 		t.Errorf("migrated message delivered_to = %q, want NULL", *got)
+	}
+}
+
+// TestMigrationV55_ThreadStartersBackfill upgrades a v54 database: the
+// backfill picks each thread's earliest message per folder (by date, then id,
+// with missing dates first), normalizes thread keys and lowercases senders,
+// and matches what the triggers keep afterwards.
+func TestMigrationV55_ThreadStartersBackfill(t *testing.T) {
+	db := openTestDB(t)
+
+	insert := `INSERT INTO messages (id, account_id, folder_id, uid, thread_id, from_email, date) VALUES `
+	for _, stmt := range []string{
+		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username)
+			VALUES ('acct-1', 'Test', 'user@example.com', 'imap.example.com', 'smtp.example.com', 'user@example.com')`,
+		`INSERT INTO folders (id, account_id, name, path, folder_type) VALUES
+			('inbox', 'acct-1', 'INBOX', 'INBOX', 'inbox'), ('other', 'acct-1', 'Other', 'Other', 'folder')`,
+		`DROP TRIGGER thread_starters_insert`,
+		`DROP TRIGGER thread_starters_delete`,
+		`DROP TRIGGER thread_starters_update`,
+		`DROP TRIGGER thread_starters_update_moved`,
+		`DROP INDEX idx_messages_folder_thread_key`,
+		`DROP TABLE thread_starters`,
+		`DELETE FROM migrations WHERE version >= 55`,
+		insert + `('a', 'acct-1', 'inbox', 1, '<t@x>', 'Bob@X', '2026-01-02 00:00:00'),
+			('b', 'acct-1', 'inbox', 2, 't@x', 'Carol@X', '2026-01-01 00:00:00'),
+			('c', 'acct-1', 'inbox', 3, '<t@x>', 'dave@x', '2026-01-01 00:00:00'),
+			('d', 'acct-1', 'inbox', 4, '<u@x>', 'erin@x', '2026-01-01 00:00:00'),
+			('e', 'acct-1', 'inbox', 5, '<u@x>', 'frank@x', NULL),
+			('f', 'acct-1', 'inbox', 6, NULL, NULL, '2026-01-01 00:00:00'),
+			('g', 'acct-1', 'other', 7, '<t@x>', 'gail@x', '2026-01-03 00:00:00')`,
+	} {
+		if _, err := db.Exec(stmt); err != nil {
+			t.Fatalf("prepare v54 state (%s): %v", stmt, err)
+		}
+	}
+
+	if err := db.Migrate(); err != nil {
+		t.Fatalf("migrate to v55: %v", err)
+	}
+
+	read := func() map[string]string {
+		t.Helper()
+		rows, err := db.Query(`SELECT folder_id, thread_key, starter_id, from_email FROM thread_starters`)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer rows.Close()
+		got := map[string]string{}
+		for rows.Next() {
+			var folderID, key, id, from string
+			if err := rows.Scan(&folderID, &key, &id, &from); err != nil {
+				t.Fatal(err)
+			}
+			got[folderID+" "+key] = id + " " + from
+		}
+		if err := rows.Err(); err != nil {
+			t.Fatal(err)
+		}
+		return got
+	}
+	want := map[string]string{
+		"inbox t@x": "b carol@x",
+		"inbox u@x": "e frank@x",
+		"inbox f":   "f ",
+		"other t@x": "g gail@x",
+	}
+	backfilled := read()
+	if fmt.Sprint(backfilled) != fmt.Sprint(want) {
+		t.Fatalf("backfill = %v, want %v", backfilled, want)
+	}
+
+	// Rebuilding through the triggers gives the same rows.
+	if _, err := db.Exec(`CREATE TEMP TABLE m AS SELECT * FROM messages; DELETE FROM messages; INSERT INTO messages SELECT * FROM m`); err != nil {
+		t.Fatal(err)
+	}
+	if got := read(); fmt.Sprint(got) != fmt.Sprint(backfilled) {
+		t.Errorf("trigger rows = %v, want backfill %v", got, backfilled)
 	}
 }

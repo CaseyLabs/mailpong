@@ -10,6 +10,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/caseylabs/mailven/internal/database"
 )
 
 // Chat list sections.
@@ -86,9 +88,9 @@ type DueSnooze struct {
 }
 
 // threadKeyExpr is the normalized thread key of a messages row, matching
-// GetConversation's normalization.
+// GetConversation's normalization and the thread_starters cache.
 func threadKeyExpr(prefix string) string {
-	return fmt.Sprintf("REPLACE(REPLACE(COALESCE(%[1]sthread_id, %[1]sid), '<', ''), '>', '')", prefix)
+	return database.ThreadKeyExpr(prefix)
 }
 
 // threadKeyMatch is an index-friendly condition selecting a thread's
@@ -166,22 +168,21 @@ func senderCombinedJoins(accountCol, emailCol string) string {
 
 // chatKeyRows maps messages to chat keys. It selects (mid, thread_key,
 // account_id, chat_key) for messages whose folder (f) matches cond. A
-// thread's starter is its earliest message in scope; when the starter's
-// sender is combined (senderCombinedExpr), the whole thread maps to the
-// sender chat, otherwise chat_key is the thread key. cond may narrow by
-// account or thread but must keep whole threads, or starters change.
-func chatKeyRows(cond string) string {
+// thread's starter is its earliest message in the folder, cached in
+// thread_starters (migration 55); when the starter's sender is combined
+// (senderCombinedExpr), the whole thread maps to the sender chat, otherwise
+// chat_key is the thread key. Each account has one inbox, so for the unified
+// inbox that is the earliest message in scope. A thread missing from the
+// cache stays a thread chat. The rows also carry the named messages columns.
+func chatKeyRows(cond string, carry ...string) string {
 	key := threadKeyExpr("m.")
 	return `
-		SELECT k.mid, k.thread_key, k.account_id,
-			CASE WHEN ` + senderCombinedExpr("k.starter") + ` THEN '` + SenderChatPrefix + `' || k.starter ELSE k.thread_key END AS chat_key
-		FROM (
-			SELECT m.id AS mid, ` + key + ` AS thread_key, f.account_id,
-				FIRST_VALUE(COALESCE(LOWER(m.from_email), '')) OVER (PARTITION BY ` + key + `, f.account_id ORDER BY m.date, m.id) AS starter
-			FROM messages m
-			INNER JOIN folders f ON m.folder_id = f.id
-			WHERE ` + cond + `
-		) k` + senderCombinedJoins("k.account_id", "k.starter")
+		SELECT m.id AS mid, ` + key + ` AS thread_key, f.account_id,
+			CASE WHEN ` + senderCombinedExpr("ts.from_email") + ` THEN '` + SenderChatPrefix + `' || ts.from_email ELSE ` + key + ` END AS chat_key` + carried("m.", carry) + `
+		FROM messages m
+		INNER JOIN folders f ON m.folder_id = f.id
+		LEFT JOIN thread_starters ts ON ts.folder_id = m.folder_id AND ts.thread_key = ` + key + senderCombinedJoins("f.account_id", "ts.from_email") + `
+		WHERE ` + cond
 }
 
 // isSenderKey matches a sender chat key in col, case-sensitively (LIKE is
@@ -190,12 +191,21 @@ func isSenderKey(col string) string {
 	return fmt.Sprintf("substr(%s, 1, %d) = '%s'", col, len(SenderChatPrefix), SenderChatPrefix)
 }
 
+// carried lists the columns cols of table prefix as extra select items.
+func carried(prefix string, cols []string) string {
+	var b strings.Builder
+	for _, c := range cols {
+		b.WriteString(", " + prefix + c)
+	}
+	return b.String()
+}
+
 // threadKeyRows is chatKeyRows without sender chats: every chat key is the
-// thread key, so it skips the window pass over the whole scope.
-func threadKeyRows(cond string) string {
+// thread key, so it skips the starter and sender joins.
+func threadKeyRows(cond string, carry ...string) string {
 	key := threadKeyExpr("m.")
 	return `
-		SELECT m.id AS mid, ` + key + ` AS thread_key, f.account_id, ` + key + ` AS chat_key
+		SELECT m.id AS mid, ` + key + ` AS thread_key, f.account_id, ` + key + ` AS chat_key` + carried("m.", carry) + `
 		FROM messages m
 		INNER JOIN folders f ON m.folder_id = f.id
 		WHERE ` + cond
@@ -227,7 +237,7 @@ const recipientsJSONExpr = `json_group_array(json(CASE WHEN f.folder_type = 'sen
 
 // senderThreadKeysExpr lists a sender chat's thread keys as JSON; it is NULL
 // for a thread chat, whose key is its one thread key.
-var senderThreadKeysExpr = `CASE WHEN ` + isSenderKey("ck.chat_key") + ` THEN json_group_array(DISTINCT ck.thread_key) END`
+var senderThreadKeysExpr = `CASE WHEN ` + isSenderKey("m.chat_key") + ` THEN json_group_array(DISTINCT m.thread_key) END`
 
 // chatListColumns are the per-chat columns ListChats scans.
 var chatListColumns = `
@@ -256,11 +266,11 @@ var chatListColumns = `
 // chatGroupColumns are the columns chatBaseQuery's GROUP BY and section
 // filters need, plus extra; counting and paging skip the JSON aggregates. The
 // unread and priority counts are computed only for the sections that filter
-// on them.
+// on them. They read the key rows as m, which carry chatGroupCarry.
 func chatGroupColumns(section, extra string) string {
 	cols := `
-				ck.chat_key AS thread_key,
-				a.id AS account_id,
+				m.chat_key AS thread_key,
+				m.account_id,
 				MAX(REPLACE(SUBSTR(m.received_at, 1, 19), 'T', ' ')) AS latest_received`
 	switch section {
 	case ChatSectionUnread:
@@ -341,35 +351,41 @@ func chatPage(tx *sql.Tx, scope, section string, now time.Time, offset, limit in
 
 // chatBaseQuery builds the FROM and WHERE clauses of the grouped chat query
 // for a scope (a folder ID, or "" for every enabled account's inbox) and
-// section, with columns from each chat group as g and its state as cs;
+// section, with columns (chatGroupColumns) from each chat group as g and its
+// state as cs;
 // callers add the SELECT list, and ordering and paging.
 // senderChats selects chatKeyRows over threadKeyRows.
 func chatBaseQuery(scope, section, columns string, now time.Time, senderChats bool) (string, []any, error) {
 	folderCond, args := chatFolderCond(scope)
-
-	var where string
-	switch section {
-	case ChatSectionAll, "":
-		where = "NOT " + snoozeActiveExpr
-	case ChatSectionUnread:
-		where = "NOT " + snoozeActiveExpr + " AND g.unread_count > 0"
-	case ChatSectionPriority:
-		where = "NOT " + snoozeActiveExpr + " AND g.is_low = 0"
-	case ChatSectionLow:
-		where = "NOT " + snoozeActiveExpr + " AND g.is_low = 1"
-	case ChatSectionSnoozed:
-		where = snoozeActiveExpr
-	default:
-		return "", nil, fmt.Errorf("unknown chat section %q", section)
+	where, err := chatSectionWhere(section)
+	if err != nil {
+		return "", nil, err
 	}
 	args = append(args, now.Unix())
-
-	// A chat is low priority only when every message in scope is, so one
-	// human reply in a newsletter thread lifts it into Chats.
 	from := `
-		FROM (` + chatGroups(folderCond, columns, "", senderChats) + `) g` + chatStateJoin + `
+		FROM (` + chatKeyGroups(folderCond, columns, senderChats) + `) g` + chatStateJoin + `
 		WHERE ` + where
 	return from, args, nil
+}
+
+// chatSectionWhere is the condition on a chat group g and its state cs for a
+// section; it takes one argument, now as Unix seconds. A chat is low
+// priority only when every message in scope is, so one human reply in a
+// newsletter thread lifts it into Chats.
+func chatSectionWhere(section string) (string, error) {
+	switch section {
+	case ChatSectionAll, "":
+		return "NOT " + snoozeActiveExpr, nil
+	case ChatSectionUnread:
+		return "NOT " + snoozeActiveExpr + " AND g.unread_count > 0", nil
+	case ChatSectionPriority:
+		return "NOT " + snoozeActiveExpr + " AND g.is_low = 0", nil
+	case ChatSectionLow:
+		return "NOT " + snoozeActiveExpr + " AND g.is_low = 1", nil
+	case ChatSectionSnoozed:
+		return snoozeActiveExpr, nil
+	}
+	return "", fmt.Errorf("unknown chat section %q", section)
 }
 
 // chatStateSelect and chatStateJoin add a chat's pinned and snoozed state to
@@ -380,31 +396,49 @@ const (
 		LEFT JOIN conversation_state cs ON cs.account_id = g.account_id AND cs.thread_key = g.thread_key`
 )
 
-// chatGroups selects columns from each chat group of the folders matching
-// folderCond. A non-empty ckWhere narrows the (account_id, chat_key) pairs
-// before messages are joined, so aggregates run only for those chats.
-func chatGroups(folderCond, columns, ckWhere string, senderChats bool) string {
-	keyRows := threadKeyRows
+// keyRowsFor picks chatKeyRows when sender chats are on, else threadKeyRows.
+func keyRowsFor(senderChats bool) func(string, ...string) string {
 	if senderChats {
-		keyRows = chatKeyRows
+		return chatKeyRows
 	}
-	rows := keyRows(folderCond)
-	if ckWhere != "" {
-		rows = `SELECT * FROM (` + rows + `) WHERE ` + ckWhere
+	return threadKeyRows
+}
+
+// chatGroupCarry are the messages columns chatGroupColumns reads.
+var chatGroupCarry = []string{"date", "received_at", "is_read", "is_bulk", "from_email"}
+
+// chatKeyGroups selects columns (chatGroupColumns) from each chat group of
+// the enabled accounts' folders matching folderCond. The key rows carry those
+// columns, so messages are read once.
+func chatKeyGroups(folderCond, columns string, senderChats bool) string {
+	rows := keyRowsFor(senderChats)(folderCond+" AND f.account_id IN (SELECT id FROM accounts WHERE enabled = 1)", chatGroupCarry...)
+	return `
+			SELECT ` + columns + `
+			FROM (` + rows + `) m` + categoryJoin(columns, "m.account_id") + `
+			GROUP BY m.chat_key, m.account_id`
+}
+
+// categoryJoin joins the sender override (sc) when columns use isLowExpr;
+// the join costs about 10 ms at 50k messages, so it is left out when unused.
+func categoryJoin(columns, accountCol string) string {
+	if !strings.Contains(columns, isLowExpr) {
+		return ""
 	}
-	// Only isLowExpr reads the sender override (sc); the join costs about
-	// 10 ms at 50k messages, so it is left out when unused.
-	var categoryJoin string
-	if strings.Contains(columns, isLowExpr) {
-		categoryJoin = `
-			LEFT JOIN sender_category sc ON sc.account_id = a.id AND sc.email = LOWER(m.from_email)`
-	}
+	return `
+			LEFT JOIN sender_category sc ON sc.account_id = ` + accountCol + ` AND sc.email = LOWER(m.from_email)`
+}
+
+// chatGroups selects columns from each chat group of the folders matching
+// folderCond. ckWhere narrows the (account_id, chat_key) pairs before
+// messages are joined, so aggregates run only for those chats.
+func chatGroups(folderCond, columns, ckWhere string, senderChats bool) string {
+	rows := `SELECT * FROM (` + keyRowsFor(senderChats)(folderCond) + `) WHERE ` + ckWhere
 	return `
 			SELECT ` + columns + `
 			FROM (` + rows + `) ck
 			INNER JOIN messages m ON m.id = ck.mid
 			INNER JOIN folders f ON m.folder_id = f.id
-			INNER JOIN accounts a ON f.account_id = a.id AND a.enabled = 1` + categoryJoin + `
+			INNER JOIN accounts a ON f.account_id = a.id AND a.enabled = 1` + categoryJoin(columns, "a.id") + `
 			GROUP BY ck.chat_key, a.id`
 }
 

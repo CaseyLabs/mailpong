@@ -665,13 +665,15 @@ func (a *App) syncSentFolder(accountID string) error {
 	syncPeriodDays := a.syncPeriodDays(accountID)
 
 	// Sync progress feedback rides on the syncEngine's sync:progress callback (see app.go:438)
-	if err := a.syncEngine.SyncMessages(ctx, accountID, sentFolder.ID, syncPeriodDays, false); err != nil && ctx.Err() == nil {
-		log.Warn().Err(err).Str("folderID", sentFolder.ID).Msg("Failed to sync Sent folder")
+	syncErr := a.syncEngine.SyncMessages(ctx, accountID, sentFolder.ID, syncPeriodDays, false)
+	if syncErr != nil && ctx.Err() == nil {
+		log.Warn().Err(syncErr).Str("folderID", sentFolder.ID).Msg("Failed to sync Sent folder")
 	}
 
 	// Also fetch bodies
-	if err := a.syncEngine.FetchBodiesInBackground(ctx, accountID, sentFolder.ID, syncPeriodDays); err != nil && ctx.Err() == nil {
-		log.Warn().Err(err).Str("folderID", sentFolder.ID).Msg("Failed to fetch bodies for Sent folder")
+	bodyErr := a.syncEngine.FetchBodiesInBackground(ctx, accountID, sentFolder.ID, syncPeriodDays)
+	if bodyErr != nil && ctx.Err() == nil {
+		log.Warn().Err(bodyErr).Str("folderID", sentFolder.ID).Msg("Failed to fetch bodies for Sent folder")
 	}
 
 	// Cancelled means a manual sync replaced this one; it emits its own
@@ -680,11 +682,7 @@ func (a *App) syncSentFolder(accountID string) error {
 		return nil
 	}
 
-	// Emit synced event
-	wailsRuntime.EventsEmit(a.ctx, "folder:synced", map[string]interface{}{
-		"accountId": accountID,
-		"folderId":  sentFolder.ID,
-	})
+	a.emitFolderSynced(accountID, sentFolder.ID, syncErr == nil && bodyErr == nil)
 
 	// Notify conversation viewer that sent folder synced (for cross-folder thread refresh)
 	wailsRuntime.EventsEmit(a.ctx, "sent:synced", map[string]interface{}{

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -9,6 +10,7 @@ import (
 	"github.com/caseylabs/mailven/internal/account"
 	"github.com/caseylabs/mailven/internal/database"
 	"github.com/caseylabs/mailven/internal/draft"
+	"github.com/caseylabs/mailven/internal/folder"
 	"github.com/caseylabs/mailven/internal/message"
 	"github.com/caseylabs/mailven/internal/settings"
 	"github.com/caseylabs/mailven/internal/smtp"
@@ -618,5 +620,51 @@ func TestApplyIdentityReplyTo(t *testing.T) {
 				t.Errorf("ReplyTo = %q, want %q", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestChatReplyFrom(t *testing.T) {
+	a, db := newChatReplyTestAppDB(t)
+	a.ctx, a.folderStore = context.Background(), folder.NewStore(db)
+	if _, err := db.Exec(`UPDATE identities SET is_default = 1 WHERE email = 'me@example.com'`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := a.accountStore.CreateIdentity("acct-1", &account.IdentityConfig{Email: "alias@example.com", Name: "Me"}); err != nil {
+		t.Fatal(err)
+	}
+	uid := uint32(1)
+	add := func(id, to, bcc, deliveredTo string) {
+		t.Helper()
+		uid++
+		m := &message.Message{ID: id, AccountID: "acct-1", FolderID: "f-1", UID: uid, Subject: "Hi",
+			FromEmail: "bob@example.com", ToList: to, BccList: bcc, Date: time.Now()}
+		if err := a.messageStore.Create(m); err != nil {
+			t.Fatal(err)
+		}
+		if deliveredTo != "" {
+			if err := a.messageStore.SetDeliveredTo(id, deliveredTo); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	add("m-bcc", "list@example.com", "alias@example.com", "")
+	add("m-fwd", "list@example.com", "", `["alias@example.com"]`)
+	add("m-none", "list@example.com", "", `[]`)
+
+	tests := []struct{ id, want string }{
+		{"m-1", ""}, // addressed to the default identity
+		{"m-bcc", "alias@example.com"},
+		{"m-fwd", "alias@example.com"},
+		{"m-none", ""},
+		{"missing", ""},
+	}
+	for _, tt := range tests {
+		got, err := a.ChatReplyFrom(tt.id)
+		if err != nil {
+			t.Fatalf("%s: %v", tt.id, err)
+		}
+		if got != tt.want {
+			t.Errorf("ChatReplyFrom(%s) = %q, want %q", tt.id, got, tt.want)
+		}
 	}
 }

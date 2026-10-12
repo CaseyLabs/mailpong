@@ -589,10 +589,13 @@ func listChatsOneQuery(t *testing.T, s *Store, scope, section string, now time.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	from, args, err := chatBaseQuery(scope, section, chatListColumns, now, senderChats)
+	folderCond, args := chatFolderCond(scope)
+	where, err := chatSectionWhere(section)
 	if err != nil {
 		t.Fatal(err)
 	}
+	args = append(args, now.Unix())
+	from := ` FROM (` + chatGroups(folderCond, chatListColumns, "1", senderChats) + `) g` + chatStateJoin + ` WHERE ` + where
 	rows, err := s.db.Query(`SELECT g.thread_key, g.account_id, g.message_count, g.unread_count, g.is_low, cs.pinned_at IS NOT NULL,
 		g.message_ids`+from+chatOrder(section)+" LIMIT ? OFFSET ?", append(args, limit, offset)...)
 	if err != nil {
@@ -688,5 +691,88 @@ func TestListChatsMatchesOneQuery(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+// TestThreadStartersTriggers checks that the thread_starters cache matches a
+// recomputation from messages after each kind of write, and that its
+// refreshes find a thread's messages through the index.
+func TestThreadStartersTriggers(t *testing.T) {
+	s, accountID, inboxID := newBodyFailedTestStore(t)
+	if _, err := s.db.Exec(`INSERT INTO folders (id, account_id, name, path, folder_type) VALUES ('other', ?, 'Other', 'Other', 'folder')`, accountID); err != nil {
+		t.Fatal(err)
+	}
+	base := time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC)
+	insert := `INSERT INTO messages (id, account_id, folder_id, uid, thread_id, from_email, date) VALUES (?, ?, ?, ?, ?, ?, ?)`
+	steps := []struct {
+		name string
+		sql  string
+		args []any
+	}{
+		{"first", insert, []any{"a", accountID, inboxID, 1, "<t@x>", "Bob@x", base.Add(time.Hour)}},
+		{"later", insert, []any{"b", accountID, inboxID, 2, "t@x", "carol@x", base.Add(2 * time.Hour)}},
+		{"earlier", insert, []any{"c", accountID, inboxID, 3, "<t@x>", "dave@x", base}},
+		{"null date", insert, []any{"d", accountID, inboxID, 4, "<u@x>", "erin@x", nil}},
+		{"unthreaded", insert, []any{"e", accountID, inboxID, 5, nil, "frank@x", base}},
+		{"broken id", insert, []any{"f", accountID, inboxID, 6, "w<1>@x", "gail@x", base}},
+		{"same day", insert, []any{"g", accountID, inboxID, 7, "<u@x>", "hal@x", nil}},
+		{"upsert rethreads", insert + ` ON CONFLICT(folder_id, uid) DO UPDATE SET thread_id = excluded.thread_id`, []any{"c", accountID, inboxID, 3, "<v@x>", "dave@x", base}},
+		{"date change", `UPDATE messages SET date = ? WHERE id = 'b'`, []any{base.Add(-time.Hour)}},
+		{"sender change", `UPDATE messages SET from_email = 'Zed@x' WHERE id = 'b'`, nil},
+		{"read change", `UPDATE messages SET is_read = 1 WHERE id = 'b'`, nil},
+		{"move", `UPDATE messages SET folder_id = 'other' WHERE id = 'b'`, nil},
+		{"delete starter", `DELETE FROM messages WHERE id = 'd'`, nil},
+		{"delete other", `DELETE FROM messages WHERE id = 'a'`, nil},
+		{"delete last", `DELETE FROM messages WHERE id = 'e'`, nil},
+		{"delete folder", `DELETE FROM folders WHERE id = 'other'`, nil},
+	}
+	key := threadKeyExpr("")
+	recompute := `SELECT folder_id, thread_key, starter_id, from_email FROM (
+		SELECT folder_id, ` + key + ` AS thread_key, id AS starter_id, LOWER(COALESCE(from_email, '')) AS from_email,
+			ROW_NUMBER() OVER (PARTITION BY folder_id, ` + key + ` ORDER BY date, id) AS rn
+		FROM messages) WHERE rn = 1 ORDER BY 1, 2`
+	cached := `SELECT folder_id, thread_key, starter_id, from_email FROM thread_starters ORDER BY 1, 2`
+	rows := func(q string) []string {
+		r, err := s.db.Query(q)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer r.Close()
+		var out []string
+		for r.Next() {
+			var f, k, id, email string
+			if err := r.Scan(&f, &k, &id, &email); err != nil {
+				t.Fatal(err)
+			}
+			out = append(out, f+"|"+k+"|"+id+"|"+email)
+		}
+		return out
+	}
+	for _, st := range steps {
+		if _, err := s.db.Exec(st.sql, st.args...); err != nil {
+			t.Fatalf("%s: %v", st.name, err)
+		}
+		if got, want := rows(cached), rows(recompute); !reflect.DeepEqual(got, want) {
+			t.Errorf("%s:\n got %v\nwant %v", st.name, got, want)
+		}
+	}
+
+	r, err := s.db.Query(`EXPLAIN QUERY PLAN
+		SELECT id FROM messages WHERE folder_id = ? AND `+key+` = ? ORDER BY date, id LIMIT 1`, inboxID, "t@x")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer r.Close()
+	var plan string
+	for r.Next() {
+		var id, parent, unused int
+		var detail string
+		if err := r.Scan(&id, &parent, &unused, &detail); err != nil {
+			t.Fatal(err)
+		}
+		plan += detail + "; "
+	}
+	if !strings.Contains(plan, "idx_messages_folder_thread_key") {
+		t.Errorf("refresh lookup does not use the index: %s", plan)
 	}
 }

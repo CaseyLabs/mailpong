@@ -8,6 +8,7 @@ import (
 	gosync "sync"
 	"time"
 
+	"github.com/caseylabs/mailven/internal/account"
 	"github.com/caseylabs/mailven/internal/certificate"
 	"github.com/caseylabs/mailven/internal/folder"
 	"github.com/caseylabs/mailven/internal/logging"
@@ -107,11 +108,7 @@ func (a *App) SyncFolder(accountID, folderID string) error {
 
 		// Actual error - emit error event
 		log.Error().Err(err).Str("folder", folderID).Msg("Header sync failed")
-		wailsRuntime.EventsEmit(a.ctx, "folder:syncError", map[string]interface{}{
-			"accountId": accountID,
-			"folderId":  folderID,
-			"error":     err.Error(),
-		})
+		a.emitSyncError(accountID, folderID, err.Error())
 		return err
 	}
 
@@ -141,11 +138,7 @@ func (a *App) SyncFolder(accountID, folderID string) error {
 		defer func() {
 			if r := recover(); r != nil {
 				log.Error().Interface("panic", r).Str("folder", folderID).Msg("Body fetch goroutine panicked")
-				wailsRuntime.EventsEmit(a.ctx, "folder:syncError", map[string]interface{}{
-					"accountId": accountID,
-					"folderId":  folderID,
-					"error":     fmt.Sprintf("body fetch panic: %v", r),
-				})
+				a.emitSyncError(accountID, folderID, fmt.Sprintf("body fetch panic: %v", r))
 			}
 		}()
 
@@ -155,25 +148,14 @@ func (a *App) SyncFolder(accountID, folderID string) error {
 			if syncCtx.Err() != nil {
 				// Cancelled - not an error, still emit synced so spinner stops
 				log.Debug().Str("folder", folderID).Msg("Background body fetch cancelled")
-				wailsRuntime.EventsEmit(a.ctx, "folder:synced", map[string]interface{}{
-					"accountId": accountID,
-					"folderId":  folderID,
-				})
+				a.emitFolderSynced(accountID, folderID, false)
 			} else {
 				// Actual error - emit error event instead of synced
 				log.Error().Err(bodyErr).Str("folder", folderID).Msg("Background body fetch failed")
-				wailsRuntime.EventsEmit(a.ctx, "folder:syncError", map[string]interface{}{
-					"accountId": accountID,
-					"folderId":  folderID,
-					"error":     bodyErr.Error(),
-				})
+				a.emitSyncError(accountID, folderID, bodyErr.Error())
 			}
 		} else {
-			// Success
-			wailsRuntime.EventsEmit(a.ctx, "folder:synced", map[string]interface{}{
-				"accountId": accountID,
-				"folderId":  folderID,
-			})
+			a.emitFolderSynced(accountID, folderID, true)
 		}
 	}(ctx, syncPeriodDays)
 
@@ -336,10 +318,7 @@ func (a *App) SyncAllComplete() error {
 				}
 				inbox, inboxErr := a.folderStore.GetByType(acc.ID, folder.TypeInbox)
 				if inboxErr == nil && inbox != nil {
-					wailsRuntime.EventsEmit(a.ctx, "folder:synced", map[string]interface{}{
-						"accountId": acc.ID,
-						"folderId":  inbox.ID,
-					})
+					a.emitFolderSynced(acc.ID, inbox.ID, false)
 				}
 			}
 		}
@@ -682,4 +661,47 @@ func (a *App) CancelAllSyncs() {
 	if a.imapPool != nil {
 		a.imapPool.CloseAll()
 	}
+}
+
+// emitSyncError stores a folder sync error as the account's last one, so the
+// sidebar still shows it after a restart, and tells the frontend.
+func (a *App) emitSyncError(accountID, folderID, msg string) {
+	if err := a.accountStore.SetSyncError(accountID, folderID, msg); err != nil {
+		log := logging.WithComponent("app")
+		log.Warn().Err(err).Str("account", accountID).Msg("Failed to store sync error")
+	}
+	wailsRuntime.EventsEmit(a.ctx, "folder:syncError", map[string]interface{}{
+		"accountId": accountID,
+		"folderId":  folderID,
+		"error":     msg,
+	})
+}
+
+// emitFolderSynced tells the frontend a folder sync finished, which clears
+// its progress indicator. ok reports success: only a successful sync forgets
+// the account's stored error from that folder, and the frontend keeps the
+// sidebar error when ok is false.
+func (a *App) emitFolderSynced(accountID, folderID string, ok bool) {
+	if ok {
+		if err := a.accountStore.ClearSyncError(accountID, folderID); err != nil {
+			log := logging.WithComponent("app")
+			log.Warn().Err(err).Str("account", accountID).Msg("Failed to clear sync error")
+		}
+	}
+	wailsRuntime.EventsEmit(a.ctx, "folder:synced", map[string]interface{}{
+		"accountId": accountID,
+		"folderId":  folderID,
+		"ok":        ok,
+	})
+}
+
+// GetSyncErrors returns each account's stored last sync error.
+func (a *App) GetSyncErrors() ([]account.SyncError, error) {
+	return a.accountStore.ListSyncErrors()
+}
+
+// ClearSyncError forgets an account's stored sync error when it came from
+// folderID, or from any folder when folderID is "".
+func (a *App) ClearSyncError(accountID, folderID string) error {
+	return a.accountStore.ClearSyncError(accountID, folderID)
 }

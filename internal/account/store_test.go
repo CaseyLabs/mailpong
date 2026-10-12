@@ -407,3 +407,43 @@ func TestIdentityReplyToRoundTrip(t *testing.T) {
 		}
 	}
 }
+
+func TestStoreSyncError(t *testing.T) {
+	tests := []struct {
+		name      string
+		clearFrom string
+		want      []SyncError
+	}{
+		{"other folder keeps it", "f2", []SyncError{{FolderID: "f1", Error: "boom"}}},
+		{"failed folder clears it", "f1", nil},
+		{"any folder clears it", "", nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := NewStore(openTestDB(t))
+			acct, err := store.Create(validAccountConfig())
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := store.SetSyncError(acct.ID, "f0", "old"); err != nil {
+				t.Fatal(err)
+			}
+			if err := store.SetSyncError(acct.ID, "f1", "boom"); err != nil {
+				t.Fatal(err)
+			}
+			if err := store.ClearSyncError(acct.ID, tt.clearFrom); err != nil {
+				t.Fatal(err)
+			}
+			got, err := store.ListSyncErrors()
+			if err != nil {
+				t.Fatal(err)
+			}
+			for i := range tt.want {
+				tt.want[i].AccountID = acct.ID
+			}
+			if len(got) != len(tt.want) || (len(got) == 1 && got[0] != tt.want[0]) {
+				t.Errorf("ListSyncErrors() = %+v, want %+v", got, tt.want)
+			}
+		})
+	}
+}

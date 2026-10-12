@@ -127,6 +127,8 @@ export function CancelOAuthFlow():Promise<void>;
 
 export function ChatDraftsFlushed():Promise<void>;
 
+export function ChatReplyFrom(arg1:string):Promise<string>;
+
 export function CheckRecipientCerts(arg1:Array<string>):Promise<Record<string, boolean>>;
 
 export function CheckRecipientPGPKeys(arg1:Array<string>):Promise<Record<string, boolean>>;
@@ -134,6 +136,8 @@ export function CheckRecipientPGPKeys(arg1:Array<string>):Promise<Record<string,
 export function CheckServerCertificate(arg1:string):Promise<app.ServerCertificateCheck>;
 
 export function ClearOAuthCreds(arg1:string):Promise<void>;
+
+export function ClearSyncError(arg1:string,arg2:string):Promise<void>;
 
 export function CloseWindow():Promise<void>;
 
@@ -402,6 +406,8 @@ export function GetSpellcheckLanguages():Promise<Array<string>>;
 export function GetStartHidden():Promise<boolean>;
 
 export function GetStartHiddenActive():Promise<boolean>;
+
+export function GetSyncErrors():Promise<Array<account.SyncError>>;
 
 export function GetSystemTheme():Promise<string>;
 

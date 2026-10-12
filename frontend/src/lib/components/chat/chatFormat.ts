@@ -154,7 +154,8 @@ export function replyTarget(messages: messageModels.Message[], myEmails: Set<str
 
 // replyAlias returns the send-as address a reply to msg goes out from: the
 // non-default identity listed in its To or Cc, else ''. Mirrors the backend's
-// selectReplyFromIdentity except for its Bcc and forwarding-header lookups.
+// selectReplyFromIdentity except for its Bcc and forwarding-header lookups,
+// which ChatView gets from the ChatReplyFrom binding when this finds none.
 export function replyAlias(msg: messageModels.Message, identities: { email: string; isDefault: boolean }[]): string {
   const addressed = new Set([...parseRecipients(msg.toList), ...parseRecipients(msg.ccList)].map((p) => p.email.trim().toLowerCase()))
   const id = identities.find((i) => addressed.has(i.email.trim().toLowerCase()))

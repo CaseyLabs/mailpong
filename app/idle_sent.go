@@ -164,10 +164,7 @@ func (a *App) syncSentAfterIdle(accountID string) {
 	}
 
 	// Clears the Sent progress indicator and refreshes chat threads.
-	wailsRuntime.EventsEmit(a.ctx, "folder:synced", map[string]interface{}{
-		"accountId": accountID,
-		"folderId":  sent.ID,
-	})
+	a.emitFolderSynced(accountID, sent.ID, err == nil)
 	// sent:synced reloads chat lists and open threads, so skip it when the
 	// sync stored or removed nothing; IDLE flag activity triggers many no-op
 	// syncs. Another writer moving the counter meanwhile only adds a reload.

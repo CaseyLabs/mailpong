@@ -499,6 +499,53 @@ func (s *Store) GetOAuthStableID(id string) (string, error) {
 	return stableID, nil
 }
 
+// SyncError is an account's last folder sync error.
+type SyncError struct {
+	AccountID string `json:"accountId"`
+	FolderID  string `json:"folderId"`
+	Error     string `json:"error"`
+}
+
+// SetSyncError stores an account's last sync error, replacing any earlier one.
+func (s *Store) SetSyncError(accountID, folderID, msg string) error {
+	_, err := s.db.Exec("UPDATE accounts SET last_sync_error = ?, last_sync_error_folder = ? WHERE id = ?", msg, folderID, accountID)
+	if err != nil {
+		return fmt.Errorf("failed to set sync error: %w", err)
+	}
+	return nil
+}
+
+// ClearSyncError clears an account's sync error when it came from folderID,
+// or whichever folder it came from when folderID is "".
+func (s *Store) ClearSyncError(accountID, folderID string) error {
+	_, err := s.db.Exec(
+		"UPDATE accounts SET last_sync_error = '', last_sync_error_folder = '' WHERE id = ? AND last_sync_error != '' AND (? = '' OR last_sync_error_folder = ?)",
+		accountID, folderID, folderID,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to clear sync error: %w", err)
+	}
+	return nil
+}
+
+// ListSyncErrors returns the stored sync error of every account that has one.
+func (s *Store) ListSyncErrors() ([]SyncError, error) {
+	rows, err := s.db.Query("SELECT id, last_sync_error_folder, last_sync_error FROM accounts WHERE last_sync_error != ''")
+	if err != nil {
+		return nil, fmt.Errorf("failed to list sync errors: %w", err)
+	}
+	defer func() { _ = rows.Close() }()
+	var out []SyncError
+	for rows.Next() {
+		var e SyncError
+		if err := rows.Scan(&e.AccountID, &e.FolderID, &e.Error); err != nil {
+			return nil, fmt.Errorf("failed to scan sync error: %w", err)
+		}
+		out = append(out, e)
+	}
+	return out, rows.Err()
+}
+
 // Reorder updates the order of accounts
 func (s *Store) Reorder(ids []string) error {
 	tx, err := s.db.Begin()

@@ -51,8 +51,9 @@ func (a *App) QueueChatReply(r ChatReply) (string, error) {
 		if err == nil || r.DraftID != "" {
 			return r.DraftID, err
 		}
-		// Keep the unsent reply so it survives a restart.
-		draftID, saveErr := a.SaveChatDraft(r)
+		// Keep the unsent reply so it survives a restart. A draft typed while
+		// it was sending keeps the thread's chat link.
+		draftID, saveErr := a.saveChatDraft(r, false)
 		if saveErr != nil {
 			sendLog().Warn().Err(saveErr).Msg("Failed to save unsent chat reply")
 		}
@@ -97,6 +98,12 @@ func (a *App) sendChatReply(r ChatReply) error {
 // SaveChatDraft saves the chat composer's text as a reply draft and returns
 // its ID. Empty text without attachments deletes the draft and returns "".
 func (a *App) SaveChatDraft(r ChatReply) (string, error) {
+	return a.saveChatDraft(r, true)
+}
+
+// saveChatDraft saves a chat reply draft. replaceLink false keeps a chat link
+// the thread already has, so the new draft is linked only when there is none.
+func (a *App) saveChatDraft(r ChatReply, replaceLink bool) (string, error) {
 	r.Text = normalizeChatText(r.Text)
 	if chatReplyEmpty(r) {
 		if err := a.draftStore.DeleteChatLink(r.AccountID, r.ThreadKey); err != nil {
@@ -115,6 +122,12 @@ func (a *App) SaveChatDraft(r ChatReply) (string, error) {
 	res, err := a.SaveDraft(r.AccountID, *msg, r.DraftID)
 	if err != nil {
 		return "", err
+	}
+	if !replaceLink {
+		existing, err := a.draftStore.GetChatLink(r.AccountID, r.ThreadKey)
+		if err != nil || existing != nil {
+			return res.Draft.ID, err
+		}
 	}
 	link := draft.ChatLink{DraftID: res.Draft.ID, MessageID: r.MessageID, ReplyAll: r.ReplyAll, TextLen: len(r.Text)}
 	if err := a.draftStore.SetChatLink(r.AccountID, r.ThreadKey, link); err != nil {
@@ -150,6 +163,28 @@ func (a *App) GetChatDraft(accountID, threadKey string) (*ChatDraft, error) {
 // so it can be edited in the full composer.
 func (a *App) ReleaseChatDraft(accountID, threadKey string) error {
 	return a.draftStore.DeleteChatLink(accountID, threadKey)
+}
+
+// ChatReplyFrom returns the address a reply to the message goes out from when
+// that is not the default identity (an alias the mail was addressed or
+// forwarded to), else "". It picks the identity as PrepareReply does, so the
+// chat reply box can show the forwarding and Bcc aliases it cannot see.
+func (a *App) ChatReplyFrom(messageID string) (string, error) {
+	msg, err := a.messageStore.Get(messageID)
+	if err != nil || msg == nil {
+		return "", err
+	}
+	identities, err := a.accountStore.GetIdentities(msg.AccountID)
+	if err != nil {
+		return "", fmt.Errorf("failed to get identities: %w", err)
+	}
+	id := selectReplyFromIdentity(identities, msg, func() []string {
+		return resolveForwarding(a.ctx, identities, msg, a.accountStore, a.messageStore, a.folderStore, a.imapPool)
+	})
+	if id == nil || id.IsDefault {
+		return "", nil
+	}
+	return strings.TrimSpace(id.Email), nil
 }
 
 // chatFlushWait bounds how long shutdown waits for the chat composer to save.
