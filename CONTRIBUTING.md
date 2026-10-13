@@ -12,13 +12,73 @@ Mailven is an independent project derived from [Aerion](https://github.com/hkdb/
 
 ## AI project guidance
 
-Shared policy lives in `AGENTS.md`; `CLAUDE.md` imports it. Edit project skills
+Shared policy, including extension/core/kit review triggers, lives in
+`AGENTS.md`; `CLAUDE.md` imports it. Read linked references only when their
+stated trigger applies; they are not automatic imports. Edit project skills
 and their resources in `.agents/skills/`. The single relative directory symlink
 `.claude/skills -> ../.agents/skills` exposes the same files to Claude Code.
 Start either CLI normally from the checkout; no plugin or custom discovery flag
 is needed. Claude uses `/skill-name`; Codex uses `$skill-name` or `/skills`.
 Keep shared workflows independent of host-specific tools and preprocessing.
-The remaining portability work and verification are tracked in `PLAN.md`.
+Native model/effort settings live in `.claude/agents/` and `.codex/agents/`;
+both adapters read the same worker/reviewer briefs in `.agents/skills/`.
+Use `project-acceptance-checker` for milestone acceptance and `project-worker`
+for general delegated project work. If the host cannot load them, disclose the
+fallback and that the configured model/effort was not applied. Host permissions,
+model availability and explicit user choices still take precedence.
+
+Codex loads project-scoped native agents only for a trusted checkout. Review and
+trust a new clone through the normal Codex onboarding before expecting these
+roles to load; trust in a parent directory does not cover a nested Git checkout
+in CLI 0.162.1. Skill discovery can still pass while native roles return
+`unknown agent_type`. To diagnose this, inspect the project layer
+`disabledReason` with app-server `config/read` (`cwd` set to the checkout,
+`includeLayers: true`). Do not copy agents into personal configuration or add
+discovery overrides to bypass trust. See the [official configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference).
+
+| Native agent | Claude Code | Codex |
+| --- | --- | --- |
+| `project-acceptance-checker` | Sonnet, low effort | GPT-6 Luna, medium effort |
+| `project-worker` | Sonnet, medium effort | GPT-6 Luna, medium effort |
+| `file_reader` | Not defined; retain Claude routing | GPT-6 Luna, low effort |
+
+Codex primary sessions inherit the personal GPT-6.1 Sol Medium default; this
+checkout has no session-wide model override. The project-local `file_reader`
+handles only mechanical retrieval, listings, and exact text extraction, including
+independent steps within skill workflows. Use deterministic tools directly when
+delegation adds no benefit. Investigation, implementation, synthesis, and
+acceptance checks retain Medium reasoning. Explicit user choices take precedence.
+
+The G3 verification record describes earlier settings; the table above describes
+the current routing. Start a fresh session to load changed role definitions.
+
+The one shared-frontmatter exception is `model: sonnet` in
+`project-next-milestone/SKILL.md`: it declares a supported Claude turn-scoped override,
+with no skill-specific effort override. Codex retains its selected session model
+and effort; its 0.162.1 native loader accepts the extra field. Keep this exception
+explicit rather than adding a duplicate Claude skill or changing the model for
+all project sessions. The generic skill-creator validator rejects this Claude
+extension; native loading checks supplement that narrower schema check.
+Runtime model/effort selection is verified separately from parsing and skill
+discovery. See the [verification record](docs/validation/shared-skills-g3.md).
+
+Resolve the active checkout with `git rev-parse --show-toplevel`; never reuse a
+skill path from another checkout. User-supplied relative plan/output paths resolve
+from the invocation working directory (default plan: `PLAN.md` there), before
+changing directory. Quote resolved paths. For example, from the checkout root:
+`sh .agents/skills/project-next-milestone/plan-outline.sh PLAN.md`.
+Read Scope, Progress, the actionable milestone and relevant decisions only.
+The run-mailven core links optional UI references by task; its safeguards always
+apply. Handoffs persist checkpoints before committing and include a host-neutral
+prompt. Deferred follow-up verification is tracked in `PLAN.md`; no milestone is active.
+The [verification record](docs/validation/shared-skills-g3.md) documents completed
+Codex and guarded UI checks. Claude runtime compliance, bidirectional cross-host
+continuation and comparable context savings remain unverified and deferred until
+requested on a new branch; their deferral does not prevent landing the completed scope.
+The screenshot helpers install fake bindings before mount and verify persisted
+UI and extension settings stay unchanged; follow the run-mailven safeguards.
+Claude's import adapter is intentional compatibility guidance; do not remove it
+based solely on support for native AGENTS.md in another version or configuration.
 
 Clones must preserve Git symlinks. On Windows, enable Developer Mode or use
 appropriate privileges and clone with `git -c core.symlinks=true clone <url>`.

@@ -1,41 +1,26 @@
 ---
 name: project-next-milestone
-description: Implement the next unticked milestone of an execution plan (PLAN.md by default), one milestone per session, then stop. Use when the user asks to continue, resume, or implement the next milestone or step of a plan file.
-argument-hint: "[plan file, default PLAN.md]"
+description: Implement one actionable milestone from an execution plan, then verify and commit it. Use when asked to continue or resume a plan.
+# Claude-only turn override; Codex retains its selected session model.
 model: sonnet
-allowed-tools: Bash(sh ${CLAUDE_SKILL_DIR}/plan-outline.sh *)
 ---
 
-Implement the next milestone in the plan file: the first one in Progress that isn't ticked. Do that one milestone only, then stop.
+Implement one milestone only, then stop. Use the requested plan path, defaulting to `PLAN.md`. Resolve relative user paths from the shell working directory at invocation, before changing directories. Skill discovery does not change cwd.
 
-## Plan outline
-
-!`sh ${CLAUDE_SKILL_DIR}/plan-outline.sh "$ARGUMENTS"`
+The `model` frontmatter is a Claude-only override. In Codex, retain the selected session model and effort; do not try to select Sonnet. No skill-specific effort is set in Claude.
 
 ## Start
 
-- Don't read the whole plan. Using the outline's line numbers, read only: that milestone's section, any section the project's CLAUDE.md or AGENTS.md says to read every session (for example "Running builds safely"), and the Decision Log or Surprises entries the milestone depends on (grep for them).
-- Prefer the current checkout over paths or line numbers quoted in the plan.
-- If a previous session left the milestone partly done, resume from its sub-step checkboxes. Otherwise add indented sub-step checkboxes under the milestone's Progress line, and tick each with a timestamp as you finish it. Make the first sub-step map each acceptance criterion to the command or test that will prove it; write a missing test as part of the milestone.
-- If the milestone's premises no longer match the code (it's already done, or what it builds on has changed), stop and say the plan needs revising rather than forcing it.
+1. Resolve the active checkout with `git rev-parse --show-toplevel`. Use its canonical `.agents/skills/` resources, including in worktrees. Run `sh "$repo/.agents/skills/project-next-milestone/plan-outline.sh" "$plan"` with quoted absolute repo and plan paths, even when the requested plan appears absent. The helper owns the missing-plan check; do not substitute `test -f` or another preflight that skips it. A missing plan is a blocker; report the helper's result rather than inventing work.
+2. Read only Scope, Progress, and the first unfinished milestone's section using the outline's line numbers, plus project-required sections and relevant Decision Log / Surprises entries. Skip explicitly blocked milestones only when a later milestone is independent and actionable; report skipped blockers. If none is actionable, report why and stop. If premises no longer match the code, report that the plan needs revising.
+3. Resume existing sub-step checkboxes; otherwise add them beneath the milestone's Progress line. First map each acceptance criterion to its proving command or test, adding a missing test when needed. Record the base commit and tick sub-steps with timestamps.
 
-## While working
+## Work
 
-- Follow the project's CLAUDE.md and AGENTS.md rules (launch helpers, read-only directories, test servers, porting ledgers).
-- Where the plan says to use plan mode, don't enter it. Write the design and its reasoning into the Decision Log, then implement it.
-- Keep the plan's living sections (Progress, Surprises & Discoveries, Decision Log) current as you go. They are the hand-off if context gets compacted.
-- Before writing new code for a sub-step, search for an existing implementation (Grep, or Explore for broad sweeps). Don't assume it's missing; extend what exists.
-- Implement each sub-step fully: no stubs, TODOs, or fake returns. If something must be deferred, add it to Progress as an unticked item.
-- Copy files with shell commands rather than reading them into context and retyping them.
-- If a failure already exists in the baseline, record it and carry on.
+Search for existing implementation before adding code. Complete each sub-step without stubs or fake returns. Keep Progress, relevant decisions, discoveries, changed files and exact validation results sufficient for continuation without chat history. Record baseline failures and confirmed deferred findings under project policy.
 
-## Questions
-
-- Check the Decision Log first; most questions are already answered there.
-- Ask only about real blockers: a missing secret, a system install not already approved, an unsettled identity or namespace choice, or a product decision that changes scope.
-- Ask through AskUserQuestion, batching pending questions up to 4 per prompt, recommended option first.
-- Put steps only a person can check into one numbered checklist, ask once, and record the answers in Surprises & Discoveries.
+Ask only material unresolved questions after checking recorded decisions. Use the host's available question tool or plain text, batching questions; continue independent work. Respect runtime restrictions and execution authorization.
 
 ## Finish
 
-Run `/project-finish-milestone`, then stop with its summary.
+Read the active checkout's `.agents/skills/project-finish-milestone/SKILL.md` and perform that workflow using available capabilities. A slash-command dispatcher is not required. Stop after its summary; do not start a second milestone.

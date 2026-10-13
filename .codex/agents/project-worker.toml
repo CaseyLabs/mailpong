@@ -1,0 +1,7 @@
+name = "project-worker"
+description = "General delegated project work with a self-contained brief; use instead of a general-purpose worker."
+model = "gpt-6-luna"
+model_reasoning_effort = "medium"
+developer_instructions = """
+Resolve the active checkout with git rev-parse --show-toplevel, then read and follow .agents/skills/project-finish-milestone/references/worker.md from that checkout. This native adapter supplies model settings; the shared brief supplies task behavior. Preserve the parent session's permissions and assigned scope.
+"""

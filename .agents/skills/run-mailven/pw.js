@@ -1,22 +1,23 @@
-// Shared Playwright launcher for the run-mailven scripts. See "Playwright checks" in SKILL.md.
-// Picks the cloud or local install; $PLAYWRIGHT_MODULE / $PLAYWRIGHT_CHROMIUM override both paths.
+// Shared launcher. Overrides are explicit paths; otherwise probe installed capabilities.
 const fs = require('fs')
 const os = require('os')
 const path = require('path')
 
-const cloud = process.env.CLAUDE_CODE_REMOTE === 'true' || fs.existsSync('/opt/node-tools/node_modules/playwright')
-const mod =
-  process.env.PLAYWRIGHT_MODULE ||
-  (cloud ? '/opt/node-tools/node_modules/playwright' : path.join(os.homedir(), '.cache/mailven-upnote-ui/node_modules/playwright'))
-const chromiumPath = process.env.PLAYWRIGHT_CHROMIUM || (cloud ? '/opt/pw-browsers/chromium' : undefined)
-
-if (!fs.existsSync(mod)) {
-  console.error(`Playwright not found at ${mod}. Reinstall (never into frontend/package.json):`)
-  console.error('  npm install --prefix ~/.cache/mailven-upnote-ui --no-save playwright@1.63.0')
-  process.exit(1)
+const candidates = [
+  path.join(os.homedir(), '.cache/mailven-upnote-ui/node_modules/playwright'),
+  '/opt/node-tools/node_modules/playwright',
+]
+const mod = process.env.PLAYWRIGHT_MODULE || candidates.find(p => fs.existsSync(p))
+if (!mod || !fs.existsSync(mod)) {
+  throw new Error(`Playwright not found${mod ? ` at ${mod}` : ''}. Install outside frontend/package.json: npm install --prefix ~/.cache/mailven-upnote-ui --no-save playwright@1.63.0`)
 }
-
 const { chromium } = require(mod)
-
-exports.cloud = cloud
-exports.launch = () => chromium.launch(chromiumPath ? { executablePath: chromiumPath } : {})
+const executable = p => {
+  try { fs.accessSync(p, fs.constants.X_OK); return true } catch { return false }
+}
+const chromiumPath = process.env.PLAYWRIGHT_CHROMIUM ||
+  [chromium.executablePath(), '/opt/pw-browsers/chromium'].find(executable)
+if (!chromiumPath || !executable(chromiumPath)) {
+  throw new Error(`Chromium executable not found${chromiumPath ? ` at ${chromiumPath}` : ''}; install the Playwright browser or set PLAYWRIGHT_CHROMIUM.`)
+}
+exports.launch = () => chromium.launch({ executablePath: chromiumPath })

@@ -1,20 +1,12 @@
 ---
 name: project-handoff
-description: Hand remaining work to a fresh Claude Code session - commit verified work, record open questions, and print a paste-ready prompt for the next session. Use when the user asks for a prompt for the next or a new session, a handoff, or to wrap up before /clear.
-argument-hint: "[focus for the next session]"
+description: Prepare a repository-backed handoff for a fresh session in either host. Use when asked to hand off work or provide a next-session prompt.
 ---
 
-Prepare a handoff so a fresh session can finish the remaining work without this conversation. $ARGUMENTS
+Prepare a handoff using the user's requested focus, if any. Resolve the active checkout with `git rev-parse --show-toplevel`; resolve user-supplied relative plan paths from the invocation working directory.
 
-1. **Open questions.** If there are decisions only the user can make, ask them now through AskUserQuestion (batched, recommended option first), so the answers go into the handoff instead of the next session.
-2. **Commit.** Commit verified changes locally, unless the project's instructions say commits need approval, in which case list the uncommitted files instead. Never push. Note the branch, and whether it still needs merging.
-3. **Persist state.** If the project has a plan or checklist file, update its progress and decision sections so they are the source of truth. If the work follows a plan with milestones, the next-session prompt can just be `/project-next-milestone [plan file]`; say so and skip step 4.
-4. **Write the prompt** as one fenced markdown block the user can paste. It must stand alone:
-   - **Read first:** the instruction files and docs the next session must read, and any privacy or safety rules to follow.
-   - **State at handoff (date):** what's done and verified, with the exact commands or artifacts that prove it; branch and commit.
-   - **Outstanding work:** numbered, concrete steps with file paths, commands, IDs, and counts. No references to "earlier" or "as discussed".
-   - **Pitfalls:** mistakes or dead ends from this session, so they aren't repeated.
-   - **Decisions for the user:** questions still open, to be asked through AskUserQuestion.
-   - **Finish with:** what the next session should report and whether it may commit.
-   Keep it general enough to reuse if the next session doesn't finish everything.
-5. Tell the user to run `/clear` (or start a new session) and paste the prompt.
+1. **Questions.** Check recorded decisions, then batch material open questions using the host's question capability or plain text. Record unanswered blockers explicitly.
+2. **Persist first.** Before committing, update the plan's Progress, Decision Log and relevant discoveries with current milestone/sub-step, changed files, completed work, remaining steps, blockers, exact validation commands/results, and any checks not run. Record the branch and pre-commit base revision; label them as such so the checkpoint does not pretend to contain its own future commit hash. Record intended commit/push/merge status and any uncommitted work that must remain. For work without a plan, use an existing task document or create a concise handoff document.
+3. **Commit.** Commit only verified task changes including the checkpoint, under project policy and current authorization. Preserve unrelated or unverified work and list it. Follow applicable push/landing policy. Capture the resulting revision and `git status --short --branch` for the prompt; do not make a second commit just to embed the first commit's hash.
+4. **Prompt.** Emit one paste-ready fenced block that works in either host: checkout/branch/revision and dirty state; instruction and checkpoint paths to read; current milestone and next concrete action; validation evidence and unrun checks; blockers and pitfalls; permitted scope and commit/push status. For planned work, ask the next session to use the project-next-milestone skill with the plan path, but never substitute a host-specific command for this state.
+5. Tell the user to start a fresh session and paste the prompt. Native resume or clear commands are optional host conveniences, not the continuation contract.
