@@ -107,6 +107,17 @@ and rollback. Fixtures do not establish provider behavior or delivery. Shared
 mailbox API routes remain unsupported. No provider registration, tenant policy,
 DNS change or test email is implied by this documentation.
 
+Relevant cases cover personal Gmail, Workspace/custom domains, Microsoft 365
+own/shared mailboxes and Outlook.com as a separate compatibility target; unsupported
+routes need implementation before they can claim parity. Check policy/grants,
+alias/delegation, Bcc privacy, international content, attachments, PGP/S/MIME
+verification/decryption, Sent counts/destinations and migration/rollback. Record
+route/time, provider acceptance, later bounce/delay, trusted received
+SPF/DKIM/DMARC evidence and observed inbox/junk/quarantine placement without
+promising placement. Never send automatically or change external configuration.
+Historical local checks and outstanding platform/UI checks are recorded in
+[provider implementation validation](validation/provider-implementation.md).
+
 ## API submission
 
 `internal/gmailapi` (`users.messages.send`, JSON `{"raw": base64url}`) and
@@ -138,6 +149,11 @@ Redirects are never followed, so a POST cannot be replayed.
 Active routes use Gmail or Graph sync in place of IMAP sync. Staged routes continue
 to use IMAP. Gmail and Graph receive behavior is described below.
 
+**Caller invariant.** Serialize API sync runs per account. Neither `GmailSync.Run`
+nor `GraphSync.Run` has an internal mutex. Production callers use
+`app/api_route.go` `runAPISync`, which holds the per-account lock;
+future callers must preserve that serialization.
+
 **Identity (migration 59).** `api_message_refs` is one remote message per `(account, provider, remote_id)` with the provider thread ID, the full container (label/folder) ID set, the unmapped subset and an opaque version. `api_message_rows` links each local `messages` row to that identity, so a multi-label Gmail message is one identity with one row per mapped folder. API rows get a local surrogate `uid` from `folders.uid_next` (never reused after a delete, never sent to a provider); the local `thread_id` still derives from headers.
 
 **Mapping (`internal/message/api_mapping.go`).**
@@ -168,6 +184,35 @@ to use IMAP. Gmail and Graph receive behavior is described below.
 - *Cursors and failures.* Pages commit with the old cursor; only the last page stores the delta link. Rate limits retry up to 3 times honoring `Retry-After` (capped at 60 s); failures report through `OnFailure` and never clear credentials.
 
 **Local Graph limits (`internal/graphapi/read.go`, `internal/sync/graphapi.go`).** Delta page size 50, folder page size 100, 4 concurrent requests, 64 MiB raw message cap and 3 rate-limit retries. These bounds do not establish the mailbox's send/receive allowance.
+
+### Provider limit source rationale
+
+The following rationale was recorded during F4d/F4e on 2026-10-13. These are
+historical source references, not newly checked requirements or live probes;
+verify the official references before changing provider-dependent behavior.
+
+- Gmail list/history requests use the documented 500-result ceiling:
+  [messages.list](https://developers.google.com/gmail/api/reference/rest/v1/users.messages/list),
+  [history.list](https://developers.google.com/gmail/api/reference/rest/v1/users.history/list).
+  [Sync guidance](https://developers.google.com/gmail/api/guides/sync) describes
+  history as typically available for at least a week, with expiry detected by 404;
+  this is not a guaranteed retention period.
+- The Gmail four-worker choice followed the recorded 250 quota units/s per user
+  and five units per `messages.get` in the [quota reference](https://developers.google.com/gmail/api/reference/quota).
+  Four workers are a local choice, not a provider concurrency guarantee. Rate-limit
+  403/429 classification follows [error guidance](https://developers.google.com/gmail/api/guides/handle-errors).
+  The 1000-ID write batch ceiling comes from [batchModify](https://developers.google.com/gmail/api/reference/rest/v1/users.messages/batchModify).
+- Graph folder delta, paging and per-folder cursors follow
+  [message delta](https://learn.microsoft.com/en-us/graph/api/message-delta) and
+  [delta query guidance](https://learn.microsoft.com/en-us/graph/delta-query-messages).
+  The four-request concurrency bound and 429/Retry-After handling follow
+  [Outlook service limits](https://learn.microsoft.com/en-us/graph/throttling-limits#outlook-service-limits).
+  ID handling follows [immutable IDs](https://learn.microsoft.com/en-us/graph/outlook-immutable-id)
+  and the returned ID from [message move](https://learn.microsoft.com/en-us/graph/api/message-move).
+- Commit batch size 50, Graph delta/folder page sizes 50/100, response-size caps,
+  three retries and the 60-second Retry-After cap are local implementation bounds.
+  Treating a Graph 400 containing `syncState` as an expired token is an unverified
+  compatibility heuristic; the recorded documented expiry response is 410.
 
 ## API actions and activation
 

@@ -13,7 +13,8 @@ import (
 	"github.com/caseylabs/mailven/internal/oauth2"
 )
 
-// Graph receive constants. Sources are recorded in PLAN.md Surprises.
+// Graph receive constants. Source rationale is in docs/MAIL_APIS.md,
+// "Provider limit source rationale".
 const (
 	graphCursorKind   = "graph-delta"
 	graphFoldersScope = "folders"
@@ -25,9 +26,9 @@ const (
 func graphFolderScope(folderID string) string { return "folder:" + folderID }
 
 // GraphSync mirrors one Microsoft 365 mailbox over Graph into the local store,
-// one delta cursor per folder. It is inert: nothing schedules it, and it only
-// runs against staged routes. A shared mailbox is read when Reader.Shared is
-// set, which also requires the Shared grant.
+// one delta cursor per folder. app.runAPISync schedules active routes and
+// serializes Run calls per account; GraphSync has no internal mutex. The reader
+// supports Reader.Shared with a Shared grant, but app activation rejects shared routes.
 type GraphSync struct {
 	Engine      *Engine
 	Reader      *graphapi.Reader

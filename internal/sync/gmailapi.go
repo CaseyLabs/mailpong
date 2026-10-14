@@ -12,7 +12,8 @@ import (
 	"github.com/caseylabs/mailven/internal/oauth2"
 )
 
-// Gmail receive limits. Sources are recorded in PLAN.md Surprises.
+// Gmail receive constants. Source rationale is in docs/MAIL_APIS.md,
+// "Provider limit source rationale".
 const (
 	gmailScope           = "mailbox"
 	gmailCursorKind      = "gmail-history"
@@ -22,7 +23,8 @@ const (
 )
 
 // GmailSync mirrors one Gmail account over the API into the local store. It
-// is inert: nothing schedules it, and it only runs against staged routes.
+// is scheduled by app.runAPISync for active routes. Callers must serialize Run
+// calls per account; GmailSync has no internal mutex.
 type GmailSync struct {
 	Engine      *Engine
 	Reader      *gmailapi.Reader
