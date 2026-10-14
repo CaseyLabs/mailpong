@@ -22,7 +22,7 @@ Mailven ships with no Google OAuth credentials, so Gmail OAuth, the Calendar ext
 
 ## 2. Enable the APIs
 
-Mailven talks to Gmail over IMAP/SMTP, but the Calendar and Contacts extensions use Google's APIs, which must be enabled per project:
+Mailven starts Gmail accounts on IMAP/SMTP and offers an explicit switch to the Gmail API. Enable the APIs for the features you intend to use in this project:
 
 1. In the console, go to **APIs & Services → Library**
 2. Search for and **Enable** each of the following:
@@ -45,10 +45,10 @@ Mailven talks to Gmail over IMAP/SMTP, but the Calendar and Contacts extensions 
 Under **Audience**, click **Publish app** to move the app from **Testing** to **In production**.
 
 :::note Why publish?
-Google expires the refresh tokens of apps left in **Testing** status after 7 days, which would force you to re-authorize every week. Publishing avoids this. Your app remains private to your project — publishing does not list it anywhere.
+For external projects requesting Gmail access, Google expires refresh tokens issued in **Testing** after seven days. Moving to **In production** avoids that Testing-specific expiry; it does not complete OAuth verification. See [Google's token lifecycle](https://developers.google.com/identity/protocols/oauth2#expiration).
 :::
 
-Since the app is published without going through Google's verification process, you will see a "This app isn't verified" warning when authorizing — this is the same warning described in the [Gmail Setup Security Note](/docs/getting-started/first-account/gmail#security-note), except this time the unverified app is your own project. Click **Advanced → Go to Mailven (unsafe) → Allow** to proceed.
+If the project has not completed the applicable Google verification, you may see a "This app isn't verified" warning when authorizing — this is the same warning described in the [Gmail Setup Security Note](/docs/getting-started/first-account/gmail#security-note), except this time the unverified app is your own project. Click **Advanced → Go to Mailven (unsafe) → Allow** to proceed.
 
 You can also add your own Google accounts as test users under **Audience → Test users**.
 
@@ -61,6 +61,7 @@ You can also add your own Google accounts as test users under **Audience → Tes
 | Scope | Used For |
 |-------|----------|
 | `https://mail.google.com/` | Full Gmail access over IMAP/SMTP (Mail) |
+| `https://www.googleapis.com/auth/gmail.modify` | Optional Gmail API route; authorized separately when preparing migration |
 | `https://www.googleapis.com/auth/contacts.readonly` | Contact sync for autocomplete (Mail) and reading contacts (Contacts extension) |
 | `https://www.googleapis.com/auth/contacts.other.readonly` | "Other contacts" for email autocomplete (Mail) |
 | `https://www.googleapis.com/auth/contacts` | Editing contacts — only needed if you enable write access in the Contacts extension |

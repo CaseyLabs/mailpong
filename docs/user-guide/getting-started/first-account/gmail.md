@@ -65,6 +65,12 @@ App passwords require 2-Step Verification, but enabling it does not guarantee th
 
 Mailven records the permissions returned by the provider separately from those requested. If a known grant lacks a required permission, only the affected feature is unavailable and its error explains the missing access. Mail authorization does not prove contacts access. Older accounts can have unknown permission evidence: their configured mail route remains available, while contacts may need explicit authorization. A new sign-in that omits permission evidence is also recorded as unknown. Mailven does not start reauthorization automatically.
 
+## Optional Gmail API route
+
+Personal Gmail and Google Workspace OAuth accounts can explicitly migrate to Gmail API sending and receiving. Enable Gmail API in your Google Cloud project and include `https://www.googleapis.com/auth/gmail.modify` in its consent configuration. Then open **Settings → Accounts → Edit → Server → Mail API route**, authorize the separate grant and review migration. Authorizing alone keeps IMAP/SMTP active. App-password accounts cannot use this flow.
+
+Review the [route limits and recovery behavior](../../../PROVIDERS.md#switching-routes-and-current-limits) first: remote draft sync and permanent deletion are unavailable, delegated Gmail mailboxes are unsupported, and live Bcc privacy and migration checks remain outstanding. Returning to IMAP/SMTP does not restore the database snapshot.
+
 ## Troubleshooting
 
 ### "Access Denied" Error

@@ -59,6 +59,8 @@ Toolchain: Go 1.26, Node.js 24 (matches CI), Wails v2 CLI. Linux needs GTK 3 and
 
 ## Documentation
 
+- For provider, OAuth, mail-route or account-setup changes, start with [docs/PROVIDERS.md](docs/PROVIDERS.md) and follow its links to the relevant technical and user guides. Keep the provider matrix and affected requirements current.
+
 - When a change affects user-visible behavior, commands, configuration, or developer workflows, update the relevant documentation in the same task.
 - Correct existing guidance instead of adding duplicate instructions.
 

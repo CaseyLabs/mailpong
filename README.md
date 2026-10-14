@@ -33,6 +33,7 @@ There are no published releases yet. Build from source with the [Build Guide](do
 ## Documentation
 
 - [User Guide](docs/user-guide/intro.md)
+- [Providers and account requirements](docs/PROVIDERS.md)
 - [Sending and recovery](docs/SENDING.md)
 - [Build Guide](docs/BUILD.md)
 - [Release process](docs/RELEASE.md)

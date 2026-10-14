@@ -81,7 +81,7 @@ Some servers handle sent mail differently:
 
 ### OAuth not working
 
-Mailven has no bundled Google or Microsoft OAuth credentials and is not verified by Google, so Google shows an "app isn't verified" warning for your own OAuth client until you publish it (see [Custom Google OAuth Credentials](/docs/getting-started/first-account/google-oauth-credentials)). If OAuth keeps failing, app passwords may be a viable workaround. However, prior to authenticating with your App Password, verify that your network is safe and that you are in fact connecting to Google's infrastructure.
+Mailven has no bundled Google or Microsoft OAuth credentials. Check your own client registration, supported account audience and granted permissions. A Google project's publishing status and verification status are separate; publishing does not itself remove the unverified-app warning. See [Custom Google OAuth Credentials](/docs/getting-started/first-account/google-oauth-credentials) and the [provider requirements](../PROVIDERS.md). For an active API route, use **Reauthorize API access** in the account's Server tab. Google app passwords are an alternative only for eligible IMAP/SMTP accounts; they cannot repair an API grant or bypass Microsoft tenant policy.
 
 The app password method:
 

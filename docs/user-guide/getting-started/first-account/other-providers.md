@@ -7,6 +7,8 @@ pagination_next: features/overview
 
 Mailven supports many email providers beyond Gmail and Outlook. This guide covers setup for pre-configured providers and manual configuration.
 
+These accounts use IMAP/SMTP. Presets supply initial server settings; confirm current credentials, service eligibility and endpoints with your provider. For route support and the distinction between authentication and transport, see [Providers and account requirements](../../../PROVIDERS.md).
+
 ## Pre-Configured Providers
 
 These providers have built-in server settings. You just need to provide your credentials.

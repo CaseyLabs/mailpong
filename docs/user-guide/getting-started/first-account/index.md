@@ -7,6 +7,8 @@ pagination_next: features/overview
 
 This guide walks you through adding your first email account to Mailven.
 
+For account types, authentication requirements and optional mail API routes, see [Providers and account requirements](../../../PROVIDERS.md). OAuth sign-in alone does not switch the account from IMAP/SMTP to an API.
+
 ## Adding an Account
 
 The quickest way to add an account is to click the **+ Add Account** button in the sidebar.

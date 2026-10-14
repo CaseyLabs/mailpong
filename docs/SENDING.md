@@ -4,7 +4,7 @@ Gmail API and delegated Microsoft Graph routes are opt-in per account (Settings 
 Accounts → Edit → Server → Mail API route). Accounts keep sending through their
 configured SMTP route until the user migrates them, and there is no automatic
 fallback between routes. No route promises delivery or inbox placement.
-See [API integration and migration gates](MAIL_APIS.md).
+See [provider requirements](PROVIDERS.md) and [API integration and migration](MAIL_APIS.md).
 
 Mailven records each submission attempt locally with an attempt ID and a stable
 Message-ID. The server's acceptance means it accepted responsibility for the
@@ -141,8 +141,8 @@ unconfirmed and is never automatically retried, including after restart. Accepte
 submission and missing-copy evidence are separate. **Refresh copy evidence**
 checks already synced messages by stable Message-ID in each intended folder;
 absence can mean delayed sync, and a Sent copy does not prove recipient delivery.
-No automatic resubmission, exactly-one global copy promise, or Graph transport
-is introduced. Actual provider/shared mailbox destinations and counts remain
+This SMTP copy policy does not promise exactly one global copy or automatically
+resubmit messages. Active API routes use provider filing instead of IMAP APPEND. Actual provider/shared mailbox destinations and counts remain
 separately authorized live checks.
 
 Linked Microsoft mailboxes use the parent's authentication ownership and refresh
@@ -163,8 +163,8 @@ Only local results are retained in memory; a new run replaces them.
 The report separates TLS/capability, login, recorded OAuth protocol scopes, cached
 sender evidence, and unknown provider/tenant policy. It shows effective endpoints,
 UTC observations, token expiry and actual known grants (legacy requested scopes
-remain unknown). Cached sender evidence includes its observation age and F3a
-limitations. A successful login is not Send As, Send on Behalf or delivery evidence.
+remain unknown). Cached sender evidence includes its observation age and sender-evidence
+limitations described above. A successful login is not Send As, Send on Behalf or delivery evidence.
 Opaque custom OAuth metadata and raw provider errors/request IDs are redacted.
 
 Probes require TLS/STARTTLS with system certificate verification; they do not bypass
@@ -198,11 +198,14 @@ remain useful diagnostic context. Review the report before sharing. There is no
 delivery score or promise of inbox placement. Real-account diagnostics and live
 provider compatibility require separately authorized checks.
 
-## API submission (not active)
+## API submission
 
-Gmail API and Graph submission clients exist but no account uses them; sending
-remains SMTP-only. They reuse the submission journal: an `unknown` checkpoint is
-written before each HTTP request and the final result is committed before local
-cleanup. An accepted API response means the provider took the message, not that
-it was delivered. Unknown outcomes (429, 5xx, timeouts after the body was sent)
-are never retried or sent over SMTP. See `docs/MAIL_APIS.md`.
+After a user authorizes and migrates an eligible account, sends use Gmail API or
+Microsoft Graph. Staged accounts and accounts without an active API route continue
+using their configured SMTP route. API sends reuse the submission journal: an
+`unknown` checkpoint is written before each HTTP request and the final result is
+committed before local cleanup. An accepted API response means the provider took
+the message, not that it was delivered. Unknown outcomes are never replayed or
+sent over SMTP. See [API integration](MAIL_APIS.md) for provider limits and unsupported API
+operations. Outlook.com personal accounts and shared-mailbox API routes are not
+supported.

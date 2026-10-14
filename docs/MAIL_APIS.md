@@ -1,27 +1,28 @@
 # Gmail API and Microsoft Graph integration
 
-The selected target is full Gmail API sending/receiving for personal Gmail and
-Workspace, and full delegated Microsoft Graph sending/receiving for Microsoft
-365, including shared mailboxes. Outlook.com is a separate compatibility target.
-Existing-account migration will be optional, with preservation and rollback,
-after submission, sync and offline parity are verified. Provider policies,
-consent and mailbox rights still govern access; this target is not a current
-compatibility or delivery guarantee.
+For the provider matrix and setup requirements, start with [Providers](PROVIDERS.md).
 
-## Current foundation
+Gmail API routes support personal Gmail and Workspace accounts; Microsoft Graph
+routes support Microsoft work/school accounts. Outlook.com personal accounts and
+shared-mailbox routes are excluded. Users opt in per account by authorizing and
+migrating from the configured IMAP/SMTP route. Provider policies, consent and
+mailbox rights still govern access; local fixtures do not establish live provider
+compatibility, privacy behavior or delivery.
 
-F4a supplies backend OAuth profiles and grant checks only. No API account route,
-consent UI, sending, receiving or migration is enabled. Current IMAP/SMTP accounts
-continue to use their existing configuration. The remaining steps are in
-[PLAN.md](../PLAN.md).
+## Authorization foundation
+
+API authorization is isolated from protocol credentials. Accounts continue to use
+IMAP/SMTP until an API route is activated through migration; the API route then
+handles supported sync, reading, sending and actions. See the sections below for
+current route behavior and unsupported operations.
 
 `oauth2.BuildMailAPIProfile` accepts an already resolved `ProviderConfig`.
 Resolve the user's selected credentials and registered audience first; the
 builder preserves every field except scopes, including auth/token endpoints,
-client ID/secret and login hint. It does not resolve another client, register a
-provider or start authorization. Callers must explicitly persist API tokens with
-`SetOAuthTokensForClientConfig` and read them with
-`GetOAuthTokensForClientConfig`, using the returned `ClientConfigID`:
+client ID/secret and login hint. It does not resolve another client, register a provider or start authorization.
+The consent lifecycle persists API tokens with `SetOAuthTokensForClientConfig`
+and reads them with `GetOAuthTokensForClientConfig`, using the returned
+`ClientConfigID`:
 
 | Profile | Separate token slot | Requested mail permissions |
 | --- | --- | --- |
@@ -32,9 +33,9 @@ provider or start authorization. Callers must explicitly persist API tokens with
 These token slots are not new OAuth app registrations. Profiles retain identity
 scopes; Graph also requests `offline_access`. Gmail's existing authorization
 flow uses offline access. Contacts and calendars keep their independent grants.
-Future lifecycle callers must retain a profile/config snapshot and the existing
-cross-process refresh lock discipline, rather than use the legacy mail refresh
-or grant-save entry points.
+The lifecycle retains a profile/config snapshot and uses the existing
+cross-process refresh lock discipline, rather than the legacy mail refresh or
+grant-save entry points.
 
 Gmail `gmail.modify` covers ordinary message operations and sending, but excludes
 immediate permanent deletion. It also permits listing send-as aliases, so no
@@ -46,9 +47,9 @@ and [send-as listing permissions](https://developers.google.com/workspace/gmail/
 
 Graph Shared permissions are delegated organizational permissions and require
 actual mailbox rights; they also cover the user's own mailbox. Own-mailbox
-permissions alone do not establish shared access. The lifecycle milestone must
-validate account type and requested audience before requesting shared access;
-personal Microsoft accounts are a separate target. See [Microsoft's permission
+permissions alone do not establish shared access. Consent validates account
+type and requested audience before requesting shared access. Personal Microsoft
+accounts are excluded from Graph API routing. See [Microsoft's permission
 reference](https://learn.microsoft.com/en-us/graph/permissions-reference).
 
 `credentials.RequireMailAPICapability` checks recorded consent for `read`,
@@ -96,24 +97,17 @@ unavailable), `partial-consent`, `other`.
 the route row and the API grant, leaving protocol credentials, drafts and
 queued mail untouched. Fixtures prove the local lifecycle, not live providers.
 
-## Rollout and migration gates
+## Live verification limits
 
-Before enabling API accounts, verify Bcc privacy, alias/delegation, signed and
-encrypted MIME, international content, attachments, size limits, Sent behavior,
-throttling and honest submission outcomes. Verify native labels/threads or
-folders, incremental-sync reset recovery, offline actions and raw MIME access.
-Unknown submissions must not trigger automatic resend or SMTP fallback.
+Local fixtures cover API sync, actions, submission handling and migration
+recovery. Live behavior still needs separately authorized checks for Bcc privacy,
+signed and encrypted MIME, international content, attachments, provider size
+limits, Sent behavior, throttling, alias permissions, and real-account migration
+and rollback. Fixtures do not establish provider behavior or delivery. Shared
+mailbox API routes remain unsupported. No provider registration, tenant policy,
+DNS change or test email is implied by this documentation.
 
-Before switching an existing account, snapshot local data and preserve account
-IDs, drafts, queued mail, credentials and stable message correlation. Verify
-interruption recovery, duplicate prevention and rollback on disposable data.
-Address the recorded encrypted-draft ownership/failure policies before migration.
-Real-account receiving/sending/shared-mailbox and rollback checks require
-separate authorization specifying accounts and controlled test cases. No
-registration, tenant policy, DNS change or test email is implied by the local
-implementation plan.
-
-## API submission clients (inert)
+## API submission
 
 `internal/gmailapi` (`users.messages.send`, JSON `{"raw": base64url}`) and
 `internal/graphapi` (`sendMail` MIME form: base64 body, `text/plain`) implement
@@ -121,16 +115,14 @@ implementation plan.
 and never alter the content other than adding a `Bcc:` header naming envelope
 recipients that no To/Cc/Bcc header shows. Both providers read recipients from
 headers; whether they strip that header from delivered copies is undocumented,
-so it is **unverified** and needs a separately authorized live check before any
-route is activated. Nothing calls the clients from a send path: `app/compose.go`
-and `app/settings.go` still use SMTP, and `app/mail_api_send.go`
-(`submitViaAPI`) is exercised only by tests.
+so this behavior remains **unverified** by live provider checks. Active API routes
+call these clients from the compose send path; staged routes continue to use SMTP.
 
 Preflight rejects, with no truncation or SMTP fallback: a route that is not
 staged/active for the provider, a grant without `send`, a Gmail From that is not
 a verified send-as identity (Graph: a From other than the mailbox without the
-Shared permission), and raw MIME over 25 MiB. Neither API documents a message
-limit; 25 MiB follows Gmail Help's 25 MB and is a conservative local ceiling.
+Shared permission), and raw MIME over 25 MiB. This is a local submission ceiling,
+not a verified provider allowance or a guarantee that a smaller message is accepted.
 
 Outcome mapping: 2xx is accepted (not delivered); 4xx is a definitive
 rejection classified with `oauth2.ClassifyMailAPIError` (403 rate-limit bodies
@@ -141,9 +133,10 @@ and one re-attempt; a rejected grant (`invalid_grant`) emits
 `mail-api:reauth-required` and leaves protocol credentials untouched.
 Redirects are never followed, so a POST cannot be replayed.
 
-## API receive and sync (inert)
+## API receive and sync
 
-Receive/sync storage for staged `gmail-api`/`graph-api` routes. Nothing reads a staged route yet: no scheduler, UI or provider call uses it, and IMAP sync is unchanged. Gmail and Graph receive are covered below.
+Active routes use Gmail or Graph sync in place of IMAP sync. Staged routes continue
+to use IMAP. Gmail and Graph receive behavior is described below.
 
 **Identity (migration 59).** `api_message_refs` is one remote message per `(account, provider, remote_id)` with the provider thread ID, the full container (label/folder) ID set, the unmapped subset and an opaque version. `api_message_rows` links each local `messages` row to that identity, so a multi-label Gmail message is one identity with one row per mapped folder. API rows get a local surrogate `uid` from `folders.uid_next` (never reused after a delete, never sent to a provider); the local `thread_id` still derives from headers.
 
@@ -154,16 +147,16 @@ Receive/sync storage for staged `gmail-api`/`graph-api` routes. Nothing reads a 
 
 **Cursors (`api_sync_state`).** One row per `(account, scope)` holding an opaque cursor, its kind, a generation and an unreconciled marker. `CommitAPIPage` stores a page's messages, removals and its new cursor in one transaction, so a crash or error leaves the old cursor and no partial page; retrying a page is idempotent. `InvalidateAPICursor` clears the cursor, bumps the generation and sets the marker without touching local mail; pages built against an older generation are refused, and the marker stays until a page with `ClearInvalid` commits.
 
-**Gmail read client (`internal/gmailapi/read.go`).** `Reader` calls `labels.list`, paged `messages.list` (500 per page, spam and trash included), `messages.get` with `format=raw` (base64url decodes to the byte-identical MIME) or `format=minimal` (labels and historyId only), `history.list` (messageAdded, messageDeleted, labelAdded, labelRemoved) and `users.getProfile`. It reuses the F4c token source: one refresh and retry on 401, no redirects, no new dependencies. Failures are a `ReadError`: 429, rate-limit 403 reasons and 5xx are rate limits (`RateLimited`, `RetryAfter`); any other 403 is a policy failure; a history 404 is `ErrHistoryExpired`; a message 404 is `ErrMessageGone`.
+**Gmail read client (`internal/gmailapi/read.go`).** `Reader` calls `labels.list`, paged `messages.list` (500 per page, spam and trash included), `messages.get` with `format=raw` (base64url decodes to the byte-identical MIME) or `format=minimal` (labels and historyId only), `history.list` (messageAdded, messageDeleted, labelAdded, labelRemoved) and `users.getProfile`. It reuses the API token source: one refresh and retry on 401, no redirects, no new dependencies. Failures are a `ReadError`: 429, rate-limit 403 reasons and 5xx are rate limits (`RateLimited`, `RetryAfter`); any other 403 is a policy failure; a history 404 is `ErrHistoryExpired`; a message 404 is `ErrMessageGone`.
 
 **Gmail sync (`internal/sync/gmailapi.go`, `GmailSync.Run`).** The `read` capability gate runs first (`RequireMailAPICapability`); a refused grant reports `partial-consent` and sends no request.
 - *Initial sync / reconcile.* The profile historyId is captured before listing. Remote IDs are diffed against local refs: unknown IDs are fetched raw and ingested, known IDs are re-fetched as `minimal` and skipped when their historyId equals the stored version, and vanished IDs are removed. Messages commit in pages of 50 with the cursor still empty and the unreconciled marker set; the last page removes vanished refs, stores the captured historyId as the `gmail-history` cursor and clears the marker. Messages that change while listing are replayed by the first incremental run.
 - *Incremental sync.* History pages are aggregated into a net state per message (a delete wins), then applied in batches. Batches re-commit the old cursor, so an interrupted run repeats idempotent work; only the last batch advances the cursor to the history response's historyId. A label change that adds no folder updates the flags of the existing rows from `minimal` data (`APIRow.FlagsOnly`); a new folder row, or an unknown message, fetches the raw message.
 - *Reset recovery.* A history 404 invalidates the cursor (generation bump, unreconciled marker) and runs the reconcile. Local data is never wiped on failure: a failed reconcile leaves the old rows and the marker, and the next run restarts it. Messages without an API ref (local-only state) are never touched.
 - *Ingestion.* Raw MIME goes through the IMAP parser (`parseHeadersIntoMessage`, `parseMessageBodyFull`, references, read-receipt and bulk headers, header-derived `thread_id`), so S/MIME, PGP, attachments, charsets and international addresses behave as for IMAP rows. The raw S/MIME/PGP bodies and attachments are written in the same transaction as the row (`APIRowExtras`). Gmail's `threadId` is stored only as `remote_thread_id`. Folders for mapped labels are created from the container listing, including empty folders; Graph does the same for its mapped folders.
-- *Failure policy.* Reauthorize, policy and partial-consent failures go to the `OnFailure` hook (the F4b reauthorization event) and never clear credentials. Rate limits retry up to 3 times, waiting `Retry-After` (capped at 60 s, 1 s doubling when absent), then stop with the `ReadError` as a hint and an unchanged cursor. Cancellation returns the context error and changes nothing past the last committed page.
+- *Failure policy.* Reauthorize, policy and partial-consent failures go to the `OnFailure` hook (the reauthorization event) and never clear credentials. Rate limits retry up to 3 times, waiting `Retry-After` (capped at 60 s, 1 s doubling when absent), then stop with the `ReadError` as a hint and an unchanged cursor. Cancellation returns the context error and changes nothing past the last committed page.
 
-**Limits (constants, never probed).** 500 IDs per `messages.list`/`history.list` page; history is documented as available for at least about a week, so expiry is detected by the 404, not predicted; raw messages are bounded by Gmail's 25 MB message ceiling (40 MiB response cap with base64 overhead); 4 concurrent raw fetches, 50 messages per page, 3 rate-limit retries. Sources are listed in PLAN.md Surprises.
+**Local limits (`internal/gmailapi/read.go`, `internal/sync/gmailapi.go`).** 500 IDs per list/history request; history expiry is detected by a 404 rather than predicted. Responses have a 40 MiB cap including base64 overhead, with 4 concurrent raw fetches, 50 messages per commit batch and 3 rate-limit retries. These are implementation bounds, not verified mailbox limits.
 
 **Graph read client (`internal/graphapi/read.go`).** `Reader` reads `/me` or, for a shared mailbox, `/users/{shared}` (which needs the `.Shared` grant). It calls `mailFolders` (root, well-known names, paged folders and `childFolders`), per-folder `messages/delta`, `GET messages/{id}` for metadata and `messages/{id}/$value` for byte-identical MIME. Every request sends `Prefer: IdType="ImmutableId"`; delta also sends `odata.maxpagesize`. Paging and delta links must stay on the API origin, so the bearer token is never sent elsewhere. Redirects are not followed. 429 and 5xx are rate limits (`RateLimited`, `RetryAfter`); 403 is a policy failure and 401 (after one refresh) a reauthorization failure; a delta 410 is `ErrDeltaExpired`, a folder 404 `ErrFolderGone`, a message 404 `ErrMessageGone`.
 
@@ -174,11 +167,12 @@ Receive/sync storage for staged `gmail-api`/`graph-api` routes. Nothing reads a 
 - *Folder lifecycle.* The folder ID to path map of the last complete run is stored under scope `folders`. A renamed folder reconciles into its new local folder, and the old, now empty, local folder is deleted; a deleted folder's messages are re-checked, then its empty local folder is removed. A local folder still holding messages is kept.
 - *Cursors and failures.* Pages commit with the old cursor; only the last page stores the delta link. Rate limits retry up to 3 times honoring `Retry-After` (capped at 60 s); failures report through `OnFailure` and never clear credentials.
 
-**Graph limits (constants, never probed).** Delta page size 50, folder page size 100, 4 concurrent requests (Outlook's per-mailbox limit), 64 MiB raw message cap, 3 rate-limit retries. Sources and unverified assumptions are in PLAN.md Surprises.
+**Local Graph limits (`internal/graphapi/read.go`, `internal/sync/graphapi.go`).** Delta page size 50, folder page size 100, 4 concurrent requests, 64 MiB raw message cap and 3 rate-limit retries. These bounds do not establish the mailbox's send/receive allowance.
 
 ## API actions and activation
 
-The write clients (F4e-1) and the local-first action queue (F4e-2) exist. The queue is wired into `app/actions.go` behind `apiRouted`, which is true only for a route in state `active`. `ActivateMailAPIRoute` (F4e-3, below) is the only thing that sets that state; accounts without an activated route still use IMAP.
+The local-first action queue is used only when `apiRouted` sees a route in state
+`active`. Accounts without an active route continue using IMAP.
 
 **Shared transport (`internal/apiwrite`).** `Do` sends one write and returns an `Error` carrying an outcome: *applied* (2xx), *rejected* (other 4xx, including 404 gone), *unknown*, *not-sent* and *reauthorize* (a 401 after one refresh, or a 403 that is not a rate limit; the `Failure` field keeps the `ClassifyMailAPIError` category). Unknown covers 5xx, redirects (never followed), a transport failure after the request headers were written, and an unreadable echo after a 2xx. A failure before any byte is written is not-sent. Only a 429, or a 403 with a rate-limit body, is retried: the provider answers it before running the operation, so the retry is safe. Up to 3 retries wait `Retry-After` (capped at 60 s) or a doubling 1 s backoff, then the outcome is unknown. A 5xx is never replayed. Tokens come from `submission.TokenSource`, with one refresh per call.
 
@@ -202,9 +196,9 @@ The write clients (F4e-1) and the local-first action queue (F4e-2) exist. The qu
 
 **Routing (`app/api_actions.go`, `app/actions.go`).** For an active route, `MarkAsRead/Unread`, `Star/Unstar`, `MoveToFolder`, `Archive`, `Trash`, `MarkAsSpam` and `MarkAsNotSpam` queue instead of using IMAP; others in the same selection keep IMAP. Local folders map to containers by path: Gmail system labels are their ID, `[Gmail]/All Mail` is no label, a user label is resolved by name through `labels.list` (needs the network); Graph folders are found by path in the folder map the Graph driver stores. Not available for API accounts, failing with an explicit error and no IMAP fallback: permanent delete, empty trash/spam, copy, and moves between an API account and another account. API moves are not undoable. The worker starts at launch (`Recover`, then drains accounts with open actions) and is kicked after each enqueue.
 
-**Activation (`app/api_route.go`, F4e-3).** `ActivateMailAPIRoute(accountID)` works only from a staged, non-shared route whose grant passes the read, write and send gates. Order: take the per-account transition lock, set the route `active` (new IMAP syncs now refuse to start), refuse if an IMAP sync is running or a queue action is in flight or unknown (pending actions are allowed), stop IDLE, swap folder rows, then run one blocking API reconcile (`GmailSync`/`GraphSync`). Any failure reverts: route back to staged, rows swapped back, IDLE restarted, account stays on IMAP. Credentials, drafts, queued mail and IMAP data are never deleted. Shared (delegated) routes cannot be activated: Graph's shared-mailbox address is not stored and `apiRemote` rejects them.
+**Activation (`app/api_route.go`).** `ActivateMailAPIRoute(accountID)` works only from a staged, non-shared route whose grant passes the read, write and send gates. Order: take the per-account transition lock, set the route `active` (new IMAP syncs now refuse to start), refuse if an IMAP sync is running or a queue action is in flight or unknown (pending actions are allowed), stop IDLE, swap folder rows, then run one blocking API reconcile (`GmailSync`/`GraphSync`). Any failure reverts: route back to staged, rows swapped back, IDLE restarted, account stays on IMAP. Credentials, drafts, queued mail and IMAP data are never deleted. Shared (delegated) routes cannot be activated: Graph's shared-mailbox address is not stored and `apiRemote` rejects them.
 
-**Folder swap (`folder.Store.SwapHidden`).** IMAP and API folder rows share one table. The inactive set is hidden in one transaction: `folder_type` becomes `hidden:<tag>:<type>` and `path` gets an `\x1f<tag>\x1f` prefix (tags `imap`, `api`). `List`, `GetByPath` and `ListSubscribed` skip hidden rows and type-equality queries never match them, so API rows are kept (until F5), never shown beside IMAP rows, and never receive IMAP calls. Deactivation swaps back.
+**Folder swap (`folder.Store.SwapHidden`).** IMAP and API folder rows share one table. The inactive set is hidden in one transaction: `folder_type` becomes `hidden:<tag>:<type>` and `path` gets an `\x1f<tag>\x1f` prefix (tags `imap`, `api`). `List`, `GetByPath` and `ListSubscribed` skip hidden rows and type-equality queries never match them, so API rows are kept, never shown beside IMAP rows, and never receive IMAP calls. Deactivation swaps back.
 
 **While active.** The scheduler hook (`Scheduler.SetAPISync`) runs the API sync instead of IMAP folder sync and reports through the existing sync status/error events. `SyncFolder`, `SyncFolders`, `SyncAccountComplete` and IDLE start-up bypass IMAP for routed accounts. Submission goes through `submitViaAPI`: no SMTP fallback on any error, and no local Sent copy (the provider files it). Errors are surfaced; nothing falls back.
 
@@ -214,30 +208,30 @@ The write clients (F4e-1) and the local-first action queue (F4e-2) exist. The qu
 
 **Tests.** `go test ./app -run 'MailAPIRoute|Activation|APISync'`; `go test ./internal/folder -run SwapHidden`; `go test ./internal/sync -run APISync`. Queue fixtures (atomic local change plus enqueue, restart with in-flight actions, 404/410, throttling, cancellation) live in `internal/message` and `internal/apiactions`.
 
-## API read paths (F5a)
+## API read paths
 
 **Raw source and bodies (`app/api_read.go`).** `fetchRawMessage` and `fetchBody` replace direct IMAP fetches for body loading, attachment listing/download, raw source, crypto handling and forward attachments. For an active API route they read the message through the provider API (`read` capability gate, 60 s timeout), never over IMAP with the surrogate UID. `fetchBody` parses with `Engine.ParseAPIBody` and caches via `message.Store.StoreAPIBody` (body, attachments, crypto extras). A 404 reports "this message no longer exists on the server"; paused accounts and shared routes return explicit errors. Cached bodies keep working offline. `syncSentFolder` is skipped for routed accounts because API sync picks up the sent copy.
 
-**Cross-account moves (MA3).** Moving between an API-routed account and any other account keeps an explicit error ("Moving messages between accounts is not available for accounts using the mail API"); API undo stays unsupported.
+**Cross-account moves.** Moving between an API-routed account and any other account keeps an explicit error ("Moving messages between accounts is not available for accounts using the mail API"); API undo stays unsupported.
 
 **Drafts on API routes.** Autosave retains drafts locally and reports that remote draft sync is unavailable. Cleanup of previously IMAP-synced drafts uses the recorded folder ID and original IMAP path, including after migration hides that folder; API surrogate UIDs are never used for this cleanup. Gmail sender evidence refresh uses the active API grant and checks its aliases capability.
 
-**Draft ownership (CD1).** `saveDraftToDB` moves a draft to the selected account: the previous account's remote copy is deleted, `account_id` is rewritten and the IMAP link reset, so encryption, sync and deletion use one account.
+**Draft ownership.** `saveDraftToDB` moves a draft to the selected account: the previous account's remote copy is deleted, `account_id` is rewritten and the IMAP link reset, so encryption, sync and deletion use one account.
 
 **Deferred.** Gmail permanent delete stays excluded from the ordinary API profile (needs a separate scope request and UX). Shared-mailbox routes remain unmigratable (MA4).
 
 **Tests.** `go test ./app -run 'APIBody|APIAttachment|APIMove|Draft'`.
 
-## Migration and rollback (F5b, F5c)
+## Migration and rollback
 
 Bindings: `PlanMailAPIMigration`, `MigrateMailAPIAccount`, `RollbackMailAPIMigration` (`app/api_migration.go`, `internal/apimigrate`). Progress lives in `api_migrations` (one row per account, state `snapshotted`, `activated`, `completed`, `failed`, `rolled-back`).
 
 - **Plan** is read-only. It reports route, row counts, drafts, queued submissions, pending actions and blockers: unusable grant, IMAP sync running, in-flight or unknown actions, unknown or queued submissions, shared routes. Migrate refuses while any blocker exists, including when resuming saved progress; volatile blockers are checked again before activation.
 - **Migrate** takes the route transition lock and runs snapshot, activate, correlate, complete. The snapshot is a `VACUUM INTO` copy in `<data>/migration-snapshots/` (owner-only, 0600/0700) with a `.json` manifest (version, account, counts, route, time). Tokens are not copied anywhere else. Account ID, credentials, identities, drafts, outbox, rules and contacts are untouched; IMAP rows stay hidden, not deleted.
 - **Correlation** matches each API row to a hidden IMAP row by Message-ID (angle brackets ignored) plus date to the second, preferring the same folder type, and carries local-only state (answered/forwarded flags, cached body where the API row has none, thread, attachment content). Ambiguous matches are left uncorrelated, never guessed. Each step is idempotent; re-running after an interruption resumes without duplicates.
-- **Failure** at any step deactivates the route, records `failed` with the error, and leaves the account on IMAP; retry is explicit. There is no automatic fallback after a completed migration.
-- **Rollback** deactivates the route (IMAP folders visible again, IMAP reconcile follows), replays nothing, and reports queued/unknown actions and actions applied since migration. Restoring the full snapshot is not implemented yet (deferred; it must warn about losing later local changes).
+- **Failure** at any step deactivates the route, records `failed` with the error, and leaves the account on IMAP; retry is explicit. Runtime API errors do not fall back to IMAP/SMTP; the user can explicitly return the account to IMAP through deactivation or migration rollback.
+- **Rollback** deactivates the route (IMAP folders visible again, IMAP reconcile follows), replays nothing, and reports queued/unknown actions and actions applied since migration. Rollback does not restore the snapshot. It returns the account to IMAP while retaining the snapshot for reference; snapshot restoration is not part of this rollback operation.
 
-**UI (F5c).** Account settings → Server tab → "Mail API route" (`MailAPISection.svelte`), shown for OAuth accounts that are not linked shared mailboxes. Flow: *Authorize API access* (`StartMailAPIConsent`, cancellable while the browser step waits; `mail-api:success|error|cancelled` events) stages the route; the plan view lists row counts, pending actions and blockers (review is disabled while any blocker exists); *Review migration* shows the snapshot note and a consent checkbox that gates *Migrate this account*, with *Cancel* available until then (the backend call itself is not interruptible; a failure returns the account to IMAP and is shown). An active account can *Reauthorize API access* in place, including after a `mail-api:reauth-required` event pauses sync and queued actions; this keeps the active route and offers cancellation while the browser step waits. It also shows *Return to IMAP / SMTP* behind an explicit confirmation, then lists actions that did not finish and the count applied since migration. *Remove API authorization* clears a staged route. The Settings account list and the Mail sidebar account header show the route name while it is active (`mailApiRoutes` store). Reauthorization and policy failures reuse the consent error text (`reauthorize`, `partial-consent`). Restoring the full snapshot is still not offered: the UI shows the snapshot path with a note, tracked as F5b-1. Guarded UI check: `node tools/mail-api-migration-check.cjs <dir>`.
+**UI.** Account settings → Server tab → "Mail API route" (`MailAPISection.svelte`), shown for OAuth accounts that are not linked shared mailboxes. Flow: *Authorize API access* (`StartMailAPIConsent`, cancellable while the browser step waits; `mail-api:success|error|cancelled` events) stages the route; the plan view lists row counts, pending actions and blockers (review is disabled while any blocker exists); *Review migration* shows the snapshot note and a consent checkbox that gates *Migrate this account*, with *Cancel* available until then (the backend call itself is not interruptible; a failure returns the account to IMAP and is shown). An active account can *Reauthorize API access* in place, including after a `mail-api:reauth-required` event pauses sync and queued actions; this keeps the active route and offers cancellation while the browser step waits. It also shows *Return to IMAP / SMTP* behind an explicit confirmation, then lists actions that did not finish and the count applied since migration. *Remove API authorization* clears a staged route. The Settings account list and the Mail sidebar account header show the route name while it is active (`mailApiRoutes` store). Reauthorization and policy failures reuse the consent error text (`reauthorize`, `partial-consent`). The UI shows the snapshot path for reference; restoring the snapshot is not offered. Guarded UI check: `node tools/mail-api-migration-check.cjs <dir>`.
 
-**Rollout gates still unverified live:** Bcc privacy (MA1), shared mailboxes (MA4, unmigratable), provider message-size limits, and every real-account migration or rollback. Fixtures do not close them; they need separately authorized accounts and cases.
+**Live checks still outstanding:** Bcc privacy, signed/encrypted MIME behavior, provider message-size limits, and real-account migration or rollback. Shared-mailbox API routes remain unsupported. Fixtures do not close them; they need separately authorized accounts and cases.

@@ -16,7 +16,7 @@ Mailven supports personal Outlook.com accounts (including Hotmail and Live addre
 
 Mailven bundles no Microsoft OAuth credentials. Register your own application in Microsoft Entra ID (**App registrations**), choose the account types you need, add a **Mobile and desktop applications** platform, and add the delegated IMAP, SMTP, and `offline_access` permissions. Then open **Settings → Accounts → OAuth Credentials**, choose **Custom** under Microsoft, and save your Application (client) ID. Use Microsoft's documented [OAuth permissions and setup](https://learn.microsoft.com/en-us/exchange/client-developer/legacy-protocols/how-to-authenticate-an-imap-pop-smtp-application-by-using-oauth) for the registration. An administrator may need to approve the app or grant consent in a work or school tenant.
 
-## oAuth Steps
+## OAuth Steps
 
 1. Click **Sign in with Microsoft**
 2. A browser window will open to Microsoft's sign-in page
@@ -39,6 +39,14 @@ If you see an "Admin approval required" message:
 1. Contact your IT administrator
 2. Request approval for the Mailven application
 3. Once approved, retry the sign-in process
+
+## Optional Microsoft Graph route
+
+Microsoft 365 work or school OAuth accounts can explicitly migrate their own mailbox to delegated Microsoft Graph. Add the delegated Microsoft Graph `Mail.ReadWrite` and `Mail.Send` permissions to your application registration, retaining its desktop sign-in configuration and supported audience. Tenant consent policy still applies. Outlook IMAP/SMTP scopes do not grant Graph access; see the [Graph permission reference](https://learn.microsoft.com/en-us/graph/permissions-reference).
+
+In **Settings → Accounts → Edit → Server → Mail API route**, authorize the separate API grant and review migration. Authorization alone does not switch routes. Personal Outlook.com accounts and linked shared mailboxes cannot migrate. Adding Shared permissions does not enable shared-mailbox API routing in Mailven.
+
+Read the [route limits and recovery behavior](../../../PROVIDERS.md#switching-routes-and-current-limits) before switching. API remote draft sync is unavailable, live Bcc privacy and migration checks remain outstanding, and returning to IMAP/SMTP does not restore the database snapshot.
 
 ## Important Notes
 
