@@ -2,7 +2,7 @@
 
 ## Working Policy
 
-- Runtime constraints and explicit user instructions take precedence. Skills cannot grant tools or permissions. Respect the active host's plan mode; if execution is restricted, record the design and wait for execution authorization.
+- Runtime constraints and explicit user instructions take precedence. Project skills must not grant tools or permissions (no `allowed-tools`). Respect the active host's plan mode; if execution is restricted, record the design and wait for execution authorization.
 - Continue authorized work without asking between steps; stop at the requested scope (one milestone for project-next-milestone). Batch material questions using the host's question tool when available. Ask before destructive actions unless that exact action is authorized; preserve a local rollback.
 - Keep output bounded and inspect targeted log excerpts. Run servers/watchers in the host's background facility and stop those you started before finishing.
 - Use subagents for independent, well-scoped work when isolation or specialization helps; this is an explicit request to delegate suitable work. Give each agent a distinct scope. Keep architecture, integration, and security decisions in the main session. Verify consequential agent claims before acting; change approach after failed or partial delegation.
