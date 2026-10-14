@@ -26,7 +26,7 @@ No live provider access, test emails, credentials changes, mailbox migration, pr
 
 ## Progress
 
-No active milestone. API-5 is done and F5b-3 resolved: rollback reports only a sync request, with scheduler-ordering and UI coverage ([evidence](docs/validation/api-5.md), [checkpoint](docs/plans/api-5.md)). API-1 design is done ([evidence](docs/validation/api-1.md), [checkpoint](docs/plans/api-1.md)); shared support remains unsupported, MA4 stays deferred and MA5 is open. API-6 is proposed and requires selection; API-2 remains another API candidate. No next milestone is activated.
+No active milestone. MAINT-5 is done: all four compact workflow helpers, logged check evidence and guarded landing are implemented and verified ([evidence](docs/validation/maint-5.md), [checkpoint](docs/plans/maint-5.md)). API-5 is done and F5b-3 resolved: rollback reports only a sync request, with scheduler-ordering and UI coverage ([evidence](docs/validation/api-5.md), [checkpoint](docs/plans/api-5.md)). API-1 design is done ([evidence](docs/validation/api-1.md), [checkpoint](docs/plans/api-1.md)); shared support remains unsupported, MA4 stays deferred and MA5 is open. API-6 is proposed and requires selection; API-2 remains another API candidate. No next milestone is activated.
 
 CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 is done and MA2/SY1 resolved ([evidence](docs/validation/maint-2.md)). MAINT-4 is done ([validation evidence](docs/validation/maint-4.md)); its findings UI1–UI3 remain open. SEND-1 is done and CD2 resolved; SYNC-1 is done and R3 resolved ([evidence](docs/validation/sync-1.md)); SYNC-2 is done and R4 resolved ([evidence](docs/validation/sync-2.md)); SYNC-3 is done and SY2/SY6 resolved ([evidence](docs/validation/sync-3.md)); API-4 is done and F5b-2 resolved ([evidence](docs/validation/api-4.md)); SYNC-4 is done and R2/SY3/SY4/SY5 resolved ([evidence](docs/validation/sync-4.md)); see [validation evidence](docs/validation/send-1.md). Other proposed milestones remain unselected; SEND-2/3, API-3 and MAINT-3 retain their gates, and G4/D2 remain deferred.
 
@@ -259,6 +259,16 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 - **Acceptance:** Repeatable PASS/FAIL results naming element, configuration and reason; no false failures on expected responsive behavior; synthetic data only and nothing persisted; critical chat behaviors covered; existing checks pass; CI config valid; failure detection demonstrated.
 - **Validation:** [execution plan](docs/plans/maint-4.md) acceptance table; evidence in [docs/validation/maint-4.md](docs/validation/maint-4.md).
 - **Issues:** found [UI1](ISSUES.md#ui1), [UI2](ISSUES.md#ui2), [UI3](ISSUES.md#ui3) (recorded, not fixed here). **Progress:** `make test-ui` passes 41/41 repeatably; mutations detected; CI job validated statically, not yet run on GitHub. [Evidence](docs/validation/maint-4.md); [completed checkpoint](docs/plans/maint-4.md).
+
+<a id="maint-5"></a>
+
+### MAINT-5 — Compact project workflow helpers
+
+- **Status / proposed priority:** done / P3. **Dependencies / gates:** user authorized 2026-10-14 after the Mailven session audit; no reopening of deferred G4/D2.
+- **Scope / deliverable:** Milestone context loader, serial check runner with compact persisted evidence, guarded branch landing helper, maintained local Markdown/site-link checker; integrate into existing project skills and developer docs.
+- **Acceptance:** Helpers handle checkout/worktree paths, linked project context and site links; required checks remain intact and failures visible; landing defaults to preview and preserves clean-tree, conflict-abort, checks-after-rebase, configured identity/upstream and equal-tree-before-deletion rules. Disposable fixtures verify success and failure paths. Instructions avoid rereading unchanged skill files within one session while still loading required guidance for each new session.
+- **Validation:** Standard-library unit/integration tests with temporary repositories and fake check commands, existing skill path tests, real docs/context/preview runs, whitespace/brand checks and independent acceptance. No production mail/backend changes.
+- **Issues:** none initially; scriptable repetition is an optimization finding, not a verified product defect. **Progress:** 30 disposable fixture tests, existing skill/worktree path checks, local docs/whitespace/brand checks and independent acceptance pass; canonical next/finish/ship workflows integrated ([evidence](docs/validation/maint-5.md), [checkpoint](docs/plans/maint-5.md)).
 
 <a id="d2"></a>
 

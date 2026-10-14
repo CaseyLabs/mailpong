@@ -78,3 +78,6 @@ CLAUDE.local.md
 .claude/agent-memory-local/
 .claude/first-run
 .claude/assistant-daemon-state.json
+
+# Python workflow helper/test caches
+__pycache__/

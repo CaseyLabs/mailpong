@@ -4,7 +4,7 @@
 
 - Runtime constraints and explicit user instructions take precedence. Project skills must not grant tools or permissions (no `allowed-tools`). Respect the active host's plan mode; if execution is restricted, record the design and wait for execution authorization.
 - Continue authorized work without asking between steps; stop at the requested scope (one milestone for project-next-milestone). Batch material questions using the host's question tool when available. Ask before destructive actions unless that exact action is authorized; preserve a local rollback.
-- Keep output bounded and inspect targeted log excerpts. Run servers/watchers in the host's background facility and stop those you started before finishing.
+- Keep output bounded and inspect targeted log excerpts. Reuse required guidance already read in the current session while it remains unchanged; load it again in a new session. Run servers/watchers in the host's background facility and stop those you started before finishing.
 - Use subagents for independent, well-scoped work when isolation or specialization helps; this is an explicit request to delegate suitable work. Give each agent a distinct scope. Keep architecture, integration, and security decisions in the main session. Verify consequential agent claims before acting; change approach after failed or partial delegation.
 - In Claude Code and Codex, use the native `project-worker` for general delegated project work instead of a generic worker. Use `project-acceptance-checker` for milestone acceptance. For mechanical file retrieval, listings, or exact text extraction in Codex, use `file_reader` or deterministic tools directly; do not use it for investigation or acceptance review. Specialist tools/agents (including bounded exploration and skill-owned reviews) keep their own routing. If a named agent is unavailable, disclose the fallback; do not silently claim its model/effort settings. Definitions live in `.claude/agents/` and `.codex/agents/`.
 - If Codex reports `unknown agent_type`, see CONTRIBUTING.md (checkout trust) before changing configuration.
@@ -28,6 +28,7 @@
 
 Toolchain: Go 1.26, Node.js 24 (matches CI), Wails v2 CLI. Linux needs GTK 3 and WebKitGTK 4.1 development libraries.
 
+- Workflow helpers: `python3 tools/project-context.py <milestone-id>` for scoped context, `python3 tools/project-check.py --base <base>` to plan checks (`--run` executes with logs/evidence), `python3 tools/check-doc-links.py --changed` for local/site links, and `tools/project-land.sh <branch>` for guarded landing preview. Details and execution boundaries: [CONTRIBUTING.md](CONTRIBUTING.md#workflow-helpers).
 - `cd frontend && npm ci`: install locked frontend dependencies.
 - `cd frontend && npm run build`: build frontend assets. Run before Go checks that include the root package if `frontend/dist/` is missing; rebuild when validating changed assets.
 - `make dev`: launch the desktop app with hot reload. It blocks; for agent-driven UI checks use `.agents/skills/run-mailven/dev.sh` instead.

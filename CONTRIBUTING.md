@@ -66,7 +66,7 @@ Resolve the active checkout with `git rev-parse --show-toplevel`; never reuse a
 skill path from another checkout. User-supplied relative plan/output paths resolve
 from the invocation working directory (default plan: `PLAN.md` there), before
 changing directory. Quote resolved paths. For example, from the checkout root:
-`sh .agents/skills/project-next-milestone/plan-outline.sh PLAN.md`.
+`python3 tools/project-context.py --plan PLAN.md`; add the authorized milestone ID for its linked issues/checkpoint. `plan-outline.sh` remains available for legacy outline-only use.
 Read Portfolio/Progress and the explicitly selected or already authorized milestone, its linked issues and execution checkpoint only.
 Follow the shared [project-management lifecycle](docs/PROJECT_MANAGEMENT.md): `PLAN.md` owns the roadmap, `ISSUES.md` owns findings, and substantial selected milestones checkpoint in `docs/plans/<milestone-id>.md`. Reconcile before work and preserve lasting evidence before pruning. A bare continuation request with no authorized active milestone lists candidates for selection; it does not execute proposed/deferred work. Keep outstanding
 verification, deferred work and authorization limits explicit.
@@ -91,6 +91,41 @@ appropriate privileges and clone with `git -c core.symlinks=true clone <url>`.
 Verify `.claude/skills` is a directory symlink, not a text file containing its
 target. Do not replace it with a copied skill tree. Relative links also keep
 linked Git worktrees pointing to their own skill files.
+
+## Workflow helpers
+
+These standard-library helpers reduce repeated shell recipes and returned context. They preserve the existing lifecycle and authorization rules; none selects a milestone, performs review, authorizes live work or marks acceptance complete. Required guidance already read in a session may be reused while unchanged; new sessions load it again.
+
+From the checkout root:
+
+```bash
+python3 tools/project-context.py                  # Portfolio/Progress and Git facts
+python3 tools/project-context.py API-5            # Selected project, milestone, linked issues/checkpoint
+python3 tools/check-doc-links.py --changed        # Staged/unstaged/untracked Markdown
+python3 tools/project-check.py --base main        # Check plan only
+python3 tools/project-check.py --base main --run  # Serial checks and private evidence/logs
+```
+
+`project-context.py` accepts `--plan`/`--issues`, `--json` and `--max-lines`; source line pointers identify bounded excerpts. User-supplied paths resolve from the invocation directory, including spaces and worktrees. Missing/ambiguous milestones and plans are errors. Context describes proposed/deferred status without authorizing it.
+
+`check-doc-links.py` accepts explicit Markdown paths, `--changed`, `--base` and `--json`. It validates local destinations, anchors, reference links and `/docs/` routes against user-guide sources; it does not fetch external sites. Deleted sources are skipped during changed-file scans, but links to missing targets fail. Ordinary relative links may browse existing repository directories without an index; `/docs/` site routes require a `.md`, `.mdx` or `index.md` page. Code examples are ignored. Use `--max-errors` to bound console diagnostics and `--json-output` for a new full report file (existing files are refused). Keep archive/origin files outside checks unless the task changes or explicitly selects them.
+
+`project-check.py` infers scopes from changes against the supplied base (default `HEAD`) and unions any `--scope docs|tooling|go|frontend` additions. Unsupported changed paths require manual validation; it never silently assumes they passed. Add milestone-specific checks with `--extra-command '["python3", "path/to/check.py"]'` (argv only, checkout-root cwd). Frontend includes lint/check/build and the full UI suite; Go includes `make test` and prepares missing embedded frontend assets. Tooling runs the Python helper tests, skill path checks and brand check. Existing native/live gates remain separate. Only one helper check/landing operation may run in a checkout at a time.
+
+Execution saves complete logs and `evidence.json` in a new private directory under `~/.cache/mailven-project-checks/` (or `$XDG_CACHE_HOME`); `--output-dir` chooses a new directory outside the checkout. Console output is bounded by `--tail-lines` (default 6). Failure stops the batch, preserves logs and identifies unrun checks. Source fingerprints cover tracked and nonignored untracked files, their content, symlinks and executable modes; changing source invalidates evidence, while committing identical content does not. Review logs before sharing them. Tests/builds may legitimately change generated source, in which case review and rerun rather than claiming fresh evidence.
+
+For the standard authorized squash landing, commit all milestone files, complete independent acceptance and review, and preview:
+
+```bash
+tools/project-land.sh feature-branch --evidence /absolute/path/evidence.json
+# Supply a reviewed title and body file; --execute performs the authorized action.
+tools/project-land.sh feature-branch --evidence /absolute/path/evidence.json \
+  --title 'feat: describe the completed work' --body-file /absolute/path/body.txt --execute
+```
+
+Landing requires the feature checkout to be clean, checks/logs to match its source and scopes, and main to have a configured upstream. It retains `recovery/project-land-...-feature` and `...-main` local branches before changes, rebases when needed and reruns the recorded checks, aborts on conflicts, respects configured identity/hooks, pushes main without force, and deletes the feature only after a successful push and equal-tree comparison. A main branch already checked out in another worktree requires landing from a checkout where it is available. Failure retains the feature/recovery branches and reports the Git state; fix the stated problem without bypassing safeguards. Recovery branches are intentionally not removed automatically.
+
+Validate changes to helpers with `python3 -m unittest discover -s tools/tests -p 'test_*.py'` and `python3 .agents/skills/project-next-milestone/tests/paths.py`. These tests use disposable repositories/remotes and fake commands, never production accounts or project pushes.
 
 ## Development Setup
 
