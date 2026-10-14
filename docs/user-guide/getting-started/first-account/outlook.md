@@ -14,7 +14,7 @@ Mailven supports personal Outlook.com accounts (including Hotmail and Live addre
 
 ## Before you start: bring your own credentials
 
-Mailven bundles no Microsoft OAuth credentials. Register your own application in Microsoft Entra ID (**App registrations**), choose the account types you need, add a **Mobile and desktop applications** platform, and add the delegated IMAP, SMTP, and `offline_access` permissions. Then open **Settings → Accounts → OAuth Credentials**, choose **Custom** under Microsoft, and save your Application (client) ID. Use Microsoft's documented [OAuth permissions and setup](https://learn.microsoft.com/en-us/exchange/client-developer/legacy-protocols/how-to-authenticate-an-imap-pop-smtp-application-by-using-oauth) for the registration. An administrator may need to approve the app or grant consent in a work or school tenant.
+Mailven bundles no Microsoft OAuth credentials. Register your own application in Microsoft Entra ID (**App registrations**), choose the account types you need (Mailven signs in through Microsoft's shared `common` endpoint, so choose a multitenant option even for a single organization), add a **Mobile and desktop applications** platform with the redirect URI `http://localhost/callback`, and add the delegated IMAP, SMTP, and `offline_access` permissions. Then open **Settings → Accounts → OAuth Credentials**, choose **Custom** under Microsoft, and save your Application (client) ID. Use Microsoft's documented [OAuth permissions and setup](https://learn.microsoft.com/en-us/exchange/client-developer/legacy-protocols/how-to-authenticate-an-imap-pop-smtp-application-by-using-oauth) for the registration. An administrator may need to approve the app or grant consent in a work or school tenant.
 
 ## OAuth Steps
 

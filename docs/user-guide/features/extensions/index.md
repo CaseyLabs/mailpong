@@ -51,7 +51,7 @@ Extensions that connect to Google or Microsoft use their own OAuth client creden
 
 **Microsoft**
 
-- **Custom** — your own client ID and secret from an Azure AD (Microsoft Entra) app registration that has a `http://localhost` redirect URI for a public client.
+- **Custom** — your own client ID and secret from an Azure AD (Microsoft Entra) app registration that has a `http://localhost/callback` redirect URI for a public client.
 - **Mailven - Microsoft** — reuse the credentials you saved for Outlook in Settings → Accounts.
 
 Options other than Custom appear only when the matching credentials exist.
