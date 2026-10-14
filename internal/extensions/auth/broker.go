@@ -48,6 +48,11 @@ func NewBroker(credStore *credentials.Store, oauthManager *oauth2.Manager, baseT
 // client config, returns *coreapi.ErrAdditionalConsentRequired. The host
 // (NOT the extension) handles the consent flow and retries.
 func (b *Broker) HTTPClient(accountID string, scopes []coreapi.AuthScope) (*http.Client, error) {
+	ownerID, err := b.credStore.OAuthTokenOwnerID(accountID)
+	if err != nil {
+		return nil, fmt.Errorf("auth broker: resolve OAuth token owner: %w", err)
+	}
+	accountID = ownerID
 	// Discover the account's provider via its existing Mail tokens. Every
 	// authenticated account has a Mail row (per migration v29 backfill).
 	mailTokens, err := b.credStore.GetOAuthTokens(accountID)
@@ -76,7 +81,7 @@ func (b *Broker) HTTPClient(accountID string, scopes []coreapi.AuthScope) (*http
 		return nil, fmt.Errorf("auth broker: check tokens: %w", err)
 	}
 
-	if missing := missingScopes(existing.Scopes, scopes); len(missing) > 0 {
+	if missing := missingScopes(existing.EffectiveScopes(), scopes); len(missing) > 0 {
 		return nil, &coreapi.ErrAdditionalConsentRequired{
 			AccountID:      accountID,
 			ClientConfigID: clientConfigID,
@@ -84,7 +89,7 @@ func (b *Broker) HTTPClient(accountID string, scopes []coreapi.AuthScope) (*http
 		}
 	}
 
-	return b.newClient(accountID, string(clientConfigID)), nil
+	return b.newClient(accountID, string(clientConfigID), scopes), nil
 }
 
 // HTTPClientForExtension is the Phase 2b entry point that knows WHICH extension
@@ -110,6 +115,11 @@ func (b *Broker) HTTPClientForExtension(
 	accountID string,
 	scopes []coreapi.AuthScope,
 ) (*http.Client, error) {
+	ownerID, err := b.credStore.OAuthTokenOwnerID(accountID)
+	if err != nil {
+		return nil, fmt.Errorf("auth broker: resolve OAuth token owner: %w", err)
+	}
+	accountID = ownerID
 	// Discover the account's provider via its existing Mail tokens. Every
 	// authenticated OAuth account has a Mail row (per migration v29 backfill).
 	mailTokens, err := b.credStore.GetOAuthTokens(accountID)
@@ -133,7 +143,7 @@ func (b *Broker) HTTPClientForExtension(
 			}
 			return nil, fmt.Errorf("auth broker: check tokens: %w", terr)
 		}
-		return b.newClient(accountID, string(clientConfigID)), nil
+		return b.newClient(accountID, string(clientConfigID), nil), nil
 	}
 
 	// Classify each requested scope: does it use Mailven core's mail OAuth
@@ -189,7 +199,7 @@ func (b *Broker) HTTPClientForExtension(
 		return nil, fmt.Errorf("auth broker: check tokens: %w", err)
 	}
 
-	if missing := missingScopes(existing.Scopes, scopes); len(missing) > 0 {
+	if missing := missingScopes(existing.EffectiveScopes(), scopes); len(missing) > 0 {
 		return nil, &coreapi.ErrAdditionalConsentRequired{
 			AccountID:      accountID,
 			ClientConfigID: coreapi.ClientConfigID(clientConfigID),
@@ -197,7 +207,7 @@ func (b *Broker) HTTPClientForExtension(
 		}
 	}
 
-	return b.newClient(accountID, clientConfigID), nil
+	return b.newClient(accountID, clientConfigID, scopes), nil
 }
 
 // IMAPClient returns an authenticated IMAP client for the account. Phase 1
@@ -218,10 +228,11 @@ func (b *Broker) SMTPClient(accountID string) (coreapi.SMTPClient, error) {
 
 // newClient returns an HTTP client that authenticates as accountID using the
 // tokens in the given slot, refreshing them as needed.
-func (b *Broker) newClient(accountID, clientConfigID string) *http.Client {
+func (b *Broker) newClient(accountID, clientConfigID string, scopes []coreapi.AuthScope) *http.Client {
 	return &http.Client{
 		Transport: &bearerRefreshTransport{
 			base:           b.baseTransport,
+			scopes:         scopes,
 			credStore:      b.credStore,
 			oauthManager:   b.oauthManager,
 			accountID:      accountID,

@@ -169,6 +169,33 @@ func TestHTTPClientForExtension_RoutesToCoreForListedScopes(t *testing.T) {
 	}
 }
 
+func TestHTTPClientForExtension_UsesLinkedParentGrant(t *testing.T) {
+	broker, credStore, db := newTestBroker(t)
+	insertTestAccount(t, db, "acct-parent")
+	insertTestAccount(t, db, "acct-shared")
+	if _, err := db.Exec("UPDATE accounts SET shared_mailbox_parent_id = ? WHERE id = ?", "acct-parent", "acct-shared"); err != nil {
+		t.Fatal(err)
+	}
+	if err := credStore.SetOAuthTokens("acct-parent", &credentials.OAuthTokens{
+		Provider: "google", AccessToken: "parent-access", RefreshToken: "parent-refresh",
+		Scopes: []string{"https://mail.google.com/", "https://www.googleapis.com/auth/contacts.readonly"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	manifest := coreapi.Manifest{
+		ID: "contacts",
+		OAuth: &coreapi.ManifestOAuth{FirstPartyUsesCoreForScopes: []string{
+			"https://www.googleapis.com/auth/contacts.readonly",
+		}},
+	}
+	client, err := broker.HTTPClientForExtension("contacts", manifest, "acct-shared", []coreapi.AuthScope{
+		{Resource: "https://www.googleapis.com/auth/contacts.readonly"},
+	})
+	if err != nil || client == nil {
+		t.Fatalf("linked mailbox did not use parent OAuth grant: client=%v err=%v", client, err)
+	}
+}
+
 func TestHTTPClientForExtension_RoutesToExtensionForUnlistedScopes(t *testing.T) {
 	broker, credStore, db := newTestBroker(t)
 	insertTestAccount(t, db, "acct-route-ext")

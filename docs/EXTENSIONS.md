@@ -38,7 +38,7 @@ Mailven's extension system lets first-party extensions (Calendar, Contacts, Note
 
 1. **Built-in, disabled by default.** Extensions compile into the binary but do nothing until enabled. Minimalists never see them.
 2. **Per-extension SQLite isolation.** Each extension owns its own database file under `<dataDir>/extensions/<name>/data.db`. Extensions never query each other's tables — cross-extension data access goes through Go interfaces in `internal/core/api/v1`.
-3. **Shared infrastructure stays shared.** One Wails process, one OAuth manager, one credential store, one IPC bus, one notification system. The extension system adds an additional **Auth Broker** layer so extensions never see access tokens or refresh tokens.
+3. **Shared infrastructure stays shared.** The main Wails process owns the OAuth manager, credential service, IPC bus, and notifications for core and extensions. The detached composer is a separate process using the same database and keyring; OS advisory locks coordinate OAuth refreshes across both processes. The extension system adds an **Auth Broker** layer so extensions never see access tokens or refresh tokens.
 4. **Inline + detach pattern.** Every extension works inside the main window. Workflows can optionally pop out to a separate window via IPC (identical to the existing detached composer; not yet exercised by any extension in v0.3.x).
 5. **Strict zero overhead when disabled.** Each extension contributes ONE `Bridge` struct allocation (~80 bytes) at App construction. The Bridge's per-extension SQLite, stores, and API wrapper are **lazy-initialized via `sync.Once` on the first enabled method call** — disabled extensions never open their database file, never construct stores, never allocate beyond the bridge stub. The only baseline cost is binary size + 80 bytes per bridge.
 
@@ -1003,7 +1003,7 @@ resp, err := client.Get("https://www.googleapis.com/calendar/v3/users/me/calenda
 
 ### Token refresh
 
-[`internal/extensions/auth/transport.go bearerRefreshTransport`](../internal/extensions/auth/transport.go) handles refresh. It serializes refreshes per `(accountID, clientConfigID)` so N concurrent expired-token requests cause exactly one refresh.
+[`internal/extensions/auth/transport.go bearerRefreshTransport`](../internal/extensions/auth/transport.go) handles refresh. It serializes refreshes per canonical OAuth owner and client config across credential-store instances and app processes using an OS advisory lock in the data directory. Lock files are persistent and must not be removed while the app may be running. Callers re-read credentials after acquiring the lock so concurrent IMAP, SMTP, composer, and extension requests reuse a token another holder already refreshed.
 
 ### IMAP / SMTP
 

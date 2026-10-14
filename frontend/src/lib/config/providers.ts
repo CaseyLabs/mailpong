@@ -59,7 +59,7 @@ export const providers: EmailProvider[] = [
   },
   {
     id: 'outlook',
-    name: 'Outlook / Hotmail',
+    name: 'Microsoft / Outlook',
     icon: 'logos:microsoft-icon',
     domains: ['outlook.com', 'hotmail.com', 'live.com', 'msn.com'],
     imap: { host: 'outlook.office365.com', port: 993, security: 'tls' },

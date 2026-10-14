@@ -175,12 +175,9 @@ func TestToRFC822_MessageIDDomain(t *testing.T) {
 		from, want string
 	}{
 		{"sender@example.com", "@example.com>"},
-		{"no-at-sign", "@mailven>"},
-		{"two@at@signs", "@mailven>"},
-		{"trailing@", "@mailven>"},
 	}
 	for _, tt := range tests {
-		msg := &ComposeMessage{From: Address{Address: tt.from}, TextBody: "x"}
+		msg := &ComposeMessage{From: Address{Address: tt.from}, To: []Address{{Address: "to@example.test"}}, TextBody: "x"}
 		data, err := msg.ToRFC822()
 		if err != nil {
 			t.Fatalf("ToRFC822(%q) returned error: %v", tt.from, err)

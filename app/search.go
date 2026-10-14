@@ -66,6 +66,9 @@ func (a *App) RebuildFTSIndex(folderID string) error {
 // Returns results with local message data where available, envelope data for non-local messages.
 // When limit > 0, only the newest `limit` results are returned but totalCount reflects all matches.
 func (a *App) IMAPSearchFolder(accountID, folderID, query string, limit int) (*sync.IMAPSearchResponse, error) {
+	if a.apiRouted(accountID) != nil {
+		return nil, apiUnsupported("Server-side search")
+	}
 	ctx, cancel := context.WithTimeout(a.ctx, 60*time.Second)
 	defer cancel()
 	return a.syncEngine.IMAPSearch(ctx, accountID, folderID, query, limit)
@@ -74,6 +77,9 @@ func (a *App) IMAPSearchFolder(accountID, folderID, query string, limit int) (*s
 // FetchServerMessage fetches a full message by UID from the IMAP server, saves it locally,
 // and returns it. Used when interacting with non-local server search results.
 func (a *App) FetchServerMessage(accountID, folderID string, uid int) (*message.Message, error) {
+	if a.apiRouted(accountID) != nil {
+		return nil, apiUnsupported("Fetching a server message")
+	}
 	ctx, cancel := context.WithTimeout(a.ctx, 30*time.Second)
 	defer cancel()
 	return a.syncEngine.FetchServerMessage(ctx, accountID, folderID, uint32(uid))

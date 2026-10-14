@@ -37,6 +37,15 @@ func (c contactsCoreImpl) sourceHTTPClient(id string, scopes []coreapi.AuthScope
 	if err != nil {
 		return nil, err
 	}
+	stored, err := c.app.credStore.GetContactSourceOAuthTokens(id)
+	if err != nil {
+		return nil, err
+	}
+	for _, scope := range scopes {
+		if !stored.HasScope(scope.Resource) {
+			return nil, &coreapi.ErrAdditionalConsentRequired{MissingScopes: scopes, Reason: "contact grant is missing or unknown; authorize this contact source separately"}
+		}
+	}
 	return davutil.NewBearerHTTPClient(token, 30*time.Second), nil
 }
 

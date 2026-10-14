@@ -185,6 +185,16 @@ func (ops *draftOps) saveDraftToDB(accountID string, localDraft *draft.Draft, ms
 	log := logging.WithComponent("draft")
 
 	if localDraft != nil {
+		// A draft belongs to the account that encrypts and syncs it. Saving
+		// under another selected account moves it: the old account's remote
+		// copy goes and the next sync creates one under the new owner.
+		if localDraft.AccountID != accountID {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			ops.deleteIMAPDraftCopy(ctx, localDraft)
+			cancel()
+			localDraft.AccountID = accountID
+			localDraft.IMAPUID, localDraft.FolderID = 0, ""
+		}
 		// Update existing draft
 		localDraft.ToList = addressListToJSON(msg.To)
 		localDraft.CcList = addressListToJSON(msg.Cc)
@@ -240,41 +250,49 @@ func (ops *draftOps) saveDraftToDB(accountID string, localDraft *draft.Draft, ms
 	return localDraft, nil
 }
 
+// deleteIMAPDraftCopy removes a synced draft's copy and message row from its
+// own account's Drafts folder, returning that folder (nil when the draft was
+// never synced). Failures are logged: the local draft is authoritative.
+func (ops *draftOps) deleteIMAPDraftCopy(ctx context.Context, d *draft.Draft) *folder.Folder {
+	log := logging.WithComponent("draft")
+	if !d.IsSynced() {
+		return nil
+	}
+	draftsFolder, _ := ops.getSpecialFolder(d.AccountID, folder.TypeDrafts)
+	if draftsFolder == nil {
+		return nil
+	}
+	poolConn, err := ops.imapPool.GetConnection(ctx, d.AccountID)
+	if err == nil {
+		defer ops.imapPool.Release(poolConn)
+		conn := poolConn.Client()
+		if _, err := conn.SelectMailbox(ctx, draftsFolder.Path); err == nil {
+			if err := conn.DeleteMessageByUID(goImap.UID(d.IMAPUID)); err != nil {
+				log.Warn().Err(err).Uint32("uid", d.IMAPUID).Msg("Failed to delete draft from IMAP")
+			}
+		}
+	}
+
+	// Clean up the message row that syncDraftToIMAP's SyncFolder may have created.
+	// Done directly because the post-delete SyncFolder may be debounced (500ms)
+	// if a recent draft sync just ran.
+	if err := ops.messageStore.DeleteByUID(draftsFolder.ID, d.IMAPUID); err != nil {
+		log.Warn().Err(err).Uint32("uid", d.IMAPUID).Str("folderID", draftsFolder.ID).Msg("Failed to clean up draft message row")
+	}
+	return draftsFolder
+}
+
 // deleteDraftCore deletes a draft from IMAP (if synced), cleans up the message
 // row, and removes the draft from the local database. Returns the drafts folder
 // (non-nil if the draft was synced) so callers can emit events and trigger syncs.
 func (ops *draftOps) deleteDraftCore(ctx context.Context, d *draft.Draft) (*folder.Folder, error) {
-	log := logging.WithComponent("draft")
-
 	// Re-read from DB to get latest sync state (IMAPUID may have been updated
 	// by a background sync goroutine since the caller obtained this draft object)
 	if fresh, err := ops.draftStore.Get(d.ID); err == nil && fresh != nil {
 		d = fresh
 	}
 
-	var draftsFolder *folder.Folder
-	if d.IsSynced() {
-		draftsFolder, _ = ops.getSpecialFolder(d.AccountID, folder.TypeDrafts)
-		if draftsFolder != nil {
-			poolConn, err := ops.imapPool.GetConnection(ctx, d.AccountID)
-			if err == nil {
-				defer ops.imapPool.Release(poolConn)
-				conn := poolConn.Client()
-				if _, err := conn.SelectMailbox(ctx, draftsFolder.Path); err == nil {
-					if err := conn.DeleteMessageByUID(goImap.UID(d.IMAPUID)); err != nil {
-						log.Warn().Err(err).Uint32("uid", d.IMAPUID).Msg("Failed to delete draft from IMAP")
-					}
-				}
-			}
-
-			// Clean up the message row that syncDraftToIMAP's SyncFolder may have created.
-			// Done directly because the post-delete SyncFolder may be debounced (500ms)
-			// if a recent draft sync just ran.
-			if err := ops.messageStore.DeleteByUID(draftsFolder.ID, d.IMAPUID); err != nil {
-				log.Warn().Err(err).Uint32("uid", d.IMAPUID).Str("folderID", draftsFolder.ID).Msg("Failed to clean up draft message row")
-			}
-		}
-	}
+	draftsFolder := ops.deleteIMAPDraftCopy(ctx, d)
 
 	// Delete from local database
 	if err := ops.draftStore.Delete(d.ID); err != nil {

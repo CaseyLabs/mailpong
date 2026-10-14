@@ -23,6 +23,9 @@ import (
 func (a *App) SyncFolder(accountID, folderID string) error {
 	const debounceMs = 500
 	log := logging.WithComponent("app")
+	if route := a.apiRouted(accountID); route != nil {
+		return a.syncRoutedAccount(route, folderID)
+	}
 
 	// Use composite key to allow multiple folders to sync concurrently
 	syncKey := accountID + ":" + folderID
@@ -193,6 +196,9 @@ func (a *App) ForceSyncFolder(accountID, folderID string) error {
 func (a *App) SyncAccountComplete(accountID string) error {
 	log := logging.WithComponent("app.masterSync")
 	log.Info().Str("accountID", accountID).Msg("Starting complete account sync")
+	if route := a.apiRouted(accountID); route != nil {
+		return a.syncRoutedAccount(route, "")
+	}
 
 	// Check if sync was cancelled before starting
 	a.syncMu.Lock()
@@ -670,7 +676,7 @@ func (a *App) emitSyncError(accountID, folderID, msg string) {
 		log := logging.WithComponent("app")
 		log.Warn().Err(err).Str("account", accountID).Msg("Failed to store sync error")
 	}
-	wailsRuntime.EventsEmit(a.ctx, "folder:syncError", map[string]interface{}{
+	eventsEmit(a.ctx, "folder:syncError", map[string]interface{}{
 		"accountId": accountID,
 		"folderId":  folderID,
 		"error":     msg,
@@ -688,7 +694,7 @@ func (a *App) emitFolderSynced(accountID, folderID string, ok bool) {
 			log.Warn().Err(err).Str("account", accountID).Msg("Failed to clear sync error")
 		}
 	}
-	wailsRuntime.EventsEmit(a.ctx, "folder:synced", map[string]interface{}{
+	eventsEmit(a.ctx, "folder:synced", map[string]interface{}{
 		"accountId": accountID,
 		"folderId":  folderID,
 		"ok":        ok,

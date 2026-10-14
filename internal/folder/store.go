@@ -32,7 +32,7 @@ func (s *Store) List(accountID string) ([]*Folder, error) {
 		       uid_validity, uid_next, highest_mod_seq,
 		       total_count, unread_count, last_sync, subscribed
 		FROM folders
-		WHERE account_id = ?
+		WHERE account_id = ? AND folder_type NOT LIKE 'hidden:%'
 		ORDER BY name
 	`
 
@@ -135,7 +135,7 @@ func (s *Store) GetByPath(accountID, path string) (*Folder, error) {
 		       uid_validity, uid_next, highest_mod_seq,
 		       total_count, unread_count, last_sync, subscribed
 		FROM folders
-		WHERE account_id = ? AND path = ?
+		WHERE account_id = ? AND path = ? AND folder_type NOT LIKE 'hidden:%'
 	`
 
 	f := &Folder{}
@@ -396,7 +396,7 @@ func (s *Store) ListSubscribed(accountID string) ([]*Folder, error) {
 		       uid_validity, uid_next, highest_mod_seq,
 		       total_count, unread_count, last_sync, subscribed
 		FROM folders
-		WHERE account_id = ? AND (subscribed = 1 OR folder_type IN ('inbox', 'drafts', 'sent'))
+		WHERE account_id = ? AND folder_type NOT LIKE 'hidden:%' AND (subscribed = 1 OR folder_type IN ('inbox', 'drafts', 'sent'))
 		ORDER BY name
 	`
 
@@ -450,6 +450,62 @@ func (s *Store) UpdateSubscribed(folderID string, subscribed bool) error {
 	_, err := s.db.Exec(`UPDATE folders SET subscribed = ? WHERE id = ?`, subscribed, folderID)
 	if err != nil {
 		return fmt.Errorf("failed to update folder subscription: %w", err)
+	}
+	return nil
+}
+
+// Row sets that can own an account's folders. Only one is visible at a time.
+const (
+	RowsIMAP = "imap"
+	RowsAPI  = "api"
+
+	hiddenPrefix = "hidden:"
+	pathMarker   = "\x1f"
+)
+
+// SwapHidden hides every visible folder of the account and then restores the
+// folders previously hidden as the `show` row set, in one transaction. Hidden
+// folders keep their messages but vanish from List, ListSubscribed, GetByPath
+// and the type lookups, so IMAP and API rows are never mixed. Nothing is
+// deleted; swapping back restores the original type and path exactly. `hide`
+// tags the folders being hidden (RowsIMAP or RowsAPI). It returns the number
+// of folders restored.
+func (s *Store) SwapHidden(accountID, hide, show string) (int, error) {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return 0, fmt.Errorf("failed to begin folder swap: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	// Hide visible folders: type becomes hidden:<tag>:<type>, path gets a
+	// tag-specific prefix so a restored set cannot collide with a new one.
+	if _, err := tx.Exec(`UPDATE folders
+		SET folder_type = ? || ? || ':' || folder_type, path = ? || ? || ? || path
+		WHERE account_id = ? AND folder_type NOT LIKE 'hidden:%'`,
+		hiddenPrefix, hide, pathMarker, hide, pathMarker, accountID); err != nil {
+		return 0, fmt.Errorf("failed to hide folders: %w", err)
+	}
+	typePrefix := hiddenPrefix + show + ":"
+	pathPrefix := pathMarker + show + pathMarker
+	res, err := tx.Exec(`UPDATE folders
+		SET folder_type = substr(folder_type, ?), path = substr(path, ?)
+		WHERE account_id = ? AND substr(folder_type, 1, ?) = ? AND substr(path, 1, ?) = ?`,
+		len(typePrefix)+1, len(pathPrefix)+1, accountID,
+		len(typePrefix), typePrefix, len(pathPrefix), pathPrefix)
+	if err != nil {
+		return 0, fmt.Errorf("failed to restore folders: %w", err)
+	}
+	n, _ := res.RowsAffected()
+	if err := tx.Commit(); err != nil {
+		return 0, fmt.Errorf("failed to commit folder swap: %w", err)
+	}
+	return int(n), nil
+}
+
+// TouchSync records a completed sync without touching UID or count state.
+func (s *Store) TouchSync(id string) error {
+	if _, err := s.db.Exec(`UPDATE folders SET last_sync = ? WHERE id = ?`, time.Now().UTC(), id); err != nil {
+		return fmt.Errorf("failed to touch folder sync: %w", err)
 	}
 	return nil
 }

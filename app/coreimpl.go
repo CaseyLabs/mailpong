@@ -329,9 +329,21 @@ func (a *extensionAuth) StartIncrementalConsent(req coreapi.StartIncrementalCons
 		AccessToken:  tokens.AccessToken,
 		RefreshToken: tokens.RefreshToken,
 		ExpiresAt:    tokens.ExpiresAt(),
-		Scopes:       unioned,
 	}
 
+	if tokens.RefreshToken == "" {
+		var prior *credentials.OAuthTokens
+		if req.AccountID != "" {
+			prior, _ = a.app.credStore.GetOAuthTokensForClientConfig(req.AccountID, string(req.ClientConfigID))
+		}
+		if req.SourceID != "" {
+			prior, _ = a.app.credStore.GetContactSourceOAuthTokens(req.SourceID)
+		}
+		if prior != nil {
+			storeTokens.RefreshToken = prior.RefreshToken
+		}
+	}
+	storeTokens.ApplyTokenResponse(tokens, unioned, oauth2.ScopeResource(baseProvider), false)
 	if req.AccountID != "" {
 		if err := a.app.credStore.SetOAuthTokensForClientConfig(req.AccountID, string(req.ClientConfigID), storeTokens); err != nil {
 			return fmt.Errorf("incremental consent: persist account tokens: %w", err)

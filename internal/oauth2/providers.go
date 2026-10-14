@@ -1,6 +1,9 @@
 package oauth2
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // ProviderConfig defines OAuth2 endpoints and settings for a provider
 type ProviderConfig struct {
@@ -213,4 +216,23 @@ func CustomProviderConfig(authURL, tokenURL, userinfoEndpoint string, scopes []s
 		ClientID:         clientID,
 		ClientSecret:     clientSecret,
 	}
+}
+
+// ScopeResource records the token resource separately from the provider and slot.
+// Microsoft Graph grants never cover Outlook protocol grants, or vice versa.
+func ScopeResource(provider ProviderConfig) string {
+	if strings.HasPrefix(provider.Name, "google") {
+		return "https://www.googleapis.com"
+	}
+	if strings.HasPrefix(provider.Name, "microsoft") {
+		for _, scope := range provider.Scopes {
+			if strings.HasPrefix(scope, "https://outlook.office.com/") {
+				return "https://outlook.office.com"
+			}
+			if strings.HasPrefix(scope, "https://graph.microsoft.com/") {
+				return "https://graph.microsoft.com"
+			}
+		}
+	}
+	return provider.TokenURL
 }

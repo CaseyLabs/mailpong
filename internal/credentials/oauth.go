@@ -2,7 +2,7 @@ package credentials
 
 import (
 	"database/sql"
-	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -12,11 +12,15 @@ import (
 
 // OAuthTokens represents OAuth2 tokens and metadata for an account
 type OAuthTokens struct {
-	Provider     string    `json:"provider"`     // "google", "microsoft"
-	AccessToken  string    `json:"accessToken"`  // Stored in keyring (sensitive)
-	RefreshToken string    `json:"refreshToken"` // Stored in keyring (sensitive)
-	ExpiresAt    time.Time `json:"expiresAt"`    // Stored in DB
-	Scopes       []string  `json:"scopes"`       // Stored in DB
+	Provider             string    `json:"provider"`     // "google", "microsoft"
+	AccessToken          string    `json:"accessToken"`  // Stored in keyring (sensitive)
+	RefreshToken         string    `json:"refreshToken"` // Stored in keyring (sensitive)
+	ExpiresAt            time.Time `json:"expiresAt"`    // Stored in DB
+	Scopes               []string  `json:"scopes"`       // Actual grants only; nil for unknown legacy evidence
+	RequestedScopes      []string  `json:"requestedScopes"`
+	ScopesKnown          bool      `json:"scopesKnown"`
+	ScopeResource        string    `json:"scopeResource"`
+	MicrosoftAccountType string    `json:"microsoftAccountType"` // Explicit setup evidence, empty means unknown
 }
 
 // IsExpired returns true if the access token has expired
@@ -46,7 +50,7 @@ func (s *Store) SetOAuthTokens(accountID string, tokens *OAuthTokens) error {
 	}
 
 	// Store metadata in database
-	scopesJSON, err := json.Marshal(tokens.Scopes)
+	scopesJSON, err := marshalOAuthGrant(tokens)
 	if err != nil {
 		return fmt.Errorf("failed to marshal scopes: %w", err)
 	}
@@ -124,22 +128,13 @@ func (s *Store) GetOAuthTokens(accountID string) (*OAuthTokens, error) {
 		return nil, fmt.Errorf("failed to get refresh token: %w", err)
 	}
 
-	// Parse scopes
-	var scopes []string
-	if scopesJSON.Valid && scopesJSON.String != "" {
-		if err := json.Unmarshal([]byte(scopesJSON.String), &scopes); err != nil {
-			s.log.Warn().Err(err).Msg("Failed to parse OAuth scopes, using empty list")
-			scopes = []string{}
-		}
-	}
-
 	tokens := &OAuthTokens{
 		Provider:     provider,
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-		Scopes:       scopes,
 	}
 
+	readOAuthGrant(scopesJSON.String, tokens)
 	if expiresAt.Valid {
 		tokens.ExpiresAt = expiresAt.Time
 	}
@@ -169,6 +164,24 @@ func (s *Store) DeleteOAuthTokens(accountID string) error {
 	}
 
 	s.log.Debug().Str("account_id", accountID).Msg("OAuth tokens deleted")
+	return nil
+}
+
+// ClearOAuthRefreshToken removes a provider-rejected refresh token while
+// preserving the account's access token and grant metadata for reauthorization.
+func (s *Store) ClearOAuthRefreshToken(accountID string) error {
+	var keyringErr error
+	if s.keyringEnabled {
+		if err := gokeyring.Delete(serviceName, accountID+":refresh_token"); err != nil && !errors.Is(err, gokeyring.ErrNotFound) {
+			keyringErr = err
+		}
+	}
+	if _, err := s.db.Exec("UPDATE accounts SET encrypted_refresh_token = NULL WHERE id = ?", accountID); err != nil {
+		return fmt.Errorf("clear encrypted OAuth refresh token: %w", err)
+	}
+	if keyringErr != nil {
+		return fmt.Errorf("clear keyring OAuth refresh token: %w", keyringErr)
+	}
 	return nil
 }
 
@@ -346,11 +359,15 @@ func (s *Store) getOAuthRefreshToken(accountID string) (string, error) {
 		accountID,
 	).Scan(&encrypted)
 
-	if err == sql.ErrNoRows || !encrypted.Valid || encrypted.String == "" {
-		return "", ErrCredentialNotFound
-	}
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		return "", fmt.Errorf("failed to query refresh token: %w", err)
+	}
+	if err == sql.ErrNoRows || !encrypted.Valid || encrypted.String == "" {
+		// The metadata row may intentionally have no refresh token (for
+		// example, after invalid_grant). The caller already established that
+		// the account has OAuth metadata, so return an empty token and let the
+		// account surface reauthorization instead of hiding the grant record.
+		return "", nil
 	}
 
 	return s.encryptor.Decrypt(encrypted.String)
@@ -377,7 +394,7 @@ func (s *Store) SetContactSourceOAuthTokens(sourceID string, tokens *OAuthTokens
 	}
 
 	// Store metadata in contact_source_oauth table
-	scopesJSON, err := json.Marshal(tokens.Scopes)
+	scopesJSON, err := marshalOAuthGrant(tokens)
 	if err != nil {
 		return fmt.Errorf("failed to marshal scopes: %w", err)
 	}
@@ -446,22 +463,13 @@ func (s *Store) GetContactSourceOAuthTokens(sourceID string) (*OAuthTokens, erro
 		return nil, fmt.Errorf("failed to get refresh token: %w", err)
 	}
 
-	// Parse scopes
-	var scopes []string
-	if scopesJSON.Valid && scopesJSON.String != "" {
-		if err := json.Unmarshal([]byte(scopesJSON.String), &scopes); err != nil {
-			s.log.Warn().Err(err).Msg("Failed to parse contact source OAuth scopes, using empty list")
-			scopes = []string{}
-		}
-	}
-
 	tokens := &OAuthTokens{
 		Provider:     provider,
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-		Scopes:       scopes,
 	}
 
+	readOAuthGrant(scopesJSON.String, tokens)
 	if expiresAt.Valid {
 		tokens.ExpiresAt = expiresAt.Time
 	}

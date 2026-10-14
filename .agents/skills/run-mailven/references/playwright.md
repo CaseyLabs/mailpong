@@ -16,8 +16,11 @@ node .agents/skills/run-mailven/ui-matrix.js "$SCRATCH" "$prefix"     # the full
 ```
 
 `headless-shot.js` and `ui-matrix.js` share `fake-page.js`: it installs the
-screenshot fakes before the Vite entry point mounts, supplies Contacts/Calendar
+screenshot fakes before the Vite entry point mounts, including Wails
+cache-busting query URLs, supplies Contacts/Calendar
 visibility through fake reads, and never enables extensions in the real profile.
+Its leading setup-module import runs before entry-point dependencies, so a
+`beforeMount` local event dispatcher also precedes module-scope listeners.
 It captures persisted UI/extension state from a bindings-only page, removes fakes
 by reloading, waits for debounced saves, asserts state is unchanged, and always
 closes the browser. Neither helper needs `serve-fakes.py`; the composer helpers

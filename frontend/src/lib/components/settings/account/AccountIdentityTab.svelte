@@ -2,8 +2,11 @@
   import { onMount } from 'svelte'
   import Icon from '@iconify/svelte'
   import { Button } from '$lib/components/ui/button'
+  import SetupDiagnosticSection from './SetupDiagnosticSection.svelte'
+  import SentPolicySection from './SentPolicySection.svelte'
   import IdentityEditor from './IdentityEditor.svelte'
   import SendAsSection from './SendAsSection.svelte'
+  import SenderEvidenceDetails from '../../composer/SenderEvidenceDetails.svelte'
   import AccountDialog from '../AccountDialog.svelte'
   import { addToast } from '$lib/stores/toast'
   import { accountStore } from '$lib/stores/accounts.svelte'
@@ -11,7 +14,7 @@
   // @ts-ignore - wailsjs path
   import { account, app } from '../../../../../wailsjs/go/models'
   // @ts-ignore - wailsjs path
-  import { GetIdentities, GetSendAsStatus, CreateIdentity, UpdateIdentity, DeleteIdentity, SetDefaultIdentity, AddMicrosoftSharedMailbox, GetMicrosoftSharedMailboxes, RemoveAccount } from '../../../../../wailsjs/go/app/App'
+  import { GetIdentities, GetSendAsStatus, GetSenderEvidence, CreateIdentity, UpdateIdentity, DeleteIdentity, SetDefaultIdentity, AddMicrosoftSharedMailbox, GetMicrosoftSharedMailboxes, RemoveAccount } from '../../../../../wailsjs/go/app/App'
   import { Input } from '$lib/components/ui/input'
   import { Label } from '$lib/components/ui/label'
   import * as Dialog from '$lib/components/ui/dialog'
@@ -33,6 +36,7 @@
   let deletingId = $state<string | null>(null)
   // Gmail send-as state; null until loaded. Only shown when supported.
   let sendAs = $state<app.SendAsStatus | null>(null)
+  let senderEvidence = $state<Record<string, app.SenderEvidence>>({})
 
   // Shared mailbox state
   let sharedMailboxes = $state<account.Account[]>([])
@@ -120,6 +124,12 @@
     try {
       const [loaded] = await Promise.all([GetIdentities(accountId), loadSendAs()])
       identities = loaded
+      senderEvidence = {}
+      const evidence = await Promise.all(loaded.map(async identity => {
+        try { return [identity.id, await GetSenderEvidence(accountId, identity.email)] as const }
+        catch { return null }
+      }))
+      senderEvidence = Object.fromEntries(evidence.filter(e => e !== null))
     } catch (err) {
       console.error('Failed to load identities:', err)
       addToast({
@@ -282,6 +292,11 @@
                 <span class="text-xs px-1.5 py-0.5 rounded {badge.cls}" title={$_(badge.title)}>{$_(badge.label)}</span>
               {/if}
             </div>
+            {#if senderEvidence[identity.id]}
+              <SenderEvidenceDetails evidence={senderEvidence[identity.id]} />
+            {:else}
+              <p class="text-xs text-muted-foreground" role="status">{$_('composer.senderLookupFailed')}</p>
+            {/if}
             <div class="text-xs text-muted-foreground truncate">
               {identity.name}
             </div>
@@ -328,7 +343,7 @@
 </div>
 
 {#if sendAs}
-  <SendAsSection {accountId} status={sendAs} onStatus={(st) => (sendAs = st)} onImported={loadIdentities} />
+  <SendAsSection {accountId} status={sendAs} onStatus={(st) => { sendAs = st; void loadIdentities() }} onImported={loadIdentities} />
 {/if}
 
 {#if isMicrosoft}
@@ -453,3 +468,9 @@
     onClose={() => { showSharedMailboxEditor = false; editingSharedMailbox = null; loadSharedMailboxes() }}
   />
 {/if}
+
+<SentPolicySection {accountId} />
+
+{#key accountId}
+  <SetupDiagnosticSection {accountId} {identities} />
+{/key}

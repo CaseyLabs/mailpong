@@ -34,6 +34,12 @@ func (a *App) SearchContacts(query string, limit int) ([]*contact.Contact, error
 				continue
 			}
 
+			// Contact grants are independent of mail; missing/unknown evidence
+			// disables this source without preventing other search results.
+			if !tokens.HasScope("https://www.googleapis.com/auth/contacts.other.readonly") {
+				log.Debug().Str("accountID", acc.ID).Msg("Google Contacts search needs additional contacts authorization")
+				continue
+			}
 			// Search Google Contacts
 			googleContacts, err := a.googleContactsClient.Search(tokens.AccessToken, query, limit-len(contacts))
 			if err != nil {

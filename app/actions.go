@@ -11,7 +11,6 @@ import (
 	"github.com/caseylabs/mailven/internal/message"
 	"github.com/caseylabs/mailven/internal/undo"
 	goImap "github.com/emersion/go-imap/v2"
-	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // withIMAPRetry wraps an IMAP operation with stale-connection retry.
@@ -103,20 +102,32 @@ func (a *App) setReadStatus(messageIDs []string, isRead bool) error {
 		return nil
 	}
 
-	// Group by folder for IMAP operations
+	// Group by folder for folder counts; only non-API messages sync over IMAP
 	byFolder := make(map[string][]*message.Message)
 	for _, m := range messages {
 		byFolder[m.FolderID] = append(byFolder[m.FolderID], m)
 	}
+	apiIDs, imapMsgs := a.splitAPIMessages(messages)
+	imapByFolder := make(map[string][]*message.Message)
+	imapIDs := make([]string, 0, len(imapMsgs))
+	for _, m := range imapMsgs {
+		imapByFolder[m.FolderID] = append(imapByFolder[m.FolderID], m)
+		imapIDs = append(imapIDs, m.ID)
+	}
 
-	// Update local DB first (local-first)
+	// Update local DB first (local-first); API accounts queue the change with it
 	isReadPtr := &isRead
-	if err := a.messageStore.UpdateFlagsBatch(messageIDs, isReadPtr, nil); err != nil {
-		return fmt.Errorf("failed to update local flags: %w", err)
+	if len(imapIDs) > 0 {
+		if err := a.messageStore.UpdateFlagsBatch(imapIDs, isReadPtr, nil); err != nil {
+			return fmt.Errorf("failed to update local flags: %w", err)
+		}
+	}
+	if err := a.apiEnqueueFlags(message.APIActionRead, isRead, apiIDs); err != nil {
+		return err
 	}
 
 	// Emit event for UI update with flag state
-	wailsRuntime.EventsEmit(a.ctx, "messages:readChanged", map[string]interface{}{
+	eventsEmit(a.ctx, "messages:readChanged", map[string]interface{}{
 		"messageIds": messageIDs,
 		"isRead":     isRead,
 	})
@@ -143,14 +154,14 @@ func (a *App) setReadStatus(messageIDs []string, isRead bool) error {
 			folderCounts[folderID] = unreadCount
 		}
 		if len(folderCounts) > 0 {
-			wailsRuntime.EventsEmit(a.ctx, "folders:countsChanged", folderCounts)
+			eventsEmit(a.ctx, "folders:countsChanged", folderCounts)
 		}
 	}()
 
 	// Sync to IMAP in background with retry
 	go func() {
 		defer recoverPanic("app.actions", "sync flags to IMAP")
-		for folderID, msgs := range byFolder {
+		for folderID, msgs := range imapByFolder {
 			var err error
 			for attempt := 1; attempt <= 3; attempt++ {
 				err = a.syncFlagsToIMAP(msgs, folderID, "read", isRead)
@@ -203,18 +214,26 @@ func (a *App) setStarredStatus(messageIDs []string, isStarred bool) error {
 		return nil
 	}
 
+	apiIDs, imapMsgs := a.splitAPIMessages(messages)
 	byFolder := make(map[string][]*message.Message)
-	for _, m := range messages {
+	imapIDs := make([]string, 0, len(imapMsgs))
+	for _, m := range imapMsgs {
 		byFolder[m.FolderID] = append(byFolder[m.FolderID], m)
+		imapIDs = append(imapIDs, m.ID)
 	}
 
-	// Update local DB first
+	// Update local DB first; API accounts queue the change with it
 	isStarredPtr := &isStarred
-	if err := a.messageStore.UpdateFlagsBatch(messageIDs, nil, isStarredPtr); err != nil {
-		return fmt.Errorf("failed to update local flags: %w", err)
+	if len(imapIDs) > 0 {
+		if err := a.messageStore.UpdateFlagsBatch(imapIDs, nil, isStarredPtr); err != nil {
+			return fmt.Errorf("failed to update local flags: %w", err)
+		}
+	}
+	if err := a.apiEnqueueFlags(message.APIActionStar, isStarred, apiIDs); err != nil {
+		return err
 	}
 
-	wailsRuntime.EventsEmit(a.ctx, "messages:starredChanged", map[string]interface{}{
+	eventsEmit(a.ctx, "messages:starredChanged", map[string]interface{}{
 		"messageIds": messageIDs,
 		"isStarred":  isStarred,
 	})
@@ -322,6 +341,16 @@ func (a *App) moveToFolder(messageIDs []string, destFolderID string, recordUndo 
 		return fmt.Errorf("destination folder not found: %s", destFolderID)
 	}
 
+	// API-routed accounts queue the move; a move between an API account and
+	// any other account has no remote equivalent.
+	srcRoute, destRoute := a.apiRouted(messages[0].AccountID), a.apiRouted(destFolder.AccountID)
+	if messages[0].AccountID != destFolder.AccountID && (srcRoute != nil || destRoute != nil) {
+		return apiUnsupported("Moving messages between accounts")
+	}
+	if srcRoute != nil {
+		return a.apiMoveLocal(srcRoute, messages, destFolder)
+	}
+
 	// Cross-account move: APPEND raw bytes to destination first, then route source
 	// cleanup through the existing Trash() pipeline (which handles local DB, IMAP
 	// COPY+EXPUNGE within source, folder counts, events, undo, Gmail labels).
@@ -357,7 +386,7 @@ func (a *App) moveToFolder(messageIDs []string, destFolderID string, recordUndo 
 		return fmt.Errorf("failed to move messages locally: %w", err)
 	}
 
-	wailsRuntime.EventsEmit(a.ctx, "messages:moved", map[string]interface{}{
+	eventsEmit(a.ctx, "messages:moved", map[string]interface{}{
 		"messageIds":   messageIDs,
 		"destFolderId": destFolderID,
 	})
@@ -407,7 +436,7 @@ func (a *App) moveToFolder(messageIDs []string, destFolderID string, recordUndo 
 		}
 
 		if len(folderCounts) > 0 {
-			wailsRuntime.EventsEmit(a.ctx, "folders:countsChanged", folderCounts)
+			eventsEmit(a.ctx, "folders:countsChanged", folderCounts)
 		}
 	}()
 
@@ -611,6 +640,10 @@ func (a *App) CopyToFolder(messageIDs []string, destFolderID string) error {
 		return nil
 	}
 
+	if a.anyAPIRouted(messageIDs) {
+		return apiUnsupported("Copying messages")
+	}
+
 	// Cross-account selections route to a partition helper that recurses
 	// through this same function with uniform single-account slices. See
 	// MoveToFolder for the rationale — same shape applied to Copy (which
@@ -762,7 +795,7 @@ func (a *App) copyMessagesAcrossAccounts(messages []*message.Message, destFolder
 			return fmt.Errorf("failed to select destination mailbox: %w", err)
 		}
 		for _, m := range messages {
-			raw, err := a.syncEngine.FetchRawMessage(a.ctx, m.AccountID, m.FolderID, m.UID)
+			raw, err := a.fetchRawMessage(a.ctx, m)
 			if err != nil {
 				return fmt.Errorf("failed to fetch raw message from source: %w", err)
 			}
@@ -902,8 +935,8 @@ func (a *App) Trash(messageIDs []string) (bool, error) {
 		return false, fmt.Errorf("no trash folder configured")
 	}
 
-	// Non-Gmail: normal move to trash for all messages
-	if !a.isGmailAccount(accountID) {
+	// Non-Gmail (and API-routed): normal move to trash for all messages
+	if !a.isGmailAccount(accountID) || a.apiRouted(accountID) != nil {
 		return true, a.MoveToFolder(messageIDs, trashFolder.ID)
 	}
 
@@ -1002,7 +1035,7 @@ func (a *App) gmailRemoveLabel(messages []*message.Message) error {
 		return fmt.Errorf("failed to delete messages locally: %w", err)
 	}
 
-	wailsRuntime.EventsEmit(a.ctx, "messages:deleted", ids)
+	eventsEmit(a.ctx, "messages:deleted", ids)
 
 	// Update folder counts
 	go func() {
@@ -1029,7 +1062,7 @@ func (a *App) gmailRemoveLabel(messages []*message.Message) error {
 			folderCounts[folderID] = unreadCount
 		}
 		if len(folderCounts) > 0 {
-			wailsRuntime.EventsEmit(a.ctx, "folders:countsChanged", folderCounts)
+			eventsEmit(a.ctx, "folders:countsChanged", folderCounts)
 		}
 	}()
 
@@ -1112,8 +1145,8 @@ func (a *App) MarkAsSpam(messageIDs []string) (bool, error) {
 		return false, fmt.Errorf("no spam folder configured")
 	}
 
-	// Non-Gmail: normal move to spam
-	if !a.isGmailAccount(accountID) {
+	// Non-Gmail (and API-routed): normal move to spam
+	if !a.isGmailAccount(accountID) || a.apiRouted(accountID) != nil {
 		return true, a.MoveToFolder(messageIDs, spamFolder.ID)
 	}
 
@@ -1176,6 +1209,10 @@ func (a *App) DeletePermanently(messageIDs []string) error {
 		return nil
 	}
 
+	if a.anyAPIRouted(messageIDs) {
+		return apiUnsupported("Permanent deletion")
+	}
+
 	messages, err := a.messageStore.GetByIDs(messageIDs)
 	if err != nil {
 		return fmt.Errorf("failed to get messages: %w", err)
@@ -1199,7 +1236,7 @@ func (a *App) DeletePermanently(messageIDs []string) error {
 		return fmt.Errorf("failed to delete messages locally: %w", err)
 	}
 
-	wailsRuntime.EventsEmit(a.ctx, "messages:deleted", messageIDs)
+	eventsEmit(a.ctx, "messages:deleted", messageIDs)
 
 	// Update folder unread counts
 	go func() {
@@ -1227,7 +1264,7 @@ func (a *App) DeletePermanently(messageIDs []string) error {
 			folderCounts[folderID] = unreadCount
 		}
 		if len(folderCounts) > 0 {
-			wailsRuntime.EventsEmit(a.ctx, "folders:countsChanged", folderCounts)
+			eventsEmit(a.ctx, "folders:countsChanged", folderCounts)
 		}
 	}()
 

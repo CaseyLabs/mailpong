@@ -38,6 +38,9 @@ func (a *App) GetFolderTree(accountID string) ([]*folder.FolderTree, error) {
 // SyncFolders synchronizes the folder list with the IMAP server
 func (a *App) SyncFolders(accountID string) error {
 	log := logging.WithComponent("app")
+	if route := a.apiRouted(accountID); route != nil {
+		return a.runAPISync(a.ctx, route, false)
+	}
 	done, ok := a.trackSync()
 	if !ok {
 		return nil

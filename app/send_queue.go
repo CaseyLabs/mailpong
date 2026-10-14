@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/caseylabs/mailven/internal/logging"
+	"github.com/caseylabs/mailven/internal/submission"
 	"github.com/rs/zerolog"
 )
 
@@ -22,9 +23,11 @@ type sendFunc func() (draftID string, err error)
 
 // SendResult is the send:finished event payload.
 type SendResult struct {
-	ID      string `json:"id"`
-	Error   string `json:"error"`
-	DraftID string `json:"draftId"` // draft keeping a message that failed to send
+	ID       string `json:"id"`
+	Error    string `json:"error"`
+	Outcome  string `json:"outcome"`
+	Warnings string `json:"warnings"`
+	DraftID  string `json:"draftId"` // draft kept after a failed send or a failed post-send cleanup
 }
 
 // sendQueue holds sends for a delay before running them, so they can be
@@ -33,6 +36,7 @@ type sendQueue struct {
 	mu      sync.Mutex
 	delay   time.Duration
 	notify  func(SendResult) // nil once muted
+	lookup  func(string) (*submission.Attempt, error)
 	waiting map[string]*time.Timer
 	sends   map[string]sendFunc
 	next    int
@@ -50,16 +54,23 @@ func (q *sendQueue) add(send sendFunc) string {
 	defer q.mu.Unlock()
 	q.next++
 	id := fmt.Sprintf("send-%d", q.next)
+	return q.addLocked(id, send)
+}
+
+// addID uses the durable attempt ID as the event/undo identifier.
+func (q *sendQueue) addID(id string, send sendFunc) string {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	return q.addLocked(id, send)
+}
+
+func (q *sendQueue) addLocked(id string, send sendFunc) string {
 	q.sends[id] = send
 	if q.flushed {
 		q.startLocked(id)
 		return id
 	}
-	q.waiting[id] = time.AfterFunc(q.delay, func() {
-		q.mu.Lock()
-		defer q.mu.Unlock()
-		q.startLocked(id)
-	})
+	q.waiting[id] = time.AfterFunc(q.delay, func() { q.mu.Lock(); defer q.mu.Unlock(); q.startLocked(id) })
 	return id
 }
 
@@ -119,9 +130,16 @@ func (q *sendQueue) startLocked(id string) {
 	go func() {
 		defer q.running.Done()
 		res := SendResult{ID: id}
-		if draftID, err := runSend(send); err != nil {
+		draftID, err := runSend(send)
+		res.DraftID = draftID
+		if err != nil {
 			sendLog().Warn().Err(err).Str("sendID", id).Msg("Queued send failed")
-			res.Error, res.DraftID = err.Error(), draftID
+			res.Error = err.Error()
+		}
+		if q.lookup != nil {
+			if attempt, err := q.lookup(id); err == nil && attempt != nil {
+				res.Outcome, res.Warnings = attempt.Outcome, attempt.Warnings
+			}
 		}
 		q.mu.Lock()
 		notify := q.notify
@@ -152,7 +170,14 @@ func sendLog() *zerolog.Logger {
 // UndoSend cancels a queued send that hasn't started and reports whether it
 // did. The message stays in its draft, if it had one.
 func (a *App) UndoSend(id string) bool {
-	return a.sendQueue.cancel(id)
+	if !a.sendQueue.cancel(id) {
+		return false
+	}
+	if attempt, err := a.composeOps.submissions.Get(id); err == nil && attempt != nil {
+		attempt.Stage = "cancelled"
+		_ = a.composeOps.submissions.Update(attempt)
+	}
+	return true
 }
 
 // finishBeforeQuit waits (bounded) for the frontend to save chat drafts, then

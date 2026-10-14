@@ -7,6 +7,7 @@
   import AccountGeneralTab from './account/AccountGeneralTab.svelte'
   import AccountIdentityTab from './account/AccountIdentityTab.svelte'
   import AccountServerTab from './account/AccountServerTab.svelte'
+  import MailAPISection from './account/MailAPISection.svelte'
   import AccountSecurityTab from './account/AccountSecurityTab.svelte'
   import AccountContactsHookPanel from '$extensions/contacts/frontend/hooks/AccountContactsHookPanel.svelte'
   import AccountCalendarHookPanelGoogle from '$extensions/calendar/frontend/hooks/AccountCalendarHookPanelGoogle.svelte'
@@ -290,10 +291,8 @@
       case isOAuth:
         result = await accountStore.addOAuthAccount(
           provider,
-          config.email,
-          config.name,
-          config.displayName,
-          config.color
+          config,
+          oauthCredentials?.microsoftAccountType ?? ''
         )
         break
       default:
@@ -522,6 +521,9 @@
                 }
               }}
             />
+          {#if editAccount.authType === 'oauth2' && !editAccount.sharedMailboxParentId}
+              <MailAPISection accountId={editAccount.id} />
+            {/if}
           </Tabs.Content>
         </div>
 

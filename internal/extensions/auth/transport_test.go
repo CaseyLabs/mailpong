@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -22,6 +23,24 @@ func (f roundTripFunc) RoundTrip(r *http.Request) (*http.Response, error) { retu
 
 func respond(r *http.Request, status int) *http.Response {
 	return &http.Response{StatusCode: status, Body: io.NopCloser(strings.NewReader(http.StatusText(status))), Request: r}
+}
+
+func TestTransportRechecksGrantRotatedByAnotherRequest(t *testing.T) {
+	for _, scopes := range [][]string{nil, {"https://example.com/other"}} {
+		t.Run(fmt.Sprintf("scopes=%v", scopes), func(t *testing.T) {
+			_, store, db := newTestBroker(t)
+			insertTestAccount(t, db, "acct")
+			if err := store.SetOAuthTokens("acct", &credentials.OAuthTokens{Provider: "custom", AccessToken: "rotated", RefreshToken: "fixture-refresh", Scopes: scopes, ScopesKnown: scopes != nil}); err != nil {
+				t.Fatal(err)
+			}
+			transport := &bearerRefreshTransport{credStore: store, accountID: "acct", clientConfigID: "custom-mail", scopes: []coreapi.AuthScope{{Resource: "https://example.com/calendar"}}}
+			_, err := transport.freshToken("stale")
+			var consent *coreapi.ErrAdditionalConsentRequired
+			if !errors.As(err, &consent) || len(consent.MissingScopes) != 1 {
+				t.Fatalf("rotated grant bypassed scope check: %v", err)
+			}
+		})
+	}
 }
 
 // newCustomAccountClient returns an extension client for a custom ("bring
@@ -252,7 +271,10 @@ func TestTransport_WaitsForMailPathRefresh(t *testing.T) {
 		t.Fatalf("HTTPClientForExtension: %v", err)
 	}
 
-	unlock := credStore.LockOAuthRefresh("acct", "custom-mail")
+	unlock, err := credStore.LockOAuthRefresh("acct", "custom-mail")
+	if err != nil {
+		t.Fatal(err)
+	}
 	result := make(chan int, 1)
 	go func() {
 		resp, err := client.Get("https://api.test/")

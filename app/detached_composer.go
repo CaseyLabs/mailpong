@@ -28,6 +28,7 @@ import (
 	"github.com/caseylabs/mailven/internal/settings"
 	"github.com/caseylabs/mailven/internal/smime"
 	"github.com/caseylabs/mailven/internal/smtp"
+	"github.com/caseylabs/mailven/internal/submission"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
@@ -224,6 +225,7 @@ func (c *ComposerApp) Startup(ctx context.Context) {
 
 	// Initialize shared compose operations
 	c.composeOps = composeOps{
+		submissions:    submission.NewStore(c.db),
 		accountStore:   c.accountStore,
 		folderStore:    c.folderStore,
 		credStore:      c.credStore,
@@ -662,12 +664,29 @@ func (c *ComposerApp) SearchContacts(query string, limit int) ([]*contact.Contac
 
 // SendMessage sends the composed email.
 func (c *ComposerApp) SendMessage(accountID string, msg smtp.ComposeMessage) error {
+	// Persist the current content before a transport operation can become ambiguous.
+	localDraft := c.currentDraft
+	if msg.SubmissionDraftID != "" {
+		var err error
+		localDraft, err = c.draftStore.Get(msg.SubmissionDraftID)
+		if err != nil {
+			return err
+		}
+		if localDraft == nil {
+			return fmt.Errorf("submission draft not found")
+		}
+	}
+	saved, err := c.draftOps.persistRecoveryDraft(accountID, msg, localDraft)
+	if err != nil {
+		return err
+	}
+	c.currentDraft = saved
 	// Cancel in-flight draft sync before send+delete
 	if c.currentDraft != nil {
 		c.cancelDraftSync()
 	}
 
-	_, err := c.composeOps.sendMessage(c.ctx, accountID, msg, c.currentDraft)
+	_, err = c.composeOps.sendMessage(c.ctx, accountID, msg, c.currentDraft)
 	if err != nil {
 		return err
 	}

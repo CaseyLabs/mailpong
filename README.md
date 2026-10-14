@@ -2,7 +2,7 @@
 
 ## Overview
 
-Mailven is a Messenger-style email client. It simplifies your inbox by turning emails into chats with the clutter removed.
+**Mailven** is a Messenger-style email client. It simplifies your inbox by turning emails into chats with the clutter removed.
 
 ![Mailven chat mail view](docs/ss.png)
 
@@ -12,11 +12,11 @@ _Note_: this is a personal project that is alpha software under active developme
 
 Mailven started with the desire for a simple chat interface for email, similar to the way that [Beeper](https://www.beeper.com/) has done for messenger apps. Unfortunately, no such solutuion existed.
 
-Mailven is a custom fork of the open-source [**Aerion email client**](https://github.com/hkdb/aerion), with the goal to turning it into an email chat app. While Mailven has diverged into its own project, its existence wouldn't be possible without all of the hard work by the Aerion team.
+Mailven is a custom fork of the open-source [**Aerion email client**](https://github.com/hkdb/aerion), with the goal of transforming it into an email chat app. While Mailven has diverged into its own project, its existence wouldn't be possible without all of the hard work by the Aerion team.
 
 ## Features
 
-Mailven strives to present your emails as chats, similar to instant messaging apps like Messages, WhatsApp, etc. The goal is to reduce the information overload that contemporary email has become:
+Mailven aims to present your emails as chats, similar to instant messaging apps like Messages, WhatsApp, etc. The goal is to reduce the information overload that contemporary email has become:
 
 - Emails are grouped by _sender_, not _subject_.
   - This allows multiple threads to appear as a single chat.
@@ -33,6 +33,7 @@ There are no published releases yet. Build from source with the [Build Guide](do
 ## Documentation
 
 - [User Guide](docs/user-guide/intro.md)
+- [Sending and recovery](docs/SENDING.md)
 - [Build Guide](docs/BUILD.md)
 - [Release process](docs/RELEASE.md)
 - [Changelog](CHANGELOG.md)

@@ -20,7 +20,7 @@
 
 ## Layout Notes
 
-- `frontend/wailsjs/` holds generated Wails bindings; regenerate with `make generate` after binding changes, then revert unrelated churn in `frontend/wailsjs/runtime/*`. Stop any running Mailven first (`dev.sh stop`): the single-instance lock makes the generator exit without writing anything.
+- `frontend/wailsjs/` holds generated Wails bindings; regenerate with `make generate` after binding changes, then revert unrelated churn in `frontend/wailsjs/runtime/*`. Stop any running Mailven first (`dev.sh stop`): the single-instance lock makes the generator exit without writing anything. Wails also inserts tabs on blank lines in `frontend/wailsjs/go/models.ts`; remove that whitespace-only churn before `git diff --check`, preserving actual binding changes.
 - Before committing changes under `extensions/**`, `internal/core/**`, `internal/extensions/**`, `internal/kit/**`, `app/coreimpl*.go`, `app/extension_*.go`, or `frontend/src/lib/components/kit/**`, read `docs/EXT_RULES.md` and check the design against it; redesign violations. Read it only for relevant extension/core/kit work.
 - `docs/EXTENSIONS.md` (about 170 KB), `docs/history/AERION_CASA_TIER2.md`, and `docs/LANGUAGE.md` are long: search or read by section, never whole. For the full extension reference, read the Contents of `docs/EXTENSIONS.md`, then only needed sections.
 
@@ -52,6 +52,9 @@ Toolchain: Go 1.26, Node.js 24 (matches CI), Wails v2 CLI. Linux needs GTK 3 and
 - Use table-driven Go tests for critical paths and edge cases.
 - `internal/database/database_test.go` rewinds the schema and reapplies later migrations: a new `ADD COLUMN` needs matching `DROP COLUMN` lines in its rewind blocks, and every migration must be rerunnable (`IF NOT EXISTS`, and backfills that clear their table first).
 - There is no frontend test script. For frontend changes, run `npm run lint` and `npm run check` in `frontend/`, then verify the UI with the `run-mailven` skill. In cloud sessions use the skill's headless path (Xvfb + Playwright); if no UI check can run at all, say so in the PLAN.md Progress entry and in your report.
+- When intercepting the frontend entry point for fakes, match `src/main.ts` with or without Wails' hot-reload query string.
+- In guarded Wails setter fakes, copy reactive arguments with `JSON.parse(JSON.stringify(value))`; `structuredClone` cannot copy Svelte state proxies.
+- Give native selects explicit accessible names (`aria-label` or a separate `for`/`id` label); wrapping labels can absorb option text and break exact-name UI checks.
 - Visual UI checks always cover the Mail view with the Accounts column expanded and collapsed (how-to: [Accounts column check](.agents/skills/run-mailven/SKILL.md#accounts-column-check)). Report checks you couldn't perform.
 
 ## Documentation

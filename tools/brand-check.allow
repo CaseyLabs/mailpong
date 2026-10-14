@@ -28,6 +28,7 @@ frontend/src/lib/components/settings/AboutTab.svelte :: [Aa]erion|AERION_URL :: 
 docs/user-guide/** :: Aerion :: Upstream relationship, CASA note and import guide
 docs/LANGUAGE.md :: Aerion :: States the i18n machinery's origin and imported-database behaviour
 docs/EXTENSIONS.md :: [Aa]erion :: Legacy manifest field minAerionVersion, choice IDs, and design notes that are not in this repository
+docs/validation/shared-skills-g3.md :: persisted Aerion identifier :: Historical verification of the persisted legacy identifier rule
 frontend/src/lib/i18n/index.ts :: Aerion database :: Comment about imported Aerion databases
 frontend/src/lib/spellcheck/locales.ts :: Aerion database :: Comment about imported Aerion databases
 frontend/src/lib/components/kit/DetailOverlay.svelte :: Aerion ancestry :: Comment on code origin

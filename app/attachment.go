@@ -107,7 +107,7 @@ func (a *App) DownloadAttachment(attachmentID, savePath string) (string, error) 
 	log.Debug().Uint32("uid", msg.UID).Str("folderID", msg.FolderID).Msg("Got message info")
 
 	// Fetch raw message from IMAP
-	raw, err := a.syncEngine.FetchRawMessage(a.ctx, msg.AccountID, msg.FolderID, msg.UID)
+	raw, err := a.fetchRawMessage(a.ctx, msg)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to fetch raw message from IMAP")
 		return "", fmt.Errorf("failed to fetch message: %w", err)
@@ -388,7 +388,7 @@ func (a *App) SaveAllAttachments(messageID string) (string, error) {
 	}
 
 	// Fetch raw message from IMAP
-	raw, err := a.syncEngine.FetchRawMessage(a.ctx, msg.AccountID, msg.FolderID, msg.UID)
+	raw, err := a.fetchRawMessage(a.ctx, msg)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch message: %w", err)
 	}
@@ -691,7 +691,7 @@ func (a *App) saveAllAttachmentsViaPortal(messageID string, attachments []*messa
 	}
 
 	// Fetch raw message from IMAP
-	raw, err := a.syncEngine.FetchRawMessage(a.ctx, msg.AccountID, msg.FolderID, msg.UID)
+	raw, err := a.fetchRawMessage(a.ctx, msg)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch message: %w", err)
 	}

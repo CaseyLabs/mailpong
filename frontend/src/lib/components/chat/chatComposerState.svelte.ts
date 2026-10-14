@@ -4,8 +4,9 @@
 // Sends wait out the backend's undo delay; Undo puts the reply back in the box.
 
 // @ts-ignore - wailsjs path
-import { SaveChatDraft, GetChatDraft, QueueChatReply, ReleaseChatDraft, PickAttachmentFiles, DeleteDraft } from '../../../../wailsjs/go/app/App'
+import { GetSubmissionAttempt, GetChatSubmissionReview, SaveChatDraft, GetChatDraft, QueueChatReply, ReleaseChatDraft, PickAttachmentFiles, DeleteDraft } from '../../../../wailsjs/go/app/App'
 import { UNDO_SEND_MS, undoSend, whenSent } from '$lib/stores/sendQueue'
+import { SubmissionReview } from '../composer/submissionReview.svelte'
 import { app, smtp } from '../../../../wailsjs/go/models'
 import type { Person, ReplyRecipients, ReplyTarget } from './chatFormat'
 
@@ -54,6 +55,7 @@ export async function flushChatComposers(): Promise<void> {
 }
 
 export class ChatComposer {
+  submissionReview = new SubmissionReview()
   text = $state('')
   // null = follow the target's default
   replyAllChoice = $state<boolean | null>(null)
@@ -221,8 +223,19 @@ export class ChatComposer {
     await this.#deliver(p.id)
   }
 
-  retry(id: number) {
-    void this.#deliver(id)
+  async retry(id: number) {
+    const p = this.pending.find(x => x.id === id)
+    if (!p || p.status !== 'failed') return
+    try {
+      const previous = await GetChatSubmissionReview(p.reply)
+      if (previous) {
+        if (!(await this.submissionReview.ask(previous.outcome))) return
+        p.reply.reviewAttemptId = previous.id
+      }
+      await this.#deliver(id)
+    } catch (err) {
+      this.pending = this.pending.map(x => x.id === id ? { ...x, error: String(err) } : x)
+    }
   }
 
   // undo stops a queued send and puts it back in the box; it does nothing
@@ -292,11 +305,19 @@ export class ChatComposer {
     if (!p) return
     update({ status: 'queued', error: '', sentAt: Date.now() + UNDO_SEND_MS, sendId: '' })
     let error: string
+    let warnings = ''
     try {
       const sendId: string = await QueueChatReply(p.reply)
+      // Queueing may create the recovery draft. Keep its ID for Undo/Edit,
+      // even before the send:finished event arrives.
+      try {
+        const attempt = await GetSubmissionAttempt(sendId)
+        if (attempt?.draftId) p.reply.draftId = attempt.draftId
+      } catch (err) { console.error('Failed to read queued submission draft:', err) }
       update({ sendId })
       const r = await whenSent(sendId)
       error = r.error
+      warnings = r.warnings || ''
       // The backend saves an unsent reply without a draft as one.
       if (r.draftId) p.reply.draftId = r.draftId
     } catch (err) {
@@ -307,7 +328,7 @@ export class ChatComposer {
       update({ status: 'failed', error, sendId: '' })
       return
     }
-    update({ status: 'sent', sentAt: Date.now(), sendId: '' })
+    update({ status: 'sent', error: warnings, sentAt: Date.now(), sendId: '' })
   }
 
   async #save(snap: Snapshot, orphans: string[]) {

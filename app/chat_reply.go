@@ -10,20 +10,20 @@ import (
 	"github.com/caseylabs/mailven/internal/account"
 	"github.com/caseylabs/mailven/internal/draft"
 	"github.com/caseylabs/mailven/internal/email"
-	"github.com/caseylabs/mailven/internal/logging"
 	"github.com/caseylabs/mailven/internal/settings"
 	"github.com/caseylabs/mailven/internal/smtp"
 )
 
 // ChatReply is a reply typed in the chat composer.
 type ChatReply struct {
-	AccountID   string            `json:"accountId"`
-	ThreadKey   string            `json:"threadKey"`
-	MessageID   string            `json:"messageId"` // message replied to
-	Text        string            `json:"text"`
-	ReplyAll    bool              `json:"replyAll"`
-	Attachments []smtp.Attachment `json:"attachments"` // files the user attached
-	DraftID     string            `json:"draftId"`     // chat draft being edited, if any
+	AccountID       string            `json:"accountId"`
+	ThreadKey       string            `json:"threadKey"`
+	MessageID       string            `json:"messageId"` // message replied to
+	Text            string            `json:"text"`
+	ReplyAll        bool              `json:"replyAll"`
+	Attachments     []smtp.Attachment `json:"attachments"` // files the user attached
+	ReviewAttemptID string            `json:"reviewAttemptId,omitempty"`
+	DraftID         string            `json:"draftId"` // chat draft being edited, if any
 }
 
 // ChatDraft is a thread's saved chat composer state.
@@ -46,53 +46,44 @@ func (a *App) QueueChatReply(r ChatReply) (string, error) {
 	if chatReplyEmpty(r) {
 		return "", fmt.Errorf("chat reply is empty")
 	}
-	return a.sendQueue.add(func() (string, error) {
-		err := a.sendChatReply(r)
-		if err == nil || r.DraftID != "" {
-			return r.DraftID, err
-		}
-		// Keep the unsent reply so it survives a restart. A draft typed while
-		// it was sending keeps the thread's chat link.
-		draftID, saveErr := a.saveChatDraft(r, false)
-		if saveErr != nil {
-			sendLog().Warn().Err(saveErr).Msg("Failed to save unsent chat reply")
-		}
-		return draftID, err
-	}), nil
-}
-
-// sendChatReply sends a chat reply, deletes its draft, and syncs Sent so the
-// reply joins the thread.
-func (a *App) sendChatReply(r ChatReply) error {
-	if chatReplyEmpty(r) {
-		return fmt.Errorf("chat reply is empty")
-	}
 	msg, err := a.buildChatReply(r)
 	if err != nil {
-		return err
+		return "", err
 	}
-	if r.DraftID != "" {
-		// Keep a background draft upload from racing the send.
+	// Chat has no sender review UI; fail now rather than after the undo delay.
+	if err := a.composeOps.requireSenderEvidence(r.AccountID, *msg); err != nil {
+		return "", err
+	}
+	// Save before queueing so crash/restart and unknown outcomes keep content.
+	var saveErr error
+	r.DraftID, saveErr = a.saveChatDraft(r, false)
+	if saveErr != nil {
+		return "", saveErr
+	}
+	msg.ReviewAttemptID = r.ReviewAttemptID
+	attempt, err := a.composeOps.prepareSubmission(r.AccountID, *msg, r.DraftID)
+	if err != nil {
+		return "", err
+	}
+	return a.sendQueue.addID(attempt.ID, func() (keptDraftID string, sendErr error) {
+		defer a.composeOps.finishAttempt(attempt, &sendErr)
+		keptDraftID = r.DraftID
 		a.cancelDraftSync(r.DraftID)
-	}
-	if _, err := a.composeOps.sendMessage(a.ctx, r.AccountID, *msg, nil); err != nil {
-		return err
-	}
-
-	log := logging.WithComponent("app.chat")
-	// Deleting the draft drops its chat link too (ON DELETE CASCADE); a draft
-	// typed while this one was sending keeps its own link.
-	if r.DraftID != "" {
+		if _, err := a.composeOps.sendPrepared(a.ctx, r.AccountID, *msg, nil, attempt); err != nil {
+			return r.DraftID, err
+		}
 		if err := a.DeleteDraft(r.DraftID); err != nil {
-			log.Warn().Err(err).Str("draftID", r.DraftID).Msg("Failed to delete chat draft after send")
+			attempt.Warnings += "Draft cleanup failed: " + err.Error() + "\n"
+			_ = a.composeOps.submissions.Update(attempt)
+			return r.DraftID, nil
 		}
-	}
-	go func() {
-		if err := a.syncSentFolder(r.AccountID); err != nil {
-			log.Debug().Err(err).Msg("Sent folder sync failed")
-		}
-	}()
-	return nil
+		go func() {
+			if err := a.syncSentFolder(r.AccountID); err != nil {
+				sendLog().Debug().Err(err).Msg("Sent folder sync failed")
+			}
+		}()
+		return "", nil
+	}), nil
 }
 
 // SaveChatDraft saves the chat composer's text as a reply draft and returns

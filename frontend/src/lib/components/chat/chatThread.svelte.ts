@@ -436,7 +436,7 @@ export class ChatThread {
       toasts.success(t('viewer.readReceiptSent'))
     } catch (err) {
       console.error('Failed to send read receipt:', err)
-      toasts.error(t('viewer.failedToSendReceipt'))
+      toasts.error(String(err))
     } finally {
       const next = new Set(this.sendingReadReceipt)
       next.delete(msg.id)

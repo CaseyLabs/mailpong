@@ -4,6 +4,7 @@
   import { account, folder } from '../../../../wailsjs/go/models'
   import FolderTreeItem from './FolderTreeItem.svelte'
   import { _ } from '$lib/i18n'
+  import { mailApiRoutes, mailApiRouteName } from '$lib/stores/mailApiRoutes.svelte'
 
   interface Props {
     account: account.Account
@@ -95,6 +96,8 @@
   function handleClickOutside() {
     showMenu = false
   }
+
+  $effect(() => { void mailApiRoutes.refresh(acc.id) })
 </script>
 
 <svelte:window onclick={handleClickOutside} />
@@ -114,6 +117,9 @@
       />
       <Icon icon="mdi:email-outline" class="w-4 h-4" />
       <span class="truncate flex-1 text-left">{acc.name}</span>
+      {#if mailApiRoutes.active[acc.id]}
+        <span class="text-xs font-normal text-muted-foreground shrink-0" data-testid="route-badge">{$_(`mailApi.${mailApiRouteName(mailApiRoutes.active[acc.id])}`)}</span>
+      {/if}
 
       <!-- pr-10 keeps these clear of the menu button, so the error tooltip stays hoverable. -->
       {#if syncing}

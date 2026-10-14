@@ -1,6 +1,7 @@
 package app
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -16,6 +17,11 @@ import (
 
 // OAuthStatus represents the OAuth status for an account
 type OAuthStatus struct {
+	MicrosoftAccountType string   `json:"microsoftAccountType"`
+	GrantedScopes        []string `json:"grantedScopes"`
+	RequestedScopes      []string `json:"requestedScopes"`
+	ScopesKnown          bool     `json:"scopesKnown"`
+
 	IsOAuth     bool      `json:"isOAuth"`     // Whether the account uses OAuth
 	Provider    string    `json:"provider"`    // OAuth provider name (google, microsoft)
 	Email       string    `json:"email"`       // Authenticated email address
@@ -128,20 +134,32 @@ func (a *App) persistOAuthStableID(accountID string, tokens *oauth2.TokenRespons
 }
 
 func (a *App) CompleteOAuthAccountSetup(provider, email, accountName, displayName, color string) (*account.Account, error) {
+	config, err := oauthAccountDefaults(provider, "")
+	if err != nil {
+		return nil, err
+	}
+	config.Email, config.Username, config.Name, config.DisplayName, config.Color = email, email, accountName, displayName, color
+	return a.CompleteOAuthAccountSetupWithConfig(provider, config, "")
+}
+
+// CompleteOAuthAccountSetupWithConfig saves explicitly chosen setup evidence and
+// the user's server fields. It never rewrites an existing account's endpoints.
+func (a *App) CompleteOAuthAccountSetupWithConfig(provider string, config account.AccountConfig, microsoftAccountType string) (*account.Account, error) {
 	log := logging.WithComponent("app.oauth")
-
-	log.Info().
-		Str("provider", provider).
-		Str("email", email).
-		Str("name", accountName).
-		Msg("Completing OAuth account setup")
-
+	if _, err := oauthAccountDefaults(provider, microsoftAccountType); err != nil {
+		return nil, err
+	}
+	config.AuthType = account.AuthOAuth2
+	email := config.Email
 	// Check that we have pending tokens from the OAuth flow
 	pendingTokens, pendingEmail, _ := a.pendingOAuth()
 	if pendingTokens == nil {
 		return nil, fmt.Errorf("no pending OAuth tokens - please complete the sign-in process first")
 	}
 
+	if pendingTokens.Provider != "" && pendingTokens.Provider != provider {
+		return nil, fmt.Errorf("OAuth provider does not match the completed sign-in")
+	}
 	// Verify the email matches
 	if pendingEmail != "" && pendingEmail != email {
 		log.Warn().
@@ -156,47 +174,6 @@ func (a *App) CompleteOAuthAccountSetup(provider, email, accountName, displayNam
 		return nil, fmt.Errorf("unknown provider: %w", err)
 	}
 
-	// Build account config based on provider
-	var config account.AccountConfig
-	switch provider {
-	case "google":
-		config = account.AccountConfig{
-			Name:           accountName,
-			DisplayName:    displayName,
-			Color:          color,
-			Email:          email,
-			Username:       email,
-			AuthType:       account.AuthOAuth2,
-			IMAPHost:       "imap.gmail.com",
-			IMAPPort:       993,
-			IMAPSecurity:   account.SecurityTLS,
-			SMTPHost:       "smtp.gmail.com",
-			SMTPPort:       587,
-			SMTPSecurity:   account.SecurityStartTLS,
-			SyncPeriodDays: 180,
-			SyncInterval:   30,
-		}
-	case "microsoft":
-		config = account.AccountConfig{
-			Name:           accountName,
-			DisplayName:    displayName,
-			Color:          color,
-			Email:          email,
-			Username:       email,
-			AuthType:       account.AuthOAuth2,
-			IMAPHost:       "outlook.office365.com",
-			IMAPPort:       993,
-			IMAPSecurity:   account.SecurityTLS,
-			SMTPHost:       "smtp.office365.com",
-			SMTPPort:       587,
-			SMTPSecurity:   account.SecurityStartTLS,
-			SyncPeriodDays: 180,
-			SyncInterval:   30,
-		}
-	default:
-		return nil, fmt.Errorf("unsupported OAuth provider: %s", provider)
-	}
-
 	// Create the account
 	acc, err := a.accountStore.Create(&config)
 	if err != nil {
@@ -209,13 +186,14 @@ func (a *App) CompleteOAuthAccountSetup(provider, email, accountName, displayNam
 
 	// Save OAuth tokens
 	tokens := &credentials.OAuthTokens{
-		Provider:     provider,
-		AccessToken:  pendingTokens.AccessToken,
-		RefreshToken: pendingTokens.RefreshToken,
-		ExpiresAt:    expiresAt,
-		Scopes:       providerConfig.Scopes,
+		Provider:             provider,
+		MicrosoftAccountType: microsoftAccountType,
+		AccessToken:          pendingTokens.AccessToken,
+		RefreshToken:         pendingTokens.RefreshToken,
+		ExpiresAt:            expiresAt,
 	}
 
+	tokens.ApplyTokenResponse(pendingTokens, providerConfig.Scopes, oauth2.ScopeResource(providerConfig), false)
 	log.Debug().
 		Str("accountID", acc.ID).
 		Str("provider", provider).
@@ -395,8 +373,8 @@ func (a *App) CompleteCustomOAuthAccountSetup(config account.AccountConfig) (*ac
 		AccessToken:  pendingTokens.AccessToken,
 		RefreshToken: pendingTokens.RefreshToken,
 		ExpiresAt:    expiresAt,
-		Scopes:       provider.Scopes,
 	}
+	tokens.ApplyTokenResponse(pendingTokens, provider.Scopes, oauth2.ScopeResource(*provider), false)
 	if err := a.credStore.SetOAuthTokens(acc.ID, tokens); err != nil {
 		log.Error().Err(err).Str("accountID", acc.ID).Msg("Failed to save OAuth tokens, rolling back account creation")
 		if delErr := a.accountStore.Delete(acc.ID); delErr != nil {
@@ -444,6 +422,11 @@ func (a *App) CompleteCustomOAuthAccountSetup(config account.AccountConfig) (*ac
 // This is used for re-authorization when tokens have expired.
 func (a *App) SavePendingOAuthTokens(accountID string) error {
 	log := logging.WithComponent("app.oauth")
+	ownerID, err := a.credStore.OAuthTokenOwnerID(accountID)
+	if err != nil {
+		return fmt.Errorf("could not resolve OAuth token owner: %w", err)
+	}
+	accountID = ownerID
 
 	pendingTokens, _, _ := a.pendingOAuth()
 	if pendingTokens == nil {
@@ -455,11 +438,17 @@ func (a *App) SavePendingOAuthTokens(accountID string) error {
 	if err != nil || provider == "" {
 		return fmt.Errorf("could not determine OAuth provider for account")
 	}
+	unlockRefresh, lockErr := a.credStore.LockOAuthRefresh(accountID, oauth2.ClientConfigIDForProvider(provider))
+	if lockErr != nil {
+		return fmt.Errorf("could not acquire OAuth reauthorization lock: %w", lockErr)
+	}
+	defer unlockRefresh()
 
 	// Resolve scopes for the token record. Shipped providers expose them via their
 	// static config; custom ("bring your own app") providers store them per account,
 	// since GetProvider("custom") fails by design.
 	var scopes []string
+	var scopeResource string
 	switch provider {
 	case customOAuthProviderName:
 		cfg, ok, cerr := a.credStore.GetCustomOAuthProvider(accountID)
@@ -467,12 +456,14 @@ func (a *App) SavePendingOAuthTokens(accountID string) error {
 			return fmt.Errorf("could not load custom OAuth provider for account")
 		}
 		scopes = cfg.Scopes
+		scopeResource = cfg.TokenURL
 	default:
 		providerConfig, perr := oauth2.GetProvider(provider)
 		if perr != nil {
 			return fmt.Errorf("unknown provider: %w", perr)
 		}
 		scopes = providerConfig.Scopes
+		scopeResource = oauth2.ScopeResource(providerConfig)
 	}
 
 	// Calculate expiry time
@@ -483,9 +474,23 @@ func (a *App) SavePendingOAuthTokens(accountID string) error {
 		AccessToken:  pendingTokens.AccessToken,
 		RefreshToken: pendingTokens.RefreshToken,
 		ExpiresAt:    expiresAt,
-		Scopes:       scopes,
 	}
 
+	// Reauthorization must still work when the prior credentials are gone;
+	// that is often why the user is reauthorizing.
+	prior, err := a.credStore.GetOAuthTokens(accountID)
+	switch {
+	case errors.Is(err, credentials.ErrCredentialNotFound):
+	case err != nil:
+		return fmt.Errorf("could not load prior OAuth credentials: %w", err)
+	default:
+		tokens.RefreshToken = prior.RefreshToken
+		tokens.MicrosoftAccountType = prior.MicrosoftAccountType
+	}
+	if pendingTokens.Provider != "" && pendingTokens.Provider != provider {
+		return fmt.Errorf("OAuth provider does not match this account")
+	}
+	tokens.ApplyTokenResponse(pendingTokens, scopes, scopeResource, false)
 	if err := a.credStore.SetOAuthTokens(accountID, tokens); err != nil {
 		return fmt.Errorf("failed to store OAuth tokens: %w", err)
 	}
@@ -495,10 +500,14 @@ func (a *App) SavePendingOAuthTokens(accountID string) error {
 	a.persistOAuthStableID(accountID, pendingTokens)
 
 	// Propagate new tokens to any shared mailboxes linked to this account
-	sharedMailboxes, _ := a.accountStore.ListBySharedMailboxParent(accountID)
+	sharedMailboxes, err := a.accountStore.ListBySharedMailboxParent(accountID)
+	if err != nil {
+		return fmt.Errorf("OAuth tokens saved, but failed to list linked shared mailboxes: %w", err)
+	}
 	for _, sm := range sharedMailboxes {
 		if smErr := a.credStore.SetOAuthTokens(sm.ID, tokens); smErr != nil {
 			log.Warn().Err(smErr).Str("sharedID", sm.ID).Msg("Failed to propagate tokens to shared mailbox")
+			return fmt.Errorf("OAuth tokens saved, but failed to update linked shared mailbox %s: %w", sm.ID, smErr)
 		}
 	}
 
@@ -546,7 +555,11 @@ func (a *App) GetOAuthStatus(accountID string) (*OAuthStatus, error) {
 	}
 
 	// Get OAuth token info
-	tokens, err := a.credStore.GetOAuthTokens(accountID)
+	ownerID, err := a.credStore.OAuthTokenOwnerID(accountID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve OAuth token owner: %w", err)
+	}
+	tokens, err := a.credStore.GetOAuthTokens(ownerID)
 	if err != nil {
 		// Tokens not found - needs re-auth
 		status.NeedsReauth = true
@@ -556,6 +569,8 @@ func (a *App) GetOAuthStatus(accountID string) (*OAuthStatus, error) {
 	status.Provider = tokens.Provider
 	status.ExpiresAt = tokens.ExpiresAt
 	status.IsExpired = tokens.IsExpired()
+	status.MicrosoftAccountType = tokens.MicrosoftAccountType
+	status.GrantedScopes, status.RequestedScopes, status.ScopesKnown = tokens.Scopes, tokens.RequestedScopes, tokens.ScopesKnown
 	status.NeedsReauth = tokens.IsExpired() && tokens.RefreshToken == ""
 
 	return status, nil
@@ -594,6 +609,11 @@ func (a *App) ReauthorizeAccount(accountID string) error {
 	if acc.AuthType != account.AuthOAuth2 {
 		return fmt.Errorf("account is not an OAuth account")
 	}
+	ownerID, err := a.credStore.OAuthTokenOwnerID(accountID)
+	if err != nil {
+		return fmt.Errorf("could not resolve OAuth token owner: %w", err)
+	}
+	accountID = ownerID
 
 	// Get the provider from stored tokens
 	provider, err := a.credStore.GetOAuthProvider(accountID)
@@ -644,6 +664,9 @@ func (a *App) TestOAuthConnection(accountID string) error {
 		return fmt.Errorf("failed to get OAuth token: %w", err)
 	}
 
+	if err := tokens.RequireMailCapability("imap"); err != nil {
+		return err
+	}
 	// Create IMAP client and test connection
 	clientConfig := imap.DefaultConfig()
 	clientConfig.Host = acc.IMAPHost

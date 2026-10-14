@@ -19,24 +19,31 @@
     const log = (s) => w.__log.push(s)
     const timers = {}
     let n = 0
-    const queue = (label) => {
+    const queue = (label, message) => {
       const id = 'send-' + ++n
       log(`queue ${id} ${label}`)
+      log('review token ' + (message?.review_attempt_id || message?.reviewAttemptId || ''))
+      w.__lastSentMessage = message
+      const result = w.__sendResult || {}
       timers[id] = setTimeout(() => {
         delete timers[id]
         log('fire ' + id)
-        emit('send:finished', { id, error: '', draftId: '' })
+        emit('send:finished', { id, outcome: 'accepted', warnings: '', error: '', draftId: '', ...result })
       }, w.__sendDelay)
       return id
     }
     return {
+      GetSenderEvidence: async (acc, email) => { if (w.__senderEvidenceError) throw Error(w.__senderEvidenceError); return w.__senderEvidence ?? { email, state: 'configured', observedState: 'configured', source: 'local account configuration', route: 'smtp://smtp.example.com:587 (starttls)', observedAt: '', action: 'allow', guidance: 'Locally configured sender; provider enforces permission.', reviewToken: '', sendAs: 'unknown', sendOnBehalf: 'unknown', sharedRead: 'unknown' } },
+      GetSubmissionAttempt: async id => ({ id, draftId: 'chat-draft-1' }),
+      GetSubmissionReview: async () => w.__submissionReview ?? null,
+      GetChatSubmissionReview: async () => w.__submissionReview ?? null,
       // Must be {draft: {id}}: without an ID the main-window composer sends at once, with no undo.
       SaveDraft: async () => { log('saveDraft'); return { draft: { id: 'draft-1', syncStatus: 'pending' } } },
       DeleteDraft: async (id) => { log('deleteDraft ' + id) },
       SaveChatDraft: async () => { log('saveChatDraft'); return 'chat-draft-1' },
       DeleteChatDraft: async () => { log('deleteChatDraft') },
-      QueueChatReply: async (r) => queue(JSON.stringify(r?.text ?? '')),
-      QueueMessage: async (acc, msg, draftId) => queue(`${draftId} ${msg?.subject ?? ''}`),
+      QueueChatReply: async (r) => queue(JSON.stringify(r?.text ?? ''), r),
+      QueueMessage: async (acc, msg, draftId) => queue(`${draftId} ${msg?.subject ?? ''}`, msg),
       UndoSend: async (id) => {
         const t = timers[id]
         log(`undo ${id} ${!!t}`)
@@ -45,7 +52,7 @@
         delete timers[id]
         return true
       },
-      SendMessage: async (acc, msg) => { log('SEND ' + (msg?.subject ?? '')) },
+      SendMessage: async (acc, msg) => { w.__lastSentMessage = msg; log('SEND ' + (msg?.subject ?? '')); log('review token ' + (msg?.review_attempt_id || '')) },
       OpenComposerWindow: async (...a) => { log('openComposerWindow ' + JSON.stringify(a)) },
       CloseWindow: async () => { log('closeWindow') },
     }

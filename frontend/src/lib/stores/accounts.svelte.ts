@@ -8,7 +8,7 @@ import {
   UpdateAccount,
   RemoveAccount,
   TestConnection,
-  CompleteOAuthAccountSetup,
+  CompleteOAuthAccountSetupWithConfig,
   CompleteCustomOAuthAccountSetup,
   ReorderAccounts,
   CancelFolderSync,
@@ -448,13 +448,10 @@ class AccountStore {
 
   /**
    * Add a new OAuth account
-   * This uses CompleteOAuthAccountSetup which creates the account AND saves the OAuth tokens
-   * that were stored temporarily during the OAuth flow.
+   * This saves the chosen server settings and tokens from the completed OAuth flow.
    */
-  async addOAuthAccount(provider: string, email: string, accountName: string, displayName: string, color: string): Promise<account.Account> {
-    // CompleteOAuthAccountSetup creates the account with correct IMAP/SMTP settings
-    // and saves the OAuth tokens from pendingOAuthTokens
-    const newAccount = await CompleteOAuthAccountSetup(provider, email, accountName, displayName, color)
+  async addOAuthAccount(provider: string, config: account.AccountConfig, microsoftAccountType = ''): Promise<account.Account> {
+    const newAccount = await CompleteOAuthAccountSetupWithConfig(provider, config, microsoftAccountType)
 
     // Add to local state
     this.accounts.push({

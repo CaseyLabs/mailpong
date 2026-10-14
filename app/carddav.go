@@ -305,7 +305,11 @@ func (a *App) GetLinkedAccountsForContactSync() ([]LinkedAccountInfo, error) {
 		}
 
 		// Get OAuth provider
-		provider, err := a.credStore.GetOAuthProvider(acc.ID)
+		ownerID, err := a.credStore.OAuthTokenOwnerID(acc.ID)
+		if err != nil {
+			continue
+		}
+		provider, err := a.credStore.GetOAuthProvider(ownerID)
 		if err != nil || provider == "" {
 			continue
 		}
@@ -317,15 +321,10 @@ func (a *App) GetLinkedAccountsForContactSync() ([]LinkedAccountInfo, error) {
 		}
 
 		// Check if account has contact scope
-		tokens, err := a.credStore.GetOAuthTokens(acc.ID)
+		tokens, err := a.credStore.GetOAuthTokens(ownerID)
 		hasContactScope := false
 		if err == nil && tokens != nil {
-			for _, scope := range tokens.Scopes {
-				if strings.Contains(scope, "contacts") {
-					hasContactScope = true
-					break
-				}
-			}
+			hasContactScope = tokens.HasScope("https://www.googleapis.com/auth/contacts.readonly")
 		}
 
 		result = append(result, LinkedAccountInfo{
@@ -590,9 +589,9 @@ func (a *App) CompleteContactSourceOAuthSetup(name string, syncInterval int) (*c
 		AccessToken:  pendingTokens.AccessToken,
 		RefreshToken: pendingTokens.RefreshToken,
 		ExpiresAt:    expiresAt,
-		Scopes:       providerConfig.Scopes,
 	}
 
+	tokens.ApplyTokenResponse(pendingTokens, providerConfig.Scopes, oauth2.ScopeResource(providerConfig), false)
 	if err := a.credStore.SetContactSourceOAuthTokens(source.ID, tokens); err != nil {
 		// Rollback source creation
 		a.carddavStore.DeleteSource(source.ID)

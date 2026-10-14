@@ -64,3 +64,53 @@ func TestDraftPersistsSenderIdentity(t *testing.T) {
 		t.Errorf("restored From after update = %q, want pat@example.com", got)
 	}
 }
+
+// CD1: saving a draft under another selected account moves ownership so the
+// draft is encrypted, synced and deleted under one account.
+func TestDraftOwnershipFollowsSelectedAccount(t *testing.T) {
+	db, err := database.Open(filepath.Join(t.TempDir(), "test.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := db.Migrate(); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { db.Close() })
+
+	accounts := account.NewStore(db)
+	mk := func(email string) *account.Account {
+		a, err := accounts.Create(&account.AccountConfig{
+			Name: email, DisplayName: "Pat", Email: email,
+			IMAPHost: "imap.example.com", IMAPPort: 993, IMAPSecurity: account.SecurityTLS,
+			SMTPHost: "smtp.example.com", SMTPPort: 587, SMTPSecurity: account.SecurityStartTLS,
+			AuthType: account.AuthPassword, Username: email,
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return a
+	}
+	first, second := mk("a@example.com"), mk("b@example.com")
+
+	ops := &draftOps{accountStore: accounts, draftStore: draft.NewStore(db)}
+	msg := smtp.ComposeMessage{From: smtp.Address{Address: "a@example.com"}, Subject: "Hi"}
+	d, err := ops.saveDraftToDB(first.ID, nil, msg, &encryptResult{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	msg.From = smtp.Address{Address: "b@example.com"}
+	if _, err := ops.saveDraftToDB(second.ID, d, msg, &encryptResult{}); err != nil {
+		t.Fatal(err)
+	}
+	stored, err := ops.draftStore.Get(d.ID)
+	if err != nil || stored == nil {
+		t.Fatalf("Get draft: %v", err)
+	}
+	if stored.AccountID != second.ID {
+		t.Errorf("AccountID = %q, want selected account %q", stored.AccountID, second.ID)
+	}
+	if stored.IMAPUID != 0 || stored.FolderID != "" {
+		t.Errorf("remote link not reset: uid=%d folder=%q", stored.IMAPUID, stored.FolderID)
+	}
+}

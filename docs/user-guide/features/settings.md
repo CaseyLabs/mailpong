@@ -298,6 +298,7 @@ For non-OAuth accounts:
         - Sync all folders - Disabled by default. Enable it to sync all imap folders
         - Or just check only the folders you want to auto-sync
 - **Trusted Certificates** - Manually trusted TLS certificates for all mail, contacts, and calendar servers, including hosts reached during discovery. Each entry shows the host; removing an entry revokes trust for that host only.
+- **Mail API route** - Gmail and Microsoft 365 (work/school) accounts can optionally switch from IMAP/SMTP to the provider's mail API. *Authorize API access* grants a separate permission, then *Review migration* shows what will happen and any blockers. Before anything changes a snapshot of the local database is saved; existing messages are matched and kept, and drafts and queued mail are preserved. *Return to IMAP / SMTP* undoes the switch; nothing is replayed to the provider and unfinished API actions are listed. There is no automatic fallback between routes, and no route promises delivery or inbox placement. Hidden (Bcc) recipient privacy and provider message-size limits on the API routes are not yet verified against live providers. Shared mailboxes cannot be migrated yet. Restoring the full snapshot is not available yet.
 
 #### Security Tab
 

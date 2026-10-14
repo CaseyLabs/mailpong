@@ -109,7 +109,7 @@ func TestSendAsStatusAndImport(t *testing.T) {
 	}
 
 	// The signature comes only on opt-in.
-	if err := ops.sendAsStore.Replace(acc.ID, []gmailapi.SendAs{{Email: "b@x.com", Signature: "<p>sig</p>"}}, time.Now()); err != nil {
+	if err := ops.sendAsStore.Replace(acc.ID, []gmailapi.SendAs{{Email: "b@x.com", VerificationStatus: "accepted", Signature: "<p>sig</p>"}}, time.Now()); err != nil {
 		t.Fatal(err)
 	}
 	signed, err := ops.importSendAs(acc.ID, []string{"b@x.com"}, true)

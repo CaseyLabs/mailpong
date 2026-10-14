@@ -6,6 +6,16 @@ Found by the full audit on 2026-10-08. Each entry gives a severity, the
 location, and the failure. "Unverified" means a reviewer reported it and it
 has not yet been confirmed against the code.
 
+### Mail APIs
+
+- **MA1 medium** `internal/gmailapi/send.go`, `internal/graphapi/send.go`: API clients add a `Bcc:` header for hidden envelope recipients because both providers read recipients from headers. Provider stripping of that header from delivered copies is undocumented and unverified; a Bcc recipient could be exposed. Needs a separately authorized live check before any route is activated (F4e). Message size limit (25 MiB) is also a local, undocumented ceiling.
+
+
+- **MA4 low** `app/api_route.go` `ActivateMailAPIRoute`: shared (delegated) mailbox routes cannot be activated because the Graph shared-mailbox address is not stored and `apiRemote` rejects shared routes. Found in F4e-3; needs shared-mailbox identity storage before a later milestone. F5a left it open: storing the address is not cheap (route schema, Graph delegate flow, read/write clients); shared routes stay unmigratable with that reason.
+
+
+- **MA2 low** `internal/extensions/store.go`: `gofmt -l` lists the file as unformatted (noticed during F4e-1; untouched there). Run `gofmt -w` on it in a change that owns that package.
+
 ### Dependencies
 
 - **D2 low** `frontend/package.json`: TypeScript 7 remains blocked upstream.
@@ -21,17 +31,45 @@ has not yet been confirmed against the code.
 
 ### Provider compatibility and deliverability (P1, 2026-10-12)
 
-Confirmed by static inspection; all remain unfixed because P1 is research-only. Details, provider sources, applicability and live-check limits are in [the provider review](docs/validation/provider-deliverability-review.md). Architecture and follow-up prioritization belong to P2.
+Confirmed by static inspection in P1; F1 verified the PD1/PD9 local fixes and new-account PD2 guidance/defaults; F2a verified the PD3 submission-outcome fix; F2b verified PD4/PD6/PD8 MIME/header/SIZE/international-envelope preflight, F3a verified PD5 sender evidence, review and blocking; and F3b verified the PD7 explicit route/destination policy and durable copy reconciliation plus U3 linked auth ownership/locks with disposable fixtures. Remaining findings and the PD2 live compatibility gate stay open. Details, provider sources, applicability and live-check limits are in [the provider review](docs/validation/provider-deliverability-review.md). Architecture and follow-up prioritization belong to P2.
 
-- **PD1 medium** `docs/user-guide/getting-started/first-account/gmail.md:77–84`, `outlook.md:30–35,51–58`: setup guidance prescribes manual reauthorization for routine token expiry despite automatic refresh in `app/compose.go:74–146`; Outlook's mail permissions list also claims contacts access absent from the Microsoft mail grant (`internal/oauth2/providers.go:51–58`). Correct the existing guides; distinguish rejected refresh grants and separate contacts authorization.
-- **PD2 medium** `app/oauth.go:179–192`, `docs/user-guide/getting-started/first-account/outlook.md:20–49`: all Microsoft OAuth accounts use Exchange Online's SMTP endpoint, rather than Outlook.com's documented `smtp-mail.outlook.com`; the guide omits personal Outlook.com's IMAP opt-in and makes an absolute app-password claim despite Microsoft's device-specific caveat. Published-default mismatch is confirmed; current endpoint failure is not. Verify compatibility before changing existing accounts.
-- **PD3 medium** `internal/smtp/client.go:375–386`, `app/send_queue.go:23–28,106–120`: generic write/final-DATA-reply errors expose no distinction between definite rejection and possibly accepted mail. A user retry after a lost final reply can duplicate a message. Preserve unknown-outcome state; verify with controlled SMTP fixtures rather than blind automatic resends.
-- **PD4 low** `internal/smtp/message.go:213–234,256–259`: whitespace folding leaves a long unbroken ASCII Subject intact and performs no total Subject-value limit check. A 1,100-character unbroken subject produces a line exceeding RFC/Gmail limits. Future checks must cover both physical-line and folded-value limits without silently altering content.
-- **PD5 medium** `app/sendas.go:46–57,94–100`, `frontend/src/lib/components/composer/SendAsWarning.svelte:20–35`, `app/compose.go:475–481`: Gmail OAuth sender status is advisory, failed lookups hide warnings, and selected From is sent without an authorization gate; equivalent Microsoft permission evidence is absent from this path. Known-unverified and unknown states need distinct guidance; lack of a warning is not proof of sender authorization.
-- **PD6 medium** `internal/smtp/client.go:351–386`, `frontend/src/lib/components/composer/Composer.svelte:365–366`: SMTP SIZE/final encoded-message size is not preflighted; the UI allows individual attachments up to 100 MB regardless of provider limits or combined MIME/encryption overhead. Users can prepare messages that their selected server rejects. Effective account thresholds still require verification.
-- **PD7 medium** `app/compose.go:484–491,1242–1255`: Sent-copy suppression depends on an IMAP-host substring rather than actual SMTP route and server copy settings. Exchange Online can disable SMTP Sent copies; the heuristic cannot represent that setting or custom/shared destinations, risking missing or duplicate copies. Verify actual mailbox behavior before changing the policy.
-- **PD8 low** `internal/smtp/client.go:351–372`: raw internationalized envelope addresses are sent without checking that SMTPUTF8 is available or normalizing international domains. Go's `net/smtp.Client.Mail` already adds SMTPUTF8 when advertised; the gap is absence of a capability-required preflight when it is not advertised. Verify Unicode domains separately from international local-parts and preserve international message content.
-- **PD9 medium** `app/oauth.go:214–216,482–486`, `internal/oauth2/flow.go:38`: persisted scope metadata records requested provider scopes rather than the token response's granted scopes. Partial consent can be represented as full consent. Verify feature handling with a controlled partial-grant response; downstream account failures are not established by this audit.
+- **PD2 medium — live compatibility gate** `app/oauth.go`, `internal/credentials/oauth_grants.go`: F1 corrects the setup guides and new personal/work defaults, verified by disposable fixtures and guarded UI checks. Existing Microsoft accounts retain their configured endpoints and unknown account type where no explicit evidence was recorded. Their prior `smtp.office365.com` endpoint can still differ from Outlook.com's published default; actual endpoint failure and migration compatibility remain unverified. Confirm account type and separately authorize live evidence before proposing any existing-account endpoint migration.
+
+### Draft storage
+
+
+- **CD2 medium** `app/draft.go:128–166`: existing autosave falls back to plaintext body/attachments when requested S/MIME or PGP encrypt-to-self fails. F2a rejects this downgrade for its new pre-submission recovery writes; ordinary autosave still needs a separately scoped encryption-failure policy. Confirmed by static inspection and disposable missing-key fixtures; no real drafts were changed.
+
+### Branch review: provider implementation (2026-10-13)
+
+- **R1 medium** `app/chat_reply.go` `QueueChatReply`: the chat composer has no
+  sender review UI, so a reply from a sender needing review (Microsoft, shared
+  mailboxes, non-Google OAuth, stale Gmail send-as) is refused at queue time and
+  must be sent from the full composer. Add the review prompt to chat.
+- **R2 low** `internal/submission/sent.go` `ReconcileCopies`: each send runs the
+  observation UPDATE and returns every accepted copy for the account, so cost
+  grows with journal size. Scope it to the new attempt or pending copies.
+
+- **Low** `internal/gmailapi/read.go`, `internal/graphapi/read.go`: `Reader`/`ReadError`/fetch (401-once refresh, size cap, classification) are duplicated across the two read clients. Found by F4d-3.
+- **Low** `internal/graphapi/read.go` `GetRaw`: a message larger than the 64 MiB cap fails the whole folder run with no skip, so one oversized message blocks that folder's cursor. Found by F4d-3.
+- **Low** `internal/sync/graphapi.go` `deltaRun`: the reconcile keeps every seen ID in memory and per-message GETs run for each local ID the enumeration missed; large folders are slow but bounded. Found by F4d-3.
+- **Low** `internal/sync/gmailapi.go` `reconcile`: collects every remote ID into one slice before committing, so memory grows with mailbox size (ID strings only; page requests stay bounded). Found by F4d-2 acceptance.
+- **Medium (before wiring)** `internal/sync/gmailapi.go` `GmailSync.Run`: no per-account mutex, so two concurrent runs on one account can race. The stale-generation check covers only a mid-run invalidate. The scheduler that wires this in must serialize runs per account.
+- **Low** `internal/sync/gmailapi.go` `reconcile`: costs one `minimal` GET per known message on the rare reset path; 5xx responses are treated like rate limits (bounded retries).
+- **Low** `internal/sync/apicommon.go` `parseAPIRaw`: a message with no parseable `Date:` header gets `time.Now()`, not the provider's received time (Gmail `internalDate`, Graph `receivedDateTime`). Such messages sort as new on every full ingest. Found by the branch review.
+
+- **F5b-1 (low)** — `app/api_migration.go` `RollbackMailAPIMigration`: full snapshot restore is not implemented; after a rollback only route state changes, so API-era local changes stay. F5c shows the snapshot path with a note but does not offer restore; it needs its own live-DB replacement design and data-loss UX.
+- **F5b-2 (low)** — `internal/apimigrate` `Correlate`: messages with no Message-ID, or ambiguous duplicates, stay uncorrelated and appear once from the API with no carried local state.
+- **F5b-3 (low)** — `app/api_migration.go` `RollbackMailAPIMigration`: the IMAP reconcile is only the async `syncScheduler.TriggerSync` inside `deactivateAPIRoute`; rollback does not wait for it and no test asserts the trigger (the scheduler is a concrete type). Add a scheduler seam and a test when F5c needs rollback progress.
+- **R3 medium** `internal/apiactions/worker.go` `applied`: when a provider move
+  returns a new remote ID and `ApplyAPIMove` fails, the error is only logged. Later
+  queued actions keep the old remote ID, the provider answers 404, and `gone()`
+  deletes the message locally until the next sync restores it. Retry the re-key
+  or keep the action open instead of only logging.
+- **R4 low** `app/api_actions.go` `apiMove`: a mid-batch failure returns before
+  `apiMoveLocal` emits `messages:moved`/counts, so rows already moved locally stay
+  shown in the source list until the next refresh. (The queued moves are now
+  kicked.)
 
 ## Recurring problems
 

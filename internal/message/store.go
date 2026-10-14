@@ -555,6 +555,15 @@ func (s *Store) GetByUID(folderID string, uid uint32) (*Message, error) {
 
 // Create creates a new message
 func (s *Store) Create(m *Message) error {
+	return s.createWith(s.db, m)
+}
+
+// execer is the Exec surface shared by the database and a transaction.
+type execer interface {
+	Exec(query string, args ...any) (sql.Result, error)
+}
+
+func (s *Store) createWith(ex execer, m *Message) error {
 	if m.ID == "" {
 		m.ID = uuid.New().String()
 	}
@@ -582,7 +591,7 @@ func (s *Store) Create(m *Message) error {
 		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
-	_, err := s.db.Exec(query,
+	_, err := ex.Exec(query,
 		m.ID, m.AccountID, m.FolderID, m.UID,
 		nullString(m.MessageID), nullString(m.InReplyTo), nullString(m.References), nullString(m.ThreadID),
 		m.Subject, m.FromName, m.FromEmail,

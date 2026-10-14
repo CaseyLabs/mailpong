@@ -487,7 +487,7 @@ func (a *App) GetImageAllowlist() ([]*settings.AllowlistEntry, error) {
 }
 
 // SendReadReceipt sends a read receipt (MDN) for the specified message
-func (a *App) SendReadReceipt(accountID, messageID string) error {
+func (a *App) SendReadReceipt(accountID, messageID string) (sendErr error) {
 	log := logging.WithComponent("app")
 
 	// Get the message
@@ -537,12 +537,36 @@ func (a *App) SendReadReceipt(accountID, messageID string) error {
 		fromEmail = acc.Email
 		fromName = acc.Name
 	}
+	// Receipts cannot acknowledge unknown sender rights. Apply the same gate
+	// as composed messages before creating an attempt or opening SMTP.
+	if err := a.composeOps.requireSenderEvidence(accountID, smtp.ComposeMessage{From: smtp.Address{Address: fromEmail}}); err != nil {
+		return err
+	}
 
 	// Build MDN message
 	mdnBytes, err := smtp.BuildMDN(msg, fromName, fromEmail, smtp.MDNDisplayed)
 	if err != nil {
 		return fmt.Errorf("failed to build MDN: %w", err)
 	}
+
+	// Journal receipts too: the original message retains the content needed
+	// for recovery. Unknown receipts are never automatically submitted again.
+	recipientEmail := extractEmailFromHeader(msg.ReadReceiptTo)
+	receipt := smtp.ComposeMessage{From: smtp.Address{Name: fromName, Address: fromEmail}, To: []smtp.Address{{Address: recipientEmail}}, Subject: "Read receipt", TextBody: messageID}
+	attempt, err := a.composeOps.prepareSubmission(accountID, receipt, "")
+	if err != nil {
+		return err
+	}
+	defer a.composeOps.finishAttempt(attempt, &sendErr)
+	// BuildMDN generated an ID; replace only its top-level header with the
+	// attempt's stable ID, leaving the original-message reference intact.
+	raw := string(mdnBytes)
+	start := strings.Index(raw, "Message-ID: ")
+	if start >= 0 {
+		end := start + strings.Index(raw[start:], "\r\n")
+		raw = raw[:start] + "Message-ID: " + attempt.MessageID + raw[end:]
+	}
+	mdnBytes = []byte(raw)
 
 	// Create SMTP config
 	smtpConfig := smtp.ClientConfig{
@@ -561,6 +585,9 @@ func (a *App) SendReadReceipt(accountID, messageID string) error {
 		if err != nil {
 			return fmt.Errorf("failed to get OAuth token: %w", err)
 		}
+		if err := tokens.RequireMailCapability("smtp"); err != nil {
+			return err
+		}
 		smtpConfig.AuthType = smtp.AuthTypeOAuth2
 		smtpConfig.AccessToken = tokens.AccessToken
 	} else {
@@ -575,27 +602,36 @@ func (a *App) SendReadReceipt(accountID, messageID string) error {
 
 	// Create SMTP client and connect
 	client := smtp.NewClient(smtpConfig)
+	attempt.Stage = "connect"
 	if err := client.Connect(); err != nil {
 		return fmt.Errorf("failed to connect to SMTP: %w", err)
 	}
 	defer client.Close()
 
+	attempt.Stage = "auth"
 	if err := client.Login(); err != nil {
 		return fmt.Errorf("failed to authenticate to SMTP: %w", err)
 	}
 
-	// Extract recipient email
-	recipientEmail := extractEmailFromHeader(msg.ReadReceiptTo)
-
-	// Send the MDN
-	if err := client.SendMail(fromEmail, []string{recipientEmail}, mdnBytes); err != nil {
+	// Send the MDN with the same conservative durable checkpoint.
+	result, err := client.SendMailTracked(fromEmail, []string{recipientEmail}, mdnBytes, func(result smtp.SubmissionResult) error {
+		applySubmissionResult(attempt, result)
+		return a.composeOps.submissions.Update(attempt)
+	})
+	applySubmissionResult(attempt, result)
+	if err != nil {
 		log.Error().Err(err).Str("from", fromEmail).Str("to", recipientEmail).Msg("Failed to send read receipt MDN")
 		return fmt.Errorf("failed to send read receipt: %w", err)
 	}
 
+	if err := a.composeOps.submissions.Update(attempt); err != nil {
+		attempt.Outcome = "unknown"
+		return fmt.Errorf("receipt acceptance could not be recorded: %w", err)
+	}
 	// Mark as handled
 	if err := a.messageStore.MarkReadReceiptHandled(messageID); err != nil {
 		log.Warn().Err(err).Str("message_id", messageID).Msg("Failed to mark read receipt as handled")
+		attempt.Warnings += "Read receipt cleanup failed: " + err.Error() + "\n"
 	}
 
 	log.Info().

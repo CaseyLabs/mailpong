@@ -2,7 +2,6 @@ package credentials
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -44,7 +43,7 @@ func (s *Store) SetOAuthTokensForClientConfig(accountID, clientConfigID string, 
 		return fmt.Errorf("clientConfigID cannot be empty")
 	}
 
-	scopesJSON, err := json.Marshal(tokens.Scopes)
+	scopesJSON, err := marshalOAuthGrant(tokens)
 	if err != nil {
 		return fmt.Errorf("failed to marshal scopes: %w", err)
 	}
@@ -107,20 +106,12 @@ func (s *Store) GetOAuthTokensForClientConfig(accountID, clientConfigID string) 
 		return nil, fmt.Errorf("failed to get refresh token: %w", err)
 	}
 
-	var scopes []string
-	if scopesJSON.Valid && scopesJSON.String != "" {
-		if err := json.Unmarshal([]byte(scopesJSON.String), &scopes); err != nil {
-			s.log.Warn().Err(err).Msg("Failed to parse OAuth scopes, using empty list")
-			scopes = []string{}
-		}
-	}
-
 	tokens := &OAuthTokens{
 		Provider:     provider,
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
-		Scopes:       scopes,
 	}
+	readOAuthGrant(scopesJSON.String, tokens)
 	if expiresAt.Valid {
 		tokens.ExpiresAt = expiresAt.Time
 	}
@@ -148,6 +139,25 @@ func (s *Store) DeleteOAuthTokensForClientConfig(accountID, clientConfigID strin
 		Str("account_id", accountID).
 		Str("client_config_id", clientConfigID).
 		Msg("OAuth tokens deleted (client-config-aware)")
+	return nil
+}
+
+// ClearOAuthRefreshTokenForClientConfig removes the refresh token of a
+// non-mail slot after the provider rejected it (the access token is kept until
+// it expires). Core mail slots are refused: use ClearOAuthRefreshToken.
+func (s *Store) ClearOAuthRefreshTokenForClientConfig(accountID, clientConfigID string) error {
+	if isMailClientConfig(clientConfigID) {
+		return fmt.Errorf("refusing to clear core mail slot %q", clientConfigID)
+	}
+	if s.keyringEnabled {
+		_ = gokeyring.Delete(serviceName, accountID+":"+clientConfigID+":refresh_token")
+	}
+	if _, err := s.db.Exec(
+		"UPDATE oauth_tokens SET encrypted_refresh_token = NULL WHERE account_id = ? AND client_config_id = ?",
+		accountID, clientConfigID,
+	); err != nil {
+		return fmt.Errorf("clear refresh token for %s/%s: %w", accountID, clientConfigID, err)
+	}
 	return nil
 }
 

@@ -41,6 +41,9 @@ func (a *App) initBackgroundSync(ctx context.Context) {
 	// Initialize the sync scheduler for periodic polling
 	a.syncScheduler = sync.NewScheduler(a.syncEngine, a.accountStore, a.folderStore)
 
+	// Active API routes sync through their API instead of IMAP.
+	a.syncScheduler.SetAPISync(a.syncAPIAccount)
+
 	// Set callback for new mail notifications
 	a.syncScheduler.SetNewMailCallback(func(info sync.NewMailInfo) {
 		a.handleNewMailNotification(info)

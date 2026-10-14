@@ -26,17 +26,38 @@ type AuthSession struct {
 	CodeVerifier   string          `json:"codeVerifier"` // PKCE
 	RedirectPort   int             `json:"redirectPort"`
 	CreatedAt      time.Time       `json:"createdAt"`
-	ProviderConfig *ProviderConfig `json:"-"` // Optional custom provider config
+	ProviderConfig *ProviderConfig `json:"-"` // Snapshot of the authorization request config
 }
 
 // TokenResponse represents the response from an OAuth token endpoint
 type TokenResponse struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-	TokenType    string `json:"token_type"`
-	ExpiresIn    int    `json:"expires_in"` // Seconds until expiry
-	Scope        string `json:"scope"`
-	IDToken      string `json:"id_token,omitempty"` // OpenID Connect
+	ScopePresent    bool     `json:"-"`
+	Provider        string   `json:"-"`
+	RequestedScopes []string `json:"-"`
+	ScopeResource   string   `json:"-"`
+	AccessToken     string   `json:"access_token"`
+	RefreshToken    string   `json:"refresh_token"`
+	TokenType       string   `json:"token_type"`
+	ExpiresIn       int      `json:"expires_in"` // Seconds until expiry
+	Scope           string   `json:"scope"`
+	IDToken         string   `json:"id_token,omitempty"` // OpenID Connect
+}
+
+// UnmarshalJSON distinguishes an omitted scope from an explicitly empty grant.
+func (t *TokenResponse) UnmarshalJSON(data []byte) error {
+	type wire TokenResponse
+	var value wire
+	if err := json.Unmarshal(data, &value); err != nil {
+		return err
+	}
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(data, &fields); err != nil {
+		return err
+	}
+	*t = TokenResponse(value)
+	scope, present := fields["scope"]
+	t.ScopePresent = present && string(scope) != "null"
+	return nil
 }
 
 // ExpiresAt returns when the access token expires, counting ExpiresIn from now.
@@ -83,7 +104,7 @@ func (m *Manager) StartAuthFlow(ctx context.Context, providerName string) (strin
 		return "", err
 	}
 
-	return m.startAuthFlowInternal(ctx, providerName, provider, nil)
+	return m.startAuthFlowInternal(ctx, providerName, provider)
 }
 
 // StartAuthFlowWithProvider begins OAuth2 flow with a custom provider config
@@ -93,11 +114,11 @@ func (m *Manager) StartAuthFlowWithProvider(ctx context.Context, provider *Provi
 		return "", fmt.Errorf("OAuth provider %s is not configured (missing client ID)", provider.Name)
 	}
 
-	return m.startAuthFlowInternal(ctx, provider.Name, *provider, provider)
+	return m.startAuthFlowInternal(ctx, provider.Name, *provider)
 }
 
 // startAuthFlowInternal is the common implementation for starting OAuth flows
-func (m *Manager) startAuthFlowInternal(ctx context.Context, providerName string, provider ProviderConfig, customConfig *ProviderConfig) (string, error) {
+func (m *Manager) startAuthFlowInternal(ctx context.Context, providerName string, provider ProviderConfig) (string, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -131,7 +152,7 @@ func (m *Manager) startAuthFlowInternal(ctx context.Context, providerName string
 		CodeVerifier:   verifier,
 		RedirectPort:   port,
 		CreatedAt:      time.Now(),
-		ProviderConfig: customConfig,
+		ProviderConfig: &provider,
 	}
 
 	// Build authorization URL
@@ -180,7 +201,8 @@ func (m *Manager) WaitForCallback(ctx context.Context) (*TokenResponse, string, 
 
 	// Check for error
 	if result.Error != "" {
-		return nil, "", fmt.Errorf("OAuth error: %s - %s", result.Error, result.ErrorDescription)
+		return nil, "", &ProviderError{Code: result.Error, Description: result.ErrorDescription,
+			message: fmt.Sprintf("OAuth error: %s - %s", result.Error, result.ErrorDescription)}
 	}
 
 	// Exchange code for tokens
@@ -295,9 +317,11 @@ func (m *Manager) RefreshTokenWithProvider(provider ProviderConfig, refreshToken
 		}
 		_ = json.Unmarshal(body, &errResp)
 		if errResp.Error == "invalid_grant" {
-			return nil, fmt.Errorf("%w - %s", ErrInvalidGrant, errResp.ErrorDescription)
+			return nil, &ProviderError{Code: errResp.Error, Description: errResp.ErrorDescription,
+				message: fmt.Sprintf("%s - %s", ErrInvalidGrant, errResp.ErrorDescription)}
 		}
-		return nil, fmt.Errorf("token refresh failed: %s - %s", errResp.Error, errResp.ErrorDescription)
+		return nil, &ProviderError{Code: errResp.Error, Description: errResp.ErrorDescription,
+			message: fmt.Sprintf("token refresh failed: %s - %s", errResp.Error, errResp.ErrorDescription)}
 	}
 
 	var tokens TokenResponse
@@ -315,6 +339,9 @@ func (m *Manager) RefreshTokenWithProvider(provider ProviderConfig, refreshToken
 		Int("expires_in", tokens.ExpiresIn).
 		Msg("Token refreshed successfully")
 
+	tokens.Provider = provider.Name
+	tokens.RequestedScopes = append([]string(nil), provider.Scopes...)
+	tokens.ScopeResource = ScopeResource(provider)
 	return &tokens, nil
 }
 
@@ -366,7 +393,8 @@ func (m *Manager) exchangeCode(provider ProviderConfig, code, codeVerifier strin
 			ErrorDescription string `json:"error_description"`
 		}
 		_ = json.Unmarshal(body, &errResp)
-		return nil, fmt.Errorf("token exchange failed (%d): %s - %s", resp.StatusCode, errResp.Error, errResp.ErrorDescription)
+		return nil, &ProviderError{Code: errResp.Error, Description: errResp.ErrorDescription,
+			message: fmt.Sprintf("token exchange failed (%d): %s - %s", resp.StatusCode, errResp.Error, errResp.ErrorDescription)}
 	}
 
 	var tokens TokenResponse
@@ -374,6 +402,9 @@ func (m *Manager) exchangeCode(provider ProviderConfig, code, codeVerifier strin
 		return nil, fmt.Errorf("failed to parse token response: %w", err)
 	}
 
+	tokens.Provider = provider.Name
+	tokens.RequestedScopes = append([]string(nil), provider.Scopes...)
+	tokens.ScopeResource = ScopeResource(provider)
 	return &tokens, nil
 }
 

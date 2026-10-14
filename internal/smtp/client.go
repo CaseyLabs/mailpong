@@ -350,8 +350,24 @@ func (c *Client) Close() error {
 
 // SendMail sends an email message
 func (c *Client) SendMail(from string, to []string, msg []byte) error {
+	_, err := c.SendMailTracked(from, to, msg, nil)
+	return err
+}
+
+// SendMailTracked sends a message and reports the SMTP submission outcome.
+// beforeData runs after the server accepts DATA and before any message bytes
+// are written. If the callback fails, the SMTP connection is closed to abort
+// DATA without sending the message body or its terminator.
+func (c *Client) SendMailTracked(from string, to []string, msg []byte, beforeData func(SubmissionResult) error) (SubmissionResult, error) {
+	result := SubmissionResult{Outcome: OutcomeNotSubmitted, Stage: "preflight"}
 	if c.client == nil {
-		return fmt.Errorf("not connected")
+		return result, submissionError(result, fmt.Errorf("not connected"))
+	}
+
+	var err error
+	from, to, err = c.preflight(from, to, msg)
+	if err != nil {
+		return result, submissionError(result, err)
 	}
 
 	c.log.Debug().
@@ -362,36 +378,74 @@ func (c *Client) SendMail(from string, to []string, msg []byte) error {
 
 	// Set the sender
 	if err := c.client.Mail(from); err != nil {
-		return fmt.Errorf("failed to set sender: %w", err)
+		result.Stage = "mail_from"
+		if outcome, _, _, rejected := rejectedOutcome(err); rejected {
+			result.Outcome = outcome
+		}
+		return result, submissionError(result, fmt.Errorf("failed to set sender: %w", err))
 	}
 
 	// Set recipients
 	for _, recipient := range to {
 		if err := c.client.Rcpt(recipient); err != nil {
-			return fmt.Errorf("failed to add recipient %s: %w", recipient, err)
+			entry := RecipientResult{Address: recipient}
+			if outcome, code, response, rejected := rejectedOutcome(err); rejected {
+				entry.Code, entry.Response = code, response
+				result.Outcome = outcome
+			} else {
+				result.Outcome = OutcomeNotSubmitted
+			}
+			result.Recipients = append(result.Recipients, entry)
+			for _, unattempted := range to[len(result.Recipients):] {
+				result.Recipients = append(result.Recipients, RecipientResult{Address: unattempted})
+			}
+			result.Stage = "rcpt_to"
+			return result, submissionError(result, fmt.Errorf("failed to add recipient %s: %w", recipient, err))
 		}
+		result.Recipients = append(result.Recipients, RecipientResult{Address: recipient, Accepted: true})
 	}
 
 	// Send the message body
 	w, err := c.client.Data()
 	if err != nil {
-		return fmt.Errorf("failed to start data transfer: %w", err)
+		result.Stage = "data_command"
+		if outcome, _, _, rejected := rejectedOutcome(err); rejected {
+			result.Outcome = outcome
+		}
+		return result, submissionError(result, fmt.Errorf("failed to start data transfer: %w", err))
+	}
+	result.Outcome = OutcomeUnknown
+	result.Stage = "data_body"
+	if beforeData != nil {
+		if err := beforeData(result); err != nil {
+			result.Outcome = OutcomeNotSubmitted
+			result.Stage = "before_data_body"
+			_ = c.client.Close()
+			c.client = nil
+			return result, submissionError(result, fmt.Errorf("before-data callback failed: %w", err))
+		}
 	}
 
 	if _, err := io.Copy(w, bytes.NewReader(msg)); err != nil {
-		return fmt.Errorf("failed to write message: %w", err)
+		return result, submissionError(result, fmt.Errorf("failed to write message: %w", err))
 	}
 
 	if err := w.Close(); err != nil {
-		return fmt.Errorf("failed to complete message: %w", err)
+		result.Stage = "data_final_reply"
+		if outcome, _, _, rejected := rejectedOutcome(err); rejected {
+			result.Outcome = outcome
+		}
+		return result, submissionError(result, fmt.Errorf("failed to complete message: %w", err))
 	}
+	result.Outcome = OutcomeAccepted
+	result.Stage = "accepted"
 
 	c.log.Info().
 		Str("from", from).
 		Int("recipients", len(to)).
 		Msg("Message sent successfully")
 
-	return nil
+	return result, nil
 }
 
 // Reset resets the SMTP session, allowing a new message to be sent

@@ -24,6 +24,22 @@ Each rollback section lists the **data lost on rollback** for that migration. Th
 
 ---
 
+### Current development schema v61 → legacy v30
+
+Use `tools/db/rollback-v61-to-v30.sql` only for a v61 database, after quitting
+Mailven and all detached composers and copying the database and credential data
+for rollback recovery. Run `sqlite3 -bail <database> < tools/db/rollback-v61-to-v30.sql`.
+This extends the legacy reconstruction below. It drops submission outcomes and
+Sent policies/copy evidence (including duplicate protection), sender evidence,
+chat preferences/associations, added account/identity settings and stable OAuth
+identity, plus mail API routes, remote message identity, queued API actions and
+migration records (back up `migration-snapshots/` too). Host-specific certificate
+trust exceptions are cleared so the older application prompts again instead of
+inheriting wider trust. Legacy contact losses listed below also apply. Retain the backup: an older app cannot enforce the newer
+submission safety rules. The application never runs this script automatically.
+
+### Legacy schema v39 → v30
+
 ### Procedure
 
 1. **Quit Mailven completely** (use the menu Quit, or kill the process — make sure nothing is using `mailven.db`).

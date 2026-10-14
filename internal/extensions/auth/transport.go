@@ -24,6 +24,7 @@ var maxBufferedBody int64 = 10 << 20
 // clientConfigID) lock, so N concurrent requests with the same expired token —
 // or a request racing the mail IMAP/SMTP refresh — cause exactly one refresh.
 type bearerRefreshTransport struct {
+	scopes         []coreapi.AuthScope
 	base           http.RoundTripper
 	credStore      *credentials.Store
 	oauthManager   *oauth2.Manager
@@ -44,6 +45,12 @@ func (t *bearerRefreshTransport) RoundTrip(req *http.Request) (*http.Response, e
 			_ = req.Body.Close()
 		}
 		return nil, fmt.Errorf("auth broker: read tokens: %w", err)
+	}
+	if missing := missingScopes(tokens.EffectiveScopes(), t.scopes); len(missing) > 0 {
+		if req.Body != nil {
+			_ = req.Body.Close()
+		}
+		return nil, &coreapi.ErrAdditionalConsentRequired{AccountID: t.accountID, ClientConfigID: coreapi.ClientConfigID(t.clientConfigID), MissingScopes: missing, Reason: "required scopes are missing or unknown"}
 	}
 	sent := tokens.AccessToken
 
@@ -84,11 +91,18 @@ func (t *bearerRefreshTransport) RoundTrip(req *http.Request) (*http.Response, e
 // freshToken returns an access token to retry with after sent got a 401. It
 // refreshes under the slot lock unless another request already replaced sent.
 func (t *bearerRefreshTransport) freshToken(sent string) (string, error) {
-	defer t.credStore.LockOAuthRefresh(t.accountID, t.clientConfigID)()
+	unlockRefresh, err := t.credStore.LockOAuthRefresh(t.accountID, t.clientConfigID)
+	if err != nil {
+		return "", fmt.Errorf("auth broker: acquire refresh lock: %w", err)
+	}
+	defer unlockRefresh()
 
 	tokens, err := t.credStore.GetOAuthTokensForClientConfig(t.accountID, t.clientConfigID)
 	if err != nil {
 		return "", fmt.Errorf("auth broker: re-read tokens before refresh: %w", err)
+	}
+	if missing := missingScopes(tokens.EffectiveScopes(), t.scopes); len(missing) > 0 {
+		return "", &coreapi.ErrAdditionalConsentRequired{AccountID: t.accountID, ClientConfigID: coreapi.ClientConfigID(t.clientConfigID), MissingScopes: missing, Reason: "required scopes are missing or unknown"}
 	}
 	if tokens.AccessToken != sent && tokens.AccessToken != "" {
 		return tokens.AccessToken, nil
@@ -115,11 +129,14 @@ func (t *bearerRefreshTransport) freshToken(sent string) (string, error) {
 		return "", fmt.Errorf("auth broker: refresh: %w", err)
 	}
 
-	expiresAt := refreshed.ExpiresAt()
+	tokens.ApplyTokenResponse(refreshed, nil, "", true)
 	// Persist the rotated refresh token too — providers like Microsoft and custom
 	// OIDC return a NEW refresh_token on refresh; dropping it breaks the next one.
-	if err := t.credStore.UpdateOAuthTokensForClientConfig(t.accountID, t.clientConfigID, refreshed.AccessToken, refreshed.RefreshToken, expiresAt); err != nil {
+	if err := t.credStore.SetOAuthTokensForClientConfig(t.accountID, t.clientConfigID, tokens); err != nil {
 		return "", fmt.Errorf("auth broker: persist refreshed tokens: %w", err)
+	}
+	if missing := missingScopes(tokens.EffectiveScopes(), t.scopes); len(missing) > 0 {
+		return "", &coreapi.ErrAdditionalConsentRequired{AccountID: t.accountID, ClientConfigID: coreapi.ClientConfigID(t.clientConfigID), MissingScopes: missing, Reason: "refreshed grant no longer covers required scopes"}
 	}
 	return refreshed.AccessToken, nil
 }

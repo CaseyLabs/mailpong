@@ -2,6 +2,7 @@
   import Icon from '@iconify/svelte'
   import { Button } from '$lib/components/ui/button'
   import { accountStore } from '$lib/stores/accounts.svelte'
+  import { mailApiRoutes, mailApiRouteName } from '$lib/stores/mailApiRoutes.svelte'
   import AccountDialog from './AccountDialog.svelte'
   import DeleteAccountDialog from './DeleteAccountDialog.svelte'
   import CoreOAuthSection from './CoreOAuthSection.svelte'
@@ -11,6 +12,8 @@
 
   // Filter out shared mailboxes — they're managed from the parent account's Identity tab
   const regularAccounts = $derived(accountStore.accounts.filter(acc => !acc.account.sharedMailboxParentId))
+
+  $effect(() => { void mailApiRoutes.refreshAll(regularAccounts.map(a => a.account.id)) })
 
   // Dialog state
   let showAccountDialog = $state(false)
@@ -102,6 +105,9 @@
           <div class="flex-1 min-w-0">
             <div class="font-medium text-sm truncate">{acc.name}</div>
             <div class="text-xs text-muted-foreground truncate">{acc.email}</div>
+            {#if mailApiRoutes.active[acc.id]}
+              <div class="text-xs text-muted-foreground truncate">{$_('mailApi.badge', { values: { route: $_(`mailApi.${mailApiRouteName(mailApiRoutes.active[acc.id])}`) } })}</div>
+            {/if}
           </div>
 
           <!-- Up/Down buttons -->

@@ -49,10 +49,13 @@
       {:else if pending.status === 'sent'}
         <Icon icon="mdi:check" class="w-3.5 h-3.5" />{$_('chat.sent')}
       {:else}
-        <span class="text-destructive" title={pending.error}>{$_('chat.sendFailed')}</span>
+        <span class="text-destructive">{$_('chat.sendFailed')}</span>
         <button class="text-primary hover:underline" onclick={onRetry}>{$_('chat.retry')}</button>
         <button class="text-primary hover:underline" onclick={onEdit}>{$_('chat.editReply')}</button>
       {/if}
     </div>
+    {#if pending.error}
+      <p class="px-1 text-xs text-muted-foreground">{pending.error} {pending.status === 'sent' ? $_('composer.acceptedCleanupWarning') : ''}</p>
+    {/if}
   </div>
 </div>

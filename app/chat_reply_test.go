@@ -308,9 +308,9 @@ func TestChatReplyEmpty(t *testing.T) {
 			}
 		})
 	}
-	// sendChatReply rejects an empty reply before touching any store.
-	if err := (&App{}).sendChatReply(ChatReply{AccountID: "a", MessageID: "m", Text: "  "}); err == nil {
-		t.Error("sendChatReply with empty text: want error")
+	// QueueChatReply rejects an empty reply before touching any store.
+	if _, err := (&App{}).QueueChatReply(ChatReply{AccountID: "a", MessageID: "m", Text: "  "}); err == nil {
+		t.Error("QueueChatReply with empty text: want error")
 	}
 }
 

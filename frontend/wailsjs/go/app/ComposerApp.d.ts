@@ -6,6 +6,7 @@ import {smtp} from '../models';
 import {message} from '../models';
 import {pgp} from '../models';
 import {smime} from '../models';
+import {submission} from '../models';
 import {draft} from '../models';
 import {contact} from '../models';
 import {context} from '../models';
@@ -50,7 +51,11 @@ export function GetSMIMESignPolicy(arg1:string):Promise<string>;
 
 export function GetSendAsStatus(arg1:string):Promise<app.SendAsStatus>;
 
+export function GetSenderEvidence(arg1:string,arg2:string):Promise<app.SenderEvidence>;
+
 export function GetShowTitleBar():Promise<boolean>;
+
+export function GetSubmissionReview(arg1:string,arg2:smtp.ComposeMessage,arg3:string):Promise<submission.Attempt>;
 
 export function GetSystemTheme():Promise<string>;
 

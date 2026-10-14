@@ -1,36 +1,33 @@
 <script lang="ts">
-  import Icon from '@iconify/svelte'
   import { _ } from '$lib/i18n'
   import type { ComposerApi } from '$lib/composerApi'
   import type { app } from '../../../../wailsjs/go/models'
+  import SenderEvidenceDetails from './SenderEvidenceDetails.svelte'
 
-  interface Props {
-    api: ComposerApi
-    /** Account the selected From identity belongs to */
-    accountId: string
-    /** Selected From identity */
-    identityId: string
-  }
-
-  let { api, accountId, identityId }: Props = $props()
-
-  let status = $state<app.SendAsStatus | null>(null)
-  const sendAsState = $derived(status?.supported ? (status.identities?.[identityId] ?? '') : '')
-
-  // Cached status only, fetched per account; a failed lookup shows no warning.
+  let { api, accountId, email }: { api: ComposerApi; accountId: string; email: string } = $props()
+  let evidence = $state<app.SenderEvidence | null>(null)
+  let failed = $state(false)
   $effect(() => {
     const acct = accountId
-    status = null
-    if (!acct) return
-    api.getSendAsStatus(acct).then((st) => {
-      if (acct === accountId) status = st
-    }).catch(() => {})
+    const from = email
+    let current = true
+    evidence = null
+    failed = false
+    if (acct && from) {
+      api.getSenderEvidence(acct, from).then(e => {
+        if (current) evidence = e
+      }).catch(() => { if (current) failed = true })
+    }
+    return () => { current = false }
   })
 </script>
 
-{#if sendAsState === 'not-configured' || sendAsState === 'pending'}
-  <div class="flex items-center gap-2 px-4 py-1.5 border-b border-border text-xs text-amber-600 dark:text-amber-400" role="alert">
-    <Icon icon="mdi:alert-outline" class="w-4 h-4 shrink-0" />
-    {$_('composer.sendAsRewrite', { values: { email: status?.accountEmail } })}
+{#if evidence || failed}
+  <div class="px-4 py-2 border-b border-border">
+    {#if evidence}
+      <SenderEvidenceDetails {evidence} />
+    {:else}
+      <p class="text-xs text-muted-foreground" role="alert">{$_('composer.senderLookupFailed')}</p>
+    {/if}
   </div>
 {/if}

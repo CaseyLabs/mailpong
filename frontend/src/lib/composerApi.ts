@@ -17,6 +17,8 @@ import { smtp, account, contact, app, smime, pgp } from '../../wailsjs/go/models
  * Both App and ComposerApp implement these methods with the same signatures.
  */
 export interface ComposerApi {
+  getSubmissionReview: (accountId: string, message: smtp.ComposeMessage, draftId: string) => Promise<{ id: string; outcome: string; warnings: string } | null>
+
   /** Send a composed email */
   sendMessage: (accountId: string, message: smtp.ComposeMessage) => Promise<void>
 
@@ -34,6 +36,9 @@ export interface ComposerApi {
 
   /** Cached Gmail send-as state of an account's identities (no network call) */
   getSendAsStatus: (accountId: string) => Promise<app.SendAsStatus>
+
+  /** Cached/local evidence for the exact From and SMTP route */
+  getSenderEvidence: (accountId: string, email: string) => Promise<app.SenderEvidence>
 
   /** Get the account's default address list for a kind ('bcc' | 'replyto'); "" when disabled */
   getDefaultAddress: (kind: string, accountId: string) => Promise<string>
@@ -134,6 +139,11 @@ export function createMainWindowApi(): ComposerApi {
   // Dynamic import to avoid bundling issues
   // These will be resolved at runtime based on which entry point is used
   return {
+    getSubmissionReview: async (accountId, message, draftId) => {
+      const { GetSubmissionReview } = await import('../../wailsjs/go/app/App.js')
+      return GetSubmissionReview(accountId, message, draftId)
+    },
+
     sendMessage: async (accountId: string, message: smtp.ComposeMessage) => {
       const { SendMessage } = await import('../../wailsjs/go/app/App.js')
       return SendMessage(accountId, message)
@@ -157,6 +167,10 @@ export function createMainWindowApi(): ComposerApi {
     getSendAsStatus: async (accountId: string) => {
       const { GetSendAsStatus } = await import('../../wailsjs/go/app/App.js')
       return GetSendAsStatus(accountId)
+    },
+    getSenderEvidence: async (accountId: string, email: string) => {
+      const { GetSenderEvidence } = await import('../../wailsjs/go/app/App.js')
+      return GetSenderEvidence(accountId, email)
     },
 
     saveDraft: async (accountId: string, message: smtp.ComposeMessage, draftId: string) => {
@@ -298,6 +312,11 @@ export function createMainWindowApi(): ComposerApi {
  */
 export function createComposerWindowApi(_accountId: string): ComposerApi {
   return {
+    getSubmissionReview: async (accountId, message, draftId) => {
+      const { GetSubmissionReview } = await import('../../wailsjs/go/app/ComposerApp.js')
+      return GetSubmissionReview(accountId, message, draftId)
+    },
+
     sendMessage: async (accountId: string, message: smtp.ComposeMessage) => {
       const { SendMessage } = await import('../../wailsjs/go/app/ComposerApp.js')
       return SendMessage(accountId, message)
@@ -316,6 +335,10 @@ export function createComposerWindowApi(_accountId: string): ComposerApi {
     getSendAsStatus: async (accountId: string) => {
       const { GetSendAsStatus } = await import('../../wailsjs/go/app/ComposerApp.js')
       return GetSendAsStatus(accountId)
+    },
+    getSenderEvidence: async (accountId: string, email: string) => {
+      const { GetSenderEvidence } = await import('../../wailsjs/go/app/ComposerApp.js')
+      return GetSenderEvidence(accountId, email)
     },
 
     saveDraft: async (accountId: string, message: smtp.ComposeMessage, draftId: string) => {

@@ -51,10 +51,13 @@
   import * as Select from '$lib/components/ui/select'
   import * as AlertDialog from '$lib/components/ui/alert-dialog'
   import Switch from '$lib/components/ui/switch/Switch.svelte'
+  import SubmissionReviewDialog from './SubmissionReviewDialog.svelte'
+  import { SubmissionReview } from './submissionReview.svelte'
   import { ThreeOptionDialog } from '$lib/components/ui/confirm-dialog'
   import { addToast } from '$lib/stores/toast'
   import { queueWithUndo, SendCountdown } from './undoSend.svelte'
   import SendAsWarning from './SendAsWarning.svelte'
+  import SenderReviewDialog from './SenderReviewDialog.svelte'
   import { getComposerFormat, getDarkComposerBody } from '$lib/stores/settings.svelte'
   import { getIsDarkActive } from '$lib/stores/theme.svelte'
   import { isDialogGuardActive } from '$lib/stores/dialogGuard'
@@ -362,8 +365,11 @@
   // Whether remote images are blocked in the composer's quoted content
   let composerImagesBlocked = $state(false)
 
-  // Max attachment size (100 MB) — server enforces its own limits for smaller caps
+  // Local per-file attachment cap (100 MB); actual message limits vary by account/server.
   const MAX_ATTACHMENT_SIZE = 100 * 1024 * 1024
+
+  const submissionReview = new SubmissionReview()
+  const senderReview = new SubmissionReview()
 
   // Confirmation dialogs state
   let showEmptySubjectDialog = $state(false)
@@ -1332,6 +1338,23 @@
       // Wait for any in-flight draft save to complete before sending
       await savingComplete
       const message = buildMessage()
+      const evidence = await api.getSenderEvidence(activeAccountId, message.from.address)
+      if (evidence.action === 'block') throw new Error(evidence.guidance)
+      if (evidence.action === 'review') {
+        const details = `${message.from.address} — ${evidence.state}
+${evidence.source}
+${evidence.route}
+${evidence.observedAt || $_('composer.senderNotObserved')}
+${evidence.guidance}`
+        if (!(await senderReview.ask(details))) { scheduleDraftSave(); return }
+        message.sender_review_token = evidence.reviewToken
+      }
+      message.submission_draft_id = currentDraftId || ''
+      const previous = await api.getSubmissionReview(activeAccountId, message, currentDraftId || '')
+      if (previous) {
+        if (!(await submissionReview.ask(previous.outcome))) { scheduleDraftSave(); return }
+        message.review_attempt_id = previous.id
+      }
       // Main window: queue behind the undo delay. That needs a draft to hold
       // the message; without one, send at once.
       if (api.queueMessage && onUndoSend && (await saveDraft(true)) && currentDraftId) {
@@ -1343,6 +1366,11 @@
         return
       }
       await api.sendMessage(activeAccountId, message)
+      // Reading cleanup status cannot turn accepted mail into a failed send.
+      try {
+        const accepted = await api.getSubmissionReview(activeAccountId, message, currentDraftId || '')
+        if (accepted?.warnings) addToast({ type: 'info', message: accepted.warnings + ' ' + $_('composer.acceptedCleanupWarning') })
+      } catch (err) { console.error('Failed to read submission cleanup status:', err) }
 
       // Delete the draft on successful send (fire-and-forget - don't block UI)
       if (currentDraftId) {
@@ -1358,9 +1386,10 @@
       onClose?.()
     } catch (err) {
       console.error('Failed to send message:', err)
+      scheduleDraftSave() // review/preflight may have cancelled the pending autosave
       addToast({
         type: 'error',
-        message: $_('composer.failedToSend'),
+        message: String(err),
       })
     } finally {
       sending = false
@@ -2097,7 +2126,7 @@
     <SendAsWarning
       {api}
       accountId={activeAccountId}
-      identityId={selectedIdentityId}
+      email={identities.find(i => i.id === selectedIdentityId)?.email || ''}
     />
 
     <!-- Reply-To (single address; revealed via the From-row link) -->
@@ -2283,6 +2312,9 @@
 
     <!-- Attachments List -->
     <ComposerAttachmentList {attachments} onRemove={removeAttachment} />
+    <p class="px-4 py-1.5 text-xs text-muted-foreground">
+      {$_('composer.messageSizeGuidance')}
+    </p>
 
     <!-- Missing S/MIME cert warning -->
     {#if encryptMessage && missingCertRecipients.length > 0}
@@ -2450,3 +2482,6 @@
     font-weight: 600;
   }
 </style>
+
+<SubmissionReviewDialog review={submissionReview} />
+<SenderReviewDialog review={senderReview} />

@@ -47,9 +47,10 @@ export async function queueWithUndo(
     toasts.remove(toastId)
     if (r.error) {
       console.error('Failed to send message:', r.error)
-      addToast({ type: 'error', message: t('composer.sendFailedDraftKept') })
+      addToast({ type: 'error', message: r.error })
       return
     }
+    if (r.warnings) addToast({ type: 'info', message: r.warnings + ' ' + t('composer.acceptedCleanupWarning') })
     addToast({ type: 'success', message: t('composer.messageSent') })
   })
 }

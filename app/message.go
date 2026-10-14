@@ -31,7 +31,7 @@ func (a *App) GetMessage(id string) (*message.Message, error) {
 	return a.messageStore.Get(id)
 }
 
-// GetMessageSource fetches the raw RFC822 source of a message from the IMAP server
+// GetMessageSource fetches the raw RFC822 source of a message from its IMAP server or mail API
 func (a *App) GetMessageSource(messageID string) (string, error) {
 	log := logging.WithComponent("app")
 	log.Debug().Str("messageID", messageID).Msg("Fetching message source")
@@ -46,7 +46,7 @@ func (a *App) GetMessageSource(messageID string) (string, error) {
 	}
 
 	// Fetch raw message from IMAP
-	rawBytes, err := a.syncEngine.FetchRawMessage(a.ctx, msg.AccountID, msg.FolderID, msg.UID)
+	rawBytes, err := a.fetchRawMessage(a.ctx, msg)
 	if err != nil {
 		return "", fmt.Errorf("failed to fetch message source: %w", err)
 	}
@@ -77,7 +77,7 @@ func (a *App) FetchMessageBody(messageID string) (*message.Message, error) {
 	}
 
 	// Fetch the body from IMAP
-	updatedMsg, err := a.syncEngine.FetchMessageBody(a.ctx, msg.AccountID, messageID)
+	updatedMsg, err := a.fetchBody(a.ctx, msg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch message body: %w", err)
 	}

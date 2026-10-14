@@ -8,6 +8,7 @@ import {v1} from '../models';
 import {app} from '../models';
 import {message} from '../models';
 import {folder} from '../models';
+import {submission} from '../models';
 import {contact} from '../models';
 import {context} from '../models';
 import {smtp} from '../models';
@@ -18,8 +19,11 @@ import {smime} from '../models';
 import {appstate} from '../models';
 import {sync} from '../models';
 import {draft} from '../models';
+import {apimigrate} from '../models';
 
 export function AcceptCertificate(arg1:string,arg2:certificate.CertificateInfo,arg3:boolean):Promise<void>;
+
+export function ActivateMailAPIRoute(arg1:string):Promise<void>;
 
 export function AddAccount(arg1:account.AccountConfig):Promise<account.Account>;
 
@@ -123,7 +127,11 @@ export function CancelContactSourceOAuthFlow():Promise<void>;
 
 export function CancelFolderSync(arg1:string,arg2:string):Promise<void>;
 
+export function CancelMailAPIConsent():Promise<void>;
+
 export function CancelOAuthFlow():Promise<void>;
+
+export function CancelSetupDiagnostic(arg1:string):Promise<void>;
 
 export function ChatDraftsFlushed():Promise<void>;
 
@@ -134,6 +142,8 @@ export function CheckRecipientCerts(arg1:Array<string>):Promise<Record<string, b
 export function CheckRecipientPGPKeys(arg1:Array<string>):Promise<Record<string, boolean>>;
 
 export function CheckServerCertificate(arg1:string):Promise<app.ServerCertificateCheck>;
+
+export function ClearMailAPIRoute(arg1:string):Promise<void>;
 
 export function ClearOAuthCreds(arg1:string):Promise<void>;
 
@@ -146,6 +156,8 @@ export function CompleteContactSourceOAuthSetup(arg1:string,arg2:number):Promise
 export function CompleteCustomOAuthAccountSetup(arg1:account.AccountConfig):Promise<account.Account>;
 
 export function CompleteOAuthAccountSetup(arg1:string,arg2:string,arg3:string,arg4:string,arg5:string):Promise<account.Account>;
+
+export function CompleteOAuthAccountSetupWithConfig(arg1:string,arg2:account.AccountConfig,arg3:string):Promise<account.Account>;
 
 export function Contacts_CreateContact(arg1:v1.ContactCreateInput):Promise<string>;
 
@@ -174,6 +186,8 @@ export function Contacts_UpdateContact(arg1:string,arg2:v1.ContactPatch):Promise
 export function CopyToFolder(arg1:Array<string>,arg2:string):Promise<void>;
 
 export function CreateIdentity(arg1:string,arg2:account.IdentityConfig):Promise<account.Identity>;
+
+export function DeactivateMailAPIRoute(arg1:string):Promise<void>;
 
 export function DeleteContact(arg1:string):Promise<void>;
 
@@ -208,6 +222,8 @@ export function DownloadEncryptedAttachment(arg1:string,arg2:string,arg3:string)
 export function EmptySpam(arg1:string,arg2:string):Promise<void>;
 
 export function EmptyTrash(arg1:string,arg2:string):Promise<void>;
+
+export function ExportSetupDiagnostic(arg1:string):Promise<boolean>;
 
 export function FetchMessageBody(arg1:string):Promise<message.Message>;
 
@@ -264,6 +280,8 @@ export function GetChatReadingWidth():Promise<string>;
 export function GetChatSendKey():Promise<string>;
 
 export function GetChatShowLowGroup():Promise<boolean>;
+
+export function GetChatSubmissionReview(arg1:app.ChatReply):Promise<submission.Attempt>;
 
 export function GetChats(arg1:string,arg2:string,arg3:number,arg4:number):Promise<Array<message.Chat>>;
 
@@ -331,6 +349,8 @@ export function GetLanguage():Promise<string>;
 
 export function GetLinkedAccountsForContactSync():Promise<Array<app.LinkedAccountInfo>>;
 
+export function GetMailAPIRouteStatus(arg1:string):Promise<app.MailAPIRouteStatus>;
+
 export function GetMailtoMode():Promise<string>;
 
 export function GetMarkAsReadDelay():Promise<number>;
@@ -387,6 +407,10 @@ export function GetSendAsStatus(arg1:string):Promise<app.SendAsStatus>;
 
 export function GetSenderChat(arg1:string,arg2:string,arg3:string):Promise<message.Conversation>;
 
+export function GetSenderEvidence(arg1:string,arg2:string):Promise<app.SenderEvidence>;
+
+export function GetSentPolicy(arg1:string):Promise<submission.SentPolicy>;
+
 export function GetServerCertificateFailure(arg1:string):Promise<app.ServerCertificateCheck>;
 
 export function GetShowMessageListCircles():Promise<boolean>;
@@ -412,6 +436,14 @@ export function GetSpellcheckLanguages():Promise<Array<string>>;
 export function GetStartHidden():Promise<boolean>;
 
 export function GetStartHiddenActive():Promise<boolean>;
+
+export function GetSubmissionAttempt(arg1:string):Promise<submission.Attempt>;
+
+export function GetSubmissionAttempts(arg1:string):Promise<Array<submission.Attempt>>;
+
+export function GetSubmissionCopies(arg1:string):Promise<Array<submission.Copy>>;
+
+export function GetSubmissionReview(arg1:string,arg2:smtp.ComposeMessage,arg3:string):Promise<submission.Attempt>;
 
 export function GetSyncErrors():Promise<Array<account.SyncError>>;
 
@@ -513,6 +545,8 @@ export function MarkAsSpam(arg1:Array<string>):Promise<boolean>;
 
 export function MarkAsUnread(arg1:Array<string>):Promise<void>;
 
+export function MigrateMailAPIAccount(arg1:string):Promise<apimigrate.Record>;
+
 export function MoveLocalMessages(arg1:Array<string>,arg2:string):Promise<void>;
 
 export function MoveMessagesToFolder(arg1:Array<string>,arg2:string):Promise<void>;
@@ -544,6 +578,8 @@ export function PickRecipientPGPKeyFile():Promise<string>;
 export function PickSMIMECertificateFile():Promise<string>;
 
 export function PinChat(arg1:string,arg2:string,arg3:boolean):Promise<void>;
+
+export function PlanMailAPIMigration(arg1:string):Promise<app.MailAPIMigrationPlan>;
 
 export function Preflight():Promise<void>;
 
@@ -584,6 +620,10 @@ export function RemoveTrustedCertificate(arg1:string):Promise<void>;
 export function RemoveTrustedCertificateForHost(arg1:string,arg2:string):Promise<void>;
 
 export function ReorderAccounts(arg1:Array<string>):Promise<void>;
+
+export function RollbackMailAPIMigration(arg1:string):Promise<app.MailAPIRollbackReport>;
+
+export function RunSetupDiagnostic(arg1:app.SetupDiagnosticRequest):Promise<app.SetupDiagnosticReport>;
 
 export function SaveAllAttachments(arg1:string):Promise<string>;
 
@@ -699,6 +739,8 @@ export function SetSenderCategory(arg1:string,arg2:string,arg3:string):Promise<v
 
 export function SetSenderChat(arg1:string,arg2:string,arg3:boolean):Promise<boolean>;
 
+export function SetSentPolicy(arg1:string,arg2:submission.SentPolicy):Promise<void>;
+
 export function SetShowMessageListCircles(arg1:boolean):Promise<void>;
 
 export function SetShowMessageListProfilePics(arg1:boolean):Promise<void>;
@@ -728,6 +770,8 @@ export function Star(arg1:Array<string>):Promise<void>;
 export function StartContactsOnlyOAuthFlow(arg1:string):Promise<void>;
 
 export function StartCustomOAuthFlow(arg1:string,arg2:string,arg3:string,arg4:Array<string>,arg5:string,arg6:string):Promise<void>;
+
+export function StartMailAPIConsent(arg1:string,arg2:boolean):Promise<void>;
 
 export function StartOAuthFlow(arg1:string):Promise<void>;
 

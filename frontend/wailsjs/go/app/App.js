@@ -6,6 +6,10 @@ export function AcceptCertificate(arg1, arg2, arg3) {
   return window['go']['app']['App']['AcceptCertificate'](arg1, arg2, arg3);
 }
 
+export function ActivateMailAPIRoute(arg1) {
+  return window['go']['app']['App']['ActivateMailAPIRoute'](arg1);
+}
+
 export function AddAccount(arg1) {
   return window['go']['app']['App']['AddAccount'](arg1);
 }
@@ -210,8 +214,16 @@ export function CancelFolderSync(arg1, arg2) {
   return window['go']['app']['App']['CancelFolderSync'](arg1, arg2);
 }
 
+export function CancelMailAPIConsent() {
+  return window['go']['app']['App']['CancelMailAPIConsent']();
+}
+
 export function CancelOAuthFlow() {
   return window['go']['app']['App']['CancelOAuthFlow']();
+}
+
+export function CancelSetupDiagnostic(arg1) {
+  return window['go']['app']['App']['CancelSetupDiagnostic'](arg1);
 }
 
 export function ChatDraftsFlushed() {
@@ -232,6 +244,10 @@ export function CheckRecipientPGPKeys(arg1) {
 
 export function CheckServerCertificate(arg1) {
   return window['go']['app']['App']['CheckServerCertificate'](arg1);
+}
+
+export function ClearMailAPIRoute(arg1) {
+  return window['go']['app']['App']['ClearMailAPIRoute'](arg1);
 }
 
 export function ClearOAuthCreds(arg1) {
@@ -256,6 +272,10 @@ export function CompleteCustomOAuthAccountSetup(arg1) {
 
 export function CompleteOAuthAccountSetup(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['app']['App']['CompleteOAuthAccountSetup'](arg1, arg2, arg3, arg4, arg5);
+}
+
+export function CompleteOAuthAccountSetupWithConfig(arg1, arg2, arg3) {
+  return window['go']['app']['App']['CompleteOAuthAccountSetupWithConfig'](arg1, arg2, arg3);
 }
 
 export function Contacts_CreateContact(arg1) {
@@ -312,6 +332,10 @@ export function CopyToFolder(arg1, arg2) {
 
 export function CreateIdentity(arg1, arg2) {
   return window['go']['app']['App']['CreateIdentity'](arg1, arg2);
+}
+
+export function DeactivateMailAPIRoute(arg1) {
+  return window['go']['app']['App']['DeactivateMailAPIRoute'](arg1);
 }
 
 export function DeleteContact(arg1) {
@@ -380,6 +404,10 @@ export function EmptySpam(arg1, arg2) {
 
 export function EmptyTrash(arg1, arg2) {
   return window['go']['app']['App']['EmptyTrash'](arg1, arg2);
+}
+
+export function ExportSetupDiagnostic(arg1) {
+  return window['go']['app']['App']['ExportSetupDiagnostic'](arg1);
 }
 
 export function FetchMessageBody(arg1) {
@@ -492,6 +520,10 @@ export function GetChatSendKey() {
 
 export function GetChatShowLowGroup() {
   return window['go']['app']['App']['GetChatShowLowGroup']();
+}
+
+export function GetChatSubmissionReview(arg1) {
+  return window['go']['app']['App']['GetChatSubmissionReview'](arg1);
 }
 
 export function GetChats(arg1, arg2, arg3, arg4) {
@@ -626,6 +658,10 @@ export function GetLinkedAccountsForContactSync() {
   return window['go']['app']['App']['GetLinkedAccountsForContactSync']();
 }
 
+export function GetMailAPIRouteStatus(arg1) {
+  return window['go']['app']['App']['GetMailAPIRouteStatus'](arg1);
+}
+
 export function GetMailtoMode() {
   return window['go']['app']['App']['GetMailtoMode']();
 }
@@ -738,6 +774,14 @@ export function GetSenderChat(arg1, arg2, arg3) {
   return window['go']['app']['App']['GetSenderChat'](arg1, arg2, arg3);
 }
 
+export function GetSenderEvidence(arg1, arg2) {
+  return window['go']['app']['App']['GetSenderEvidence'](arg1, arg2);
+}
+
+export function GetSentPolicy(arg1) {
+  return window['go']['app']['App']['GetSentPolicy'](arg1);
+}
+
 export function GetServerCertificateFailure(arg1) {
   return window['go']['app']['App']['GetServerCertificateFailure'](arg1);
 }
@@ -788,6 +832,22 @@ export function GetStartHidden() {
 
 export function GetStartHiddenActive() {
   return window['go']['app']['App']['GetStartHiddenActive']();
+}
+
+export function GetSubmissionAttempt(arg1) {
+  return window['go']['app']['App']['GetSubmissionAttempt'](arg1);
+}
+
+export function GetSubmissionAttempts(arg1) {
+  return window['go']['app']['App']['GetSubmissionAttempts'](arg1);
+}
+
+export function GetSubmissionCopies(arg1) {
+  return window['go']['app']['App']['GetSubmissionCopies'](arg1);
+}
+
+export function GetSubmissionReview(arg1, arg2, arg3) {
+  return window['go']['app']['App']['GetSubmissionReview'](arg1, arg2, arg3);
 }
 
 export function GetSyncErrors() {
@@ -990,6 +1050,10 @@ export function MarkAsUnread(arg1) {
   return window['go']['app']['App']['MarkAsUnread'](arg1);
 }
 
+export function MigrateMailAPIAccount(arg1) {
+  return window['go']['app']['App']['MigrateMailAPIAccount'](arg1);
+}
+
 export function MoveLocalMessages(arg1, arg2) {
   return window['go']['app']['App']['MoveLocalMessages'](arg1, arg2);
 }
@@ -1052,6 +1116,10 @@ export function PickSMIMECertificateFile() {
 
 export function PinChat(arg1, arg2, arg3) {
   return window['go']['app']['App']['PinChat'](arg1, arg2, arg3);
+}
+
+export function PlanMailAPIMigration(arg1) {
+  return window['go']['app']['App']['PlanMailAPIMigration'](arg1);
 }
 
 export function Preflight() {
@@ -1132,6 +1200,14 @@ export function RemoveTrustedCertificateForHost(arg1, arg2) {
 
 export function ReorderAccounts(arg1) {
   return window['go']['app']['App']['ReorderAccounts'](arg1);
+}
+
+export function RollbackMailAPIMigration(arg1) {
+  return window['go']['app']['App']['RollbackMailAPIMigration'](arg1);
+}
+
+export function RunSetupDiagnostic(arg1) {
+  return window['go']['app']['App']['RunSetupDiagnostic'](arg1);
 }
 
 export function SaveAllAttachments(arg1) {
@@ -1362,6 +1438,10 @@ export function SetSenderChat(arg1, arg2, arg3) {
   return window['go']['app']['App']['SetSenderChat'](arg1, arg2, arg3);
 }
 
+export function SetSentPolicy(arg1, arg2) {
+  return window['go']['app']['App']['SetSentPolicy'](arg1, arg2);
+}
+
 export function SetShowMessageListCircles(arg1) {
   return window['go']['app']['App']['SetShowMessageListCircles'](arg1);
 }
@@ -1420,6 +1500,10 @@ export function StartContactsOnlyOAuthFlow(arg1) {
 
 export function StartCustomOAuthFlow(arg1, arg2, arg3, arg4, arg5, arg6) {
   return window['go']['app']['App']['StartCustomOAuthFlow'](arg1, arg2, arg3, arg4, arg5, arg6);
+}
+
+export function StartMailAPIConsent(arg1, arg2) {
+  return window['go']['app']['App']['StartMailAPIConsent'](arg1, arg2);
 }
 
 export function StartOAuthFlow(arg1) {

@@ -313,3 +313,45 @@ func TestUpsert(t *testing.T) {
 		t.Errorf("got %d folders, want 1", len(folders))
 	}
 }
+
+func TestSwapHiddenRoundTrip(t *testing.T) {
+	db := openTestDB(t)
+	createTestAccount(t, db, "acc1")
+	store := NewStore(db)
+	imap := &Folder{AccountID: "acc1", Name: "Inbox", Path: "INBOX", Type: TypeInbox}
+	if err := store.Create(imap); err != nil {
+		t.Fatal(err)
+	}
+
+	if n, err := store.SwapHidden("acc1", RowsIMAP, RowsAPI); err != nil || n != 0 {
+		t.Fatalf("first swap = %d, %v; want nothing to restore", n, err)
+	}
+	if fs, _ := store.List("acc1"); len(fs) != 0 {
+		t.Fatalf("IMAP folders still visible: %v", fs)
+	}
+	if f, _ := store.GetByType("acc1", TypeInbox); f != nil {
+		t.Fatal("hidden folder found by type")
+	}
+	if f, _ := store.GetByPath("acc1", "INBOX"); f != nil {
+		t.Fatal("hidden folder found by path")
+	}
+	api := &Folder{AccountID: "acc1", Name: "Inbox", Path: "INBOX", Type: TypeInbox}
+	if err := store.Create(api); err != nil {
+		t.Fatalf("API folder cannot reuse the hidden path: %v", err)
+	}
+
+	if n, err := store.SwapHidden("acc1", RowsAPI, RowsIMAP); err != nil || n != 1 {
+		t.Fatalf("swap back = %d, %v", n, err)
+	}
+	fs, _ := store.List("acc1")
+	if len(fs) != 1 || fs[0].ID != imap.ID || fs[0].Path != "INBOX" || fs[0].Type != TypeInbox {
+		t.Fatalf("restored = %+v", fs)
+	}
+	if n, err := store.SwapHidden("acc1", RowsIMAP, RowsAPI); err != nil || n != 1 {
+		t.Fatalf("reactivation swap = %d, %v", n, err)
+	}
+	fs, _ = store.List("acc1")
+	if len(fs) != 1 || fs[0].ID != api.ID || fs[0].Path != "INBOX" {
+		t.Fatalf("API folders after reactivation = %+v", fs)
+	}
+}

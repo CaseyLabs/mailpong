@@ -1515,6 +1515,119 @@ var migrations = []Migration{
 		Version: 55,
 		SQL:     threadStartersSQL(),
 	},
+	{
+		Version: 56,
+		SQL: `CREATE TABLE IF NOT EXISTS submission_attempts (
+			id TEXT PRIMARY KEY, message_id TEXT NOT NULL, account_id TEXT NOT NULL,
+			draft_id TEXT NOT NULL, fingerprint TEXT NOT NULL, outcome TEXT NOT NULL,
+			stage TEXT NOT NULL, recipients TEXT NOT NULL DEFAULT '[]',
+			error TEXT NOT NULL DEFAULT '', warnings TEXT NOT NULL DEFAULT '',
+			created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL
+		);
+		CREATE INDEX IF NOT EXISTS idx_submission_fingerprint ON submission_attempts(account_id, fingerprint);
+		CREATE INDEX IF NOT EXISTS idx_submission_draft ON submission_attempts(draft_id);`,
+	},
+	{
+		Version: 57,
+		SQL: `CREATE TABLE IF NOT EXISTS sent_policies (
+			account_id TEXT PRIMARY KEY, route TEXT NOT NULL, destinations TEXT NOT NULL
+		);
+		CREATE TABLE IF NOT EXISTS submission_copies (
+			attempt_id TEXT NOT NULL, account_id TEXT NOT NULL, folder_path TEXT NOT NULL,
+			mode TEXT NOT NULL, state TEXT NOT NULL, evidence TEXT NOT NULL DEFAULT '',
+            mailbox_route TEXT NOT NULL DEFAULT '',
+			PRIMARY KEY(attempt_id, account_id, folder_path)
+		);`,
+	},
+	{
+		Version: 58,
+		SQL: `CREATE TABLE IF NOT EXISTS account_mail_api_routes (
+			account_id TEXT PRIMARY KEY REFERENCES accounts(id) ON DELETE CASCADE,
+			route TEXT NOT NULL, state TEXT NOT NULL, client_config_id TEXT NOT NULL,
+			shared INTEGER NOT NULL DEFAULT 0, snapshot TEXT NOT NULL,
+			updated_at INTEGER NOT NULL
+		);`,
+	},
+	{
+		Version: 59,
+		// API receive identity and cursor storage (inert until F4e). A remote
+		// message is one api_message_refs identity; each local row it maps to
+		// (one per folder) is an api_message_rows link, so a multi-label Gmail
+		// message shares one identity. IMAP rows and columns are untouched.
+		SQL: `CREATE TABLE IF NOT EXISTS api_message_refs (
+			account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+			provider TEXT NOT NULL,
+			remote_id TEXT NOT NULL,
+			remote_thread_id TEXT NOT NULL DEFAULT '',
+			containers TEXT NOT NULL DEFAULT '[]',
+			unmapped TEXT NOT NULL DEFAULT '[]',
+			version TEXT NOT NULL DEFAULT '',
+			PRIMARY KEY(account_id, provider, remote_id)
+		);
+		CREATE TABLE IF NOT EXISTS api_message_rows (
+			message_id TEXT PRIMARY KEY REFERENCES messages(id) ON DELETE CASCADE,
+			account_id TEXT NOT NULL,
+			provider TEXT NOT NULL,
+			remote_id TEXT NOT NULL,
+			FOREIGN KEY(account_id, provider, remote_id)
+				REFERENCES api_message_refs(account_id, provider, remote_id) ON DELETE CASCADE
+		);
+		CREATE INDEX IF NOT EXISTS idx_api_message_rows_ref
+			ON api_message_rows(account_id, provider, remote_id);
+		CREATE TABLE IF NOT EXISTS api_sync_state (
+			account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+			scope TEXT NOT NULL,
+			cursor TEXT NOT NULL DEFAULT '',
+			cursor_kind TEXT NOT NULL DEFAULT '',
+			generation INTEGER NOT NULL DEFAULT 0,
+			invalid INTEGER NOT NULL DEFAULT 0,
+			updated_at INTEGER NOT NULL,
+			PRIMARY KEY(account_id, scope)
+		);`,
+	},
+	{
+		Version: 60,
+		// Persisted queue of user actions for API-routed accounts (inert until
+		// a route is active). One row per remote message; id order is apply
+		// order. status: pending, in-flight, unknown (needs verification or
+		// review), applied and rejected (terminal, kept for display until
+		// pruned).
+		SQL: `CREATE TABLE IF NOT EXISTS api_pending_actions (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			account_id TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+			provider TEXT NOT NULL,
+			op TEXT NOT NULL,
+			message_ids TEXT NOT NULL DEFAULT '[]',
+			remote_id TEXT NOT NULL,
+			payload TEXT NOT NULL DEFAULT '{}',
+			status TEXT NOT NULL DEFAULT 'pending',
+			attempts INTEGER NOT NULL DEFAULT 0,
+			next_attempt_at INTEGER NOT NULL DEFAULT 0,
+			error TEXT NOT NULL DEFAULT '',
+			created_at INTEGER NOT NULL
+		);
+		CREATE INDEX IF NOT EXISTS idx_api_pending_actions_account
+			ON api_pending_actions(account_id, status, id);
+		CREATE INDEX IF NOT EXISTS idx_api_pending_actions_remote
+			ON api_pending_actions(account_id, provider, remote_id);`,
+	},
+	{
+		Version: 61,
+		// One opt-in migration record per account (internal/apimigrate). state:
+		// snapshotted, activated, completed, failed, rolled-back. It makes an
+		// interrupted migration resumable and keeps the snapshot location.
+		SQL: `CREATE TABLE IF NOT EXISTS api_migrations (
+			account_id TEXT PRIMARY KEY REFERENCES accounts(id) ON DELETE CASCADE,
+			state TEXT NOT NULL,
+			route TEXT NOT NULL DEFAULT '',
+			snapshot_path TEXT NOT NULL DEFAULT '',
+			correlated INTEGER NOT NULL DEFAULT 0,
+			uncorrelated INTEGER NOT NULL DEFAULT 0,
+			error TEXT NOT NULL DEFAULT '',
+			started_at INTEGER NOT NULL,
+			updated_at INTEGER NOT NULL
+		);`,
+	},
 }
 
 // ThreadKeyExpr is the normalized thread key of a messages row: row is ""

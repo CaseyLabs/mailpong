@@ -39,6 +39,7 @@ import (
 	"github.com/caseylabs/mailven/internal/platform"
 	"github.com/caseylabs/mailven/internal/settings"
 	"github.com/caseylabs/mailven/internal/smime"
+	"github.com/caseylabs/mailven/internal/submission"
 	"github.com/caseylabs/mailven/internal/sync"
 	"github.com/caseylabs/mailven/internal/undo"
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
@@ -172,6 +173,8 @@ func isValidEmail(email string) bool {
 
 // App struct holds the application state and dependencies
 type App struct {
+	setupDiagnostic setupDiagnosticState
+
 	// Embedded extension bridges. Each extension contributes its Wails-bound
 	// surface via a Bridge struct embedded here; Go's method promotion makes
 	// those bridge methods appear on App so Wails reflection picks them up.
@@ -191,6 +194,11 @@ type App struct {
 	*extcalendarbe.CalendarBridge
 
 	ctx context.Context
+
+	// apiActions drains the local-first action queue of API-routed accounts.
+	apiActions apiActionState
+	// apiRoutes serializes API route transitions and API syncs.
+	apiRoutes apiRouteState
 
 	// ready is the backend-up signal the frontend polls before mounting the
 	// main app. False until Startup completes. The boot splash in
@@ -728,6 +736,9 @@ func (a *App) Startup(ctx context.Context) {
 			if err != nil {
 				return "", err
 			}
+			if err := tokens.RequireContactsRead(); err != nil {
+				return "", err
+			}
 			return tokens.AccessToken, nil
 		},
 		// Source token getter - for standalone contact sources
@@ -753,6 +764,7 @@ func (a *App) Startup(ctx context.Context) {
 
 	// Initialize shared compose operations (used by both App and ComposerApp)
 	a.composeOps = composeOps{
+		submissions:    submission.NewStore(a.db),
 		accountStore:   a.accountStore,
 		folderStore:    a.folderStore,
 		credStore:      a.credStore,
@@ -767,6 +779,12 @@ func (a *App) Startup(ctx context.Context) {
 		pgpEncryptor:   a.pgpEncryptor,
 		draftOps:       &a.draftOps,
 		sendAsStore:    gmailapi.NewStore(a.db.DB),
+		emit:           func(event string, data any) { eventsEmit(a.ctx, event, data) },
+	}
+
+	a.sendQueue.lookup = a.composeOps.submissions.Get
+	if err := a.composeOps.submissions.RecoverQueued(); err != nil {
+		log.Error().Err(err).Msg("Failed to recover submission journal")
 	}
 
 	// Refresh stale Gmail send-as lists in the background (at most daily).
@@ -828,6 +846,7 @@ func (a *App) Startup(ctx context.Context) {
 	// under high call rates on Linux/webkit2gtk and Flatpak. So: event for
 	// the normal case, IsReady for the "event fired before listener
 	// registered" race.
+	a.startAPIActions()
 	a.ready = true
 	wailsRuntime.EventsEmit(a.ctx, "app:ready")
 
@@ -1182,7 +1201,7 @@ func (a *App) getValidContactSourceOAuthToken(sourceID string) (string, error) {
 			Msg("Contact source OAuth token expiring soon, refreshing")
 
 		// Refresh the token
-		newTokenResp, err := a.oauth2Manager.RefreshToken(tokens.Provider, tokens.RefreshToken)
+		newTokenResp, err := a.oauth2Manager.RefreshToken(strings.TrimSuffix(tokens.Provider, "-contacts")+"-contacts", tokens.RefreshToken)
 		if err != nil {
 			log.Error().Err(err).
 				Str("source_id", sourceID).
@@ -1195,15 +1214,7 @@ func (a *App) getValidContactSourceOAuthToken(sourceID string) (string, error) {
 			return "", fmt.Errorf("contact source OAuth token refresh failed: %w", err)
 		}
 
-		// Calculate new expiry time
-		expiresAt := newTokenResp.ExpiresAt()
-
-		// Update tokens in store
-		tokens.AccessToken = newTokenResp.AccessToken
-		tokens.ExpiresAt = expiresAt
-		if newTokenResp.RefreshToken != "" {
-			tokens.RefreshToken = newTokenResp.RefreshToken
-		}
+		tokens.ApplyTokenResponse(newTokenResp, nil, "", true)
 
 		if err := a.credStore.SetContactSourceOAuthTokens(sourceID, tokens); err != nil {
 			log.Warn().Err(err).Msg("Failed to save refreshed contact source OAuth tokens")
@@ -1211,10 +1222,13 @@ func (a *App) getValidContactSourceOAuthToken(sourceID string) (string, error) {
 
 		log.Info().
 			Str("source_id", sourceID).
-			Time("new_expires_at", expiresAt).
+			Time("new_expires_at", tokens.ExpiresAt).
 			Msg("Contact source OAuth token refreshed successfully")
 	}
 
+	if err := tokens.RequireContactsRead(); err != nil {
+		return "", err
+	}
 	return tokens.AccessToken, nil
 }
 

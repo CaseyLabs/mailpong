@@ -31,19 +31,21 @@ func TestListSendAs(t *testing.T) {
 	serve(t, 200, `{"sendAs":[
 		{"sendAsEmail":"me@gmail.com","displayName":"Me","isPrimary":true,"isDefault":true},
 		{"sendAsEmail":"sean@caseylabs.com","displayName":"Sean","replyToAddress":"r@x.com","verificationStatus":"accepted","signature":"<b>s</b>"},
-		{"sendAsEmail":"new@x.com","verificationStatus":"pending"}]}`)
+		{"sendAsEmail":"new@x.com","verificationStatus":"pending"},
+		{"sendAsEmail":"legacy@x.com"},
+		{"sendAsEmail":"future@x.com","verificationStatus":"future-status"}]}`)
 	got, err := ListSendAs(context.Background(), "tok")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(got) != 3 {
+	if len(got) != 5 {
 		t.Fatalf("got %d entries", len(got))
 	}
 	if got[1].Email != "sean@caseylabs.com" || got[1].ReplyTo != "r@x.com" || got[1].Signature != "<b>s</b>" || !got[1].Verified() {
 		t.Errorf("entry 1 = %+v", got[1])
 	}
-	if !got[0].Verified() || got[2].Verified() {
-		t.Error("Verified() wrong for primary or pending")
+	if !got[0].Verified() || !got[1].Verified() || got[2].Verified() || got[3].Verified() || got[4].Verified() {
+		t.Error("Verified() must accept primary and explicit accepted only")
 	}
 }
 
@@ -103,21 +105,35 @@ func TestStoreAndStatus(t *testing.T) {
 		{Email: "me@gmail.com", IsPrimary: true},
 		{Email: "Sean@CaseyLabs.com", VerificationStatus: "accepted", Signature: "<i>s</i>"},
 		{Email: "wait@x.com", VerificationStatus: "pending"},
+		{Email: "legacy@x.com"},
+		{Email: "future@x.com", VerificationStatus: "future-status"},
 	}, now)
 	if err != nil {
 		t.Fatal(err)
 	}
 	c, err = s.Get(acc.ID)
-	if err != nil || len(c.Entries) != 3 || !c.FetchedAt.Equal(now) {
+	if err != nil || len(c.Entries) != 5 || !c.FetchedAt.Equal(now) {
 		t.Fatalf("cache: %+v %v", c, err)
 	}
-	if c.Entries[1].Signature != "<i>s</i>" {
+	if got := c.StatusFor("sean@caseylabs.com"); got != StatusVerified {
+		t.Errorf("accepted entry status = %s, want %s", got, StatusVerified)
+	}
+	var accepted *SendAs
+	for i := range c.Entries {
+		if c.Entries[i].Email == "sean@caseylabs.com" {
+			accepted = &c.Entries[i]
+			break
+		}
+	}
+	if accepted == nil || accepted.Signature != "<i>s</i>" {
 		t.Errorf("signature not cached: %+v", c.Entries)
 	}
 	for email, want := range map[string]string{
 		"me@gmail.com":       StatusVerified,
 		"sean@caseylabs.com": StatusVerified,
 		"WAIT@x.com":         StatusPending,
+		"legacy@x.com":       StatusUnknown,
+		"future@x.com":       StatusUnknown,
 		"other@x.com":        StatusNotConfigured,
 	} {
 		if got := c.StatusFor(email); got != want {
@@ -125,10 +141,38 @@ func TestStoreAndStatus(t *testing.T) {
 		}
 	}
 
+	attemptedAt := now.Add(time.Minute)
+	if err := s.MarkLookupFailed(acc.ID, attemptedAt); err != nil {
+		t.Fatal(err)
+	}
+	c, err = s.Get(acc.ID)
+	if err != nil || len(c.Entries) != 5 || !c.FetchedAt.Equal(now) || !c.LookupFailed {
+		t.Fatalf("failed refresh must preserve successful cache and report failure: %+v %v", c, err)
+	}
+
 	if err := s.Replace(acc.ID, []SendAs{{Email: "me@gmail.com", IsPrimary: true}}, now); err != nil {
 		t.Fatal(err)
 	}
-	if c, _ = s.Get(acc.ID); len(c.Entries) != 1 {
+	if c, err = s.Get(acc.ID); err != nil || len(c.Entries) != 1 || c.LookupFailed {
 		t.Errorf("Replace did not clear old rows: %+v", c.Entries)
+	}
+
+	emptyFetchedAt := now.Add(time.Minute)
+	if err := s.Replace(acc.ID, nil, emptyFetchedAt); err != nil {
+		t.Fatal(err)
+	}
+	c, err = s.Get(acc.ID)
+	if err != nil || len(c.Entries) != 0 || !c.FetchedAt.Equal(emptyFetchedAt) {
+		t.Fatalf("empty cache must retain successful fetch time: %+v %v", c, err)
+	}
+	if got := c.StatusFor("me@gmail.com"); got != StatusNotConfigured {
+		t.Errorf("StatusFor after successful empty lookup = %s, want %s", got, StatusNotConfigured)
+	}
+	if err := s.MarkLookupFailed(acc.ID, emptyFetchedAt.Add(time.Minute)); err != nil {
+		t.Fatal(err)
+	}
+	c, err = s.Get(acc.ID)
+	if err != nil || len(c.Entries) != 0 || !c.FetchedAt.Equal(emptyFetchedAt) || !c.LookupFailed {
+		t.Fatalf("failed refresh must preserve successful empty observation: %+v %v", c, err)
 	}
 }

@@ -19,6 +19,7 @@ const serviceName = "mailven"
 type Store struct {
 	db             *sql.DB
 	encryptor      *crypto.Encryptor
+	dataDir        string
 	keyringEnabled bool
 	log            zerolog.Logger
 
@@ -48,6 +49,7 @@ func NewStore(db *sql.DB, dataDir string) (*Store, error) {
 	return &Store{
 		db:             db,
 		encryptor:      encryptor,
+		dataDir:        dataDir,
 		keyringEnabled: keyringEnabled,
 		log:            log,
 	}, nil

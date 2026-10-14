@@ -20,6 +20,9 @@ func (a *App) ensureSentIdle(accountID string) {
 	}
 	a.idleAccountMu.Lock()
 	defer a.idleAccountMu.Unlock()
+	if a.apiRouted(accountID) != nil {
+		return // API-routed accounts have no IMAP IDLE
+	}
 	acc, err := a.accountStore.Get(accountID)
 	if err != nil || acc == nil || !acc.Enabled {
 		return
@@ -53,6 +56,9 @@ func (a *App) startAccountIdle(accountID string) {
 	}
 	a.idleAccountMu.Lock()
 	defer a.idleAccountMu.Unlock()
+	if a.apiRouted(accountID) != nil {
+		return // API-routed accounts have no IMAP IDLE
+	}
 	acc, err := a.accountStore.Get(accountID)
 	if err != nil || acc == nil || !acc.Enabled {
 		return

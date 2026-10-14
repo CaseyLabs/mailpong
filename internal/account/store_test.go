@@ -447,3 +447,51 @@ func TestStoreSyncError(t *testing.T) {
 		})
 	}
 }
+
+func TestMailAPIRouteStore(t *testing.T) {
+	db := openTestDB(t)
+	store := NewStore(db)
+	acc, err := store.Create(validAccountConfig())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r, err := store.GetMailAPIRoute(acc.ID); err != nil || r != nil {
+		t.Fatalf("new account must be protocol: %v %v", r, err)
+	}
+	want := MailAPIRoute{AccountID: acc.ID, Route: MailRouteGraphAPI, ClientConfigID: "microsoft-mail-api", Shared: true,
+		Snapshot: MailAPISnapshot{Provider: "microsoft", TokenURL: "https://login.example.test/token", ClientID: "client", Scopes: []string{"a", "b"}, Resource: "https://graph.microsoft.com"}}
+	if err := store.SetMailAPIRoute(want); err != nil {
+		t.Fatal(err)
+	}
+	got, err := store.GetMailAPIRoute(acc.ID)
+	if err != nil || got == nil || got.State != MailRouteStateStaged || !got.Shared || got.Snapshot.ClientID != "client" || len(got.Snapshot.Scopes) != 2 {
+		t.Fatalf("route not round-tripped: %+v %v", got, err)
+	}
+	want.Route, want.Shared = MailRouteGmailAPI, false
+	if err := store.SetMailAPIRoute(want); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ = store.GetMailAPIRoute(acc.ID); got.Route != MailRouteGmailAPI || got.Shared {
+		t.Fatalf("route not replaced: %+v", got)
+	}
+	for _, bad := range []MailAPIRoute{{AccountID: acc.ID, Route: "imap", ClientConfigID: "x"}, {Route: MailRouteGmailAPI, ClientConfigID: "x"}, {AccountID: acc.ID, Route: MailRouteGmailAPI}} {
+		if store.SetMailAPIRoute(bad) == nil {
+			t.Fatalf("accepted invalid route %+v", bad)
+		}
+	}
+	if err := store.ClearMailAPIRoute(acc.ID); err != nil {
+		t.Fatal(err)
+	}
+	if r, _ := store.GetMailAPIRoute(acc.ID); r != nil {
+		t.Fatal("route not cleared")
+	}
+	if err := store.SetMailAPIRoute(want); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.Delete(acc.ID); err != nil {
+		t.Fatal(err)
+	}
+	if r, _ := store.GetMailAPIRoute(acc.ID); r != nil {
+		t.Fatal("route survived account deletion")
+	}
+}

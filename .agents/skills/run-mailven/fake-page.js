@@ -3,8 +3,10 @@ const fs = require('node:fs')
 const path = require('node:path')
 const assert = require('node:assert/strict')
 const { launch } = require('./pw')
+// Wails adds a cache-busting query after a backend hot reload.
+const mainEntry = /\/src\/main\.ts(?:\?.*)?$/
 
-exports.withFakePage = async (viewport, check) => {
+exports.withFakePage = async (viewport, check, options = {}) => {
   const browser = await launch()
   let state, before, page
   const snapshot = () => state.evaluate(async () => {
@@ -17,7 +19,7 @@ exports.withFakePage = async (viewport, check) => {
   })
   try {
     state = await browser.newPage()
-    await state.route('**/src/main.ts', route => route.abort())
+    await state.route(mainEntry, route => route.abort())
     await state.goto('http://localhost:34115')
     await state.waitForFunction(() => window.go?.app?.App)
     before = await snapshot()
@@ -27,13 +29,17 @@ exports.withFakePage = async (viewport, check) => {
       if (!/blocked: |reading 'nodes'/.test(error.message)) errors.push(error.message)
     })
     const fakes = fs.readFileSync(path.join(__dirname, 'screenshot-fakes.js'), 'utf8')
-    await page.route('**/src/main.ts', async route => {
+    await page.route(mainEntry, async route => {
       const response = await route.fetch()
-      await route.fulfill({ response, body: `${fakes}
+      const setup = `${fakes}
 window.__installFakes(window);
 const realIsEnabled = window.go.app.App.IsExtensionEnabled;
 window.go.app.App.IsExtensionEnabled = name => ['contacts', 'calendar'].includes(name) ? Promise.resolve(true) : realIsEnabled(name);
-${await response.text()}` })
+${options.beforeMount || ''}`
+      // A leading import executes before the entry point's other dependencies.
+      // Prepending ordinary statements runs too late for EventsOn at module scope.
+      const initModule = 'data:text/javascript;base64,' + Buffer.from(setup).toString('base64')
+      await route.fulfill({ response, body: `import ${JSON.stringify(initModule)};\n${await response.text()}` })
     })
     await page.goto('http://localhost:34115')
     await page.waitForSelector('.chat-row', { timeout: 30000 })
@@ -42,8 +48,8 @@ ${await response.text()}` })
   } finally {
     try {
       if (page) {
-        await page.unroute('**/src/main.ts')
-        await page.route('**/src/main.ts', route => route.abort())
+        await page.unroute(mainEntry)
+        await page.route(mainEntry, route => route.abort())
         await page.reload()
         await page.waitForTimeout(1700)
         assert.equal(await page.evaluate(() => typeof window.__installFakes), 'undefined')

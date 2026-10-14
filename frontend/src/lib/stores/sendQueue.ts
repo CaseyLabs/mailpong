@@ -9,6 +9,8 @@ export const UNDO_SEND_MS = 10_000
 
 export interface SendResult {
   id: string
+  outcome: string
+  warnings: string
   error: string
   // Draft keeping a message that failed to send, if any.
   draftId: string

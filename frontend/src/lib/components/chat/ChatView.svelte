@@ -7,6 +7,7 @@
   import Icon from '@iconify/svelte'
   import { _ } from '$lib/i18n'
   import { ChatReplyFrom, GetIdentities, OpenURL } from '../../../../wailsjs/go/app/App'
+  import SubmissionReviewDialog from '../composer/SubmissionReviewDialog.svelte'
   import { ConfirmDialog } from '$lib/components/ui/confirm-dialog'
   import { toasts } from '$lib/stores/toast'
   import { setFocusedPane } from '$lib/stores/keyboard.svelte'
@@ -413,3 +414,5 @@
   onConfirm={() => { showDeleteConfirm = false; void actions.deleteMessages(messageIds, true) }}
   onCancel={() => (showDeleteConfirm = false)}
 />
+
+<SubmissionReviewDialog review={composer.submissionReview} />

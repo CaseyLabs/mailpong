@@ -70,7 +70,8 @@ changing directory. Quote resolved paths. For example, from the checkout root:
 Read Scope, Progress, the actionable milestone and relevant decisions only.
 The run-mailven core links optional UI references by task; its safeguards always
 apply. Handoffs persist checkpoints before committing and include a host-neutral
-prompt. Deferred follow-up verification is tracked in `PLAN.md`; no milestone is active.
+prompt. Deferred cross-host verification and current provider implementation milestones
+are tracked in `PLAN.md`.
 The [verification record](docs/validation/shared-skills-g3.md) documents completed
 Codex and guarded UI checks. Claude runtime compliance, bidirectional cross-host
 continuation and comparable context savings remain unverified and deferred until

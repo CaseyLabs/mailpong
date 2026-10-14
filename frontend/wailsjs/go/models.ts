@@ -287,6 +287,59 @@ export namespace account {
 
 }
 
+export namespace apimigrate {
+
+	export class Counts {
+	    folders: number;
+	    imapMessages: number;
+	    apiMessages: number;
+	    drafts: number;
+	    queuedSubmissions: number;
+
+	    static createFrom(source: any = {}) {
+	        return new Counts(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.folders = source["folders"];
+	        this.imapMessages = source["imapMessages"];
+	        this.apiMessages = source["apiMessages"];
+	        this.drafts = source["drafts"];
+	        this.queuedSubmissions = source["queuedSubmissions"];
+	    }
+	}
+	export class Record {
+	    accountId: string;
+	    state: string;
+	    route: string;
+	    snapshotPath: string;
+	    correlated: number;
+	    uncorrelated: number;
+	    error: string;
+	    startedAt: number;
+	    updatedAt: number;
+
+	    static createFrom(source: any = {}) {
+	        return new Record(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.accountId = source["accountId"];
+	        this.state = source["state"];
+	        this.route = source["route"];
+	        this.snapshotPath = source["snapshotPath"];
+	        this.correlated = source["correlated"];
+	        this.uncorrelated = source["uncorrelated"];
+	        this.error = source["error"];
+	        this.startedAt = source["startedAt"];
+	        this.updatedAt = source["updatedAt"];
+	    }
+	}
+
+}
+
 export namespace app {
 	
 	export class AccountIdentityGroup {
@@ -404,6 +457,7 @@ export namespace app {
 	    text: string;
 	    replyAll: boolean;
 	    attachments: smtp.Attachment[];
+	    reviewAttemptId?: string;
 	    draftId: string;
 	
 	    static createFrom(source: any = {}) {
@@ -418,6 +472,7 @@ export namespace app {
 	        this.text = source["text"];
 	        this.replyAll = source["replyAll"];
 	        this.attachments = this.convertValues(source["attachments"], smtp.Attachment);
+	        this.reviewAttemptId = source["reviewAttemptId"];
 	        this.draftId = source["draftId"];
 	    }
 	
@@ -609,6 +664,120 @@ export namespace app {
 	        this.hasContactScope = source["hasContactScope"];
 	    }
 	}
+	export class MailAPIMigrationPlan {
+	    accountId: string;
+	    route: string;
+	    routeState: string;
+	    counts: apimigrate.Counts;
+	    pendingActions: number;
+	    blockers: string[];
+	    migration?: apimigrate.Record;
+
+	    static createFrom(source: any = {}) {
+	        return new MailAPIMigrationPlan(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.accountId = source["accountId"];
+	        this.route = source["route"];
+	        this.routeState = source["routeState"];
+	        this.counts = this.convertValues(source["counts"], apimigrate.Counts);
+	        this.pendingActions = source["pendingActions"];
+	        this.blockers = source["blockers"];
+	        this.migration = this.convertValues(source["migration"], apimigrate.Record);
+	    }
+
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class MailAPIRollbackAction {
+	    op: string;
+	    status: string;
+	    error: string;
+
+	    static createFrom(source: any = {}) {
+	        return new MailAPIRollbackAction(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.op = source["op"];
+	        this.status = source["status"];
+	        this.error = source["error"];
+	    }
+	}
+	export class MailAPIRollbackReport {
+	    accountId: string;
+	    snapshotPath: string;
+	    unfinished: MailAPIRollbackAction[];
+	    appliedSince: number;
+
+	    static createFrom(source: any = {}) {
+	        return new MailAPIRollbackReport(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.accountId = source["accountId"];
+	        this.snapshotPath = source["snapshotPath"];
+	        this.unfinished = this.convertValues(source["unfinished"], MailAPIRollbackAction);
+	        this.appliedSince = source["appliedSince"];
+	    }
+
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class MailAPIRouteStatus {
+	    route: string;
+	    state: string;
+	    shared: boolean;
+	    authorized: boolean;
+	    failure: string;
+
+	    static createFrom(source: any = {}) {
+	        return new MailAPIRouteStatus(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.route = source["route"];
+	        this.state = source["state"];
+	        this.shared = source["shared"];
+	        this.authorized = source["authorized"];
+	        this.failure = source["failure"];
+	    }
+	}
 	export class MailtoData {
 	    to: string[];
 	    cc: string[];
@@ -700,6 +869,10 @@ export namespace app {
 	    }
 	}
 	export class OAuthStatus {
+	    microsoftAccountType: string;
+	    grantedScopes: string[];
+	    requestedScopes: string[];
+	    scopesKnown: boolean;
 	    isOAuth: boolean;
 	    provider: string;
 	    email: string;
@@ -714,6 +887,10 @@ export namespace app {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.microsoftAccountType = source["microsoftAccountType"];
+	        this.grantedScopes = source["grantedScopes"];
+	        this.requestedScopes = source["requestedScopes"];
+	        this.scopesKnown = source["scopesKnown"];
 	        this.isOAuth = source["isOAuth"];
 	        this.provider = source["provider"];
 	        this.email = source["email"];
@@ -898,6 +1075,40 @@ export namespace app {
 		    return a;
 		}
 	}
+	export class SenderEvidence {
+	    email: string;
+	    state: string;
+	    observedState: string;
+	    source: string;
+	    route: string;
+	    observedAt: string;
+	    action: string;
+	    guidance: string;
+	    reviewToken: string;
+	    sendAs: string;
+	    sendOnBehalf: string;
+	    sharedRead: string;
+
+	    static createFrom(source: any = {}) {
+	        return new SenderEvidence(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.email = source["email"];
+	        this.state = source["state"];
+	        this.observedState = source["observedState"];
+	        this.source = source["source"];
+	        this.route = source["route"];
+	        this.observedAt = source["observedAt"];
+	        this.action = source["action"];
+	        this.guidance = source["guidance"];
+	        this.reviewToken = source["reviewToken"];
+	        this.sendAs = source["sendAs"];
+	        this.sendOnBehalf = source["sendOnBehalf"];
+	        this.sharedRead = source["sharedRead"];
+	    }
+	}
 	export class ServerCertificateCheck {
 	    certificateRequired: boolean;
 	    host?: string;
@@ -931,6 +1142,88 @@ export namespace app {
 		    }
 		    return a;
 		}
+	}
+	export class SetupDiagnosticReport {
+	    runId: string;
+	    accountId: string;
+	    mailbox: string;
+	    from: string;
+	    route: string;
+	    startedAt: string;
+	    finishedAt: string;
+	    endpoints: string[];
+	    oauthResource: string;
+	    oauthExpiresAt: string;
+	    oauthScopes: string[];
+	    oauthScopesKnown: boolean;
+	    checks: setupdiagnostic.Check[];
+	    dns: setupdiagnostic.DNSResult;
+	    limitations: string;
+
+	    static createFrom(source: any = {}) {
+	        return new SetupDiagnosticReport(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.runId = source["runId"];
+	        this.accountId = source["accountId"];
+	        this.mailbox = source["mailbox"];
+	        this.from = source["from"];
+	        this.route = source["route"];
+	        this.startedAt = source["startedAt"];
+	        this.finishedAt = source["finishedAt"];
+	        this.endpoints = source["endpoints"];
+	        this.oauthResource = source["oauthResource"];
+	        this.oauthExpiresAt = source["oauthExpiresAt"];
+	        this.oauthScopes = source["oauthScopes"];
+	        this.oauthScopesKnown = source["oauthScopesKnown"];
+	        this.checks = this.convertValues(source["checks"], setupdiagnostic.Check);
+	        this.dns = this.convertValues(source["dns"], setupdiagnostic.DNSResult);
+	        this.limitations = source["limitations"];
+	    }
+
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class SetupDiagnosticRequest {
+	    runId: string;
+	    accountId: string;
+	    from: string;
+	    route: string;
+	    domain: string;
+	    ownedDomain: boolean;
+	    dkimSelectors: string[];
+
+	    static createFrom(source: any = {}) {
+	        return new SetupDiagnosticRequest(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.runId = source["runId"];
+	        this.accountId = source["accountId"];
+	        this.from = source["from"];
+	        this.route = source["route"];
+	        this.domain = source["domain"];
+	        this.ownedDomain = source["ownedDomain"];
+	        this.dkimSelectors = source["dkimSelectors"];
+	    }
 	}
 
 }
@@ -2823,6 +3116,108 @@ export namespace settings {
 
 }
 
+export namespace setupdiagnostic {
+
+	export class Check {
+	    name: string;
+	    status: string;
+	    at: string;
+	    evidenceAgeSeconds: number;
+	    detail: string;
+	    code: string;
+
+	    static createFrom(source: any = {}) {
+	        return new Check(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.status = source["status"];
+	        this.at = source["at"];
+	        this.evidenceAgeSeconds = source["evidenceAgeSeconds"];
+	        this.detail = source["detail"];
+	        this.code = source["code"];
+	    }
+	}
+	export class DNSCheck {
+	    query: string;
+	    resolver: string;
+	    // Go type: time
+	    observedAt: any;
+	    evidenceAgeSeconds: number;
+	    ttlSeconds?: number;
+	    status: string;
+	    evidence: string;
+
+	    static createFrom(source: any = {}) {
+	        return new DNSCheck(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.query = source["query"];
+	        this.resolver = source["resolver"];
+	        this.observedAt = this.convertValues(source["observedAt"], null);
+	        this.evidenceAgeSeconds = source["evidenceAgeSeconds"];
+	        this.ttlSeconds = source["ttlSeconds"];
+	        this.status = source["status"];
+	        this.evidence = source["evidence"];
+	    }
+
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+	export class DNSResult {
+	    domain: string;
+	    checks: DNSCheck[];
+
+	    static createFrom(source: any = {}) {
+	        return new DNSResult(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.domain = source["domain"];
+	        this.checks = this.convertValues(source["checks"], DNSCheck);
+	    }
+
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
 export namespace smime {
 	
 	export class Certificate {
@@ -3017,6 +3412,9 @@ export namespace smtp {
 	    text_body: string;
 	    html_body: string;
 	    attachments: Attachment[];
+	    submission_draft_id?: string;
+	    sender_review_token?: string;
+	    review_attempt_id?: string;
 	    in_reply_to?: string;
 	    references?: string[];
 	    request_read_receipt: boolean;
@@ -3040,6 +3438,9 @@ export namespace smtp {
 	        this.text_body = source["text_body"];
 	        this.html_body = source["html_body"];
 	        this.attachments = this.convertValues(source["attachments"], Attachment);
+	        this.submission_draft_id = source["submission_draft_id"];
+	        this.sender_review_token = source["sender_review_token"];
+	        this.review_attempt_id = source["review_attempt_id"];
 	        this.in_reply_to = source["in_reply_to"];
 	        this.references = source["references"];
 	        this.request_read_receipt = source["request_read_receipt"];
@@ -3049,6 +3450,119 @@ export namespace smtp {
 	        this.pgp_encrypt_message = source["pgp_encrypt_message"];
 	    }
 	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
+export namespace submission {
+
+	export class Attempt {
+	    id: string;
+	    messageId: string;
+	    accountId: string;
+	    draftId: string;
+	    outcome: string;
+	    stage: string;
+	    recipients: string;
+	    error: string;
+	    warnings: string;
+	    createdAt: number;
+	    updatedAt: number;
+
+	    static createFrom(source: any = {}) {
+	        return new Attempt(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.messageId = source["messageId"];
+	        this.accountId = source["accountId"];
+	        this.draftId = source["draftId"];
+	        this.outcome = source["outcome"];
+	        this.stage = source["stage"];
+	        this.recipients = source["recipients"];
+	        this.error = source["error"];
+	        this.warnings = source["warnings"];
+	        this.createdAt = source["createdAt"];
+	        this.updatedAt = source["updatedAt"];
+	    }
+	}
+	export class Copy {
+	    mailboxRoute: string;
+	    attemptId: string;
+	    messageId: string;
+	    accountId: string;
+	    folderPath: string;
+	    mode: string;
+	    state: string;
+	    evidence: string;
+
+	    static createFrom(source: any = {}) {
+	        return new Copy(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.mailboxRoute = source["mailboxRoute"];
+	        this.attemptId = source["attemptId"];
+	        this.messageId = source["messageId"];
+	        this.accountId = source["accountId"];
+	        this.folderPath = source["folderPath"];
+	        this.mode = source["mode"];
+	        this.state = source["state"];
+	        this.evidence = source["evidence"];
+	    }
+	}
+	export class Destination {
+	    mailboxRoute: string;
+	    accountId: string;
+	    folderPath: string;
+	    mode: string;
+
+	    static createFrom(source: any = {}) {
+	        return new Destination(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.mailboxRoute = source["mailboxRoute"];
+	        this.accountId = source["accountId"];
+	        this.folderPath = source["folderPath"];
+	        this.mode = source["mode"];
+	    }
+	}
+	export class SentPolicy {
+	    route: string;
+	    destinations: Destination[];
+
+	    static createFrom(source: any = {}) {
+	        return new SentPolicy(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.route = source["route"];
+	        this.destinations = this.convertValues(source["destinations"], Destination);
+	    }
+
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;

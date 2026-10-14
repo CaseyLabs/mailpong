@@ -34,6 +34,7 @@
   // OAuth credentials to pass to parent
   export interface OAuthCredentials {
     provider: string
+    microsoftAccountType?: string
     accessToken: string
     refreshToken: string
     expiresIn: number
@@ -69,6 +70,14 @@
     microsoft: false,
   })
   let oauthInitialized = $state(false)
+  let microsoftAccountType = $state('')
+
+  function chooseMicrosoftAccountType(value: string) {
+    microsoftAccountType = value
+    if (smtpHost === 'smtp.office365.com' || smtpHost === 'smtp-mail.outlook.com') {
+      smtpHost = value === 'personal' ? 'smtp-mail.outlook.com' : 'smtp.office365.com'
+    }
+  }
 
   // Custom ("bring your own app") OAuth — for a generic IMAP account whose OAuth
   // provider Mailven does not ship. Primary inputs are the issuer URL + client ID;
@@ -382,6 +391,7 @@
 
   // Start OAuth flow for the selected provider
   async function startOAuthFlow() {
+    if (selectedProvider && getOAuthProviderType(selectedProvider) === 'microsoft' && !microsoftAccountType) return
     if (!selectedProvider) return
 
     // Custom ("bring your own app") provider: build the flow from user-entered
@@ -458,6 +468,7 @@
 
   // Auto-fill settings when provider is selected
   function selectProvider(provider: EmailProvider) {
+    microsoftAccountType = ''
     selectedProvider = provider
     imapHost = provider.imap.host
     imapPort = provider.imap.port
@@ -489,7 +500,7 @@
     prevEmail = email
 
     // Try to detect provider
-    const detected = detectProvider(email)
+    const detected = editAccount ? null : detectProvider(email)
     if (detected && detected.id !== selectedProvider?.id) {
       selectProvider(detected)
     }
@@ -642,12 +653,17 @@
         // We just pass the metadata so the parent can complete the account setup
         oauthCredentials = {
           provider: oauthStore.flowResult.provider,
+          microsoftAccountType,
           accessToken: '', // Tokens are handled by backend
           refreshToken: '', // Tokens are handled by backend
           expiresIn: oauthStore.flowResult.expiresIn,
         }
       }
 
+      if (!editAccount && oauthCredentials?.provider === 'microsoft' && !microsoftAccountType) {
+        errors.oauth = $_('account.microsoftChooseType')
+        return
+      }
       await onSubmit?.(buildConfig(), oauthCredentials)
 
       // Reset OAuth state on success
@@ -799,6 +815,18 @@
           </p>
         </div>
 
+        {#if !editAccount && selectedProvider && getOAuthProviderType(selectedProvider) === 'microsoft'}
+          <div class="space-y-2">
+            <Label for="microsoft-account-type">{$_('account.microsoftAccountType')}</Label>
+            <select id="microsoft-account-type" class="w-full rounded-md border border-input bg-background p-2 text-sm" value={microsoftAccountType} onchange={(event) => chooseMicrosoftAccountType(event.currentTarget.value)}>
+              <option value="">{$_('account.microsoftChooseType')}</option>
+              <option value="personal">{$_('account.microsoftPersonal')}</option>
+              <option value="business">{$_('account.microsoftBusiness')}</option>
+            </select>
+            <p class="text-xs text-muted-foreground">{$_('account.microsoftSetupHelp')}</p>
+          </div>
+        {/if}
+
         <!-- Authentication Section -->
         <div class="space-y-3">
           <!-- Shared OAuth flow status (idle/pending/success/error). Used by both the
@@ -942,7 +970,7 @@
               {/if}
 
               {#if authMethod === 'oauth2'}
-                {@render oauthFlowStatus()}
+                {@render oauthFlowStatus(getOAuthProviderType(selectedProvider!) === 'microsoft' && !microsoftAccountType)}
               {:else}
                 <!-- Password field for app password -->
                 <div class="space-y-2">

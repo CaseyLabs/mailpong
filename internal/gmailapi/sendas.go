@@ -29,10 +29,10 @@ type SendAs struct {
 	Signature          string `json:"signature"`
 }
 
-// Verified reports whether Gmail will send mail from this address as-is.
-// The primary address has no verification status.
+// Verified reports whether Gmail's response explicitly supports sending from
+// this address as-is. The primary address may omit verificationStatus.
 func (s SendAs) Verified() bool {
-	return s.IsPrimary || s.VerificationStatus == "" || s.VerificationStatus == "accepted"
+	return s.IsPrimary || s.VerificationStatus == "accepted"
 }
 
 // ListSendAs returns the account's send-as addresses.

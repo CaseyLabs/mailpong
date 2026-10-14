@@ -43,6 +43,7 @@ type Scheduler struct {
 	syncCompletedCallback SyncCompletedCallback
 	isConnected           func() bool                 // optional: skip sync when offline
 	suppressSync          func(accountID string) bool // optional: skip scheduled ticks during an own-delete burst
+	apiSync               APISyncFunc                 // optional: runs API-routed accounts instead of IMAP
 
 	// Control
 	ctx           context.Context
@@ -259,6 +260,11 @@ func (s *Scheduler) syncAccountInbox(acc *account.Account) {
 		delete(s.syncing, acc.ID)
 		s.syncingMu.Unlock()
 	}()
+
+	if handled, info, err := s.syncViaAPI(ctx, acc); handled {
+		s.completeAPISync(acc, info, err)
+		return
+	}
 
 	s.log.Info().Str("account", acc.Name).Msg("Starting scheduled sync for INBOX")
 
@@ -477,6 +483,10 @@ func (s *Scheduler) SyncAccountInboxBlocking(accountID string) (*NewMailInfo, er
 		delete(s.syncing, acc.ID)
 		s.syncingMu.Unlock()
 	}()
+
+	if handled, info, err := s.syncViaAPI(ctx, acc); handled {
+		return info, err
+	}
 
 	// Get the INBOX folder
 	inbox, err := s.folderStore.GetByType(acc.ID, folder.TypeInbox)

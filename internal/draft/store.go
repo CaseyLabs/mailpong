@@ -75,7 +75,7 @@ func (s *Store) Update(d *Draft) error {
 
 	query := `
 		UPDATE drafts SET
-			to_list = ?, cc_list = ?, bcc_list = ?, reply_to = ?, subject = ?,
+			account_id = ?, to_list = ?, cc_list = ?, bcc_list = ?, reply_to = ?, subject = ?,
 			body_html = ?, body_text = ?, in_reply_to_id = ?, reply_type = ?,
 			references_list = ?, identity_id = ?, sign_message = ?,
 			encrypted = ?, encrypted_body = ?,
@@ -87,7 +87,7 @@ func (s *Store) Update(d *Draft) error {
 	`
 
 	_, err := s.db.Exec(query,
-		d.ToList, d.CcList, d.BccList, nullString(d.ReplyTo), d.Subject,
+		d.AccountID, d.ToList, d.CcList, d.BccList, nullString(d.ReplyTo), d.Subject,
 		d.BodyHTML, d.BodyText, nullString(d.InReplyToID), nullString(d.ReplyType),
 		nullString(d.ReferencesList), nullString(d.IdentityID), d.SignMessage,
 		d.Encrypted, nullBytes(d.EncryptedBody),

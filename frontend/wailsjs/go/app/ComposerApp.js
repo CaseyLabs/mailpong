@@ -82,8 +82,16 @@ export function GetSendAsStatus(arg1) {
   return window['go']['app']['ComposerApp']['GetSendAsStatus'](arg1);
 }
 
+export function GetSenderEvidence(arg1, arg2) {
+  return window['go']['app']['ComposerApp']['GetSenderEvidence'](arg1, arg2);
+}
+
 export function GetShowTitleBar() {
   return window['go']['app']['ComposerApp']['GetShowTitleBar']();
+}
+
+export function GetSubmissionReview(arg1, arg2, arg3) {
+  return window['go']['app']['ComposerApp']['GetSubmissionReview'](arg1, arg2, arg3);
 }
 
 export function GetSystemTheme() {

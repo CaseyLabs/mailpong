@@ -23,13 +23,13 @@ OAuth is the easiest and most secure way to connect your Gmail account.
 
 ### Permissions Requested
 
-Mailven requests the following permissions:
-- **Read, send, and manage your email** - Required for basic email functionality
-- **View your contacts** - Used for email address autocomplete
+Mailven requests access to Gmail and Google Contacts. Contact sync is configured separately in **Settings > Contacts**; you can manage or remove that contact source independently of the mail account.
 
 ### Security Note
 
-You may see a warning that "This app isn't verified." This is expected: Mailven has no bundled Google credentials, so you authorize against an OAuth client you created yourself, which Google shows as unverified until it is verified. You can verify what Mailven does by reviewing the [source code](https://github.com/CaseyLabs/mailven).
+You may see a warning that "This app isn't verified." Mailven has no bundled Google OAuth credentials, so you use an OAuth client you created. The warning depends on that project's publishing and verification status; creating a client does not itself make it verified. For an external project left in **Testing**, Google expires refresh tokens after seven days when the app requests Gmail access. Publish the project to **In production** to avoid this Testing-only seven-day limit; Gmail's sensitive/restricted scope verification requirements still apply. See [Google's OAuth token guidance](https://developers.google.com/identity/protocols/oauth2#expiration) and [OAuth verification guidance](https://support.google.com/cloud/answer/13463073).
+
+You can review what Mailven does in the [source code](https://github.com/CaseyLabs/mailven).
 
 To proceed:
 1. Click **Advanced**
@@ -38,14 +38,11 @@ To proceed:
 
 ## App Password Method (Alternative)
 
-Use this method if:
-- OAuth doesn't work in your environment
-- Your organization restricts OAuth applications
-- You prefer using app-specific passwords
+Mailven recommends OAuth. Use an app password only when you cannot use OAuth and your Google account offers this option. Google describes app passwords as less secure and may hide the option for some accounts, including some organization-managed accounts and accounts enrolled in Advanced Protection.
 
 ### Prerequisites
 
-You must have 2-Step Verification enabled on your Google account to use app passwords.
+App passwords require 2-Step Verification, but enabling it does not guarantee that the option will be available. See Google's [app password eligibility and setup guidance](https://support.google.com/accounts/answer/185833?hl=en).
 
 ### Creating an App Password
 
@@ -66,6 +63,8 @@ You must have 2-Step Verification enabled on your Google account to use app pass
 5. Paste the app password you generated
 6. Click **Add Account**
 
+Mailven records the permissions returned by the provider separately from those requested. If a known grant lacks a required permission, only the affected feature is unavailable and its error explains the missing access. Mail authorization does not prove contacts access. Older accounts can have unknown permission evidence: their configured mail route remains available, while contacts may need explicit authorization. A new sign-in that omits permission evidence is also recorded as unknown. Mailven does not start reauthorization automatically.
+
 ## Troubleshooting
 
 ### "Access Denied" Error
@@ -74,9 +73,9 @@ You must have 2-Step Verification enabled on your Google account to use app pass
 - Try generating a new app password
 - Check if your organization has restrictions on third-party apps
 
-### OAuth Token Expired
+### OAuth Sign-in Requested
 
-OAuth tokens periodically expire. To re-authorize:
+Mailven refreshes OAuth access tokens automatically during normal use. An expired access token usually does not require action. If Google rejects or revokes the saved refresh grant, Mailven will ask you to sign in again. Then:
 
 1. Go to **Settings > Accounts**
 2. Click **Edit** on your Gmail account
@@ -93,6 +92,10 @@ If emails aren't appearing:
 
 ## Contact Sync
 
-When you authorize Gmail with OAuth, Mailven can also sync your Google Contacts for email autocomplete. This is configured separately in **Settings > Contacts**.
+Google Contacts are managed as a separate contact source in **Settings > Contacts**. Connect or reauthorize that source there if contact sync needs access; mail authorization status and contact-source status are managed separately.
+
+Autocomplete can also search Google's Other Contacts when the mail account's
+grant includes `contacts.other.readonly`. This search does not require the
+separate `contacts.readonly` permission used for saved-contact sync.
 
 See [Contacts](/docs/features/contacts) for more information.

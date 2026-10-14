@@ -76,8 +76,12 @@ type ComposeMessage struct {
 	Attachments []Attachment `json:"attachments"`
 
 	// Headers
-	InReplyTo  string   `json:"in_reply_to,omitempty"` // Message-ID of the message being replied to
-	References []string `json:"references,omitempty"`  // Thread references
+	MessageID         string   `json:"-"` // Assigned by the durable submission journal, never trusted from RPC.
+	SubmissionDraftID string   `json:"submission_draft_id,omitempty"`
+	SenderReviewToken string   `json:"sender_review_token,omitempty"` // Explicit acknowledgement of route-specific unknown/stale sender evidence.
+	ReviewAttemptID   string   `json:"review_attempt_id,omitempty"`
+	InReplyTo         string   `json:"in_reply_to,omitempty"` // Message-ID of the message being replied to
+	References        []string `json:"references,omitempty"`  // Thread references
 
 	// Options
 	RequestReadReceipt bool `json:"request_read_receipt"`
@@ -104,12 +108,31 @@ func (m *ComposeMessage) AllRecipients() []string {
 
 // ToRFC822 converts the message to RFC 822 format for sending
 func (m *ComposeMessage) ToRFC822() ([]byte, error) {
+	if err := m.validateInput(); err != nil {
+		return nil, err
+	}
+	// Normalize domains before serializing headers and signing, without changing
+	// the caller's draft or international local parts.
+	copyMessage := *m
+	copyMessage.From.Address, _ = NormalizeEnvelopeAddress(m.From.Address)
+	copyMessage.To = normalizeAddresses(m.To)
+	copyMessage.Cc = normalizeAddresses(m.Cc)
+	copyMessage.Bcc = normalizeAddresses(m.Bcc)
+	if m.ReplyTo != nil {
+		reply := *m.ReplyTo
+		reply.Address, _ = NormalizeEnvelopeAddress(reply.Address)
+		copyMessage.ReplyTo = &reply
+	}
+	m = &copyMessage
 	var buf bytes.Buffer
 
 	// Generate Message-ID under the sender's domain; spam filters
 	// penalize IDs without a real domain. The "mailven" fallback avoids
 	// "localhost", which looks like a misconfigured host to those filters.
-	messageID := fmt.Sprintf("<%s@%s>", uuid.New().String(), domainFromEmail(m.From.Address, "mailven"))
+	messageID := m.MessageID
+	if messageID == "" {
+		messageID = NewMessageID(m.From.Address)
+	}
 
 	// Write headers
 	writeHeader(&buf, "From", m.From.String())
@@ -646,4 +669,64 @@ func (w *base64LineWrapper) Write(p []byte) (int, error) {
 		p = p[toWrite:]
 	}
 	return n, nil
+}
+
+// NewMessageID creates a stable identifier for a new submission.
+func NewMessageID(from string) string {
+	if normalized, err := NormalizeEnvelopeAddress(from); err == nil {
+		from = normalized
+	}
+	return fmt.Sprintf("<%s@%s>", uuid.New().String(), domainFromEmail(from, "mailven"))
+}
+
+// Reject invalid input rather than silently stripping injected header content.
+func (m *ComposeMessage) validateInput() error {
+	addresses := []Address{m.From}
+	addresses = append(addresses, m.To...)
+	addresses = append(addresses, m.Cc...)
+	addresses = append(addresses, m.Bcc...)
+	if m.ReplyTo != nil {
+		addresses = append(addresses, *m.ReplyTo)
+	}
+	if len(m.AllRecipients()) == 0 {
+		return fmt.Errorf("no recipients specified")
+	}
+	for _, address := range addresses {
+		if strings.ContainsAny(address.Name, "\r\n\x00") {
+			return fmt.Errorf("display name contains a header control character")
+		}
+		if _, err := NormalizeEnvelopeAddress(address.Address); err != nil {
+			return err
+		}
+	}
+	for _, value := range append([]string{m.Subject, m.MessageID, m.InReplyTo}, m.References...) {
+		if strings.ContainsAny(value, "\r\n\x00") {
+			return fmt.Errorf("header contains a control character")
+		}
+	}
+	if m.MessageID != "" && (!validMessageIDs(m.MessageID) || len(strings.Fields(m.MessageID)) != 1) {
+		return fmt.Errorf("invalid Message-ID")
+	}
+	if m.InReplyTo != "" && !validMessageIDs(m.InReplyTo) {
+		return fmt.Errorf("invalid In-Reply-To")
+	}
+	for _, reference := range m.References {
+		if !validMessageIDs(reference) {
+			return fmt.Errorf("invalid References")
+		}
+	}
+	for _, attachment := range m.Attachments {
+		if strings.ContainsAny(attachment.Filename+attachment.ContentType+attachment.ContentID, "\r\n\x00") {
+			return fmt.Errorf("attachment header contains a control character")
+		}
+	}
+	return nil
+}
+
+func normalizeAddresses(addresses []Address) []Address {
+	result := append([]Address(nil), addresses...)
+	for i := range result {
+		result[i].Address, _ = NormalizeEnvelopeAddress(result[i].Address)
+	}
+	return result
 }

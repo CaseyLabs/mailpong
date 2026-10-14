@@ -3,6 +3,7 @@ package database
 import (
 	"database/sql"
 	"fmt"
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -1002,5 +1003,138 @@ func TestMigrationV55_ThreadStartersBackfill(t *testing.T) {
 	}
 	if got := read(); fmt.Sprint(got) != fmt.Sprint(backfilled) {
 		t.Errorf("trigger rows = %v, want backfill %v", got, backfilled)
+	}
+}
+
+func TestMigration57SentEvidenceRerunnableAndRollback(t *testing.T) {
+	db, err := Open(filepath.Join(t.TempDir(), "sent-migration.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	if err := db.Migrate(); err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range migrations {
+		if m.Version == 57 {
+			if _, err := db.Exec(m.SQL); err != nil {
+				t.Fatalf("migration not rerunnable: %v", err)
+			}
+		}
+	}
+	script, err := os.ReadFile("../../tools/db/rollback-v61-to-v30.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(string(script)); err != nil {
+		t.Fatalf("rollback failed: %v", err)
+	}
+	var version int
+	if err := db.QueryRow("SELECT MAX(version) FROM migrations").Scan(&version); err != nil || version != 30 {
+		t.Fatalf("rollback version %d: %v", version, err)
+	}
+	if err := db.Migrate(); err != nil {
+		t.Fatalf("reupgrade failed: %v", err)
+	}
+}
+
+func TestMigration59APIIdentityRerunnableAndCascades(t *testing.T) {
+	db, err := Open(filepath.Join(t.TempDir(), "api-identity.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	if err := db.Migrate(); err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range migrations {
+		if m.Version == 59 {
+			if _, err := db.Exec(m.SQL); err != nil {
+				t.Fatalf("migration not rerunnable: %v", err)
+			}
+		}
+	}
+	for _, q := range []string{
+		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username) VALUES ('a','n','a@x.test','i','s','a@x.test')`,
+		`INSERT INTO folders (id, account_id, name, path, folder_type) VALUES ('f','a','INBOX','INBOX','inbox')`,
+		`INSERT INTO messages (id, account_id, folder_id, uid) VALUES ('m','a','f',1)`,
+		`INSERT INTO api_message_refs (account_id, provider, remote_id) VALUES ('a','gmail','r')`,
+		`INSERT INTO api_message_rows (message_id, account_id, provider, remote_id) VALUES ('m','a','gmail','r')`,
+		`INSERT INTO api_sync_state (account_id, scope, updated_at) VALUES ('a','mailbox',1)`,
+	} {
+		if _, err := db.Exec(q); err != nil {
+			t.Fatalf("%s: %v", q, err)
+		}
+	}
+	if _, err := db.Exec(`DELETE FROM accounts WHERE id='a'`); err != nil {
+		t.Fatal(err)
+	}
+	for _, table := range []string{"api_message_refs", "api_message_rows", "api_sync_state"} {
+		var n int
+		if err := db.QueryRow("SELECT COUNT(*) FROM " + table).Scan(&n); err != nil || n != 0 {
+			t.Fatalf("%s rows after account delete = %d, %v", table, n, err)
+		}
+	}
+}
+
+func TestMigration60APIPendingActionsRerunnableAndCascades(t *testing.T) {
+	db, err := Open(filepath.Join(t.TempDir(), "api-queue.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	if err := db.Migrate(); err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range migrations {
+		if m.Version == 60 {
+			if _, err := db.Exec(m.SQL); err != nil {
+				t.Fatalf("migration not rerunnable: %v", err)
+			}
+		}
+	}
+	for _, q := range []string{
+		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username) VALUES ('a','n','a@x.test','i','s','a@x.test')`,
+		`INSERT INTO api_pending_actions (account_id, provider, op, remote_id, created_at) VALUES ('a','gmail','read','r',1)`,
+		`DELETE FROM accounts WHERE id='a'`,
+	} {
+		if _, err := db.Exec(q); err != nil {
+			t.Fatalf("%s: %v", q, err)
+		}
+	}
+	var n int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM api_pending_actions`).Scan(&n); err != nil || n != 0 {
+		t.Fatalf("queue rows after account delete = %d, %v", n, err)
+	}
+}
+
+func TestMigration61APIMigrationsRerunnableAndCascades(t *testing.T) {
+	db, err := Open(filepath.Join(t.TempDir(), "api-migrations.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer db.Close()
+	if err := db.Migrate(); err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range migrations {
+		if m.Version == 61 {
+			if _, err := db.Exec(m.SQL); err != nil {
+				t.Fatalf("migration not rerunnable: %v", err)
+			}
+		}
+	}
+	for _, q := range []string{
+		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username) VALUES ('a','n','a@x.test','i','s','a@x.test')`,
+		`INSERT INTO api_migrations (account_id, state, route, snapshot_path, started_at, updated_at) VALUES ('a','snapshotted','gmail-api','/s',1,1)`,
+		`DELETE FROM accounts WHERE id='a'`,
+	} {
+		if _, err := db.Exec(q); err != nil {
+			t.Fatalf("%s: %v", q, err)
+		}
+	}
+	var n int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM api_migrations`).Scan(&n); err != nil || n != 0 {
+		t.Fatalf("rows after account delete = %d, %v", n, err)
 	}
 }
