@@ -71,6 +71,14 @@ Confirmed by static inspection in P1; F1 verified the PD1/PD9 local fixes and ne
   shown in the source list until the next refresh. (The queued moves are now
   kicked.)
 
+## Documentation audit (2026-10-14)
+
+- **DOC1 medium** `PLAN.md:11`: Scope still says F5 is next although Progress marks F5a–F5c complete. Completed milestone bodies and older outcome paragraphs also retain obsolete blockers and next-step instructions. Prune completed material and reconcile the current scope with Progress, retaining needed verification evidence and deferred work.
+- **DOC2 low** `ISSUES.md` GmailSync "before wiring" entry: the required scheduler serialization now exists in `app/api_route.go:93` (`runAPISync` takes the per-account lock) and is wired in `app/background.go:45`. Close or rewrite the entry as a caller invariant rather than an outstanding integration gap; `GmailSync.Run` itself still has no internal mutex.
+- **DOC3 low** `docs/PLAN-migration.md:47`: the execution contract requires `.claude/rules/working-style.md`, which no longer exists. Point to the current shared guidance in `AGENTS.md`.
+- **DOC4 low** `docs/user-guide/features/keyboard-shortcuts.md:73`: Alt+G is described unconditionally as All Inboxes, but `Sidebar.svelte` selects the first visible item, with All Inboxes only when present. Align with `docs/KEYBOARD_SHORTCUTS.md:37`.
+- **DOC5 low** `docs/user-guide/faq.md:25` has malformed `https:/svelte.dev`; `docs/user-guide/troubleshooting.md:269` links to the absent FAQ anchor `where-are-log-files-located`. Correct the URL and point log guidance to an existing section or supply the missing section.
+
 ## Recurring problems
 
 None.
