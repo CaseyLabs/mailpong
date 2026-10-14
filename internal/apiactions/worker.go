@@ -144,6 +144,14 @@ func backoff(attempts int) time.Duration {
 // run settles one action. Store errors abort the drain; provider errors are
 // settled into the action's state.
 func (w *Worker) run(ctx context.Context, a *message.APIAction) error {
+	if a.Op == message.APIActionMove && a.Payload.MovedTo != "" {
+		// The provider already applied this move; only the local re-key is left.
+		if err := w.Store.SetAPIActionStatus(a.ID, message.APIActionInFlight, ""); err != nil {
+			return err
+		}
+		a.Attempts++
+		return w.rekey(a, a.Payload.MovedTo, a.Payload.MovedContainers)
+	}
 	remote, err := w.Remote(a.AccountID, a.Provider)
 	if err != nil {
 		// No client (no grant, no token): nothing was sent this time, but an
@@ -212,15 +220,37 @@ func (w *Worker) settle(a *message.APIAction, res Result, err error) error {
 
 func (w *Worker) applied(a *message.APIAction, res Result) error {
 	if a.Op == message.APIActionMove && res.NewRemoteID != "" && res.NewRemoteID != a.RemoteID {
-		err := w.Store.ApplyAPIMove(message.APIMove{AccountID: a.AccountID, Provider: a.Provider,
-			OldRemoteID: a.RemoteID, NewRemoteID: res.NewRemoteID, Containers: res.Containers,
-			FromFolderID: a.Payload.ToFolderID, ToFolderID: a.Payload.ToFolderID})
-		if err != nil {
-			// The move happened; the identity will be corrected by the next sync.
-			log.Warn().Err(err).Int64("action", a.ID).Msg("could not re-key moved api message")
-		}
+		return w.rekey(a, res.NewRemoteID, res.Containers)
 	}
 	return w.Store.SetAPIActionStatus(a.ID, message.APIActionApplied, "")
+}
+
+// rekey gives the moved message its new remote ID locally. The move already
+// happened at the provider, so a failure keeps the action open with the new ID
+// recorded: later actions on the message stay queued behind it instead of
+// using the stale ID, and each retry repeats only the re-key.
+func (w *Worker) rekey(a *message.APIAction, newID string, containers []string) error {
+	err := w.Store.ApplyAPIMove(message.APIMove{AccountID: a.AccountID, Provider: a.Provider,
+		OldRemoteID: a.RemoteID, NewRemoteID: newID, Containers: containers,
+		FromFolderID: a.Payload.ToFolderID, ToFolderID: a.Payload.ToFolderID})
+	if err != nil && a.Payload.MovedTo != "" {
+		// An earlier retry may have re-keyed without recording it.
+		old, _, oerr := w.Store.GetAPIRef(a.AccountID, a.Provider, a.RemoteID)
+		moved, rows, nerr := w.Store.GetAPIRef(a.AccountID, a.Provider, newID)
+		if oerr == nil && nerr == nil && old == nil && moved != nil && rows[a.Payload.ToFolderID] != "" {
+			err = nil
+		}
+	}
+	if err == nil {
+		return w.Store.SetAPIActionStatus(a.ID, message.APIActionApplied, "")
+	}
+	log.Warn().Err(err).Int64("action", a.ID).Msg("could not re-key moved api message; will retry")
+	p := a.Payload
+	p.MovedTo, p.MovedContainers = newID, containers
+	if perr := w.Store.SetAPIActionPayload(a.ID, p); perr != nil {
+		return perr
+	}
+	return w.retryLater(a, "could not update the moved message locally: "+err.Error())
 }
 
 func (w *Worker) gone(a *message.APIAction) error {

@@ -10,13 +10,13 @@ Priorities are recommendations assigned in this reorganization: P1 privacy/data 
 | --- | --- | --- | --- | --- |
 | [SEND — Sending, privacy and compatibility](#send) | proposed | P1 | [2](ISSUES.md#send) | SEND-2/3 require live authorization |
 | [API — Provider API activation and migration](#api) | proposed | P2 | [4](ISSUES.md#api) | API-1 or API-2 design; API-3 gated by API-2 |
-| [SYNC — Mail synchronization and action reliability](#sync) | proposed | P1 | [8](ISSUES.md#sync) | SYNC-1 |
+| [SYNC — Mail synchronization and action reliability](#sync) | proposed | P1 | [7](ISSUES.md#sync) | SYNC-2/3/4 |
 | [CHAT — Chat composer sender review](#chat) | proposed | P2 | [1](ISSUES.md#chat) | CHAT-1 |
 | [MAINT — Maintenance and documentation](#maint) | proposed | P2 | [10](ISSUES.md#maint) | MAINT-1; MAINT-3 external; D2 deferred/upstream blocked |
 | [AI — AI development workflows](#ai) | deferred | P3 | [1](ISSUES.md#ai) | G4 deferred; no eligible work |
 | [WAILS — Desktop framework migration assessment](#wails) | proposed | P3 | [0](ISSUES.md#wails) | W3-M0 assessment only |
 
-**Recommended next selection:** SYNC-1 (API move data integrity), requiring an explicit request and scope reconciliation. External privacy gate SEND-2 is high priority but cannot run live without separately specified authorization. No automatic selection or status transition occurs here.
+**Recommended next selection:** none automatic; SYNC-2 and CHAT-1 are the next independent P2 candidates and need an explicit request. External privacy gate SEND-2 is high priority but cannot run live without separately specified authorization. No automatic selection or status transition occurs here.
 
 ## Scope and preserved decisions
 
@@ -26,7 +26,7 @@ No live provider access, test emails, credentials changes, mailbox migration, pr
 
 ## Progress
 
-MAINT-4 is done ([validation evidence](docs/validation/maint-4.md)); its findings UI1–UI3 remain open. SEND-1 is done and CD2 resolved; see [validation evidence](docs/validation/send-1.md). Other proposed milestones remain unselected; SEND-2/3, API-3 and MAINT-3 retain their gates, and G4/D2 remain deferred. SYNC-1 is a candidate requiring separate selection.
+MAINT-4 is done ([validation evidence](docs/validation/maint-4.md)); its findings UI1–UI3 remain open. SEND-1 is done and CD2 resolved; SYNC-1 is done and R3 resolved ([evidence](docs/validation/sync-1.md)); see [validation evidence](docs/validation/send-1.md). Other proposed milestones remain unselected; SEND-2/3, API-3 and MAINT-3 retain their gates, and G4/D2 remain deferred.
 
 <a id="send"></a>
 
@@ -142,11 +142,11 @@ MAINT-4 is done ([validation evidence](docs/validation/maint-4.md)); its finding
 
 ### SYNC-1 — Durable API move re-key recovery
 
-- **Status / proposed priority:** proposed / P1. **Dependencies / gates:** none.
+- **Status / proposed priority:** done / P1. **Dependencies / gates:** none.
 - **Scope / deliverable:** Preserve an action or retry re-key after provider success and local failure.
 - **Acceptance:** Fault injection proves stale queued IDs cannot cause local deletion following re-key failure.
 - **Validation:** Focused apiactions/database tests; broaden Go tests if shared action semantics change.
-- **Issues:** [R3](ISSUES.md#r3). **Progress:** not started.
+- **Issues:** [R3](ISSUES.md#r3). **Progress:** Failed re-keys keep the move open and retry only the re-key; fault-injection test passes. [Evidence](docs/validation/sync-1.md).
 
 <a id="sync-2"></a>
 

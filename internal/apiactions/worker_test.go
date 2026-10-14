@@ -33,6 +33,7 @@ func (f *fakeRemote) Verify(context.Context, *message.APIAction) (Verdict, error
 
 type env struct {
 	s      *message.Store
+	db     *database.DB
 	w      *Worker
 	remote *fakeRemote
 	now    time.Time
@@ -67,7 +68,7 @@ func newEnv(t *testing.T, provider string) *env {
 		t.Fatal(err)
 	}
 	_, rows, _ := s.GetAPIRef("a", provider, "r1")
-	e := &env{s: s, remote: &fakeRemote{}, now: time.Unix(1000, 0), rowID: rows["f1"]}
+	e := &env{s: s, db: db, remote: &fakeRemote{}, now: time.Unix(1000, 0), rowID: rows["f1"]}
 	e.w = &Worker{Store: s, Now: func() time.Time { return e.now },
 		Remote: func(string, string) (Remote, error) { return e.remote, nil },
 		Emit:   func(ev string, _ any) { e.events = append(e.events, ev) }}
@@ -284,5 +285,76 @@ func TestWorkerMoveRekeysQueuedActions(t *testing.T) {
 	}
 	if ref, rows, _ := e.s.GetAPIRef("a", message.APIProviderGraph, "r2"); ref == nil || rows["f2"] != e.rowID {
 		t.Fatalf("ref=%v rows=%v", ref, rows)
+	}
+}
+
+func TestWorkerMoveRekeyFailureRetriesWithoutDeleting(t *testing.T) {
+	e := newEnv(t, message.APIProviderGraph)
+	err := e.s.EnqueueAPIMove(message.APIMoveRequest{AccountID: "a", Provider: message.APIProviderGraph, MessageID: e.rowID,
+		ToFolderID: "f2", Dest: "work-id", Source: "inbox-id", Containers: []string{"work-id"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := e.s.EnqueueAPIFlag("a", message.APIProviderGraph, message.APIActionRead, []string{e.rowID}, true); err != nil {
+		t.Fatal(err)
+	}
+	e.remote.res = Result{NewRemoteID: "r2", Containers: []string{"work-id"}}
+	// Fault: the new ID is already taken locally, so the re-key fails.
+	if _, err := e.db.Exec(`INSERT INTO api_message_refs(account_id,provider,remote_id,containers) VALUES('a','graph','r2','[]')`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := e.w.Drain(context.Background(), "a"); err != nil {
+		t.Fatal(err)
+	}
+	// The move was sent once; the flag action stays held and nothing was deleted.
+	if len(e.remote.applied) != 1 || e.remote.applied[0] != "move:r1" {
+		t.Fatalf("applied = %v", e.remote.applied)
+	}
+	acts, _ := e.s.ListAPIActions("a", message.APIActionPending)
+	if len(acts) != 2 || acts[0].Payload.MovedTo != "r2" {
+		t.Fatalf("pending = %+v", acts)
+	}
+	if _, err := e.s.Get(e.rowID); err != nil {
+		t.Fatalf("message lost: %v", err)
+	}
+	// Clear the fault; after backoff only the re-key is retried.
+	if _, err := e.db.Exec(`DELETE FROM api_message_refs WHERE remote_id='r2'`); err != nil {
+		t.Fatal(err)
+	}
+	e.now = e.now.Add(time.Hour)
+	if _, err := e.w.Drain(context.Background(), "a"); err != nil {
+		t.Fatal(err)
+	}
+	if len(e.remote.applied) != 2 || e.remote.applied[1] != "read:r2" {
+		t.Fatalf("applied = %v", e.remote.applied)
+	}
+	if ref, rows, _ := e.s.GetAPIRef("a", message.APIProviderGraph, "r2"); ref == nil || rows["f2"] != e.rowID {
+		t.Fatalf("ref=%v rows=%v", ref, rows)
+	}
+}
+
+func TestWorkerMoveRekeyRetryAcceptsUnrecordedRekey(t *testing.T) {
+	e := newEnv(t, message.APIProviderGraph)
+	err := e.s.EnqueueAPIMove(message.APIMoveRequest{AccountID: "a", Provider: message.APIProviderGraph, MessageID: e.rowID,
+		ToFolderID: "f2", Dest: "work-id", Source: "inbox-id", Containers: []string{"work-id"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	acts, _ := e.s.ListAPIActions("a")
+	a := acts[0]
+	// A retry re-keyed the message but could not record the action as applied.
+	if err := e.s.ApplyAPIMove(message.APIMove{AccountID: "a", Provider: message.APIProviderGraph, OldRemoteID: "r1",
+		NewRemoteID: "r2", Containers: []string{"work-id"}, FromFolderID: "f2", ToFolderID: "f2"}); err != nil {
+		t.Fatal(err)
+	}
+	a.Payload.MovedTo = "r2"
+	if err := e.s.SetAPIActionPayload(a.ID, a.Payload); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := e.w.Drain(context.Background(), "a"); err != nil {
+		t.Fatal(err)
+	}
+	if len(e.remote.applied) != 0 || e.status(t) != message.APIActionApplied {
+		t.Fatalf("applied=%v status=%s", e.remote.applied, e.status(t))
 	}
 }

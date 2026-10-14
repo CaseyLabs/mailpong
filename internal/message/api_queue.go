@@ -48,6 +48,11 @@ type APIActionPayload struct {
 	// Merged records that the destination already held a row for the message,
 	// so the source row was dropped; a revert must not move that row away.
 	Merged bool `json:"merged,omitempty"`
+	// MovedTo and MovedContainers record a move the provider applied whose
+	// local re-key failed: the new remote ID and container set. The action
+	// stays open and retries only the re-key, never the provider request.
+	MovedTo         string   `json:"movedTo,omitempty"`
+	MovedContainers []string `json:"movedContainers,omitempty"`
 }
 
 // APIAction is one queued user action on one remote message.
@@ -378,6 +383,18 @@ func (s *Store) SetAPIActionStatus(id int64, status, errText string) error {
 	if _, err := s.db.Exec(`UPDATE api_pending_actions SET status=?, error=?, attempts=attempts+?, next_attempt_at=0 WHERE id=?`,
 		status, errText, attempts, id); err != nil {
 		return fmt.Errorf("failed to update api action: %w", err)
+	}
+	return nil
+}
+
+// SetAPIActionPayload replaces the stored payload of an action.
+func (s *Store) SetAPIActionPayload(id int64, p APIActionPayload) error {
+	raw, err := json.Marshal(p)
+	if err != nil {
+		return err
+	}
+	if _, err := s.db.Exec(`UPDATE api_pending_actions SET payload=? WHERE id=?`, string(raw), id); err != nil {
+		return fmt.Errorf("failed to update api action payload: %w", err)
 	}
 	return nil
 }

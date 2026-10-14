@@ -8,7 +8,7 @@ The 2026-10-08 audit used “unverified” for reported findings not confirmed a
 
 - [SEND — Sending, privacy and compatibility](#send): [MA1](#ma1), [PD2](#pd2) (resolved: [CD2](#cd2))
 - [API — Provider API activation and migration](#api): [MA4](#ma4), [F5b-1](#f5b-1), [F5b-2](#f5b-2), [F5b-3](#f5b-3)
-- [SYNC — Mail synchronization and action reliability](#sync): [R2](#r2), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6), [R3](#r3), [R4](#r4)
+- [SYNC — Mail synchronization and action reliability](#sync): [R2](#r2), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6), [R4](#r4) (resolved: [R3](#r3))
 - [CHAT — Chat composer sender review](#chat): [R1](#r1)
 - [MAINT — Maintenance and documentation](#maint): [MA2](#ma2), [D2](#d2), [SY1](#sy1), [DOC4](#doc4), [DOC5](#doc5), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI3](#ui3)
 - [AI — AI development workflows](#ai): [AI6](#ai6)
@@ -191,16 +191,8 @@ Project: [SYNC](PLAN.md#sync).
 ### R3 — API move re-key failure
 
 - **Owner / milestone:** [SYNC](PLAN.md#sync) / [SYNC-1](PLAN.md#sync-1).
-- **Severity / proposed priority / status:** medium / P1 / deferred.
-- **Dependencies / gates:** Fault injection for provider-success/local-re-key failure.
-- **Resolution criteria:** A failed local re-key is retried or kept open; queued actions do not delete the message due to a stale ID.
-- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
-
-- **R3 medium** `internal/apiactions/worker.go` `applied`: when a provider move
-  returns a new remote ID and `ApplyAPIMove` fails, the error is only logged. Later
-  queued actions keep the old remote ID, the provider answers 404, and `gone()`
-  deletes the message locally until the next sync restores it. Retry the re-key
-  or keep the action open instead of only logging.
+- **Severity / proposed priority / status:** medium / P1 / resolved.
+- **Resolution / evidence:** SYNC-1 verified 2026-10-14. A failed local re-key after a provider move keeps the action open and retries only the re-key; queued actions stay behind it and cannot use the stale ID. Fault-injection test passes. [Validation and limits](docs/validation/sync-1.md).
 
 <a id="r4"></a>
 
