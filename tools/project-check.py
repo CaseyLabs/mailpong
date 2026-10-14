@@ -116,7 +116,7 @@ def parse_extra(values):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--scope', action='append', choices=SCOPES, default=[])
-    parser.add_argument('--base', default='HEAD', help='Changed-source baseline (use milestone base or main for landing evidence)')
+    parser.add_argument('--base', default='HEAD', help='Compare from the common ancestor with HEAD (use milestone base or main for landing evidence)')
     parser.add_argument('--run', action='store_true', help='Execute the displayed checks; default only plans them')
     parser.add_argument('--output-dir', help='New private log directory; relative to invocation cwd')
     parser.add_argument('--tail-lines', type=int, default=6)
@@ -130,6 +130,7 @@ def main(argv=None):
     try:
         repo = repository()
         base = git(repo, 'rev-parse', '--verify', args.base + '^{commit}').stdout.strip()
+        base = git(repo, 'merge-base', base, 'HEAD').stdout.strip()
         paths = changed_paths(repo, base)
         inferred, unknown = infer_scopes(paths)
         if unknown:

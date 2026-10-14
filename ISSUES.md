@@ -10,7 +10,7 @@ The 2026-10-08 audit used “unverified” for reported findings not confirmed a
 - [API — Provider API activation and migration](#api): [MA4](#ma4), [F5b-1](#f5b-1), [F5b-3](#f5b-3)
 - [SYNC — Mail synchronization and action reliability](#sync): none (resolved: [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [CHAT — Chat composer sender review](#chat): [CH1](#ch1) (resolved: [R1](#r1))
-- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI3](#ui3) (resolved: [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [SY1](#sy1))
+- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI3](#ui3) (resolved: [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
 - [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
 
@@ -224,6 +224,15 @@ Project: [MAINT](PLAN.md#maint).
 - **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-2](PLAN.md#maint-2).
 - **Severity / proposed priority / status:** low / P3 / resolved.
 - **Resolution / evidence:** MAINT-2 verified 2026-10-14. `gofmt -w internal/extensions/store.go`; `gofmt -l internal app extensions` is clean. See [evidence](docs/validation/maint-2.md).
+
+<a id="ma6"></a>
+
+### MA6 — Landing evidence branch coverage
+
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-5](PLAN.md#maint-5) review follow-up; user authorized both fixes on 2026-10-14.
+- **Severity / proposed priority / status:** P2 (both review findings) / P2 / resolved.
+- **Problem / reproduction:** `tools/project_land.py` accepted evidence based on a later feature commit, allowing an earlier broken Markdown link to land unchecked. Fresh `project-check.py --base main --run` evidence was rejected before rebase when main had diverged.
+- **Resolution / evidence:** Check baselines normalize to a common ancestor; landing requires an ancestor of the landing merge base and complete feature-path coverage. Rebase still reruns checks. Both reproductions, restored-file coverage, older valid evidence and custom landing targets are covered by disposable fixtures; 35 helper tests and independent acceptance passed. See [validation](docs/validation/maint-5.md#review-follow-up-ma6).
 
 <a id="d2"></a>
 

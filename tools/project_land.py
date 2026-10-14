@@ -10,7 +10,7 @@ import sys
 import tempfile
 
 sys.dont_write_bytecode = True
-from project_common import WorkflowError, checkout_lock, git, repository, resolve_path, tree_fingerprint
+from project_common import WorkflowError, changed_paths, checkout_lock, git, repository, resolve_path, tree_fingerprint
 
 spec = importlib.util.spec_from_file_location('project_check', Path(__file__).with_name('project-check.py'))
 checks = importlib.util.module_from_spec(spec)
@@ -25,7 +25,7 @@ def branch_ref(repo, branch):
     return ref
 
 
-def validate_evidence(repo, path, required_scopes):
+def validate_evidence(repo, path, required_scopes, main='main'):
     try:
         evidence = json.loads(path.read_text())
     except (OSError, ValueError) as error:
@@ -43,8 +43,13 @@ def validate_evidence(repo, path, required_scopes):
     base = evidence.get('base', '')
     if not isinstance(base, str) or not re.fullmatch(r'[0-9a-f]{40,64}', base):
         raise WorkflowError('Invalid evidence baseline')
-    if git(repo, 'merge-base', '--is-ancestor', base, 'HEAD', check=False).returncode:
-        raise WorkflowError('Check evidence baseline is not an ancestor of this branch')
+    landing_base = git(repo, 'merge-base', main, 'HEAD').stdout.strip()
+    if git(repo, 'merge-base', '--is-ancestor', base, landing_base, check=False).returncode:
+        raise WorkflowError('Check evidence baseline does not cover the entire branch; rerun checks with --base ' + main)
+    # An older baseline can also hide a feature edit that restores older content.
+    # Check actual diff coverage, rather than trusting the evidence path list.
+    if not set(changed_paths(repo, landing_base)).issubset(changed_paths(repo, base)):
+        raise WorkflowError('Check evidence omits feature paths; rerun checks with --base ' + main)
     commands = evidence.get('commands', [])
     results = evidence.get('results', [])
     if not isinstance(commands, list) or not isinstance(results, list) or len(commands) != len(results):
@@ -133,7 +138,7 @@ def land(repo, args, evidence, extra, remote, merge):
         code, path = checks.run_checks(repo, checks.command_plan(repo, scopes, base, extra, go_build=go_build), output, metadata)
         if code:
             raise WorkflowError(f'Rebased checks failed; feature retained and nothing landed. Evidence: {path}')
-        validate_evidence(repo, path, scopes)
+        validate_evidence(repo, path, scopes, args.main)
     if git(repo, 'status', '--porcelain').stdout:
         raise WorkflowError('Checks left source/index changes; review and commit them before landing')
     git(repo, 'switch', args.main)
@@ -179,7 +184,7 @@ def main(argv=None):
         scopes, remote, merge = preflight(repo, args.branch, args.main)
         evidence, extra = (None, [])
         if args.evidence:
-            evidence, extra = validate_evidence(repo, args.evidence, scopes)
+            evidence, extra = validate_evidence(repo, args.evidence, scopes, args.main)
         if not args.execute:
             print(f'PREVIEW ONLY: {args.branch} -> {args.main}; scopes={",".join(sorted(scopes)) or "none"}')
             print(f'Rebase if needed, rerun checks after rebase, retain recovery branches, squash/commit, push {remote}:{merge}, compare trees, then delete feature.')
@@ -195,7 +200,7 @@ def main(argv=None):
         with checkout_lock(repo):
             # Recheck all source/Git gates after acquiring the shared operation lock.
             scopes, remote, merge = preflight(repo, args.branch, args.main)
-            evidence, extra = validate_evidence(repo, args.evidence, scopes)
+            evidence, extra = validate_evidence(repo, args.evidence, scopes, args.main)
             return land(repo, args, evidence, extra, remote, merge)
     except (WorkflowError, OSError, ValueError, TypeError) as error:
         print(f'ERROR: {error}', file=sys.stderr)

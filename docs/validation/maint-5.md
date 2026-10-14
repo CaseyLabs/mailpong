@@ -27,3 +27,13 @@ Initial unit run failed eight cases: seven due to unsupported full-ref upstream 
 An illustrative pre-closeout run returned 29 lines / 3,530 characters for overview context and 58 lines / 6,046 characters for MAINT-5 context, compared with 59,223 characters for the whole PLAN plus ISSUES. Scoped output deliberately omits unrelated work; these are text-size observations, not measured tokens, cost savings or cross-host runtime evidence. G4 remains deferred.
 
 No application Go/frontend/UI/native/provider tests, dependency changes or account actions were needed or run. Helper fixtures execute only disposable Git repositories/remotes and fake commands; real landing follows repository authorization. Windows runtime and fresh Claude/Codex workflow execution trials were unrun. Checks cannot replace human/agent review, prove live provider compatibility or authorize additional milestones. No confirmed finding was left unfixed.
+
+## Review follow-up MA6
+
+User authorized fixes for both P2 review findings on 2026-10-14; [issue MA6](../../ISSUES.md#ma6). Branch `fix/landing-evidence-coverage`, pre-commit base `ddaf5d5`.
+
+`project-check.py` now records the common ancestor of the supplied base and HEAD, so the documented `--base main --run` command checks feature changes when main has diverged. Landing requires that recorded baseline to be an ancestor of the landing merge base and verifies actual changed-path coverage independently of the evidence path list. A later feature baseline is refused even if scopes match. The path check also rejects older baselines that hide a feature edit restoring earlier content. Safe older evidence and custom `--main` remain supported; post-rebase checks still run before squash.
+
+Passed `python3 tools/project-check.py --base main --run`: whitespace, changed-doc links, all 35 disposable helper tests, skill/worktree path checks and brand check. Initial focused workflow run passed 20 tests; the full suite passed 33 before the final two acceptance fixtures were added. New fixtures cover unchecked earlier Markdown, older restored-file omission, safe older evidence, a custom target, and fresh diverged-main evidence with check reruns; the existing post-rebase failure fixture now generates evidence after main diverges. No failed checks. Final source-bound evidence is regenerated after these documentation updates.
+
+Independent `project-acceptance-checker` reviewed the implementation, fixtures, documented commands and preserved landing gates read-only: PASS, no defects. Primary diff/simplification review found no warranted additional abstraction. No application Go/frontend/UI/native or live provider checks were needed or run; fixtures use disposable repositories and bare remotes.

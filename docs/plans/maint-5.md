@@ -32,3 +32,9 @@ Complete; final recorded runner refresh and commit/landing remain as mechanics. 
 ## Discoveries / outcomes
 
 All four recommendations implemented. The existing outline helper remains for compatibility; the new loader scopes context without selecting work. Relative directory links browse repository paths; /docs/ routes require real pages. Recovery branches are retained intentionally. Initial test failures (Git upstream shorthand and a baseline fixture mismatch) were corrected; strengthened fixtures also cover deletions, check failure after rebase and hook-altered commit trees. The earlier reviewer objection to relative directories was clarified as a contract distinction, not an unresolved defect. No new confirmed defects remain. G4/D2 remain deferred; output character counts do not establish token/billing savings.
+
+## Review follow-up checkpoint — MA6
+
+User authorized both P2 review fixes on 2026-10-14. Branch `fix/landing-evidence-coverage`, base `ddaf5d5`; [issue](../../ISSUES.md#ma6), [validation](../validation/maint-5.md#review-follow-up-ma6). Complete: common-ancestor check baselines, complete landing evidence ancestry/path coverage, five new regression fixtures and fresh-divergence failure coverage. Changed files: `tools/project-check.py`, `tools/project_land.py`, `tools/tests/test_workflow.py`, `CONTRIBUTING.md`, `PLAN.md`, `ISSUES.md`, this checkpoint and validation record. No unresolved findings; no new milestone activated.
+
+Checks: focused workflow suite PASS (20 cases); initial full suite PASS (33); final `python3 tools/project-check.py --base main --run` PASS (35 tests, whitespace/docs/skill paths/brand). Independent acceptance PASS; direct diff and simplification review complete. Next: refresh source-bound check evidence after documentation, commit all fix files, preview and execute guarded landing under repository policy. No app/backend/UI/live checks required for these helper-only fixes.

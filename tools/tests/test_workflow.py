@@ -66,10 +66,10 @@ class Workflow(unittest.TestCase):
                               cwd=self.root, text=True, capture_output=True,
                               env={**os.environ, 'PYTHONDONTWRITEBYTECODE': '1'})
 
-    def evidence(self, extra=None):
+    def evidence(self, extra=None, base='main'):
         self.counter += 1
         out = Path(self.tmp.name) / f'checks-{self.counter}'
-        args = ['--base', 'main', '--run', '--output-dir', out]
+        args = ['--base', base, '--run', '--output-dir', out]
         if extra:
             args += ['--extra-command', json.dumps(extra)]
         r = self.cli('project-check.py', *args)
@@ -198,6 +198,72 @@ class Workflow(unittest.TestCase):
         self.assertIn('recovery/project-land-', self.git('branch', '--list', 'recovery/*').stdout)
         self.assertFalse(self.git('status', '--porcelain').stdout)
 
+    def test_later_feature_baseline_cannot_hide_unchecked_document(self):
+        (self.root / 'change.md').write_text('[Broken](missing.md)\n')
+        self.git('add', '.')
+        self.git('commit', '-qm', 'docs: unchecked broken link')
+        partial_base = self.git('rev-parse', 'HEAD').stdout.strip()
+        (self.root / 'later.md').write_text('# Later\n')
+        self.git('add', '.')
+        self.git('commit', '-qm', 'docs: later change')
+        evidence = self.evidence(base=partial_base)
+        main_before = self.git('rev-parse', 'main').stdout
+        for execute in (False, True):
+            result = self.landing(evidence, execute=execute)
+            self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+            self.assertIn('does not cover the entire branch', result.stderr)
+        self.assertEqual(self.git('rev-parse', 'main').stdout, main_before)
+        self.assertEqual(self.git('rev-parse', 'origin/main').stdout, main_before)
+        self.assertFalse(self.git('branch', '--list', 'recovery/*').stdout)
+
+    def test_older_baseline_cannot_hide_restored_document(self):
+        old_base = self.git('rev-parse', 'main').stdout.strip()
+        self.git('switch', '-q', 'main')
+        (self.root / 'README.md').write_text('# Fixture\nNew base\n')
+        self.git('add', '.')
+        self.git('commit', '-qm', 'docs: update base')
+        self.git('push', '-q')
+        self.git('switch', '-q', 'feature')
+        self.git('rebase', 'main')
+        (self.root / 'README.md').write_text('# Fixture\nBase\n')
+        self.git('add', '.')
+        self.git('commit', '-qm', 'docs: restore old content')
+        result = self.landing(self.evidence(base=old_base))
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('omits feature paths', result.stderr)
+
+    def test_older_baseline_with_complete_coverage_can_land(self):
+        old_base = self.git('rev-parse', 'main').stdout.strip()
+        self.advance_main()
+        self.git('rebase', 'main')
+        result = self.landing(self.evidence(base=old_base))
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_evidence_uses_selected_landing_target(self):
+        self.git('branch', '-m', 'main', 'trunk')
+        evidence = self.evidence(base='trunk')
+        result = self.cli('project_land.py', 'feature', '--main', 'trunk',
+                          '--evidence', evidence, '--title', 'docs: landed',
+                          '--body-file', self.body, '--execute')
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.git('branch', '--show-current').stdout.strip(), 'trunk')
+
+    def test_fresh_diverged_main_evidence_rebases_and_reruns_checks(self):
+        common_base = self.git('rev-parse', 'main').stdout.strip()
+        self.advance_main()
+        marker = Path(self.tmp.name) / 'fresh-check-count.txt'
+        extra = [sys.executable, '-c', 'from pathlib import Path; p=Path(__import__("sys").argv[1]); p.write_text(p.read_text()+"check\\n" if p.exists() else "check\\n")', str(marker)]
+        evidence = self.evidence(extra)
+        data = json.loads(evidence.read_text())
+        self.assertEqual(data['base'], common_base)
+        self.assertEqual(data['changed_paths'], ['change.md'])
+        self.assertEqual(self.landing(evidence, execute=False).returncode, 0)
+        result = self.landing(evidence)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(marker.read_text().splitlines(), ['check', 'check'])
+        self.assertTrue((self.root / 'other.md').exists())
+        self.assertEqual(self.git('rev-parse', 'main').stdout, self.git('rev-parse', 'origin/main').stdout)
+
     def test_rebase_reruns_recorded_checks_before_landing(self):
         marker = Path(self.tmp.name) / 'check-count.txt'
         extra = [sys.executable, '-c', 'from pathlib import Path; p=Path(__import__("sys").argv[1]); p.write_text(p.read_text()+"check\\n" if p.exists() else "check\\n")', str(marker)]
@@ -210,8 +276,8 @@ class Workflow(unittest.TestCase):
 
     def test_rebased_check_failure_stops_before_squash(self):
         extra=[sys.executable, '-c', 'from pathlib import Path; raise SystemExit(3 if Path("other.md").exists() else 0)']
-        evidence=self.evidence(extra)
         self.advance_main()
+        evidence=self.evidence(extra)
         main_before=self.git('rev-parse','main').stdout
         result=self.landing(evidence)
         self.assertNotEqual(result.returncode,0)
