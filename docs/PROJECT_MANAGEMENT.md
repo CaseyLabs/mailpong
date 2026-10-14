@@ -27,6 +27,10 @@ A candidate is eligible for selection when its known prerequisites permit its sc
 
 Search the relevant register section and IDs for duplicates. Assign a stable unused ID; associate an existing project, or justify a small proposed project for a distinct outcome. Link an existing relevant milestone or propose one, with reverse links. Record problem, affected symbols, impact, original severity (or unspecified), recommended priority, status, evidence/date, verification limits, reproduction if known, dependencies and closure criteria. Record confirmed findings left unfixed in the same task. Reports not yet verified stay labeled as such. Adding an entry does not authorize a fix.
 
+### Recurring problems
+
+`ISSUES.md` Recurring problems records environment and tool symptoms with their workaround and an occurrence count. Check it before debugging. On a second occurrence, or a costly first one, promote the workaround into the applicable guidance and delete the tally.
+
 ### Start or resume one milestone
 
 Check Git status and preserve unrelated work. Read Portfolio/Progress, the selected project/milestone and linked issues/reference sections only. Reconcile scope with implementation and dated evidence; ask about material scope changes. Confirm prerequisites, gates and acceptance-to-validation mapping. Record authorization and any live/upgrade/migration exclusions; change only selected statuses to active. A blocked gate is not waived by selecting adjacent local work.

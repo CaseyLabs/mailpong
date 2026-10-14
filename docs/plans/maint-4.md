@@ -18,7 +18,7 @@ Out of scope: product behavior changes (bugs found are recorded, and fixed only 
 
 ## Authorization
 
-Explicitly authorized by the user's 2026-10-14 request "Mailven: Automated UI Quality, Regression Testing, and CI Improvements", which covers this milestone only. Local commits on `feat/maint-4-ui-regression-ci` are allowed; merging and pushing need explicit approval, which overrides AGENTS.md "Landing a Branch".
+Explicitly authorized by the user's 2026-10-14 request "Mailven: Automated UI Quality, Regression Testing, and CI Improvements", which covers this milestone only. Local commits on `feat/maint-4-ui-regression-ci` are allowed; merging and pushing need explicit approval, which overrides the Landing a branch policy (now in CONTRIBUTING.md).
 
 ## Context
 

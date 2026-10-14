@@ -67,3 +67,8 @@ Use `ui.run(options, async (page, config) => { ... })` from `harness.cjs`. The o
 `ui.calls(page, name)` returns the recorded binding calls with JSON-copied arguments. Prefer importing pure
 modules in the page (see `logic.test.cjs`) over driving the UI. Use the UI for wiring that logic tests cannot
 reach. Use roles and accessible names for selectors, and keep test data synthetic.
+
+- When intercepting the frontend entry point for fakes, match `src/main.ts` with or without Wails' hot-reload
+  query string.
+- In guarded Wails setter fakes, copy reactive arguments with `JSON.parse(JSON.stringify(value))`;
+  `structuredClone` cannot copy Svelte state proxies.

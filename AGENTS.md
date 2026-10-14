@@ -20,7 +20,7 @@
 
 ## Layout Notes
 
-- `frontend/wailsjs/` holds generated Wails bindings; regenerate with `make generate` after binding changes, then revert unrelated churn in `frontend/wailsjs/runtime/*`. Stop any running Mailven first (`dev.sh stop`): the single-instance lock makes the generator exit without writing anything. Wails also inserts tabs on blank lines in `frontend/wailsjs/go/models.ts`; remove that whitespace-only churn before `git diff --check`, preserving actual binding changes.
+- `frontend/wailsjs/` holds generated Wails bindings; before running `make generate`, follow [Regenerating Wails bindings](CONTRIBUTING.md#regenerating-wails-bindings).
 - Before committing changes under `extensions/**`, `internal/core/**`, `internal/extensions/**`, `internal/kit/**`, `app/coreimpl*.go`, `app/extension_*.go`, or `frontend/src/lib/components/kit/**`, read `docs/EXT_RULES.md` and check the design against it; redesign violations. Read it only for relevant extension/core/kit work.
 - `docs/EXTENSIONS.md` (about 170 KB), `docs/history/AERION_CASA_TIER2.md`, and `docs/LANGUAGE.md` are long: search or read by section, never whole. For the full extension reference, read the Contents of `docs/EXTENSIONS.md`, then only needed sections.
 
@@ -53,8 +53,7 @@ Toolchain: Go 1.26, Node.js 24 (matches CI), Wails v2 CLI. Linux needs GTK 3 and
 - Use table-driven Go tests for critical paths and edge cases.
 - `internal/database/database_test.go` rewinds the schema and reapplies later migrations: a new `ADD COLUMN` needs matching `DROP COLUMN` lines in its rewind blocks, and every migration must be rerunnable (`IF NOT EXISTS`, and backfills that clear their table first).
 - For frontend changes, run `npm run lint` and `npm run check` in `frontend/`, then `make test-ui` (backend-free UI audit and regression tests, fake data; [tests/ui/README.md](tests/ui/README.md)); `node tests/ui/run.mjs <filter>` runs only the matching suites, for quick iteration; run the full suite before reporting. Use the `run-mailven` skill for checks the suite cannot make (native window, real backend, subjective visuals). In cloud sessions use the skill's headless path (Xvfb + Playwright); if no UI check can run at all, say so in the active execution checkpoint and in your report.
-- When intercepting the frontend entry point for fakes, match `src/main.ts` with or without Wails' hot-reload query string.
-- In guarded Wails setter fakes, copy reactive arguments with `JSON.parse(JSON.stringify(value))`; `structuredClone` cannot copy Svelte state proxies.
+- Before writing or changing frontend fakes or UI tests, read [Writing tests](tests/ui/README.md#writing-tests).
 - Give native selects explicit accessible names (`aria-label` or a separate `for`/`id` label); wrapping labels can absorb option text and break exact-name UI checks.
 - Turn each confirmed frontend bug into a regression test. Treat a UI test failure as a product, test or fixture defect: read its message and `test-results/ui/results.json`, and use screenshots only for investigation. Do not rerun unchanged or loosen an assertion or allowlist entry to pass; escalate ambiguous visual failures. Report passed, failed, skipped and unrun checks separately.
 - Visual UI checks always cover the Mail view with the Accounts column expanded and collapsed (how-to: [Accounts column check](.agents/skills/run-mailven/SKILL.md#accounts-column-check)). Report checks you couldn't perform.
@@ -73,27 +72,15 @@ Use project-next-milestone for one explicitly selected or previously authorized 
 ## Commits and PRs
 
 - Use descriptive prefixes for commits: `feat:`, `fix:`, `docs:`.
-- Work on a branch per feature or audit pass, not on `main`, and land it as described in Landing a Branch.
+- Work on a branch per feature or audit pass, not on `main`. When all of a feature's milestones are done or an audit pass is complete, land the branch without being asked, following [Landing a branch](CONTRIBUTING.md#landing-a-branch).
 - One commit per milestone or independent fix. Fold corrections to a commit that has not been pushed into it (`git commit --amend`) instead of adding a new commit.
 - Commit `PLAN.md` and `ISSUES.md` updates with the change they describe, not separately.
 - See `CONTRIBUTING.md` for setup and workflow details. Consult upstream's own guidelines when submitting upstream.
 
-## Landing a Branch
-
-When all of a feature's milestones are done or an audit pass is complete, land the branch without being asked. Checks must pass and nothing may be uncommitted.
-
-1. If `main` has commits the branch lacks, rebase the branch onto `main` and rerun the relevant checks. On conflicts, run `git rebase --abort`, stop, and report the conflicting files.
-2. Run `git switch main` and `git merge --squash <branch>`, then commit once, listing each change the branch made in the commit body.
-3. After the squash commit succeeds, push `main` to its configured upstream.
-4. Run `git branch -D <branch>` only after `git diff main <branch>` prints nothing.
-
 ## Planning Files
 
-- `PLAN.md` is the authoritative project roadmap; `ISSUES.md` is the unresolved issue register grouped by the same stable project IDs. Start roadmap tasks with Portfolio/Progress, then read only the selected project/milestone and linked issues. Unrelated changes do not require loading either whole file.
-- For selection, issue recording, completion or handoff, follow [the lifecycle rules](docs/PROJECT_MANAGEMENT.md). Require explicit or recorded authorization; check dependencies/gates, preserve severity and evidence limits, and keep bidirectional ID links. Proposed priorities do not approve work; deferred work is not automatically reopened.
-- Substantial selected milestones use linked `docs/plans/<milestone-id>.md` execution plans; small tasks checkpoint inline. Update current step, changed files, remaining work, decisions and exact check outcomes at meaningful changes and before handoff. Keep task progress out of guidance.
-- Done means verified acceptance. Resolve only fixed/verified issues. Preserve lasting decisions in technical docs and evidence/limits in `docs/validation/` before pruning completed detail; retain IDs/links needed by remaining work. With no active milestone, say so and list candidates without activating them. Do not start another milestone without authorization.
-- Record every confirmed finding left unfixed in `ISSUES.md` in the same task. Its Recurring problems section records environment/tool symptoms, workaround and count; check it before debugging. On a second occurrence or a costly first occurrence, promote the solution into applicable guidance and delete the tally. Correct obsolete guidance as discovered.
+- `PLAN.md` is the roadmap and `ISSUES.md` the unresolved issue register, keyed by the same stable IDs. For roadmap work, read Portfolio/Progress, then only the selected project/milestone and linked issues (`tools/project-context.py <id>`); unrelated changes need neither file. Follow [the lifecycle rules](docs/PROJECT_MANAGEMENT.md) for selection, issues, execution plans, checkpoints, completion and handoff. Proposed priorities do not approve work, deferred work is not automatically reopened, and done means verified acceptance.
+- Record every confirmed finding left unfixed in `ISSUES.md` in the same task. Check its [Recurring problems](docs/PROJECT_MANAGEMENT.md#recurring-problems) section before debugging environment or tool symptoms. Keep task progress out of guidance, and correct obsolete guidance as discovered.
 
 ## Compaction
 

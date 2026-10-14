@@ -14,7 +14,11 @@ Mailven is an independent project derived from [Aerion](https://github.com/hkdb/
 
 Shared policy, including extension/core/kit review triggers, lives in
 `AGENTS.md`; `CLAUDE.md` imports it. Read linked references only when their
-stated trigger applies; they are not automatic imports. Edit project skills
+stated trigger applies; they are not automatic imports. Every host loads
+`AGENTS.md` in full each session, so keep it to rules that must always hold;
+move task-specific procedures to the doc that owns them and leave a one-line
+trigger and link. Do not add `@` imports for them in `CLAUDE.md`: imports load
+eagerly and save nothing. Edit project skills
 and their resources in `.agents/skills/`. The single relative directory symlink
 `.claude/skills -> ../.agents/skills` exposes the same files to Claude Code.
 Start either CLI normally from the checkout; no plugin or custom discovery flag
@@ -91,6 +95,15 @@ appropriate privileges and clone with `git -c core.symlinks=true clone <url>`.
 Verify `.claude/skills` is a directory symlink, not a text file containing its
 target. Do not replace it with a copied skill tree. Relative links also keep
 linked Git worktrees pointing to their own skill files.
+
+## Landing a branch
+
+When all of a feature's milestones are done or an audit pass is complete, land the branch without being asked. Checks must pass and nothing may be uncommitted. `tools/project-land.sh` automates these steps with extra safeguards (see [Workflow helpers](#workflow-helpers)).
+
+1. If `main` has commits the branch lacks, rebase the branch onto `main` and rerun the relevant checks. On conflicts, run `git rebase --abort`, stop, and report the conflicting files.
+2. Run `git switch main` and `git merge --squash <branch>`, then commit once, listing each change the branch made in the commit body.
+3. After the squash commit succeeds, push `main` to its configured upstream.
+4. Run `git branch -D <branch>` only after `git diff main <branch>` prints nothing.
 
 ## Workflow helpers
 
@@ -181,6 +194,10 @@ Prefer small changes, explicit Go error handling, and guard clauses. Format Go w
 - `make generate`: regenerate bindings after changing the Wails API.
 
 Start with checks relevant to the change. Add Go tests for meaningful behavior and edge cases, using table-driven tests where appropriate. Frontend regression tests live in `tests/ui/`; add one for each confirmed frontend bug. No numeric coverage threshold is configured. Manually check affected UI flows the suite does not cover and report checks that could not run.
+
+### Regenerating Wails bindings
+
+`frontend/wailsjs/` holds generated bindings. Stop any running Mailven first (`.agents/skills/run-mailven/dev.sh stop`): the single-instance lock makes the generator exit without writing anything. After `make generate`, revert unrelated churn in `frontend/wailsjs/runtime/*`. Wails also inserts tabs on blank lines in `frontend/wailsjs/go/models.ts`; remove that whitespace-only churn before `git diff --check`, preserving actual binding changes.
 
 ## Localization and Security
 
