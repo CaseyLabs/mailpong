@@ -9,7 +9,7 @@ Priorities are recommendations assigned in this reorganization: P1 privacy/data 
 | Project | Status | Proposed priority | Unresolved issues | Candidate / gate |
 | --- | --- | --- | --- | --- |
 | [SEND — Sending, privacy and compatibility](#send) | proposed | P1 | [2](ISSUES.md#send) | SEND-2/3 require live authorization |
-| [API — Provider API activation and migration](#api) | proposed | P2 | [3](ISSUES.md#api) | API-2 design or API-6 local implementation; API-3 gated by API-2, shared rollout gated by live checks |
+| [API — Provider API activation and migration](#api) | proposed | P2 | [3](ISSUES.md#api) | API-3 needs selection (API-2 design approved), shared rollout gated by live checks |
 | [SYNC — Mail synchronization and action reliability](#sync) | proposed | P1 | [0](ISSUES.md#sync) | none; SYNC-1–4 done |
 | [CHAT — Chat composer sender review](#chat) | proposed | P3 | [1](ISSUES.md#chat) | CH1 unassigned (cosmetic) |
 | [MAINT — Maintenance and documentation](#maint) | proposed | P2 | [6](ISSUES.md#maint) | MAINT-3 external; D2 deferred/upstream blocked |
@@ -26,7 +26,7 @@ No live provider access, test emails, credentials changes, mailbox migration, pr
 
 ## Progress
 
-API-6 local implementation is done ([evidence](docs/validation/api-6.md), [checkpoint](docs/plans/api-6.md)); shared activation stays closed pending live checks. MAINT-5 is done: all four compact workflow helpers, logged check evidence and guarded landing are implemented and verified ([evidence](docs/validation/maint-5.md), [checkpoint](docs/plans/maint-5.md)). API-5 is done and F5b-3 resolved: rollback reports only a sync request, with scheduler-ordering and UI coverage ([evidence](docs/validation/api-5.md), [checkpoint](docs/plans/api-5.md)). API-1 design is done ([evidence](docs/validation/api-1.md), [checkpoint](docs/plans/api-1.md)); MA5 was resolved by API-6 (verified by fixture) and MA4 stays open for live evidence. API-2 remains another API candidate. No next milestone is activated.
+API-2 design is done ([design](docs/API_SNAPSHOT_RESTORE_DESIGN.md), [evidence](docs/validation/api-2.md)); F5b-1 stays open until API-3. API-6 local implementation is done ([evidence](docs/validation/api-6.md), [checkpoint](docs/plans/api-6.md)); shared activation stays closed pending live checks. MAINT-5 is done: all four compact workflow helpers, logged check evidence and guarded landing are implemented and verified ([evidence](docs/validation/maint-5.md), [checkpoint](docs/plans/maint-5.md)). API-5 is done and F5b-3 resolved: rollback reports only a sync request, with scheduler-ordering and UI coverage ([evidence](docs/validation/api-5.md), [checkpoint](docs/plans/api-5.md)). API-1 design is done ([evidence](docs/validation/api-1.md), [checkpoint](docs/plans/api-1.md)); MA5 was resolved by API-6 (verified by fixture) and MA4 stays open for live evidence. No next milestone is activated.
 
 CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 is done and MA2/SY1 resolved ([evidence](docs/validation/maint-2.md)). MAINT-4 is done ([validation evidence](docs/validation/maint-4.md)); its findings UI1–UI3 remain open. SEND-1 is done and CD2 resolved; SYNC-1 is done and R3 resolved ([evidence](docs/validation/sync-1.md)); SYNC-2 is done and R4 resolved ([evidence](docs/validation/sync-2.md)); SYNC-3 is done and SY2/SY6 resolved ([evidence](docs/validation/sync-3.md)); API-4 is done and F5b-2 resolved ([evidence](docs/validation/api-4.md)); SYNC-4 is done and R2/SY3/SY4/SY5 resolved ([evidence](docs/validation/sync-4.md)); see [validation evidence](docs/validation/send-1.md). Other proposed milestones remain unselected; SEND-2/3, API-3 and MAINT-3 retain their gates, and G4/D2 remain deferred.
 
@@ -94,17 +94,17 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 
 ### API-2 — Snapshot restoration design
 
-- **Status / proposed priority:** proposed / P2. **Dependencies / gates:** none.
+- **Status / proposed priority:** done / P2. **Dependencies / gates:** none; API-3 implementation requires selection.
 - **Scope / deliverable:** Design live-DB replacement, crash recovery, data-loss consent and rollback; leave route-only rollback truthful.
 - **Acceptance:** Approved design distinguishes local snapshot restore from undoing remote actions and covers active database replacement, credentials and data-loss UX.
 - **Validation:** Review isolated backup/restore strategy and failure cases; no real database replacement.
-- **Issues:** [F5b-1](ISSUES.md#f5b-1). **Progress:** not started.
+- **Issues:** [F5b-1](ISSUES.md#f5b-1). **Progress:** design recorded ([design](docs/API_SNAPSHOT_RESTORE_DESIGN.md), [evidence](docs/validation/api-2.md), [checkpoint](docs/plans/api-2.md)); owner approved the design 2026-10-14; API-3 requires selection.
 
 <a id="api-3"></a>
 
 ### API-3 — Snapshot restoration implementation
 
-- **Status / proposed priority:** blocked / P2. **Dependencies / gates:** [API-2](#api-2) and explicit implementation selection.
+- **Status / proposed priority:** blocked / P2. **Dependencies / gates:** [API-2](#api-2) (design approved) and explicit implementation selection.
 - **Scope / deliverable:** Implement only the selected restore design and consent flow after its gate.
 - **Acceptance:** Isolated restore/crash fixtures and UI verify approved recovery and loss semantics; provider-side changes remain accurately disclosed.
 - **Validation:** Disposable database fixtures, relevant Go checks, frontend lint/check and guarded UI; live migration requires separate authorization.

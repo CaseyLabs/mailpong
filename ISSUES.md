@@ -76,7 +76,7 @@ Project: [API](PLAN.md#api).
 
 - **Owner / milestone:** [API](PLAN.md#api) / [API-2](PLAN.md#api-2); implementation: [API-3](PLAN.md#api-3).
 - **Severity / proposed priority / status:** low / P2 / deferred.
-- **Dependencies / gates:** Live-DB replacement design and data-loss UX before implementation API-3.
+- **Dependencies / gates:** Design recorded by API-2 ([design](docs/API_SNAPSHOT_RESTORE_DESIGN.md)); owner approved 2026-10-14; implementation requires selecting API-3.
 - **Resolution criteria:** Approved restore design and later isolated restore validation prove data/credential safety and explicit loss consent.
 - **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
 
