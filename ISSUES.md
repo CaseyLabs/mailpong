@@ -10,7 +10,7 @@ The 2026-10-08 audit used “unverified” for reported findings not confirmed a
 - [API — Provider API activation and migration](#api): [MA4](#ma4), [F5b-1](#f5b-1), [F5b-3](#f5b-3)
 - [SYNC — Mail synchronization and action reliability](#sync): none (resolved: [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [CHAT — Chat composer sender review](#chat): [CH1](#ch1) (resolved: [R1](#r1))
-- [MAINT — Maintenance and documentation](#maint): [MA2](#ma2), [D2](#d2), [SY1](#sy1), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI3](#ui3) (resolved: [DOC4](#doc4), [DOC5](#doc5))
+- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI3](#ui3) (resolved: [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [SY1](#sy1))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
 - [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
 
@@ -215,12 +215,8 @@ Project: [MAINT](PLAN.md#maint).
 ### MA2 — Go formatting follow-up
 
 - **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-2](PLAN.md#maint-2).
-- **Severity / proposed priority / status:** low / P3 / deferred.
-- **Dependencies / gates:** Own the affected package before formatting.
-- **Resolution criteria:** gofmt reports no formatting changes for the affected file.
-- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
-
-- **MA2 low** `internal/extensions/store.go`: `gofmt -l` lists the file as unformatted (noticed during F4e-1; untouched there). Run `gofmt -w` on it in a change that owns that package.
+- **Severity / proposed priority / status:** low / P3 / resolved.
+- **Resolution / evidence:** MAINT-2 verified 2026-10-14. `gofmt -w internal/extensions/store.go`; `gofmt -l internal app extensions` is clean. See [evidence](docs/validation/maint-2.md).
 
 <a id="d2"></a>
 
@@ -244,12 +240,8 @@ Project: [MAINT](PLAN.md#maint).
 ### SY1 — Duplicated API reader logic
 
 - **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-2](PLAN.md#maint-2).
-- **Severity / proposed priority / status:** low / P3 / deferred.
-- **Dependencies / gates:** Behavior-preserving extraction only.
-- **Resolution criteria:** Shared reader behavior preserves refresh, caps and error classification in both clients.
-- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
-
-- **Low** `internal/gmailapi/read.go`, `internal/graphapi/read.go`: `Reader`/`ReadError`/fetch (401-once refresh, size cap, classification) are duplicated across the two read clients. Found by F4d-3.
+- **Severity / proposed priority / status:** low / P3 / resolved.
+- **Resolution / evidence:** MAINT-2 verified 2026-10-14. Read-client transport (401-once refresh, size cap, classification, `Retry-After`) now lives in `internal/apiread`; `gmailapi.ReadError` and `graphapi.ReadError` are aliases of `apiread.Error`. Existing provider tests pass unchanged. See [evidence](docs/validation/maint-2.md).
 
 <a id="doc4"></a>
 

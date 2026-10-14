@@ -12,7 +12,7 @@ Priorities are recommendations assigned in this reorganization: P1 privacy/data 
 | [API — Provider API activation and migration](#api) | proposed | P2 | [3](ISSUES.md#api) | API-1 or API-2 design; API-3 gated by API-2 |
 | [SYNC — Mail synchronization and action reliability](#sync) | proposed | P1 | [0](ISSUES.md#sync) | none; SYNC-1–4 done |
 | [CHAT — Chat composer sender review](#chat) | proposed | P3 | [1](ISSUES.md#chat) | CH1 unassigned (cosmetic) |
-| [MAINT — Maintenance and documentation](#maint) | proposed | P2 | [8](ISSUES.md#maint) | MAINT-3 external; D2 deferred/upstream blocked |
+| [MAINT — Maintenance and documentation](#maint) | proposed | P2 | [6](ISSUES.md#maint) | MAINT-3 external; D2 deferred/upstream blocked |
 | [AI — AI development workflows](#ai) | deferred | P3 | [1](ISSUES.md#ai) | G4 deferred; no eligible work |
 | [WAILS — Desktop framework migration assessment](#wails) | proposed | P3 | [0](ISSUES.md#wails) | W3-M0 assessment only |
 
@@ -26,7 +26,7 @@ No live provider access, test emails, credentials changes, mailbox migration, pr
 
 ## Progress
 
-CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-4 is done ([validation evidence](docs/validation/maint-4.md)); its findings UI1–UI3 remain open. SEND-1 is done and CD2 resolved; SYNC-1 is done and R3 resolved ([evidence](docs/validation/sync-1.md)); SYNC-2 is done and R4 resolved ([evidence](docs/validation/sync-2.md)); SYNC-3 is done and SY2/SY6 resolved ([evidence](docs/validation/sync-3.md)); API-4 is done and F5b-2 resolved ([evidence](docs/validation/api-4.md)); SYNC-4 is done and R2/SY3/SY4/SY5 resolved ([evidence](docs/validation/sync-4.md)); see [validation evidence](docs/validation/send-1.md). Other proposed milestones remain unselected; SEND-2/3, API-3 and MAINT-3 retain their gates, and G4/D2 remain deferred.
+CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 is done and MA2/SY1 resolved ([evidence](docs/validation/maint-2.md)). MAINT-4 is done ([validation evidence](docs/validation/maint-4.md)); its findings UI1–UI3 remain open. SEND-1 is done and CD2 resolved; SYNC-1 is done and R3 resolved ([evidence](docs/validation/sync-1.md)); SYNC-2 is done and R4 resolved ([evidence](docs/validation/sync-2.md)); SYNC-3 is done and SY2/SY6 resolved ([evidence](docs/validation/sync-3.md)); API-4 is done and F5b-2 resolved ([evidence](docs/validation/api-4.md)); SYNC-4 is done and R2/SY3/SY4/SY5 resolved ([evidence](docs/validation/sync-4.md)); see [validation evidence](docs/validation/send-1.md). Other proposed milestones remain unselected; SEND-2/3, API-3 and MAINT-3 retain their gates, and G4/D2 remain deferred.
 
 <a id="send"></a>
 
@@ -222,11 +222,11 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-4 
 
 ### MAINT-2 — Owned formatting and reader reuse
 
-- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** none.
+- **Status / proposed priority:** done / P3. **Dependencies / gates:** none.
 - **Scope / deliverable:** Format the owned Go file and assess behavior-preserving reader extraction in distinct substeps.
 - **Acceptance:** Formatting is clean and any extraction preserves refresh, size caps and error classification across both providers.
 - **Validation:** gofmt and focused affected Go tests; review diff for unrelated churn.
-- **Issues:** [MA2](ISSUES.md#ma2), [SY1](ISSUES.md#sy1). **Progress:** not started.
+- **Issues:** [MA2](ISSUES.md#ma2), [SY1](ISSUES.md#sy1). **Progress:** base `db18d02`; `store.go` formatted; transport extracted to `internal/apiread` with provider tests unchanged and passing. [Evidence](docs/validation/maint-2.md).
 
 <a id="maint-3"></a>
 

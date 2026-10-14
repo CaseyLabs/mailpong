@@ -6,14 +6,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailven/internal/oauth2"
+	"github.com/caseylabs/mailven/internal/apiread"
 	"github.com/caseylabs/mailven/internal/submission"
 )
 
@@ -42,19 +41,8 @@ var (
 	ErrMessageGone = errors.New("gmail: message not found")
 )
 
-// ReadError is a failed read request. It carries the classification the sync
-// driver needs: rate limits pause sync, policy and reauthorization failures
-// are reported, and none of them clears credentials.
-type ReadError struct {
-	Status      int
-	RetryAfter  time.Duration
-	RateLimited bool
-	Failure     oauth2.MailAPIFailure
-	Err         error
-}
-
-func (e *ReadError) Error() string { return e.Err.Error() }
-func (e *ReadError) Unwrap() error { return e.Err }
+// ReadError is a failed read request, classified for the sync driver.
+type ReadError = apiread.Error
 
 // Reader is the read-only Gmail client. Redirects are never followed.
 type Reader struct {
@@ -131,77 +119,14 @@ func (r *Reader) base() string {
 
 // get performs one GET with the 401-once refresh policy and classifies failures.
 func (r *Reader) get(ctx context.Context, path string, q url.Values) ([]byte, error) {
-	hc := r.HTTP
-	if hc == nil {
-		hc = submission.NewHTTPClient()
-	}
-	token, err := r.Tokens.Token(ctx)
-	if err != nil {
-		return nil, &ReadError{Failure: oauth2.ClassifyMailAPIError(err), Err: err}
-	}
 	target := r.base() + path
 	if len(q) > 0 {
 		target += "?" + q.Encode()
 	}
-	for attempt := 0; ; attempt++ {
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
-		if err != nil {
-			return nil, err
-		}
-		req.Header.Set("Authorization", "Bearer "+token)
-		req.Header.Set("Accept", "application/json")
-		resp, err := hc.Do(req)
-		if err != nil {
-			return nil, fmt.Errorf("gmail read %s: %w", path, err)
-		}
-		body, readErr := io.ReadAll(io.LimitReader(resp.Body, maxJSONBytes+1))
-		_ = resp.Body.Close()
-		status := resp.StatusCode
-		if status >= 200 && status < 300 {
-			if readErr != nil {
-				return nil, fmt.Errorf("gmail read %s: %w", path, readErr)
-			}
-			if len(body) > maxJSONBytes {
-				return nil, fmt.Errorf("gmail read %s: response exceeds %d bytes", path, maxJSONBytes)
-			}
-			return body, nil
-		}
-		if status == http.StatusUnauthorized && attempt == 0 {
-			if token, err = r.Tokens.Refresh(ctx, token); err != nil {
-				return nil, &ReadError{Status: status, Failure: oauth2.ClassifyMailAPIError(err), Err: err}
-			}
-			continue
-		}
-		return nil, classifyRead(status, resp.Header, body)
-	}
-}
-
-func classifyRead(status int, h http.Header, body []byte) error {
-	detail := strings.TrimSpace(string(body[:min(len(body), 200)]))
-	e := &ReadError{Status: status, RetryAfter: parseRetryAfter(h),
-		Err: fmt.Errorf("gmail read: HTTP %d: %s", status, detail)}
-	switch {
-	case status == http.StatusTooManyRequests, status == http.StatusForbidden && isRateLimit(body):
-		e.RateLimited = true
-	case status == http.StatusForbidden:
-		e.Failure = oauth2.ClassifyMailAPIError(oauth2.NewProviderError("access_denied", detail))
-	case status == http.StatusUnauthorized:
-		e.Failure = oauth2.ClassifyMailAPIError(oauth2.NewProviderError("invalid_grant", detail))
-	case status >= 500:
-		e.RateLimited = true // transient: pause like a throttle, never replay in a loop
-	}
-	return e
-}
-
-func parseRetryAfter(h http.Header) time.Duration {
-	v := h.Get("Retry-After")
-	if secs, err := strconv.Atoi(v); err == nil && secs >= 0 {
-		return time.Duration(secs) * time.Second
-	}
-	if t, err := http.ParseTime(v); err == nil {
-		return max(time.Until(t), 0)
-	}
-	return 0
+	c := apiread.Client{Tokens: r.Tokens, HTTP: r.HTTP, Label: "gmail read", Detail: path,
+		Header:               http.Header{"Accept": {"application/json"}},
+		ForbiddenRateLimited: isRateLimit}
+	return c.Get(ctx, target, maxJSONBytes)
 }
 
 // Profile returns users.getProfile's current historyId, the starting point to

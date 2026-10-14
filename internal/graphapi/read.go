@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/caseylabs/mailven/internal/oauth2"
+	"github.com/caseylabs/mailven/internal/apiread"
 	"github.com/caseylabs/mailven/internal/submission"
 )
 
@@ -52,18 +51,8 @@ var (
 // errTooLarge marks a response past its byte cap.
 var errTooLarge = errors.New("response too large")
 
-// ReadError is a failed read request. Rate limits pause sync; policy and
-// reauthorization failures are reported; none of them clears credentials.
-type ReadError struct {
-	Status      int
-	RetryAfter  time.Duration
-	RateLimited bool
-	Failure     oauth2.MailAPIFailure
-	Err         error
-}
-
-func (e *ReadError) Error() string { return e.Err.Error() }
-func (e *ReadError) Unwrap() error { return e.Err }
+// ReadError is a failed read request, classified for the sync driver.
+type ReadError = apiread.Error
 
 // Reader is the read-only Graph client for one mailbox. Redirects are never
 // followed, and a server-supplied paging link must stay on the API origin so
@@ -168,75 +157,13 @@ func (r *Reader) sameOrigin(link string) bool {
 // fetch performs one GET with the 401-once refresh policy and classifies failures.
 // IdType="ImmutableId" is sent on every request so IDs survive moves and renames.
 func (r *Reader) fetch(ctx context.Context, target string, maxBytes int64, extraPrefer string) ([]byte, error) {
-	hc := r.HTTP
-	if hc == nil {
-		hc = submission.NewHTTPClient()
-	}
-	token, err := r.Tokens.Token(ctx)
-	if err != nil {
-		return nil, &ReadError{Failure: oauth2.ClassifyMailAPIError(err), Err: err}
-	}
 	prefer := `IdType="ImmutableId"`
 	if extraPrefer != "" {
 		prefer += ", " + extraPrefer
 	}
-	for attempt := 0; ; attempt++ {
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, target, nil)
-		if err != nil {
-			return nil, err
-		}
-		req.Header.Set("Authorization", "Bearer "+token)
-		req.Header.Set("Prefer", prefer)
-		resp, err := hc.Do(req)
-		if err != nil {
-			return nil, fmt.Errorf("graph read: %w", err)
-		}
-		body, readErr := io.ReadAll(io.LimitReader(resp.Body, maxBytes+1))
-		_ = resp.Body.Close()
-		status := resp.StatusCode
-		if status >= 200 && status < 300 {
-			if readErr != nil {
-				return nil, fmt.Errorf("graph read: %w", readErr)
-			}
-			if int64(len(body)) > maxBytes {
-				return nil, fmt.Errorf("graph read: response exceeds %d bytes: %w", maxBytes, errTooLarge)
-			}
-			return body, nil
-		}
-		if status == http.StatusUnauthorized && attempt == 0 {
-			if token, err = r.Tokens.Refresh(ctx, token); err != nil {
-				return nil, &ReadError{Status: status, Failure: oauth2.ClassifyMailAPIError(err), Err: err}
-			}
-			continue
-		}
-		return nil, classifyRead(status, resp.Header, body)
-	}
-}
-
-func classifyRead(status int, h http.Header, body []byte) error {
-	detail := strings.TrimSpace(string(body[:min(len(body), 200)]))
-	e := &ReadError{Status: status, RetryAfter: parseRetryAfter(h),
-		Err: fmt.Errorf("graph read: HTTP %d: %s", status, detail)}
-	switch {
-	case status == http.StatusTooManyRequests, status >= 500:
-		e.RateLimited = true // transient: pause like a throttle, never replay in a loop
-	case status == http.StatusForbidden:
-		e.Failure = oauth2.ClassifyMailAPIError(oauth2.NewProviderError("access_denied", detail))
-	case status == http.StatusUnauthorized:
-		e.Failure = oauth2.ClassifyMailAPIError(oauth2.NewProviderError("invalid_grant", detail))
-	}
-	return e
-}
-
-func parseRetryAfter(h http.Header) time.Duration {
-	v := h.Get("Retry-After")
-	if secs, err := strconv.Atoi(v); err == nil && secs >= 0 {
-		return time.Duration(secs) * time.Second
-	}
-	if t, err := http.ParseTime(v); err == nil {
-		return max(time.Until(t), 0)
-	}
-	return 0
+	c := apiread.Client{Tokens: r.Tokens, HTTP: r.HTTP, Label: "graph read",
+		Header: http.Header{"Prefer": {prefer}}, TooLarge: errTooLarge}
+	return c.Get(ctx, target, maxBytes)
 }
 
 func status(err error) int {
