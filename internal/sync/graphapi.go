@@ -85,6 +85,13 @@ func (g *GraphSync) Run(ctx context.Context) (res GraphResult, err error) {
 		gf = append(gf, message.GraphFolder{ID: f.ID, Name: f.Name, ParentID: f.ParentID, WellKnown: f.WellKnown})
 	}
 	fm := message.MapGraphFolders(listing.root, gf)
+	// The folder listing can contain empty folders; materialize it independently
+	// of delta message ingestion so actions can still target those destinations.
+	for _, f := range fm.Folders {
+		if _, err := g.folderCache.ensure(f); err != nil {
+			return res, err
+		}
+	}
 
 	fcur, err := store.LoadAPICursor(g.AccountID, graphFoldersScope)
 	if err != nil {

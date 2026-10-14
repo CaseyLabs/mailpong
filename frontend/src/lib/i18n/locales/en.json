@@ -1282,6 +1282,7 @@
     "scopes": "Authorization asks the provider for permission to read, change and send mail for this account only. It is separate from your current sign-in and can be removed here.",
     "limits": "Limits: no route promises delivery or inbox placement. Shared mailboxes cannot be migrated yet, some provider limits (message size, Bcc handling) are not verified against the live service, and moving messages between accounts is not available on the API route.",
     "authorize": "Authorize API access",
+    "reauthorizeAction": "Reauthorize API access",
     "waiting": "Waiting for the browser authorization…",
     "authorized": "API access is authorized. The account still uses IMAP / SMTP.",
     "removeAuth": "Remove API authorization",

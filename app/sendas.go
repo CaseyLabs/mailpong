@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/caseylabs/mailven/internal/account"
+	"github.com/caseylabs/mailven/internal/credentials"
 	"github.com/caseylabs/mailven/internal/gmailapi"
 	"github.com/caseylabs/mailven/internal/logging"
 )
@@ -110,7 +111,19 @@ func (ops *composeOps) refreshSendAs(ctx context.Context, accountID string) (ref
 			}
 		}
 	}()
-	tokens, err := ops.getValidOAuthToken(ctx, accountID)
+	route, err := ops.accountStore.GetMailAPIRoute(accountID)
+	if err != nil {
+		return err
+	}
+	var tokens *credentials.OAuthTokens
+	if route != nil && route.State == account.MailRouteStateActive && route.Route == account.MailRouteGmailAPI {
+		tokens, err = ops.apiOps().validToken(accountID)
+		if err == nil {
+			err = tokens.RequireMailAPICapability("aliases", false)
+		}
+	} else {
+		tokens, err = ops.getValidOAuthToken(ctx, accountID)
+	}
 	if err != nil {
 		return fmt.Errorf("failed to get OAuth token: %w", err)
 	}

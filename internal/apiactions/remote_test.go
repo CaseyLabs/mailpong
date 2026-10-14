@@ -2,6 +2,7 @@ package apiactions
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -15,8 +16,8 @@ import (
 
 type tokens struct{}
 
-func (tokens) Token(context.Context) (string, error)   { return "t", nil }
-func (tokens) Refresh(context.Context) (string, error) { return "t", nil }
+func (tokens) Token(context.Context) (string, error)           { return "t", nil }
+func (tokens) Refresh(context.Context, string) (string, error) { return "t", nil }
 
 func TestGmailRemoteRequests(t *testing.T) {
 	cases := []struct {
@@ -59,5 +60,24 @@ func TestGmailRemoteRequests(t *testing.T) {
 				t.Fatalf("requests = %q, want %q", got, tc.want)
 			}
 		})
+	}
+}
+
+func TestGmailMoveVerifyRequiresSourceLabelRemoval(t *testing.T) {
+	labels := []string{"DEST", "SOURCE"}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]any{"id": "m", "labelIds": labels, "historyId": "1"})
+	}))
+	defer srv.Close()
+	g := &Gmail{Reader: &gmailapi.Reader{Tokens: tokens{}, Base: srv.URL}}
+	a := &message.APIAction{Op: message.APIActionMove, RemoteID: "m", Payload: message.APIActionPayload{Dest: "DEST", Source: "SOURCE"}}
+	got, err := g.Verify(context.Background(), a)
+	if err != nil || got != Differs {
+		t.Fatalf("Verify with both labels = %v, %v; want Differs", got, err)
+	}
+	labels = []string{"DEST"}
+	got, err = g.Verify(context.Background(), a)
+	if err != nil || got != Matches {
+		t.Fatalf("Verify after source removal = %v, %v; want Matches", got, err)
 	}
 }

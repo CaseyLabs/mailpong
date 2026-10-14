@@ -297,3 +297,33 @@ func TestSenderEvidencePreservesIDNAFrom(t *testing.T) {
 		t.Fatal("selected From changed")
 	}
 }
+
+func TestSendAsRefreshUsesActiveAPIGrant(t *testing.T) {
+	fx := newMailAPIFixture(t, "google", "https://unused.example.test/token")
+	acc := fx.acc
+	if _, err := fx.ops.accountStore.Update(acc.ID, &account.AccountConfig{Name: acc.Name, DisplayName: "Me", Email: acc.Email, Username: acc.Username, IMAPHost: "imap.gmail.com", SMTPHost: "smtp.gmail.com", SMTPPort: 587, AuthType: account.AuthOAuth2}); err != nil {
+		t.Fatal(err)
+	}
+	stageGmailRoute(t, fx, time.Now().Add(time.Hour))
+	route, _ := fx.ops.accountStore.GetMailAPIRoute(acc.ID)
+	route.State = account.MailRouteStateActive
+	if err := fx.ops.accountStore.SetMailAPIRoute(*route); err != nil {
+		t.Fatal(err)
+	}
+	ops := &composeOps{accountStore: fx.ops.accountStore, credStore: fx.ops.credStore, oauth2Manager: fx.ops.oauth2Manager, sendAsStore: gmailapi.NewStore(fx.db.DB)}
+	original := http.DefaultClient
+	t.Cleanup(func() { http.DefaultClient = original })
+	http.DefaultClient = &http.Client{Transport: senderRoundTripper(func(r *http.Request) (*http.Response, error) {
+		if r.Header.Get("Authorization") != "Bearer api-access" {
+			t.Fatalf("wrong grant: %s", r.Header.Get("Authorization"))
+		}
+		return &http.Response{StatusCode: 200, Body: io.NopCloser(strings.NewReader(`{"sendAs":[{"sendAsEmail":"user@example.test","isPrimary":true}]}`))}, nil
+	})}
+	if err := ops.refreshSendAs(t.Context(), acc.ID); err != nil {
+		t.Fatal(err)
+	}
+	cached, err := ops.sendAsStore.Get(acc.ID)
+	if err != nil || !freshSendAs(cached) {
+		t.Fatalf("cache = %+v, %v", cached, err)
+	}
+}

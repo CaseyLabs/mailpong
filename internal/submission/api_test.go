@@ -21,7 +21,7 @@ type fakeTokens struct {
 }
 
 func (f *fakeTokens) Token(context.Context) (string, error) { return "old", nil }
-func (f *fakeTokens) Refresh(context.Context) (string, error) {
+func (f *fakeTokens) Refresh(context.Context, string) (string, error) {
 	f.refreshes++
 	return "new", f.refreshErr
 }

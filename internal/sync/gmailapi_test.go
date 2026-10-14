@@ -75,6 +75,8 @@ func (f *fakeGmail) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	case p == "/labels":
 		out(map[string]any{"labels": []map[string]string{
 			{"id": "INBOX", "name": "INBOX", "type": "system"},
+			{"id": "TRASH", "name": "TRASH", "type": "system"},
+			{"id": "SPAM", "name": "SPAM", "type": "system"},
 			{"id": "Label_1", "name": cmp.Or(f.label1, "Receipts"), "type": "user"}}})
 	case p == "/messages":
 		f.events = append(f.events, "list")
@@ -156,8 +158,8 @@ func newGmailRig(t *testing.T) *gmailRig {
 
 type staticTokens struct{}
 
-func (staticTokens) Token(context.Context) (string, error)   { return "tok", nil }
-func (staticTokens) Refresh(context.Context) (string, error) { return "tok2", nil }
+func (staticTokens) Token(context.Context) (string, error)           { return "tok", nil }
+func (staticTokens) Refresh(context.Context, string) (string, error) { return "tok2", nil }
 
 var _ submission.TokenSource = staticTokens{}
 
@@ -182,6 +184,20 @@ func (r *gmailRig) folderRows(path string) []*message.MessageHeader {
 		}
 	}
 	return nil
+}
+
+func (r *gmailRig) hasFolder(path string) bool {
+	r.t.Helper()
+	fs, err := folder.NewStore(r.db).List("acct-1")
+	if err != nil {
+		r.t.Fatal(err)
+	}
+	for _, f := range fs {
+		if f.Path == path {
+			return true
+		}
+	}
+	return false
 }
 
 func (r *gmailRig) run() (GmailResult, error) { return r.g.Run(context.Background()) }
@@ -234,6 +250,18 @@ func TestGmailAPIInitialSync(t *testing.T) {
 	res, err = r.run()
 	if err != nil || res.Reconciled || res.Added != 0 || len(r.fake.rawGets) != 0 {
 		t.Fatalf("second Run = %+v, %v, raw=%v", res, err, r.fake.rawGets)
+	}
+}
+
+func TestGmailSyncCreatesEmptyListedFolders(t *testing.T) {
+	r := newGmailRig(t)
+	if _, err := r.run(); err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range []string{"INBOX", "TRASH", "SPAM", "Receipts"} {
+		if !r.hasFolder(path) {
+			t.Errorf("listed empty folder %q was not created", path)
+		}
 	}
 }
 

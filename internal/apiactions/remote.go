@@ -125,7 +125,7 @@ func (g *Gmail) Verify(ctx context.Context, a *message.APIAction) (Verdict, erro
 		case p.Trash:
 			return verdict(has(gmailapi.LabelTrash)), nil
 		case p.Dest != "":
-			return verdict(has(p.Dest) && !has(gmailapi.LabelTrash)), nil
+			return verdict(has(p.Dest) && !has(gmailapi.LabelTrash) && (p.Source == "" || !has(p.Source))), nil
 		case p.Source != "":
 			return verdict(!has(p.Source)), nil
 		}

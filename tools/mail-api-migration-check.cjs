@@ -8,6 +8,11 @@ if (!out) throw Error('Usage: node tools/mail-api-migration-check.cjs <output-di
 fs.mkdirSync(out, { recursive: true })
 const beforeMount = `
 const A = window.go.app.App;
+const eventHandlers = new Map();
+window.runtime.EventsOnMultiple = (name, callback) => { const handlers = eventHandlers.get(name) || []; handlers.push(callback); eventHandlers.set(name, handlers); return () => { const current = eventHandlers.get(name) || []; eventHandlers.set(name, current.filter(fn => fn !== callback)); }; };
+window.runtime.EventsOff = (...names) => names.forEach(name => eventHandlers.delete(name));
+window.runtime.EventsOffAll = () => eventHandlers.clear();
+window.runtime.EventsEmit = (name, ...args) => { for (const callback of eventHandlers.get(name) || []) callback(...args); };
 const base = A.GetAccounts;
 A.GetAccounts = async () => (await base()).map((a, i) => i === 0 ? { ...a, authType: 'oauth2' } : a);
 A.GetSendAsStatus = async () => ({supported:false}); A.GetSenderEvidence = async () => null;
@@ -19,8 +24,8 @@ const counts = { folders: 4, imapMessages: 120, apiMessages: 118, drafts: 2, que
 window.__blockers = [];
 A.GetMailAPIRouteStatus = async () => JSON.parse(JSON.stringify(route));
 A.PlanMailAPIMigration = async () => ({ accountId: 'x', route: route.route, routeState: route.state, counts, pendingActions: 1, blockers: window.__blockers, migration: record });
-A.StartMailAPIConsent = async (id, shared) => { window.__calls.push(['consent', id, shared]); route = { route: 'gmail-api', state: 'staged', shared: false, authorized: true, failure: '' }; setTimeout(() => window.runtime.EventsEmit && 0, 0); window.__consentDone = () => window.__emit('mail-api:success', { accountId: id }) };
-A.CancelMailAPIConsent = async () => { window.__calls.push(['cancel-consent']) };
+A.StartMailAPIConsent = async (id, shared) => { window.__accountId = id; window.__calls.push(['consent', id, shared]); route = { ...route, route: 'gmail-api', state: route.state === 'active' ? 'active' : 'staged', shared: false, authorized: true, failure: '' }; setTimeout(() => window.runtime.EventsEmit && 0, 0); window.__consentDone = () => window.__emit('mail-api:success', { accountId: id }) };
+A.CancelMailAPIConsent = async () => { window.__calls.push(['cancel-consent']); window.__emit('mail-api:cancelled', null) };
 A.MigrateMailAPIAccount = async id => { window.__calls.push(['migrate', id]); route = { ...route, state: 'active' }; record = { accountId: id, state: 'completed', route: 'gmail-api', snapshotPath: '/home/u/snapshots/pre.db', correlated: 110, uncorrelated: 8, error: '' }; return record };
 A.RollbackMailAPIMigration = async id => { window.__calls.push(['rollback', id]); route = { ...route, state: 'staged' }; record = { ...record, state: 'rolled-back' }; return { accountId: id, snapshotPath: record.snapshotPath, appliedSince: 3, unfinished: [{ op: 'move', status: 'pending', error: '' }] } };
 A.ClearMailAPIRoute = async id => { window.__calls.push(['clear', id]); route = { route: 'protocol', state: '', shared: false, authorized: false, failure: '' } };
@@ -29,9 +34,11 @@ async function main() {
  await withFakePage({width:1400,height:1100},async p => {
   // Expose the runtime event bus to the check.
   await p.evaluate(() => { window.__emit = (n, d) => window.runtime.EventsEmit(n, d) })
-  await p.getByRole('button',{name:'Show sidebar',exact:true}).click(); await p.waitForTimeout(350)
+  await p.getByRole('button',{name:'Show sidebar',exact:true}).click()
+  await p.getByRole('button',{name:'Hide sidebar',exact:true}).waitFor()
   await p.screenshot({path:path.join(out,'mail-expanded.png')})
-  await p.getByRole('button',{name:'Hide sidebar',exact:true}).click(); await p.waitForTimeout(350)
+  await p.getByRole('button',{name:'Hide sidebar',exact:true}).click()
+  await p.getByRole('button',{name:'Show sidebar',exact:true}).waitFor()
   await p.screenshot({path:path.join(out,'mail-collapsed.png')})
   console.log('PASS Mail Accounts expanded/collapsed')
   await p.getByRole('button',{name:'Settings',exact:true}).click()
@@ -81,6 +88,27 @@ async function main() {
   await s.getByText(/move: pending/).waitFor()
   await p.screenshot({path:path.join(out,'rolled-back.png')})
   console.log('PASS authorize, blockers, consent gate, migrate, rollback confirm')
+
+  // Active API grants can be renewed in place after a provider rejection.
+  await p.evaluate(()=>window.__emit('mail-api:success',{accountId:'x'}))
+  await s.getByRole('button',{name:'Authorize API access',exact:true}).click()
+  await p.evaluate(()=>window.__consentDone())
+  await s.getByRole('button',{name:'Review migration',exact:true}).click()
+  await s.getByRole('checkbox').check()
+  await s.getByRole('button',{name:'Migrate this account',exact:true}).click()
+  await s.getByText('This account uses its mail API.').waitFor()
+  await p.evaluate(()=>window.__emit('mail-api:reauth-required',{accountId:window.__accountId,failure:'reauthorize',error:'grant rejected'}))
+  await s.getByText('The API authorization needs to be renewed. Authorize again to continue.').waitFor()
+  const reauthorize = s.getByRole('button',{name:'Reauthorize API access',exact:true})
+  await reauthorize.click()
+  await s.getByRole('button',{name:'Cancel',exact:true}).last().click()
+  assert.equal(await p.evaluate(()=>window.__calls.filter(c=>c[0]==='cancel-consent').length),1)
+  await s.getByText('This account uses its mail API.').waitFor()
+  await reauthorize.click()
+  await p.evaluate(()=>window.__consentDone())
+  await s.getByText('This account uses its mail API.').waitFor()
+  assert.equal(await s.getByRole('button',{name:'Return to IMAP / SMTP',exact:true}).count(),1)
+  console.log('PASS active-route reauthorization, cancellation, and in-place recovery')
  },{beforeMount})
 }
 main().catch(e=>{console.error(e);process.exitCode=1})

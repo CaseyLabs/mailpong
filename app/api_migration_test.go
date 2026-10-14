@@ -224,3 +224,27 @@ func TestMigrationRollbackRestoresIMAPAndReportsQueuedActions(t *testing.T) {
 		t.Fatalf("re-migrate = %+v, %v", rec, err)
 	}
 }
+
+func TestMigrationResumeRechecksSubmissions(t *testing.T) {
+	for _, state := range []string{apimigrate.StateSnapshotted, apimigrate.StateActivated} {
+		t.Run(state, func(t *testing.T) {
+			r := newMigrationRig(t)
+			if err := r.app.migrationStore().Put(apimigrate.Record{AccountID: r.acc.ID, State: state, Route: account.MailRouteGmailAPI}); err != nil {
+				t.Fatal(err)
+			}
+			if _, err := r.db.Exec(`INSERT INTO submission_attempts (id,message_id,account_id,draft_id,fingerprint,outcome,stage,created_at,updated_at) VALUES ('s1','m',?,'d','f','unknown','data_body',1,1)`, r.acc.ID); err != nil {
+				t.Fatal(err)
+			}
+			plan, err := r.app.PlanMailAPIMigration(r.acc.ID)
+			if err != nil || len(plan.Blockers) == 0 {
+				t.Fatalf("plan = %+v, %v", plan, err)
+			}
+			if _, err := r.app.MigrateMailAPIAccount(r.acc.ID); err == nil {
+				t.Fatal("resumed with unresolved submission")
+			}
+			if r.state(t) != account.MailRouteStateStaged {
+				t.Fatal("route changed")
+			}
+		})
+	}
+}

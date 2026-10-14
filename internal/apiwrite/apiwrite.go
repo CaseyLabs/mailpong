@@ -163,7 +163,7 @@ func Do(ctx context.Context, hc *http.Client, tokens submission.TokenSource, r R
 			return body, nil
 		case status == http.StatusUnauthorized && !refreshed:
 			refreshed = true
-			if token, err = tokens.Refresh(ctx); err != nil {
+			if token, err = tokens.Refresh(ctx, token); err != nil {
 				return nil, &Error{Outcome: Reauthorize, Status: status, Failure: oauth2.ClassifyMailAPIError(err), Err: err}
 			}
 			continue

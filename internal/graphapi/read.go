@@ -182,7 +182,7 @@ func (r *Reader) fetch(ctx context.Context, target string, maxBytes int64, extra
 			return body, nil
 		}
 		if status == http.StatusUnauthorized && attempt == 0 {
-			if token, err = r.Tokens.Refresh(ctx); err != nil {
+			if token, err = r.Tokens.Refresh(ctx, token); err != nil {
 				return nil, &ReadError{Status: status, Failure: oauth2.ClassifyMailAPIError(err), Err: err}
 			}
 			continue

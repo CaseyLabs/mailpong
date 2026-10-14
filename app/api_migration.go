@@ -123,15 +123,8 @@ func (a *App) PlanMailAPIMigration(accountID string) (*MailAPIMigrationPlan, err
 		plan.Blockers = append(plan.Blockers, "The account already uses its API route.")
 		return plan, nil
 	}
-	if inProgress(rec) {
-		return plan, nil // resuming needs no fresh preconditions
-	}
 	plan.Blockers = append(plan.Blockers, a.migrationBlockers(route, counts, open)...)
 	return plan, nil
-}
-
-func inProgress(rec *apimigrate.Record) bool {
-	return rec != nil && (rec.State == apimigrate.StateSnapshotted || rec.State == apimigrate.StateActivated)
 }
 
 // MigrateMailAPIAccount moves an account onto its staged API route: snapshot,
@@ -224,6 +217,13 @@ func (a *App) MigrateMailAPIAccount(accountID string) (*apimigrate.Record, error
 	if route.State != account.MailRouteStateActive {
 		if err := step(migrateStepActivate); err != nil {
 			return fail(err)
+		}
+		fresh, err := a.PlanMailAPIMigration(accountID)
+		if err != nil {
+			return fail(err)
+		}
+		if len(fresh.Blockers) > 0 {
+			return fail(fmt.Errorf("migration blocked: %s", fresh.Blockers[0]))
 		}
 		if err := a.activateAPIRoute(accountID); err != nil {
 			return fail(err)

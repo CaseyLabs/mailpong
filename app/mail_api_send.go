@@ -18,7 +18,6 @@ import (
 type apiTokenSource struct {
 	ops       *mailAPIOps
 	accountID string
-	last      string
 }
 
 func (s *apiTokenSource) Token(context.Context) (string, error) {
@@ -26,17 +25,15 @@ func (s *apiTokenSource) Token(context.Context) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	s.last = tokens.AccessToken
-	return s.last, nil
+	return tokens.AccessToken, nil
 }
 
-func (s *apiTokenSource) Refresh(context.Context) (string, error) {
-	tokens, err := s.ops.tokenAfter(s.accountID, s.last)
+func (s *apiTokenSource) Refresh(_ context.Context, rejectedToken string) (string, error) {
+	tokens, err := s.ops.tokenAfter(s.accountID, rejectedToken)
 	if err != nil {
 		return "", err
 	}
-	s.last = tokens.AccessToken
-	return s.last, nil
+	return tokens.AccessToken, nil
 }
 
 // submitViaAPI submits the final MIME through the account's staged or active

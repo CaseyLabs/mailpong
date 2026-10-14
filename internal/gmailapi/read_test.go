@@ -16,7 +16,7 @@ import (
 type fakeTokens struct{ refreshed atomic.Int32 }
 
 func (f *fakeTokens) Token(context.Context) (string, error) { return "old", nil }
-func (f *fakeTokens) Refresh(context.Context) (string, error) {
+func (f *fakeTokens) Refresh(context.Context, string) (string, error) {
 	f.refreshed.Add(1)
 	return "new", nil
 }

@@ -248,6 +248,18 @@ func TestGraphSyncInitialAndIncremental(t *testing.T) {
 	}
 }
 
+func TestGraphSyncCreatesEmptyListedFolders(t *testing.T) {
+	r := newGraphRig(t)
+	if _, err := r.run(); err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range []string{"Inbox", "Receipts"} {
+		if !r.hasFolder(path) {
+			t.Errorf("listed empty folder %q was not created", path)
+		}
+	}
+}
+
 func TestGraphSyncMoveKeepsMessage(t *testing.T) {
 	r := newGraphRig(t)
 	r.add("m1", "inbox-id", "k1", plainMail("m1", "Hello", "body"))

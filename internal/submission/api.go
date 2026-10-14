@@ -48,10 +48,11 @@ func (e *APIError) Error() string { return e.Err.Error() }
 func (e *APIError) Unwrap() error { return e.Err }
 
 // TokenSource supplies the API access token. Refresh forces a refresh through
-// the locked snapshot refresh and is used at most once per submission.
+// the locked snapshot refresh and is used at most once per submission. The
+// rejected token belongs to that request; sources may be shared by fetch workers.
 type TokenSource interface {
 	Token(ctx context.Context) (string, error)
-	Refresh(ctx context.Context) (string, error)
+	Refresh(ctx context.Context, rejectedToken string) (string, error)
 }
 
 // CheckRoute is the provider-neutral preflight: the route must be staged or
@@ -169,7 +170,7 @@ func Post(ctx context.Context, hc *http.Client, tokens TokenSource, before func(
 			return smtp.SubmissionResult{Outcome: smtp.OutcomeAccepted, Stage: "api-send"}, nil
 		case status == http.StatusUnauthorized && attempt == 0:
 			// Rejected before any send; refresh once and try again.
-			if token, err = tokens.Refresh(ctx); err != nil {
+			if token, err = tokens.Refresh(ctx, token); err != nil {
 				rejected := smtp.SubmissionResult{Outcome: smtp.OutcomeRejectedPermanent, Stage: "auth"}
 				return rejected, &APIError{Result: rejected, Status: status, Failure: oauth2.ClassifyMailAPIError(err), Err: err}
 			}

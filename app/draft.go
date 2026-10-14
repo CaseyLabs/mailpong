@@ -250,15 +250,40 @@ func (ops *draftOps) saveDraftToDB(accountID string, localDraft *draft.Draft, ms
 	return localDraft, nil
 }
 
+// originalDraftFolder resolves the recorded IMAP linkage even after migration
+// hides that row. Surrogate API UIDs must never be used as IMAP UIDs.
+func (ops *draftOps) originalDraftFolder(d *draft.Draft) (*folder.Folder, error) {
+	f, err := ops.folderStore.Get(d.FolderID)
+	if err != nil || f == nil {
+		return nil, err
+	}
+	if f.AccountID != d.AccountID {
+		return nil, fmt.Errorf("draft folder belongs to another account")
+	}
+	if strings.HasPrefix(string(f.Type), "hidden:imap:") {
+		f.Path = strings.TrimPrefix(f.Path, "\x1fimap\x1f")
+		f.Type = folder.Type(strings.TrimPrefix(string(f.Type), "hidden:imap:"))
+		return f, nil
+	}
+	route, err := ops.accountStore.GetMailAPIRoute(d.AccountID)
+	if err != nil {
+		return nil, err
+	}
+	if strings.HasPrefix(string(f.Type), "hidden:") || (route != nil && route.State == account.MailRouteStateActive) {
+		return nil, fmt.Errorf("draft folder is not an IMAP folder")
+	}
+	return f, nil
+}
+
 // deleteIMAPDraftCopy removes a synced draft's copy and message row from its
 // own account's Drafts folder, returning that folder (nil when the draft was
 // never synced). Failures are logged: the local draft is authoritative.
 func (ops *draftOps) deleteIMAPDraftCopy(ctx context.Context, d *draft.Draft) *folder.Folder {
 	log := logging.WithComponent("draft")
-	if !d.IsSynced() {
+	if d.IMAPUID == 0 || d.FolderID == "" {
 		return nil
 	}
-	draftsFolder, _ := ops.getSpecialFolder(d.AccountID, folder.TypeDrafts)
+	draftsFolder, _ := ops.originalDraftFolder(d)
 	if draftsFolder == nil {
 		return nil
 	}
@@ -333,6 +358,14 @@ func (ops *draftOps) syncToIMAP(ctx context.Context, localDraft *draft.Draft, ms
 		_ = ops.draftStore.UpdateSyncStatus(localDraft.ID, draft.SyncStatusFailed, localDraft.IMAPUID, localDraft.FolderID, reason)
 		emitStatus(draft.SyncStatusFailed, localDraft.IMAPUID, reason)
 		return nil
+	}
+
+	route, err := ops.accountStore.GetMailAPIRoute(localDraft.AccountID)
+	if err != nil {
+		return fail(err.Error())
+	}
+	if route != nil && route.State == account.MailRouteStateActive {
+		return fail("Draft saved locally; remote draft sync is unavailable on API routes")
 	}
 
 	// Find the Drafts folder for this account

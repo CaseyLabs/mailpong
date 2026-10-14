@@ -74,6 +74,15 @@ func (g *GmailSync) Run(ctx context.Context) (res GmailResult, err error) {
 	if err != nil {
 		return res, err
 	}
+	// labels.list is the authoritative container listing. Create mapped folders
+	// even when their current message set is empty.
+	for _, label := range labels {
+		for _, f := range message.MapGmailLabels([]string{label.ID}, labels).Folders {
+			if _, err := g.ensureFolder(f); err != nil {
+				return res, err
+			}
+		}
+	}
 	if cur.Kind == gmailCursorKind && cur.Cursor != "" && !cur.Invalid {
 		err = g.incremental(ctx, cur, labels, &res)
 		if !errors.Is(err, gmailapi.ErrHistoryExpired) {

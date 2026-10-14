@@ -22,6 +22,7 @@
   let message = $state('')
   let error = $state('')
   let report = $state<app.MailAPIRollbackReport | null>(null)
+  let reauthRequired = $state(false)
 
   const staged = $derived(status?.state === 'staged')
   const active = $derived(status?.state === 'active')
@@ -43,7 +44,7 @@
     return ''
   }
   async function authorize() {
-    error = ''; message = ''; waiting = true
+    error = ''; message = ''; reauthRequired = false; waiting = true
     try { await StartMailAPIConsent(accountId, false) }
     catch (e) { waiting = false; error = $_('mailApi.failed', { values: { error: String(e) } }) }
   }
@@ -75,16 +76,22 @@
   }
   onMount(() => {
     void load()
-    EventsOn('mail-api:success', (d: { accountId: string }) => { if (d.accountId === accountId) { waiting = false; void load() } })
+    EventsOn('mail-api:success', (d: { accountId: string }) => { if (d.accountId === accountId) { waiting = false; reauthRequired = false; void load() } })
     EventsOn('mail-api:cancelled', () => { waiting = false })
     EventsOn('mail-api:error', (d: { accountId: string; failure: string; error: string }) => {
       if (d.accountId !== accountId) return
       waiting = false
       error = $_('mailApi.authFailed', { values: { failure: d.failure, error: d.error } })
     })
+    EventsOn('mail-api:reauth-required', (d: { accountId: string; failure: string; error: string }) => {
+      if (d.accountId !== accountId) return
+      reauthRequired = true
+      error = $_('mailApi.authFailed', { values: { failure: d.failure, error: d.error } })
+      void load()
+    })
   })
   onDestroy(() => {
-    EventsOff('mail-api:success'); EventsOff('mail-api:cancelled'); EventsOff('mail-api:error')
+    EventsOff('mail-api:success'); EventsOff('mail-api:cancelled'); EventsOff('mail-api:error'); EventsOff('mail-api:reauth-required')
     if (waiting) void CancelMailAPIConsent().catch(() => {})
   })
 </script>
@@ -138,8 +145,13 @@
 
   {#if active}
     <p class="text-sm">{$_('mailApi.active')}</p>
+    {#if reauthRequired}<p role="alert" class="text-sm text-destructive">{$_('mailApi.reauthorize')}</p>{/if}
     {#if status?.failure}<p role="alert" class="text-sm text-destructive">{failureText(status.failure)}</p>{/if}
     {#if plan?.migration?.snapshotPath}<p class="break-all text-xs text-muted-foreground">{$_('mailApi.snapshotAt', { values: { path: plan.migration.snapshotPath } })}</p>{/if}
+    <div class="flex flex-wrap gap-2">
+      <Button size="sm" variant="outline" onclick={authorize} disabled={busy}>{$_('mailApi.reauthorizeAction')}</Button>
+      {#if waiting}<Button size="sm" variant="outline" onclick={cancelConsent}>{$_('common.cancel')}</Button>{/if}
+    </div>
     {#if !confirmRollback}
       <Button size="sm" variant="outline" onclick={() => confirmRollback = true} disabled={busy}>{$_('mailApi.rollback')}</Button>
     {:else}

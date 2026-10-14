@@ -320,3 +320,42 @@ func TestMailAPICancelConsent(t *testing.T) {
 		t.Fatal("protocol slot changed")
 	}
 }
+
+func TestAPITokenSourceConcurrentRejectedToken(t *testing.T) {
+	var calls atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls.Add(1)
+		_ = json.NewEncoder(w).Encode(map[string]any{"access_token": "new", "expires_in": 3600, "scope": gmailScopes})
+	}))
+	defer srv.Close()
+	fx := newMailAPIFixture(t, "google", srv.URL)
+	if err := fx.ops.finish(fx.consent(t, false), &oauth2.TokenResponse{AccessToken: "old", RefreshToken: "refresh", ExpiresIn: 3600, Scope: gmailScopes}, fx.acc.Email); err != nil {
+		t.Fatal(err)
+	}
+	source := &apiTokenSource{ops: fx.ops, accountID: fx.acc.ID}
+	var wg sync.WaitGroup
+	for range 16 {
+		wg.Go(func() {
+			if _, err := source.Token(t.Context()); err != nil {
+				t.Error(err)
+			}
+			if got, err := source.Refresh(t.Context(), "old"); err != nil || got != "new" {
+				t.Errorf("refresh = %q, %v", got, err)
+			}
+		})
+	}
+	wg.Wait()
+	if calls.Load() != 1 {
+		t.Fatalf("refresh requests = %d", calls.Load())
+	}
+	// A late rejection of old must reuse new, even after another Token call.
+	if _, err := source.Token(t.Context()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := source.Refresh(t.Context(), "old"); err != nil {
+		t.Fatal(err)
+	}
+	if calls.Load() != 1 {
+		t.Fatal("late old rejection refreshed the new token")
+	}
+}

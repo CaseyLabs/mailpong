@@ -13,7 +13,7 @@ import (
 type tokens struct{ refreshed atomic.Int32 }
 
 func (*tokens) Token(context.Context) (string, error) { return "old", nil }
-func (t *tokens) Refresh(context.Context) (string, error) {
+func (t *tokens) Refresh(context.Context, string) (string, error) {
 	t.refreshed.Add(1)
 	return "new", nil
 }

@@ -18,8 +18,8 @@ import (
 
 type staticToken struct{}
 
-func (staticToken) Token(context.Context) (string, error)   { return "tok", nil }
-func (staticToken) Refresh(context.Context) (string, error) { return "tok2", nil }
+func (staticToken) Token(context.Context) (string, error)           { return "tok", nil }
+func (staticToken) Refresh(context.Context, string) (string, error) { return "tok2", nil }
 
 func capture(t *testing.T, status int) (*[]byte, *string) {
 	t.Helper()
