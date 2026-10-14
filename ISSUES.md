@@ -8,11 +8,9 @@ has not yet been confirmed against the code.
 
 ### Mail APIs
 
-- **MA1 medium** `internal/gmailapi/send.go`, `internal/graphapi/send.go`: API clients add a `Bcc:` header for hidden envelope recipients because both providers read recipients from headers. Provider stripping of that header from delivered copies is undocumented and unverified; a Bcc recipient could be exposed. Needs a separately authorized live check before any route is activated (F4e). Message size limit (25 MiB) is also a local, undocumented ceiling.
-
+- **MA1 medium** `internal/gmailapi/send.go`, `internal/graphapi/send.go`: API clients add a `Bcc:` header for hidden envelope recipients because both providers read recipients from headers. Provider stripping of that header from delivered copies is undocumented and unverified; a Bcc recipient could be exposed. F4e implemented route activation, but the required separately authorized live Bcc check remains an unsatisfied rollout gate; activation does not establish privacy. Message size limit (25 MiB) is also a local, undocumented ceiling.
 
 - **MA4 low** `app/api_route.go` `ActivateMailAPIRoute`: shared (delegated) mailbox routes cannot be activated because the Graph shared-mailbox address is not stored and `apiRemote` rejects shared routes. Found in F4e-3; needs shared-mailbox identity storage before a later milestone. F5a left it open: storing the address is not cheap (route schema, Graph delegate flow, read/write clients); shared routes stay unmigratable with that reason.
-
 
 - **MA2 low** `internal/extensions/store.go`: `gofmt -l` lists the file as unformatted (noticed during F4e-1; untouched there). Run `gofmt -w` on it in a change that owns that package.
 
@@ -37,7 +35,6 @@ Confirmed by static inspection in P1; F1 verified the PD1/PD9 local fixes and ne
 
 ### Draft storage
 
-
 - **CD2 medium** `app/draft.go:128–166`: existing autosave falls back to plaintext body/attachments when requested S/MIME or PGP encrypt-to-self fails. F2a rejects this downgrade for its new pre-submission recovery writes; ordinary autosave still needs a separately scoped encryption-failure policy. Confirmed by static inspection and disposable missing-key fixtures; no real drafts were changed.
 
 ### Branch review: provider implementation (2026-10-13)
@@ -54,7 +51,6 @@ Confirmed by static inspection in P1; F1 verified the PD1/PD9 local fixes and ne
 - **Low** `internal/graphapi/read.go` `GetRaw`: a message larger than the 64 MiB cap fails the whole folder run with no skip, so one oversized message blocks that folder's cursor. Found by F4d-3.
 - **Low** `internal/sync/graphapi.go` `deltaRun`: the reconcile keeps every seen ID in memory and per-message GETs run for each local ID the enumeration missed; large folders are slow but bounded. Found by F4d-3.
 - **Low** `internal/sync/gmailapi.go` `reconcile`: collects every remote ID into one slice before committing, so memory grows with mailbox size (ID strings only; page requests stay bounded). Found by F4d-2 acceptance.
-- **Medium (before wiring)** `internal/sync/gmailapi.go` `GmailSync.Run`: no per-account mutex, so two concurrent runs on one account can race. The stale-generation check covers only a mid-run invalidate. The scheduler that wires this in must serialize runs per account.
 - **Low** `internal/sync/gmailapi.go` `reconcile`: costs one `minimal` GET per known message on the rare reset path; 5xx responses are treated like rate limits (bounded retries).
 - **Low** `internal/sync/apicommon.go` `parseAPIRaw`: a message with no parseable `Date:` header gets `time.Now()`, not the provider's received time (Gmail `internalDate`, Graph `receivedDateTime`). Such messages sort as new on every full ingest. Found by the branch review.
 
@@ -73,8 +69,6 @@ Confirmed by static inspection in P1; F1 verified the PD1/PD9 local fixes and ne
 
 ## Documentation audit (2026-10-14)
 
-- **DOC1 medium** `PLAN.md:11`: Scope still says F5 is next although Progress marks F5a–F5c complete. Completed milestone bodies and older outcome paragraphs also retain obsolete blockers and next-step instructions. Prune completed material and reconcile the current scope with Progress, retaining needed verification evidence and deferred work.
-- **DOC2 low** `ISSUES.md` GmailSync "before wiring" entry: the required scheduler serialization now exists in `app/api_route.go:93` (`runAPISync` takes the per-account lock) and is wired in `app/background.go:45`. Close or rewrite the entry as a caller invariant rather than an outstanding integration gap; `GmailSync.Run` itself still has no internal mutex.
 - **DOC3 low** `docs/PLAN-migration.md:47`: the execution contract requires `.claude/rules/working-style.md`, which no longer exists. Point to the current shared guidance in `AGENTS.md`.
 - **DOC4 low** `docs/user-guide/features/keyboard-shortcuts.md:73`: Alt+G is described unconditionally as All Inboxes, but `Sidebar.svelte` selects the first visible item, with All Inboxes only when present. Align with `docs/KEYBOARD_SHORTCUTS.md:37`.
 - **DOC5 low** `docs/user-guide/faq.md:25` has malformed `https:/svelte.dev`; `docs/user-guide/troubleshooting.md:269` links to the absent FAQ anchor `where-are-log-files-located`. Correct the URL and point log guidance to an existing section or supply the missing section.
