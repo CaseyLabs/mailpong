@@ -148,3 +148,41 @@ func TestAPIMoveBetweenAccountsKeepsExplicitError(t *testing.T) {
 		t.Fatalf("MoveToFolder = %v", err)
 	}
 }
+
+func TestAPIMovePartialBatchRefreshesMovedRowsAndReportsFailure(t *testing.T) {
+	a, acct, folders := newAPIActionApp(t, account.MailRouteStateActive)
+	id := apiRowID(t, a, acct)
+	route := a.apiRouted(acct)
+	m, err := a.messageStore.Get(id)
+	if err != nil || m == nil {
+		t.Fatalf("message = %v, %v", m, err)
+	}
+	bad := *m
+	bad.ID, bad.FolderID = "missing", "no-such-folder"
+
+	var mu sync.Mutex
+	var movedIDs []string
+	orig := eventsEmit
+	eventsEmit = func(_ context.Context, name string, vals ...interface{}) {
+		if name != "messages:moved" || len(vals) != 1 {
+			return
+		}
+		mu.Lock()
+		defer mu.Unlock()
+		movedIDs = append(movedIDs, vals[0].(map[string]interface{})["messageIds"].([]string)...)
+	}
+	t.Cleanup(func() { eventsEmit = orig })
+
+	err = a.apiMoveLocal(route, []*message.Message{m, &bad}, folders[folder.TypeTrash])
+	if err == nil || !strings.Contains(err.Error(), "source folder not found") {
+		t.Fatalf("err = %v, want the later row's failure", err)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if len(movedIDs) != 1 || movedIDs[0] != id {
+		t.Fatalf("messages:moved ids = %v, want only [%s]", movedIDs, id)
+	}
+	if got, _ := a.messageStore.Get(id); got == nil || got.FolderID != folders[folder.TypeTrash].ID {
+		t.Fatalf("first row not moved locally: %+v", got)
+	}
+}

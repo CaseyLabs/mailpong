@@ -235,16 +235,19 @@ func (a *App) splitAPIMessages(messages []*message.Message) (api map[string][]st
 }
 
 // apiMove moves messages of one API account to destFolder locally and queues
-// the remote moves. Messages already in the destination are skipped.
-func (a *App) apiMove(route *account.MailAPIRoute, messages []*message.Message, destFolder *folder.Folder) error {
+// the remote moves. Messages already in the destination are skipped. It returns
+// the messages moved so far, including when a later message fails, so the
+// caller can refresh them before reporting the error.
+func (a *App) apiMove(route *account.MailAPIRoute, messages []*message.Message, destFolder *folder.Folder) ([]*message.Message, error) {
 	accountID := route.AccountID
 	provider := apiProvider(route)
 	ctx, cancel := context.WithTimeout(a.ctx, 15*time.Second)
 	defer cancel()
 	resolve, err := a.apiResolver(ctx, route)
 	if err != nil {
-		return err
+		return nil, err
 	}
+	var moved []*message.Message
 	queued := false
 	defer func() {
 		// Moves queued before a mid-batch failure still need the worker.
@@ -258,27 +261,28 @@ func (a *App) apiMove(route *account.MailAPIRoute, messages []*message.Message, 
 		}
 		src, err := a.folderStore.Get(m.FolderID)
 		if err != nil || src == nil {
-			return fmt.Errorf("source folder not found: %s", m.FolderID)
+			return moved, fmt.Errorf("source folder not found: %s", m.FolderID)
 		}
 		remoteID, _, err := a.messageStore.APIMessageRemote(accountID, provider, m.ID)
 		if err != nil {
-			return err
+			return moved, err
 		}
 		prior, err := a.messageStore.APIRefContainers(accountID, provider, remoteID)
 		if err != nil {
-			return err
+			return moved, err
 		}
 		req, err := resolve(src, destFolder, prior)
 		if err != nil {
-			return err
+			return moved, err
 		}
 		req.AccountID, req.Provider, req.MessageID, req.ToFolderID = accountID, provider, m.ID, destFolder.ID
 		if err := a.messageStore.EnqueueAPIMove(req); err != nil {
-			return fmt.Errorf("failed to queue move: %w", err)
+			return moved, fmt.Errorf("failed to queue move: %w", err)
 		}
 		queued = true
+		moved = append(moved, m)
 	}
-	return nil
+	return moved, nil
 }
 
 type apiMoveResolver func(src, dest *folder.Folder, prior []string) (message.APIMoveRequest, error)
@@ -376,15 +380,17 @@ func (a *App) anyAPIRouted(messageIDs []string) bool {
 }
 
 // apiMoveLocal is the API branch of moveToFolder: it queues the move with its
-// local effect, then refreshes the UI and folder counts. API moves are not
+// local effect, then refreshes the UI and folder counts for the rows moved,
+// even when a later row fails and the error is returned. API moves are not
 // undoable.
 func (a *App) apiMoveLocal(route *account.MailAPIRoute, messages []*message.Message, destFolder *folder.Folder) error {
-	if err := a.apiMove(route, messages, destFolder); err != nil {
-		return err
+	moved, moveErr := a.apiMove(route, messages, destFolder)
+	if len(moved) == 0 {
+		return moveErr
 	}
-	ids := make([]string, 0, len(messages))
+	ids := make([]string, 0, len(moved))
 	folders := map[string]bool{destFolder.ID: true}
-	for _, m := range messages {
+	for _, m := range moved {
 		ids = append(ids, m.ID)
 		folders[m.FolderID] = true
 	}
@@ -413,5 +419,5 @@ func (a *App) apiMoveLocal(route *account.MailAPIRoute, messages []*message.Mess
 			eventsEmit(a.ctx, "folders:countsChanged", counts)
 		}
 	}()
-	return nil
+	return moveErr
 }

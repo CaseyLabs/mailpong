@@ -8,7 +8,7 @@ The 2026-10-08 audit used “unverified” for reported findings not confirmed a
 
 - [SEND — Sending, privacy and compatibility](#send): [MA1](#ma1), [PD2](#pd2) (resolved: [CD2](#cd2))
 - [API — Provider API activation and migration](#api): [MA4](#ma4), [F5b-1](#f5b-1), [F5b-2](#f5b-2), [F5b-3](#f5b-3)
-- [SYNC — Mail synchronization and action reliability](#sync): [R2](#r2), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6), [R4](#r4) (resolved: [R3](#r3))
+- [SYNC — Mail synchronization and action reliability](#sync): [R2](#r2), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6) (resolved: [R3](#r3), [R4](#r4))
 - [CHAT — Chat composer sender review](#chat): [R1](#r1)
 - [MAINT — Maintenance and documentation](#maint): [MA2](#ma2), [D2](#d2), [SY1](#sy1), [DOC4](#doc4), [DOC5](#doc5), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI3](#ui3)
 - [AI — AI development workflows](#ai): [AI6](#ai6)
@@ -199,9 +199,10 @@ Project: [SYNC](PLAN.md#sync).
 ### R4 — Partial batch move UI refresh
 
 - **Owner / milestone:** [SYNC](PLAN.md#sync) / [SYNC-2](PLAN.md#sync-2).
-- **Severity / proposed priority / status:** low / P2 / deferred.
+- **Severity / proposed priority / status:** low / P2 / resolved.
 - **Dependencies / gates:** Partial batch failure fixture.
 - **Resolution criteria:** Already moved rows and counts refresh when a later batch item fails.
+- **Resolution / evidence:** SYNC-2 verified 2026-10-14. `apiMoveLocal` emits `messages:moved` and refreshes counts for rows moved before the failure, then returns the error. Fixture passes. [Validation and limits](docs/validation/sync-2.md).
 - **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
 
 - **R4 low** `app/api_actions.go` `apiMove`: a mid-batch failure returns before
