@@ -90,7 +90,8 @@ When all of a feature's milestones are done or an audit pass is complete, land t
 
 1. If `main` has commits the branch lacks, rebase the branch onto `main` and rerun the relevant checks. On conflicts, run `git rebase --abort`, stop, and report the conflicting files.
 2. Run `git switch main` and `git merge --squash <branch>`, then commit once, listing each change the branch made in the commit body.
-3. Run `git branch -D <branch>` only after `git diff main <branch>` prints nothing.
+3. After the squash commit succeeds, push `main` to its configured upstream.
+4. Run `git branch -D <branch>` only after `git diff main <branch>` prints nothing.
 
 ## Planning Files
 
