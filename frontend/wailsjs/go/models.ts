@@ -458,6 +458,7 @@ export namespace app {
 	    replyAll: boolean;
 	    attachments: smtp.Attachment[];
 	    reviewAttemptId?: string;
+	    senderReviewToken?: string;
 	    draftId: string;
 	
 	    static createFrom(source: any = {}) {
@@ -473,6 +474,7 @@ export namespace app {
 	        this.replyAll = source["replyAll"];
 	        this.attachments = this.convertValues(source["attachments"], smtp.Attachment);
 	        this.reviewAttemptId = source["reviewAttemptId"];
+	        this.senderReviewToken = source["senderReviewToken"];
 	        this.draftId = source["draftId"];
 	    }
 	

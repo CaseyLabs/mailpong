@@ -279,6 +279,8 @@ export function GetChatReadingWidth():Promise<string>;
 
 export function GetChatSendKey():Promise<string>;
 
+export function GetChatSenderEvidence(arg1:app.ChatReply):Promise<app.SenderEvidence>;
+
 export function GetChatShowLowGroup():Promise<boolean>;
 
 export function GetChatSubmissionReview(arg1:app.ChatReply):Promise<submission.Attempt>;

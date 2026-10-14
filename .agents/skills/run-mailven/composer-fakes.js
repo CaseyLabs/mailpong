@@ -32,8 +32,11 @@
       }, w.__sendDelay)
       return id
     }
+    const evidence = async (email) => { if (w.__senderEvidenceError) throw Error(w.__senderEvidenceError); return w.__senderEvidence ?? { email, state: 'configured', observedState: 'configured', source: 'local account configuration', route: 'smtp://smtp.example.com:587 (starttls)', observedAt: '', action: 'allow', guidance: 'Locally configured sender; provider enforces permission.', reviewToken: '', sendAs: 'unknown', sendOnBehalf: 'unknown', sharedRead: 'unknown' } }
     return {
-      GetSenderEvidence: async (acc, email) => { if (w.__senderEvidenceError) throw Error(w.__senderEvidenceError); return w.__senderEvidence ?? { email, state: 'configured', observedState: 'configured', source: 'local account configuration', route: 'smtp://smtp.example.com:587 (starttls)', observedAt: '', action: 'allow', guidance: 'Locally configured sender; provider enforces permission.', reviewToken: '', sendAs: 'unknown', sendOnBehalf: 'unknown', sharedRead: 'unknown' } },
+      GetSenderEvidence: async (acc, email) => evidence(email),
+      // The fake chat reply always goes out from the sender below.
+      GetChatSenderEvidence: async () => evidence('alex@example.com'),
       GetSubmissionAttempt: async id => ({ id, draftId: 'chat-draft-1' }),
       GetSubmissionReview: async () => w.__submissionReview ?? null,
       GetChatSubmissionReview: async () => w.__submissionReview ?? null,
@@ -42,7 +45,12 @@
       DeleteDraft: async (id) => { log('deleteDraft ' + id) },
       SaveChatDraft: async () => { log('saveChatDraft'); return 'chat-draft-1' },
       DeleteChatDraft: async () => { log('deleteChatDraft') },
-      QueueChatReply: async (r) => queue(JSON.stringify(r?.text ?? ''), r),
+      // Mirrors the backend gate: a review needs the current token.
+      QueueChatReply: async (r) => {
+        const e = await evidence('alex@example.com')
+        if (e.action === 'review' && r?.senderReviewToken !== e.reviewToken) throw Error('sender review required')
+        return queue(JSON.stringify(r?.text ?? ''), r)
+      },
       QueueMessage: async (acc, msg, draftId) => queue(`${draftId} ${msg?.subject ?? ''}`, msg),
       UndoSend: async (id) => {
         const t = timers[id]

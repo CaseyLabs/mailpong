@@ -23,7 +23,10 @@ type ChatReply struct {
 	ReplyAll        bool              `json:"replyAll"`
 	Attachments     []smtp.Attachment `json:"attachments"` // files the user attached
 	ReviewAttemptID string            `json:"reviewAttemptId,omitempty"`
-	DraftID         string            `json:"draftId"` // chat draft being edited, if any
+	// SenderReviewToken acknowledges the sender evidence returned by
+	// GetChatSenderEvidence; the queue-time and send-time checks still apply.
+	SenderReviewToken string `json:"senderReviewToken,omitempty"`
+	DraftID           string `json:"draftId"` // chat draft being edited, if any
 }
 
 // ChatDraft is a thread's saved chat composer state.
@@ -50,7 +53,9 @@ func (a *App) QueueChatReply(r ChatReply) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// Chat has no sender review UI; fail now rather than after the undo delay.
+	// Fail now rather than after the undo delay; a stale or missing review
+	// token is rejected here and again before SMTP submission.
+	msg.SenderReviewToken = r.SenderReviewToken
 	if err := a.composeOps.requireSenderEvidence(r.AccountID, *msg); err != nil {
 		return "", err
 	}
@@ -84,6 +89,16 @@ func (a *App) QueueChatReply(r ChatReply) (string, error) {
 		}()
 		return "", nil
 	}), nil
+}
+
+// GetChatSenderEvidence returns the evidence for the From address a chat reply
+// would use, so the chat composer can run the sender review before queueing.
+func (a *App) GetChatSenderEvidence(r ChatReply) (*SenderEvidence, error) {
+	msg, err := a.buildChatReply(r)
+	if err != nil {
+		return nil, err
+	}
+	return a.composeOps.senderEvidence(r.AccountID, msg.From.Address)
 }
 
 // SaveChatDraft saves the chat composer's text as a reply draft and returns

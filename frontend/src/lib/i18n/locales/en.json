@@ -101,6 +101,7 @@
     "noFilteredMessages": "No messages match the current filter"
   },
   "chat": {
+    "senderReviewCancelled": "Sender review cancelled. Edit or retry to send.",
     "searchChats": "Search chats...",
     "scope": "Chat scope",
     "allInboxes": "All inboxes",

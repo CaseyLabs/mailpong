@@ -697,3 +697,28 @@ func TestStaleSenderChatDraftTargets(t *testing.T) {
 		}
 	}
 }
+
+// Chat runs the composer's sender review: GetChatSenderEvidence returns the
+// reply's From evidence, and QueueChatReply refuses a missing or stale token
+// before saving or queueing anything.
+func TestChatSenderReviewGate(t *testing.T) {
+	a, db := newChatReplyTestAppDB(t)
+	if _, err := db.Exec(`UPDATE accounts SET smtp_host = 'smtp.office365.com' WHERE id = 'acct-1'`); err != nil {
+		t.Fatal(err)
+	}
+	a.composeOps = composeOps{accountStore: a.accountStore}
+	r := ChatReply{AccountID: "acct-1", MessageID: "m-1", Text: "Sure"}
+	e, err := a.GetChatSenderEvidence(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if e.Email != "me@example.com" || e.Action != "review" || e.ReviewToken == "" {
+		t.Fatalf("evidence = %+v", e)
+	}
+	for _, token := range []string{"", "stale-token"} {
+		r.SenderReviewToken = token
+		if _, err := a.QueueChatReply(r); err == nil || !strings.Contains(err.Error(), "sender review required") {
+			t.Errorf("token %q: QueueChatReply = %v, want sender review required", token, err)
+		}
+	}
+}

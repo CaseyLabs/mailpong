@@ -1,5 +1,5 @@
 // Chat composition in the docked reply box: Reply vs Reply All, draft autosave and restore, undo-send, the
-// identity a reply goes out from, and a refused reply (ISSUES.md R1). Sends use composer-fakes.js, so nothing
+// identity a reply goes out from, and sender review and a refused reply (ISSUES.md R1). Sends use composer-fakes.js, so nothing
 // leaves the page: queued sends fire a fake send:finished event after window.__sendDelay ms.
 const fs = require('node:fs')
 const path = require('node:path')
@@ -90,8 +90,8 @@ describe('chat compose', () => {
     assert.equal((await argsOf(page, 'ChatReplyFrom')).length, 0)
   }))
 
-  it('a refused reply (sender needs review) can be edited', ui.run({
-    // QueueChatReply refuses replies whose sender needs review (ISSUES.md R1); the error text is synthetic.
+  it('a refused reply (backend rejection) can be edited', ui.run({
+    // The backend can still refuse a queued reply (stale or rejected evidence); the error text is synthetic.
     beforeMount: withComposer(`window.go.app.App.QueueChatReply = async () => { throw new Error('sender needs review: send from the full composer') }`),
   }, async (page) => {
     await box(page).fill('Refused reply')
@@ -102,5 +102,53 @@ describe('chat compose', () => {
     await pending.getByRole('button', { name: 'Edit' }).click()
     assert.equal(await box(page).inputValue(), 'Refused reply', 'Edit puts the reply back in the box')
     assert.equal(await pending.count(), 0)
+  }))
+
+  const review = `window.__senderEvidence = { email: 'alex@example.com', state: 'unknown', observedState: '', source: 'Gmail send-as settings', route: 'smtp.gmail.com:587', observedAt: '', action: 'review', guidance: 'Sender rights are unverified.', reviewToken: 'tok-1', sendAs: 'unknown', sendOnBehalf: 'unknown', sharedRead: 'unknown' }`
+  const sendReviewed = async (page, text) => {
+    await box(page).fill(text)
+    await box(page).press('Enter')
+    return page.getByRole('alertdialog').or(page.getByRole('dialog')).filter({ hasText: 'Sender rights are unverified.' })
+  }
+
+  for (const accounts of ['expanded', 'collapsed']) it(`sender review: keyboard confirm sends with the evidence token (accounts ${accounts})`, ui.run({ accounts, beforeMount: withComposer(review) }, async (page) => {
+    const dialog = await sendReviewed(page, 'Reviewed reply')
+    await dialog.waitFor()
+    assert.equal((await argsOf(page, 'QueueChatReply')).length, 0, 'nothing is queued before the review is confirmed')
+    await dialog.getByRole('button', { name: /send/i }).focus()
+    await page.keyboard.press('Enter')
+    await page.waitForFunction(() => window.__calls.some((c) => c.name === 'QueueChatReply'))
+    const [[reply]] = await argsOf(page, 'QueueChatReply')
+    assert.equal(reply.senderReviewToken, 'tok-1')
+  }))
+
+  it('sender review: cancel queues nothing and keeps the reply editable', ui.run({ beforeMount: withComposer(review) }, async (page) => {
+    const dialog = await sendReviewed(page, 'Cancelled reply')
+    await dialog.waitFor()
+    await dialog.getByRole('button', { name: 'Cancel' }).click()
+    const pending = page.getByRole('status').filter({ hasText: 'Cancelled reply' })
+    await pending.getByText('Sender review cancelled').waitFor()
+    assert.equal((await argsOf(page, 'QueueChatReply')).length, 0)
+    await pending.getByRole('button', { name: 'Edit' }).click()
+    assert.equal(await box(page).inputValue(), 'Cancelled reply')
+  }))
+
+  it('sender review: stale evidence is still refused at queue time', ui.run({
+    beforeMount: withComposer(`${review}\nwindow.__QCR = window.go.app.App.GetChatSenderEvidence; window.go.app.App.GetChatSenderEvidence = async () => { const e = await window.__QCR(); setTimeout(() => { window.__senderEvidence = { ...window.__senderEvidence, reviewToken: 'tok-2' } }); return e }`),
+  }, async (page) => {
+    const dialog = await sendReviewed(page, 'Stale reply')
+    await dialog.waitFor()
+    await dialog.getByRole('button', { name: /send/i }).click()
+    const pending = page.getByRole('status').filter({ hasText: 'Stale reply' })
+    await pending.getByText(/sender review required/).waitFor()
+  }))
+
+  it('sender review: blocked evidence never offers a review', ui.run({
+    beforeMount: withComposer(`window.__senderEvidence = { email: 'alex@example.com', state: 'pending', observedState: 'pending', source: 'Gmail send-as settings', route: 'smtp.gmail.com:587', observedAt: '', action: 'block', guidance: 'Address is not verified.', reviewToken: '', sendAs: 'unknown', sendOnBehalf: 'unknown', sharedRead: 'unknown' }`),
+  }, async (page) => {
+    await box(page).fill('Blocked reply')
+    await box(page).press('Enter')
+    await page.getByRole('status').filter({ hasText: 'Blocked reply' }).getByText(/Address is not verified/).waitFor()
+    assert.equal((await argsOf(page, 'QueueChatReply')).length, 0)
   }))
 })

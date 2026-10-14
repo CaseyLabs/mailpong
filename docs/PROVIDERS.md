@@ -56,7 +56,7 @@ Current API routes support sending, receiving and queued flag/folder actions, wi
 
 ## Sending, limits and troubleshooting
 
-An authenticated mailbox is not proof that an alias can send. Mailven checks route-specific sender evidence and may require review in the full composer; chat replies cannot perform that review. Review **Sent copy policy** for SMTP routes to avoid unintended copies. API routes rely on the provider's Sent behavior. See [Sending and recovery](SENDING.md) for sender evidence, uncertain outcomes and Sent-copy handling.
+An authenticated mailbox is not proof that an alias can send. Mailven checks route-specific sender evidence and may require review before sending, in the full composer or in chat. Review **Sent copy policy** for SMTP routes to avoid unintended copies. API routes rely on the provider's Sent behavior. See [Sending and recovery](SENDING.md) for sender evidence, uncertain outcomes and Sent-copy handling.
 
 Message limits apply to the encoded MIME, including attachments and encryption overhead. SMTP SIZE is a server advertisement, not a delivery guarantee. The API submission ceiling is a local 25 MiB bound, not a verified provider allowance; other local attachment/read limits do not establish what a mailbox can send or receive. Acceptance is not delivery or inbox placement.
 

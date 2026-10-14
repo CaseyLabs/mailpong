@@ -518,6 +518,10 @@ export function GetChatSendKey() {
   return window['go']['app']['App']['GetChatSendKey']();
 }
 
+export function GetChatSenderEvidence(arg1) {
+  return window['go']['app']['App']['GetChatSenderEvidence'](arg1);
+}
+
 export function GetChatShowLowGroup() {
   return window['go']['app']['App']['GetChatShowLowGroup']();
 }

@@ -8,6 +8,7 @@
   import { _ } from '$lib/i18n'
   import { ChatReplyFrom, GetIdentities, OpenURL } from '../../../../wailsjs/go/app/App'
   import SubmissionReviewDialog from '../composer/SubmissionReviewDialog.svelte'
+  import SenderReviewDialog from '../composer/SenderReviewDialog.svelte'
   import { ConfirmDialog } from '$lib/components/ui/confirm-dialog'
   import { toasts } from '$lib/stores/toast'
   import { setFocusedPane } from '$lib/stores/keyboard.svelte'
@@ -416,3 +417,4 @@
 />
 
 <SubmissionReviewDialog review={composer.submissionReview} />
+<SenderReviewDialog review={composer.senderReview} />

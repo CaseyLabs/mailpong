@@ -4,7 +4,9 @@
 // Sends wait out the backend's undo delay; Undo puts the reply back in the box.
 
 // @ts-ignore - wailsjs path
-import { GetSubmissionAttempt, GetChatSubmissionReview, SaveChatDraft, GetChatDraft, QueueChatReply, ReleaseChatDraft, PickAttachmentFiles, DeleteDraft } from '../../../../wailsjs/go/app/App'
+import { GetSubmissionAttempt, GetChatSubmissionReview, GetChatSenderEvidence, SaveChatDraft, GetChatDraft, QueueChatReply, ReleaseChatDraft, PickAttachmentFiles, DeleteDraft } from '../../../../wailsjs/go/app/App'
+import { get } from 'svelte/store'
+import { _ } from '$lib/i18n'
 import { UNDO_SEND_MS, undoSend, whenSent } from '$lib/stores/sendQueue'
 import { SubmissionReview } from '../composer/submissionReview.svelte'
 import { app, smtp } from '../../../../wailsjs/go/models'
@@ -56,6 +58,7 @@ export async function flushChatComposers(): Promise<void> {
 
 export class ChatComposer {
   submissionReview = new SubmissionReview()
+  senderReview = new SubmissionReview()
   text = $state('')
   // null = follow the target's default
   replyAllChoice = $state<boolean | null>(null)
@@ -307,6 +310,16 @@ export class ChatComposer {
     let error: string
     let warnings = ''
     try {
+      // Review is per attempt: a token from an earlier attempt is never reused.
+      p.reply.senderReviewToken = ''
+      const evidence = await GetChatSenderEvidence(p.reply)
+      if (evidence.action === 'block') throw new Error(evidence.guidance)
+      if (evidence.action === 'review') {
+        const details = [`${evidence.email} — ${evidence.state}`, evidence.source, evidence.route,
+          evidence.observedAt || get(_)('composer.senderNotObserved'), evidence.guidance].filter(Boolean).join('\n')
+        if (!(await this.senderReview.ask(details))) throw new Error(get(_)('chat.senderReviewCancelled'))
+        p.reply.senderReviewToken = evidence.reviewToken
+      }
       const sendId: string = await QueueChatReply(p.reply)
       // Queueing may create the recovery draft. Keep its ID for Undo/Edit,
       // even before the send:finished event arrives.

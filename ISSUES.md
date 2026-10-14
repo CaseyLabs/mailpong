@@ -9,7 +9,7 @@ The 2026-10-08 audit used “unverified” for reported findings not confirmed a
 - [SEND — Sending, privacy and compatibility](#send): [MA1](#ma1), [PD2](#pd2) (resolved: [CD2](#cd2))
 - [API — Provider API activation and migration](#api): [MA4](#ma4), [F5b-1](#f5b-1), [F5b-2](#f5b-2), [F5b-3](#f5b-3)
 - [SYNC — Mail synchronization and action reliability](#sync): [R2](#r2), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6) (resolved: [R3](#r3), [R4](#r4))
-- [CHAT — Chat composer sender review](#chat): [R1](#r1)
+- [CHAT — Chat composer sender review](#chat): [CH1](#ch1) (resolved: [R1](#r1))
 - [MAINT — Maintenance and documentation](#maint): [MA2](#ma2), [D2](#d2), [SY1](#sy1), [DOC4](#doc4), [DOC5](#doc5), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI3](#ui3)
 - [AI — AI development workflows](#ai): [AI6](#ai6)
 - [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
@@ -216,14 +216,25 @@ Project: [SYNC](PLAN.md#sync).
 
 Project: [CHAT](PLAN.md#chat).
 
+<a id="ch1"></a>
+
+### CH1 — Pending bubble reads "Sending…" during chat sender review
+
+- **Owner / milestone:** [CHAT](PLAN.md#chat) / found during [CHAT-1](PLAN.md#chat-1); no milestone assigned.
+- **Severity / proposed priority / status:** low / P3 / open.
+- **Location:** `frontend/src/lib/components/chat/chatComposerState.svelte.ts` `#deliver`: the bubble is set to `queued` before `GetChatSenderEvidence` and the review dialog run.
+- **Failure:** while the **Use this From and send** dialog is open, the reply bubble already shows "Sending…" although nothing is queued (seen in the CHAT-1 UI screenshots). Cancel or confirm resolves it correctly.
+- **Closure criteria:** the bubble shows a review/waiting state (or none) until `QueueChatReply` returns, covered by a `chat-compose` UI assertion.
+
 <a id="r1"></a>
 
 ### R1 — Chat sender review
 
 - **Owner / milestone:** [CHAT](PLAN.md#chat) / [CHAT-1](PLAN.md#chat-1).
-- **Severity / proposed priority / status:** medium / P2 / deferred.
+- **Severity / proposed priority / status:** medium / P2 / resolved.
 - **Dependencies / gates:** Retain existing sender review policy.
 - **Resolution criteria:** Chat can perform required sender review with keyboard-accessible UI and verified queue guards.
+- **Resolution / evidence:** CHAT-1 verified 2026-10-14. Chat calls `GetChatSenderEvidence`, shows the review dialog and sends `senderReviewToken`; `QueueChatReply` and the send path still reject missing/stale tokens and blocked evidence. `tests/ui/chat-compose.test.cjs` covers confirm (Accounts expanded and collapsed), cancel, stale token and block. Live provider review was not exercised.
 - **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
 
 - **R1 medium** `app/chat_reply.go` `QueueChatReply`: the chat composer has no

@@ -11,12 +11,12 @@ Priorities are recommendations assigned in this reorganization: P1 privacy/data 
 | [SEND — Sending, privacy and compatibility](#send) | proposed | P1 | [2](ISSUES.md#send) | SEND-2/3 require live authorization |
 | [API — Provider API activation and migration](#api) | proposed | P2 | [4](ISSUES.md#api) | API-1 or API-2 design; API-3 gated by API-2 |
 | [SYNC — Mail synchronization and action reliability](#sync) | proposed | P1 | [6](ISSUES.md#sync) | SYNC-3/4 |
-| [CHAT — Chat composer sender review](#chat) | proposed | P2 | [1](ISSUES.md#chat) | CHAT-1 |
+| [CHAT — Chat composer sender review](#chat) | proposed | P3 | [1](ISSUES.md#chat) | CH1 unassigned (cosmetic) |
 | [MAINT — Maintenance and documentation](#maint) | proposed | P2 | [10](ISSUES.md#maint) | MAINT-1; MAINT-3 external; D2 deferred/upstream blocked |
 | [AI — AI development workflows](#ai) | deferred | P3 | [1](ISSUES.md#ai) | G4 deferred; no eligible work |
 | [WAILS — Desktop framework migration assessment](#wails) | proposed | P3 | [0](ISSUES.md#wails) | W3-M0 assessment only |
 
-**Recommended next selection:** none automatic; CHAT-1 is the next independent P2 candidate and need an explicit request. External privacy gate SEND-2 is high priority but cannot run live without separately specified authorization. No automatic selection or status transition occurs here.
+**Recommended next selection:** none automatic; CHAT-1 is done; no independent P2 candidate is recommended automatically. External privacy gate SEND-2 is high priority but cannot run live without separately specified authorization. No automatic selection or status transition occurs here.
 
 ## Scope and preserved decisions
 
@@ -26,7 +26,7 @@ No live provider access, test emails, credentials changes, mailbox migration, pr
 
 ## Progress
 
-MAINT-4 is done ([validation evidence](docs/validation/maint-4.md)); its findings UI1–UI3 remain open. SEND-1 is done and CD2 resolved; SYNC-1 is done and R3 resolved ([evidence](docs/validation/sync-1.md)); SYNC-2 is done and R4 resolved ([evidence](docs/validation/sync-2.md)); see [validation evidence](docs/validation/send-1.md). Other proposed milestones remain unselected; SEND-2/3, API-3 and MAINT-3 retain their gates, and G4/D2 remain deferred.
+CHAT-1 is done and R1 resolved. MAINT-4 is done ([validation evidence](docs/validation/maint-4.md)); its findings UI1–UI3 remain open. SEND-1 is done and CD2 resolved; SYNC-1 is done and R3 resolved ([evidence](docs/validation/sync-1.md)); SYNC-2 is done and R4 resolved ([evidence](docs/validation/sync-2.md)); see [validation evidence](docs/validation/send-1.md). Other proposed milestones remain unselected; SEND-2/3, API-3 and MAINT-3 retain their gates, and G4/D2 remain deferred.
 
 <a id="send"></a>
 
@@ -192,11 +192,11 @@ MAINT-4 is done ([validation evidence](docs/validation/maint-4.md)); its finding
 
 ### CHAT-1 — Chat sender review
 
-- **Status / proposed priority:** proposed / P2. **Dependencies / gates:** none; existing sender policy is implemented.
+- **Status / proposed priority:** done / P2. **Dependencies / gates:** none; existing sender policy is implemented.
 - **Scope / deliverable:** Add sender review to chat while retaining queue-time safeguards.
 - **Acceptance:** Review-required senders can complete an accessible chat review; stale/rejected evidence still blocks submission.
 - **Validation:** Queue fixtures, frontend lint/check and guarded chat/Mail UI with both Accounts states; no test emails.
-- **Issues:** [R1](ISSUES.md#r1). **Progress:** not started.
+- **Issues:** [R1](ISSUES.md#r1). **Progress:** done (branch `chat-1-sender-review`, base 02a0b11). Chat runs the sender review (`GetChatSenderEvidence`, `ChatReply.senderReviewToken`) before `QueueChatReply`; queue-time and send-time checks are unchanged. Evidence: `node tests/ui/run.mjs chat-compose` (11 pass, review confirm under Accounts expanded and collapsed, cancel, stale token, block), `make test-ui` 46 pass, `go test ./app -run 'Sender|Chat'`, frontend lint/check. Live provider review not exercised (no test emails). Follow-up [CH1](ISSUES.md#ch1) (cosmetic) is open.
 
 <a id="maint"></a>
 

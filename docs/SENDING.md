@@ -126,8 +126,9 @@ mailbox records read setup only. The current SMTP route sends the selected From
 without a Sender-on-behalf transformation and requires Send As for another mailbox;
 Send on Behalf is not a substitute. Confirm rights with an administrator and review
 unknown evidence. Microsoft documents the [separate delegation permissions](https://learn.microsoft.com/en-us/exchange/recipients-in-exchange-online/manage-permissions-for-recipients).
-Quick replies and read receipts also pass the backend gate: when sender evidence
-needs review, use the full composer for a reply; an automatic receipt cannot
+Chat replies run the same **Use this From and send** review before queueing; cancelling
+leaves the reply as an editable failed bubble. Quick replies and read receipts also
+pass the backend gate. An automatic receipt cannot
 acknowledge unknown rights and remains unsent. Mailven never silently changes From
 or chooses another route. Provider enforcement remains authoritative. Actual
 alias/delegation authorization still requires separately authorized live checks.
