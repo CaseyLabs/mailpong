@@ -70,13 +70,15 @@ changing directory. Quote resolved paths. For example, from the checkout root:
 Read Scope, Progress, the actionable milestone and relevant decisions only.
 The run-mailven core links optional UI references by task; its safeguards always
 apply. Handoffs persist checkpoints before committing and include a host-neutral
-prompt. Deferred cross-host verification and future provider work are tracked
+prompt. Remaining G4 runtime/context verification and future provider work are tracked
 in `PLAN.md`; completed provider checks are retained in
 [the implementation validation record](docs/validation/provider-implementation.md).
 The [verification record](docs/validation/shared-skills-g3.md) documents completed
-Codex and guarded UI checks. Claude runtime compliance, bidirectional cross-host
-continuation and comparable context savings remain unverified and deferred until
-requested on a new branch; their deferral does not prevent landing the completed scope.
+Codex and guarded UI checks. [Bidirectional handoff trials](docs/validation/shared-handoff-ai5.md)
+verified fresh Codex/Claude continuation with dirty work, checkpoint provenance
+and blockers. Broader Claude workflow compliance/routing and comparable context
+savings remain unverified and deferred until requested on a new branch; their
+deferral does not prevent landing the completed scope.
 The screenshot helpers install fake bindings before mount and verify persisted
 UI and extension settings stay unchanged; follow the run-mailven safeguards.
 Claude's import adapter is intentional compatibility guidance; do not remove it

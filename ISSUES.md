@@ -23,10 +23,6 @@ has not yet been confirmed against the code.
   Both tools are already current here; retain TypeScript ~6.0.3 until both accept 7.
   Recheck using the commands in `CONTRIBUTING.md`.
 
-### AI guidance portability (reviewed 2026-10-12)
-
-- **AI5 medium** `.agents/skills/project-handoff/SKILL.md`: G2 corrected checkpoint-before-commit ordering and now requires branch/revision, dirty state, validation provenance and blockers in the shared handoff. Bidirectional continuation, including uncommitted work, is still unverified; complete the deferred bidirectional runtime trials in PLAN.md G4 on a future branch before closing this item. The user closed the current branch on 2026-10-12; resume only when requested.
-
 ### Provider compatibility and deliverability (P1, 2026-10-12)
 
 Confirmed by static inspection in P1; F1 verified the PD1/PD9 local fixes and new-account PD2 guidance/defaults; F2a verified the PD3 submission-outcome fix; F2b verified PD4/PD6/PD8 MIME/header/SIZE/international-envelope preflight, F3a verified PD5 sender evidence, review and blocking; and F3b verified the PD7 explicit route/destination policy and durable copy reconciliation plus U3 linked auth ownership/locks with disposable fixtures. Remaining findings and the PD2 live compatibility gate stay open. Details, provider sources, applicability and live-check limits are in [the provider review](docs/validation/provider-deliverability-review.md). Architecture and follow-up prioritization belong to P2.
@@ -69,7 +65,6 @@ Confirmed by static inspection in P1; F1 verified the PD1/PD9 local fixes and ne
 
 ## Documentation audit (2026-10-14)
 
-- **DOC3 low** `docs/PLAN-migration.md:47`: the execution contract requires `.claude/rules/working-style.md`, which no longer exists. Point to the current shared guidance in `AGENTS.md`.
 - **DOC4 low** `docs/user-guide/features/keyboard-shortcuts.md:73`: Alt+G is described unconditionally as All Inboxes, but `Sidebar.svelte` selects the first visible item, with All Inboxes only when present. Align with `docs/KEYBOARD_SHORTCUTS.md:37`.
 - **DOC5 low** `docs/user-guide/faq.md:25` has malformed `https:/svelte.dev`; `docs/user-guide/troubleshooting.md:269` links to the absent FAQ anchor `where-are-log-files-located`. Correct the URL and point log guidance to an existing section or supply the missing section.
 
