@@ -246,6 +246,10 @@ export function CheckServerCertificate(arg1) {
   return window['go']['app']['App']['CheckServerCertificate'](arg1);
 }
 
+export function CleanRestoreOrphanCredentials() {
+  return window['go']['app']['App']['CleanRestoreOrphanCredentials']();
+}
+
 export function ClearMailAPIRoute(arg1) {
   return window['go']['app']['App']['ClearMailAPIRoute'](arg1);
 }
@@ -388,6 +392,10 @@ export function DiscoverCardDAVAddressbooksOAuth(arg1, arg2) {
 
 export function DiscoverOAuthProvider(arg1) {
   return window['go']['app']['App']['DiscoverOAuthProvider'](arg1);
+}
+
+export function DismissSnapshotRestoreResult() {
+  return window['go']['app']['App']['DismissSnapshotRestoreResult']();
 }
 
 export function DownloadAttachment(arg1, arg2) {
@@ -810,6 +818,10 @@ export function GetShowViewerCircles() {
   return window['go']['app']['App']['GetShowViewerCircles']();
 }
 
+export function GetSnapshotRestoreResult() {
+  return window['go']['app']['App']['GetSnapshotRestoreResult']();
+}
+
 export function GetSourceAddressbooks(arg1) {
   return window['go']['app']['App']['GetSourceAddressbooks'](arg1);
 }
@@ -1134,6 +1146,14 @@ export function PrepareReply(arg1, arg2) {
   return window['go']['app']['App']['PrepareReply'](arg1, arg2);
 }
 
+export function PreviewMailAPISnapshotRestore(arg1) {
+  return window['go']['app']['App']['PreviewMailAPISnapshotRestore'](arg1);
+}
+
+export function PreviewUndoSnapshotRestore() {
+  return window['go']['app']['App']['PreviewUndoSnapshotRestore']();
+}
+
 export function ProcessPGPMessage(arg1) {
   return window['go']['app']['App']['ProcessPGPMessage'](arg1);
 }
@@ -1204,6 +1224,10 @@ export function RemoveTrustedCertificateForHost(arg1, arg2) {
 
 export function ReorderAccounts(arg1) {
   return window['go']['app']['App']['ReorderAccounts'](arg1);
+}
+
+export function RestoreMailAPISnapshot(arg1, arg2) {
+  return window['go']['app']['App']['RestoreMailAPISnapshot'](arg1, arg2);
 }
 
 export function RollbackMailAPIMigration(arg1) {
@@ -1576,6 +1600,10 @@ export function Undo() {
 
 export function UndoSend(arg1) {
   return window['go']['app']['App']['UndoSend'](arg1);
+}
+
+export function UndoSnapshotRestore(arg1) {
+  return window['go']['app']['App']['UndoSnapshotRestore'](arg1);
 }
 
 export function UnsnoozeChat(arg1, arg2) {

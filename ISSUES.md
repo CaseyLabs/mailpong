@@ -7,7 +7,7 @@ The 2026-10-08 audit used “unverified” for reported findings not confirmed a
 ## Index
 
 - [SEND — Sending, privacy and compatibility](#send): [MA1](#ma1), [PD2](#pd2) (resolved: [CD2](#cd2))
-- [API — Provider API activation and migration](#api): [MA4](#ma4), [F5b-1](#f5b-1), [F5b-3](#f5b-3)
+- [API — Provider API activation and migration](#api): [MA4](#ma4) (resolved: [F5b-1](#f5b-1), [F5b-3](#f5b-3))
 - [SYNC — Mail synchronization and action reliability](#sync): none (resolved: [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [CHAT — Chat composer sender review](#chat): [CH1](#ch1) (resolved: [R1](#r1))
 - [MAINT — Maintenance and documentation](#maint): [D2](#d2), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI3](#ui3) (resolved: [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
@@ -74,13 +74,10 @@ Project: [API](PLAN.md#api).
 
 ### F5b-1 — Full migration snapshot restoration
 
-- **Owner / milestone:** [API](PLAN.md#api) / [API-2](PLAN.md#api-2); implementation: [API-3](PLAN.md#api-3).
-- **Severity / proposed priority / status:** low / P2 / deferred.
-- **Dependencies / gates:** Design recorded by API-2 ([design](docs/API_SNAPSHOT_RESTORE_DESIGN.md)); owner approved 2026-10-14; implementation requires selecting API-3.
-- **Resolution criteria:** Approved restore design and later isolated restore validation prove data/credential safety and explicit loss consent.
-- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
-
-- **F5b-1 (low)** — `app/api_migration.go` `RollbackMailAPIMigration`: full snapshot restore is not implemented; after a rollback only route state changes, so API-era local changes stay. F5c shows the snapshot path with a note but does not offer restore; it needs its own live-DB replacement design and data-loss UX.
+- **Owner / milestone:** [API](PLAN.md#api) / [API-2](PLAN.md#api-2) (design); [API-3](PLAN.md#api-3) (implementation).
+- **Severity / proposed priority / status:** low / P2 / resolved.
+- **Resolution / evidence:** API-3 verified 2026-10-14. An explicit, acknowledged whole-database restore from the pre-migration snapshot, applied offline at next start with a never-overwritten pre-restore backup and undo. Preflight proves hash, integrity, forward migration and credential key on a copy. Crash fixtures at every phase boundary keep the live database whole and resume. Post-restore rules hold API actions as `unknown` (never replayed), deactivate the route, clear search and report sign-in and orphaned-credential follow-ups. The consent UI states that provider-side changes are not undone. Go fixtures, full Go suite and full UI suite (Accounts expanded and collapsed) pass. [Evidence and limits](docs/validation/api-3.md).
+- **Preserved limits:** No native-window or real-account restore was run; Windows replace semantics and Flatpak paths are unverified. Live restore stays separately gated.
 
 <a id="f5b-3"></a>
 

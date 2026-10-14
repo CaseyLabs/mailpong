@@ -39,6 +39,7 @@ import (
 	"github.com/caseylabs/mailven/internal/platform"
 	"github.com/caseylabs/mailven/internal/settings"
 	"github.com/caseylabs/mailven/internal/smime"
+	"github.com/caseylabs/mailven/internal/snapshotrestore"
 	"github.com/caseylabs/mailven/internal/submission"
 	"github.com/caseylabs/mailven/internal/sync"
 	"github.com/caseylabs/mailven/internal/undo"
@@ -499,6 +500,10 @@ func (a *App) Preflight() error {
 		return fmt.Errorf("init credential store: %w", err)
 	}
 	a.credStore = credStore
+
+	if _, err := snapshotrestore.FinishPost(db, paths.Data, a.restoreCredentialsOK); err != nil {
+		log.Error().Err(err).Msg("Finishing snapshot restore")
+	}
 
 	// Wire user-supplied OAuth client credentials override into the oauth2
 	// resolver chain. When the user has saved their own client_id + secret

@@ -1,6 +1,6 @@
 # Migration snapshot restoration design
 
-Design for [API-2](../PLAN.md#api-2) / [F5b-1](../ISSUES.md#f5b-1). Nothing here is implemented; implementation is the gated [API-3](../PLAN.md#api-3). Current behavior stays as documented in [MAIL_APIS](MAIL_APIS.md#migration-and-rollback): rollback changes the route only and keeps the snapshot for reference.
+Design for [API-2](../PLAN.md#api-2) / [F5b-1](../ISSUES.md#f5b-1). Implemented by [API-3](../PLAN.md#api-3); current behavior and the deviations from this design are in [MAIL_APIS](MAIL_APIS.md#snapshot-restoration) and the [validation record](validation/api-3.md).
 
 ## What a restore is, and is not
 

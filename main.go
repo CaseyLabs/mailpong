@@ -15,6 +15,7 @@ import (
 	"github.com/caseylabs/mailven/internal/appstate"
 	"github.com/caseylabs/mailven/internal/platform"
 	"github.com/caseylabs/mailven/internal/settings"
+	"github.com/caseylabs/mailven/internal/snapshotrestore"
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
@@ -101,6 +102,14 @@ func runMainMode(mailtoData *app.MailtoData, rawMailtoArg string) {
 		return
 	}
 	defer lock.Unlock()
+
+	// A staged snapshot restore swaps the database file now, while nothing
+	// else has it open; it must precede every read of the database.
+	if paths, err := platform.GetPaths(); err == nil {
+		if _, err := snapshotrestore.Apply(paths.Data, snapshotrestore.Hooks{}); err != nil {
+			println("Warning: snapshot restore:", err.Error())
+		}
+	}
 
 	// Initialize WebKit on the main thread before anything spawns GLib worker
 	// threads — see webkit_preinit_linux.go (#431).

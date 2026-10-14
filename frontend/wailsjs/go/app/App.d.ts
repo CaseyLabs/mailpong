@@ -16,6 +16,7 @@ import {imap} from '../models';
 import {settings} from '../models';
 import {pgp} from '../models';
 import {smime} from '../models';
+import {snapshotrestore} from '../models';
 import {appstate} from '../models';
 import {sync} from '../models';
 import {draft} from '../models';
@@ -143,6 +144,8 @@ export function CheckRecipientPGPKeys(arg1:Array<string>):Promise<Record<string,
 
 export function CheckServerCertificate(arg1:string):Promise<app.ServerCertificateCheck>;
 
+export function CleanRestoreOrphanCredentials():Promise<void>;
+
 export function ClearMailAPIRoute(arg1:string):Promise<void>;
 
 export function ClearOAuthCreds(arg1:string):Promise<void>;
@@ -214,6 +217,8 @@ export function DiscoverCardDAVAddressbooks(arg1:string,arg2:string,arg3:string)
 export function DiscoverCardDAVAddressbooksOAuth(arg1:string,arg2:string):Promise<Array<carddav.AddressbookInfo>>;
 
 export function DiscoverOAuthProvider(arg1:string):Promise<app.OIDCDiscoveryResult>;
+
+export function DismissSnapshotRestoreResult():Promise<void>;
 
 export function DownloadAttachment(arg1:string,arg2:string):Promise<string>;
 
@@ -425,6 +430,8 @@ export function GetShowTitleBar():Promise<boolean>;
 
 export function GetShowViewerCircles():Promise<boolean>;
 
+export function GetSnapshotRestoreResult():Promise<snapshotrestore.Result>;
+
 export function GetSourceAddressbooks(arg1:string):Promise<Array<carddav.Addressbook>>;
 
 export function GetSpecialFolder(arg1:string,arg2:folder.Type):Promise<folder.Folder>;
@@ -587,6 +594,10 @@ export function Preflight():Promise<void>;
 
 export function PrepareReply(arg1:string,arg2:string):Promise<smtp.ComposeMessage>;
 
+export function PreviewMailAPISnapshotRestore(arg1:string):Promise<snapshotrestore.Report>;
+
+export function PreviewUndoSnapshotRestore():Promise<snapshotrestore.Report>;
+
 export function ProcessPGPMessage(arg1:string):Promise<app.PGPViewResult>;
 
 export function ProcessSMIMEMessage(arg1:string):Promise<app.SMIMEViewResult>;
@@ -622,6 +633,8 @@ export function RemoveTrustedCertificate(arg1:string):Promise<void>;
 export function RemoveTrustedCertificateForHost(arg1:string,arg2:string):Promise<void>;
 
 export function ReorderAccounts(arg1:Array<string>):Promise<void>;
+
+export function RestoreMailAPISnapshot(arg1:string,arg2:boolean):Promise<snapshotrestore.Report>;
 
 export function RollbackMailAPIMigration(arg1:string):Promise<app.MailAPIRollbackReport>;
 
@@ -808,6 +821,8 @@ export function Trash(arg1:Array<string>):Promise<boolean>;
 export function Undo():Promise<string>;
 
 export function UndoSend(arg1:string):Promise<boolean>;
+
+export function UndoSnapshotRestore(arg1:boolean):Promise<snapshotrestore.Report>;
 
 export function UnsnoozeChat(arg1:string,arg2:string):Promise<void>;
 

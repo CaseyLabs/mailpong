@@ -4,6 +4,7 @@
 
   import { onMount, untrack } from 'svelte'
   import TitleBar from './lib/components/common/TitleBar.svelte'
+  import SnapshotRestoreBanner from './lib/components/common/SnapshotRestoreBanner.svelte'
   import Sidebar from './lib/components/sidebar/Sidebar.svelte'
   import PaneResizeHandle from '$lib/components/kit/PaneResizeHandle.svelte'
   import ChatList from './lib/components/chat/ChatList.svelte'
@@ -1485,6 +1486,8 @@
   {#if getShowTitleBar() && !getNativeTitleBar()}
     <TitleBar onClose={handleClose} />
   {/if}
+
+  <SnapshotRestoreBanner />
 
   <!-- Main Content -->
   <div class="flex flex-1 min-h-0 overflow-hidden relative">

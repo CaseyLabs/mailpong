@@ -8,6 +8,7 @@
     ClearMailAPIRoute, MigrateMailAPIAccount, RollbackMailAPIMigration,
   } from '../../../../../wailsjs/go/app/App'
   import { EventsOn, EventsOff } from '../../../../../wailsjs/runtime/runtime'
+  import SnapshotRestoreSection from './SnapshotRestoreSection.svelte'
   import { app } from '../../../../../wailsjs/go/models'
 
   let { accountId, shared = false }: { accountId: string; shared?: boolean } = $props()
@@ -165,6 +166,8 @@
       </div>
     {/if}
   {/if}
+
+  {#if plan?.migration?.snapshotPath}<SnapshotRestoreSection {accountId} />{/if}
 
   {#if report && report.unfinished?.length}
     <div class="text-sm"><p class="font-medium">{$_('mailApi.unfinished')}</p>
