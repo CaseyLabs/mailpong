@@ -33,7 +33,8 @@ window.__installFakes = (win) => {
     chat('sender:news@trailmag.example', 'Ten autumn hikes worth the drive', 'This week: coastal paths, quiet ridges and where to find good coffee.', [p('Trail Magazine', 'news@trailmag.example')], 6 * H, { low: true, sender: 'news@trailmag.example', count: 12 }),
     chat('sender:offers@grocer.example', 'Your weekly offers', 'Fresh deals on seasonal fruit and vegetables.', [p('Corner Grocer', 'offers@grocer.example')], 30 * H, { low: true, sender: 'offers@grocer.example', count: 20 }),
   ]
-  const lists = { all: [...pinned, ...regular], unread: regular.filter((c) => c.unreadCount), low, snoozed: [] }
+  // Like the backend, the all section includes Low priority chats; the list groups them by isLowPriority.
+  const lists = { all: [...pinned, ...regular, ...low], unread: regular.filter((c) => c.unreadCount), low, snoozed: [] }
   const msg = (i, from, to, cc, ago, body, mine) => ({ id: 'trip-' + i, accountId: 'acc1', folderId: mine ? 'f1-sent' : 'f1-inbox', uid: i, messageId: `<trip-${i}@example>`, threadId: 't-trip', subject: i ? 'Re: Weekend trip to the coast' : 'Weekend trip to the coast', fromName: from.name, fromEmail: from.email, toList: JSON.stringify(to), ccList: JSON.stringify(cc), date: iso(ago), snippet: body.slice(0, 80), isRead: true, isStarred: false, isAnswered: false, isForwarded: false, isDraft: false, isDeleted: false, size: 2000, hasAttachments: false, bodyText: body, bodyFetched: true, chat: { text: body, hasQuoted: false, isRich: false }, readReceiptHandled: true, mine })
   const trip = [
     msg(0, priya, [me, sam], [], 26 * H, 'Still on for the coast the weekend after next? Found a cabin by the lighthouse 🌊'),

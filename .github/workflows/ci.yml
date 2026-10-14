@@ -106,3 +106,40 @@ jobs:
 
       - name: Run Go tests
         run: make test
+
+  ui:
+    name: UI tests
+    runs-on: ubuntu-22.04
+    env:
+      # Playwright stays outside frontend/package.json; pw.js loads it from here.
+      PLAYWRIGHT_MODULE: ${{ github.workspace }}/../playwright/node_modules/playwright
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: cd frontend && npm ci
+
+      - name: Install Playwright and Chromium
+        run: |
+          npm install --prefix "$GITHUB_WORKSPACE/../playwright" --no-save playwright@1.63.0
+          "$GITHUB_WORKSPACE/../playwright/node_modules/.bin/playwright" install --with-deps chromium
+
+      # Backend-free: Vite serves the frontend against fake bindings and synthetic data.
+      - name: Run UI audit and regression tests
+        run: make test-ui
+
+      - name: Upload UI test results
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-results
+          path: test-results/ui
+          retention-days: 7

@@ -8,7 +8,7 @@
 # OAuth credentials are loaded from .env or .env.local files
 # See .env.example for required variables
 
-.PHONY: all build build-linux dev dev-race credentials generate clean test lint lint-brand lint-contrast help \
+.PHONY: all build build-linux dev dev-race credentials generate clean test test-ui lint lint-brand lint-contrast help \
         install uninstall install-linux uninstall-linux \
         install-darwin uninstall-darwin build-windows-installer flatpak flatpak-install flatpak-dev
 
@@ -132,6 +132,10 @@ generate:
 test:
 	@echo "Running tests..."
 	go test ./...
+
+# Run the backend-free UI audit and frontend regression tests (needs Playwright; see tests/ui/README.md)
+test-ui:
+	node tests/ui/run.mjs
 
 # Run all linters (Go + frontend)
 lint: lint-go lint-frontend lint-brand lint-contrast
@@ -306,6 +310,7 @@ help:
 	@echo ""
 	@echo "Code Quality:"
 	@echo "  make test          - Run Go tests"
+	@echo "  make test-ui       - Run UI audit and frontend regression tests (headless, fake data)"
 	@echo "  make lint          - Run all linters (Go + frontend)"
 	@echo "  make lint-go       - Run Go linter only (requires golangci-lint)"
 	@echo "  make lint-frontend - Run frontend linter only (ESLint)"

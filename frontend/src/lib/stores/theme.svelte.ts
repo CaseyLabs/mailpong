@@ -28,9 +28,12 @@ export function getIsDarkActive(): boolean {
  *  maintain. We mirror it as the `.dark` class so Tailwind `dark:` variants and
  *  any `.dark mark`-style selectors keep working.
  *  Fork: dev builds (`make dev`) always render Dark, whatever theme is
- *  saved, so dev sessions and screenshots match the fork's default look. */
+ *  saved, so dev sessions and screenshots match the fork's default look. The
+ *  backend-free test mode (window.__fakeBackend) keeps the requested theme so
+ *  UI tests can cover every theme through the real theme path. */
 export function applyTheme(themeName: ThemeMode) {
-  if (import.meta.env.DEV) themeName = 'dark'
+  const fakeBackend = (window as { __fakeBackend?: boolean }).__fakeBackend
+  if (import.meta.env.DEV && !fakeBackend) themeName = 'dark'
   document.documentElement.setAttribute('data-theme', themeName)
   const scheme = getComputedStyle(document.documentElement).colorScheme.trim()
   const dark = scheme === 'dark'

@@ -12,7 +12,7 @@ Priorities are recommendations assigned in this reorganization: P1 privacy/data 
 | [API — Provider API activation and migration](#api) | proposed | P2 | [4](ISSUES.md#api) | API-1 or API-2 design; API-3 gated by API-2 |
 | [SYNC — Mail synchronization and action reliability](#sync) | proposed | P1 | [8](ISSUES.md#sync) | SYNC-1 |
 | [CHAT — Chat composer sender review](#chat) | proposed | P2 | [1](ISSUES.md#chat) | CHAT-1 |
-| [MAINT — Maintenance and documentation](#maint) | proposed | P2 | [7](ISSUES.md#maint) | MAINT-1; MAINT-3 external; D2 deferred/upstream blocked |
+| [MAINT — Maintenance and documentation](#maint) | proposed | P2 | [10](ISSUES.md#maint) | MAINT-1; MAINT-3 external; D2 deferred/upstream blocked |
 | [AI — AI development workflows](#ai) | deferred | P3 | [1](ISSUES.md#ai) | G4 deferred; no eligible work |
 | [WAILS — Desktop framework migration assessment](#wails) | proposed | P3 | [0](ISSUES.md#wails) | W3-M0 assessment only |
 
@@ -26,7 +26,7 @@ No live provider access, test emails, credentials changes, mailbox migration, pr
 
 ## Progress
 
-No active milestone. SEND-1 is done and CD2 resolved; see [validation evidence](docs/validation/send-1.md). Other proposed milestones remain unselected; SEND-2/3, API-3 and MAINT-3 retain their gates, and G4/D2 remain deferred. SYNC-1 is a candidate requiring separate selection.
+MAINT-4 is done ([validation evidence](docs/validation/maint-4.md)); its findings UI1–UI3 remain open. SEND-1 is done and CD2 resolved; see [validation evidence](docs/validation/send-1.md). Other proposed milestones remain unselected; SEND-2/3, API-3 and MAINT-3 retain their gates, and G4/D2 remain deferred. SYNC-1 is a candidate requiring separate selection.
 
 <a id="send"></a>
 
@@ -237,6 +237,16 @@ No active milestone. SEND-1 is done and CD2 resolved; see [validation evidence](
 - **Acceptance:** Recorded owner disposition determines whether draft markers and texts may change; historical concerns are explicitly resolved or retained.
 - **Validation:** Documentation and approval-evidence review; no assumed sign-off or autonomous legal text revision.
 - **Issues:** [L2](ISSUES.md#l2), [L3](ISSUES.md#l3). **Progress:** not started.
+
+<a id="maint-4"></a>
+
+### MAINT-4 — Deterministic UI audit, frontend regression tests and CI
+
+- **Status / proposed priority:** done / P2. **Dependencies / gates:** none; authorized 2026-10-14 (local commits only; merge and push need approval).
+- **Scope / deliverable:** Backend-free headless UI test mode, UI quality audit over the theme × width × Accounts × previews matrix, chat presentation/triage/composition regression tests, `make test-ui` and a CI job with machine-readable diagnostics, workflow guidance.
+- **Acceptance:** Repeatable PASS/FAIL results naming element, configuration and reason; no false failures on expected responsive behavior; synthetic data only and nothing persisted; critical chat behaviors covered; existing checks pass; CI config valid; failure detection demonstrated.
+- **Validation:** [execution plan](docs/plans/maint-4.md) acceptance table; evidence in [docs/validation/maint-4.md](docs/validation/maint-4.md).
+- **Issues:** found [UI1](ISSUES.md#ui1), [UI2](ISSUES.md#ui2), [UI3](ISSUES.md#ui3) (recorded, not fixed here). **Progress:** `make test-ui` passes 41/41 repeatably; mutations detected; CI job validated statically, not yet run on GitHub. [Evidence](docs/validation/maint-4.md); [completed checkpoint](docs/plans/maint-4.md).
 
 <a id="d2"></a>
 

@@ -21,6 +21,9 @@ build/flatpak/flathub/io.github.caseylabs.Mailven.yml.backup
 frontend/node_modules/
 frontend/dist/
 
+# UI test results (make test-ui)
+test-results/
+
 # Go
 *.exe
 *.exe~

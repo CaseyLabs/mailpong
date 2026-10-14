@@ -141,10 +141,11 @@ Prefer small changes, explicit Go error handling, and guard clauses. Format Go w
 - `make lint`: run golangci-lint v2, frontend ESLint, the theme contrast check (`tools/contrast-check.mjs`) and the brand check (`tools/brand-check.sh`; add a reasoned line to `tools/brand-check.allow` for any legitimate "Aerion" mention).
 - `cd frontend && npm run check`: check Svelte and TypeScript.
 - `make test`: run Go tests; build the frontend first because Go embeds `frontend/dist/`.
+- `make test-ui`: run the backend-free UI audit and frontend regression tests headlessly with fake data; needs Playwright outside `frontend/package.json` (see `tests/ui/README.md`).
 - `make build`: produce the desktop application.
 - `make generate`: regenerate bindings after changing the Wails API.
 
-Start with checks relevant to the change. Add Go tests for meaningful behavior and edge cases, using table-driven tests where appropriate. No frontend test script or numeric coverage threshold is configured. Manually check affected UI flows and report checks that could not run.
+Start with checks relevant to the change. Add Go tests for meaningful behavior and edge cases, using table-driven tests where appropriate. Frontend regression tests live in `tests/ui/`; add one for each confirmed frontend bug. No numeric coverage threshold is configured. Manually check affected UI flows the suite does not cover and report checks that could not run.
 
 ## Localization and Security
 

@@ -10,7 +10,7 @@ The 2026-10-08 audit used “unverified” for reported findings not confirmed a
 - [API — Provider API activation and migration](#api): [MA4](#ma4), [F5b-1](#f5b-1), [F5b-2](#f5b-2), [F5b-3](#f5b-3)
 - [SYNC — Mail synchronization and action reliability](#sync): [R2](#r2), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6), [R3](#r3), [R4](#r4)
 - [CHAT — Chat composer sender review](#chat): [R1](#r1)
-- [MAINT — Maintenance and documentation](#maint): [MA2](#ma2), [D2](#d2), [SY1](#sy1), [DOC4](#doc4), [DOC5](#doc5), [L2](#l2), [L3](#l3)
+- [MAINT — Maintenance and documentation](#maint): [MA2](#ma2), [D2](#d2), [SY1](#sy1), [DOC4](#doc4), [DOC5](#doc5), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI3](#ui3)
 - [AI — AI development workflows](#ai): [AI6](#ai6)
 - [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
 
@@ -326,6 +326,39 @@ Project: [MAINT](PLAN.md#maint).
 - **Severity / proposed priority / status:** unspecified (legal review flag, not a legal conclusion) / P2 / blocked.
 - **Problem / evidence:** Privacy wording under bring-your-own OAuth, Google API policy statements and historical dictionary distribution. Current [draft](docs/PRIVACY.md) still carries a legal-review comment naming L2/L3. Original flags and review process are traceable with `git show 33c1851:PLAN.md` (Legal review flags). Current sign-off is not established by that comment or this task; do not assume the historical concern remains a verified defect.
 - **Dependencies / closure:** owner supplies authoritative sign-off or selects review; record the decision and align draft markers only after verified approval. No legal text changes are authorized by backlog entry.
+
+<a id="ui1"></a>
+
+### UI1 — Light-theme primary text contrast
+
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / found by [MAINT-4](PLAN.md#maint-4); fix not selected.
+- **Severity / proposed priority / status:** low / P3 / open.
+- **Problem / evidence:** 2026-10-14, `make test-ui` UI audit (runtime contrast, backend-free fake data). In the light theme the header "Compose" label measures 3.57:1 (rgb(239,241,246) on rgb(93,129,172)) at 900 and 700 px, and the selected sidebar "Inbox" label measures 2.99:1 (rgb(93,129,172) on rgb(215,222,234)); WCAG AA normal text needs 4.5:1. Dark theme passes. `tools/contrast-check.mjs` checks text tiers on pane surfaces only, so it does not cover primary-on-primary/accent pairs.
+- **Impact / limits:** reduced legibility for low-vision users in the light theme. Measured in Chromium against the dev build only; not checked on WebKitGTK.
+- **Reproduction:** delete the UI1 entry in `tests/ui/ui-audit-allow.cjs`, then `node tests/ui/run.mjs ui-quality`.
+- **Dependencies / closure:** theme token change reviewed for both themes; the UI1 allowlist entry is deleted and the audit passes.
+
+<a id="ui2"></a>
+
+### UI2 — Closed narrow sidebar stays in the Tab order
+
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / found by [MAINT-4](PLAN.md#maint-4); fix not selected.
+- **Severity / proposed priority / status:** medium / P2 / open.
+- **Problem / evidence:** 2026-10-14, `make test-ui` UI audit keyboard pass. Below 768 px the closed `aside.responsive-sidebar-overlay` (App.svelte, `SidebarFrame.svelte`, `app.css` `.responsive-sidebar-overlay`) is only translated off-screen, so about 16 of its controls (folders, account menus) still receive Tab focus while invisible.
+- **Impact / limits:** keyboard and screen-reader users land on invisible controls in the narrow layout. The hidden medium-layout viewer overlay may behave the same; not yet audited separately.
+- **Reproduction:** delete the UI2 entry in `tests/ui/ui-audit-allow.cjs`, then `node tests/ui/run.mjs ui-quality` (700 px configurations report `focus-invisible`).
+- **Dependencies / closure:** closed overlays leave the Tab order (for example `inert`) without changing the open behavior; the UI2 allowlist entry is deleted and the audit passes.
+
+<a id="ui3"></a>
+
+### UI3 — Chat row menu lists Archive twice
+
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / found by [MAINT-4](PLAN.md#maint-4); fix not selected.
+- **Severity / proposed priority / status:** low / P3 / open.
+- **Problem / evidence:** 2026-10-14, `tests/ui/inbox-triage.test.cjs` (backend-free fakes). A chat row's context menu renders the chat's own Archive (`ChatRow.svelte` `extraItems`) and then the shared message Archive (`MessageContextMenu.svelte` Move/Delete actions). Both archive the same message IDs, but with different toasts ("Conversation archived" vs "Archived") and list follow-up.
+- **Impact / limits:** redundant, slightly inconsistent menu; no data risk. Not checked in the open chat's header menu.
+- **Reproduction:** right-click any chat row in the chat list.
+- **Dependencies / closure:** the chat row menu shows one Archive with the chat behavior; `inbox-triage.test.cjs` `menu()` no longer needs `.first()` for Archive.
 
 <a id="ai"></a>
 

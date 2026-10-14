@@ -30,6 +30,8 @@ For fake-data checks block every non-read binding before interacting, including 
 
 The helper starts its own session. Use a host background handle for waits that exceed the tool's foreground limit. Record whether this task started the session; do not stop a pre-existing one. Finish Go edits first: backend hot reload replaces pages and invalidates fake frames.
 
+Try `make test-ui` first: its backend-free mode (Vite plus fake bindings, no Wails session or display) covers the UI audit matrix and chat regressions deterministically; see `tests/ui/README.md`. Use a dev session for what it cannot reach.
+
 Read only the reference needed for the check:
 
 - [Playwright](references/playwright.md): repeatable screenshots, theme/layout matrix, fake server and headless setup.

@@ -6,7 +6,8 @@ Paths in commands are relative to the active checkout root; helper filenames ref
 
 - **Dev mode always renders Dark** (`applyTheme` in
   `theme.svelte.ts` forces it under `import.meta.env.DEV`), so the theme picker
-  has no visible effect in dev.
+  has no visible effect in dev. Backend-free mode (`window.__fakeBackend`, used
+  by `tests/ui/`) is exempt: it applies the theme `GetThemeMode` returns.
 - **Dev mode uses the user's real accounts and saved UI state.** It syncs real
   mail. Collapsed sidebars, the active view and widths are saved for real. Note
   the starting `GetUIState()` and restore it before stopping. The calendar
