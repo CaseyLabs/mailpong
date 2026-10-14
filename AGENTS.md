@@ -11,6 +11,7 @@
 - Only one agent may run builds or tests in a checkout at a time. Independent read-only work and light static checks may run concurrently; use agent teams only when requested.
 - Use the configured Git identity. Never add generated-by attribution, AI co-authors, or AI/session trailers to commits or PRs, or override identity for an assistant. The `.githooks/commit-msg` hook rejects such lines once enabled (see CONTRIBUTING.md); never bypass it with `--no-verify`.
 - This file is shared policy. Links are pointers, not automatic imports: read references when their stated trigger applies. Host-specific configuration (permissions, models, agent definitions, tool schemas) belongs in native host adapters, not shared policy. The documented Claude-only next-milestone `model` frontmatter is the sole shared-skill exception.
+- Before adding or changing guidance in this file or a skill, read [AI project guidance](CONTRIBUTING.md#ai-project-guidance): keep always-loaded text to rules that must always hold, and move procedures to the doc that owns them with a one-line trigger.
 
 ## Project Identity
 
