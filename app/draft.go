@@ -109,7 +109,8 @@ func resolveAttachmentContent(attachments []smtp.Attachment) ([]smtp.Attachment,
 }
 
 // encryptDraftBody encrypts the draft body to self if encryption is enabled.
-// Handles S/MIME and PGP (mutually exclusive). Falls back to unencrypted on failure.
+// Handles S/MIME and PGP (mutually exclusive). Requested encryption must succeed
+// before callers may persist or sync the draft.
 func (ops *draftOps) encryptDraftBody(accountID, fromEmail string, msg smtp.ComposeMessage) (*encryptResult, error) {
 	log := logging.WithComponent("draft")
 
@@ -138,8 +139,7 @@ func (ops *draftOps) encryptDraftBody(accountID, fromEmail string, msg smtp.Comp
 
 		enc, encErr := ops.smimeEncryptor.EncryptBytes(accountID, fromEmail, jsonBytes)
 		if encErr != nil {
-			log.Warn().Err(encErr).Msg("Failed to encrypt draft body, saving unencrypted")
-			break
+			return nil, fmt.Errorf("draft not saved: S/MIME encryption failed: %w", encErr)
 		}
 		result.encrypted = true
 		result.encryptedBody = enc
@@ -156,8 +156,7 @@ func (ops *draftOps) encryptDraftBody(accountID, fromEmail string, msg smtp.Comp
 
 		enc, encErr := ops.pgpEncryptor.EncryptBytes(accountID, fromEmail, jsonBytes)
 		if encErr != nil {
-			log.Warn().Err(encErr).Msg("Failed to PGP encrypt draft body, saving unencrypted")
-			break
+			return nil, fmt.Errorf("draft not saved: PGP encryption failed: %w", encErr)
 		}
 		result.pgpEncrypted = true
 		result.pgpEncryptedBody = enc

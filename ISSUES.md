@@ -6,7 +6,7 @@ The 2026-10-08 audit used “unverified” for reported findings not confirmed a
 
 ## Index
 
-- [SEND — Sending, privacy and compatibility](#send): [MA1](#ma1), [PD2](#pd2), [CD2](#cd2)
+- [SEND — Sending, privacy and compatibility](#send): [MA1](#ma1), [PD2](#pd2) (resolved: [CD2](#cd2))
 - [API — Provider API activation and migration](#api): [MA4](#ma4), [F5b-1](#f5b-1), [F5b-2](#f5b-2), [F5b-3](#f5b-3)
 - [SYNC — Mail synchronization and action reliability](#sync): [R2](#r2), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6), [R3](#r3), [R4](#r4)
 - [CHAT — Chat composer sender review](#chat): [R1](#r1)
@@ -49,12 +49,8 @@ Project: [SEND](PLAN.md#send).
 ### CD2 — Autosave encryption failure policy
 
 - **Owner / milestone:** [SEND](PLAN.md#send) / [SEND-1](PLAN.md#send-1).
-- **Severity / proposed priority / status:** medium / P1 / deferred.
-- **Dependencies / gates:** Select an encryption-failure policy; do not change real drafts.
-- **Resolution criteria:** Missing-key/encryption-failure fixtures prove ordinary autosave follows the approved policy without unintended plaintext persistence.
-- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
-
-- **CD2 medium** `app/draft.go:128–166`: existing autosave falls back to plaintext body/attachments when requested S/MIME or PGP encrypt-to-self fails. F2a rejects this downgrade for its new pre-submission recovery writes; ordinary autosave still needs a separately scoped encryption-failure policy. Confirmed by static inspection and disposable missing-key fixtures; no real drafts were changed.
+- **Severity / proposed priority / status:** medium / P1 / resolved.
+- **Resolution / evidence:** SEND-1 verified 2026-10-14. Ordinary autosave rejects requested S/MIME/PGP encryption failures before persistence or new sync; bodies and attachments never fall back to plaintext. Missing/unusable-key fixtures cover both composers and failed create/update, with prior rows unchanged. Plaintext and successful encrypted round trips and recovery regressions pass; independent acceptance passed. [Validation and limits](docs/validation/send-1.md). No real drafts or live providers were touched.
 
 <a id="api"></a>
 

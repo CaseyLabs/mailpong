@@ -8,7 +8,7 @@ Priorities are recommendations assigned in this reorganization: P1 privacy/data 
 
 | Project | Status | Proposed priority | Unresolved issues | Candidate / gate |
 | --- | --- | --- | --- | --- |
-| [SEND — Sending, privacy and compatibility](#send) | proposed | P1 | [3](ISSUES.md#send) | SEND-1; SEND-2/3 require live authorization |
+| [SEND — Sending, privacy and compatibility](#send) | proposed | P1 | [2](ISSUES.md#send) | SEND-2/3 require live authorization |
 | [API — Provider API activation and migration](#api) | proposed | P2 | [4](ISSUES.md#api) | API-1 or API-2 design; API-3 gated by API-2 |
 | [SYNC — Mail synchronization and action reliability](#sync) | proposed | P1 | [8](ISSUES.md#sync) | SYNC-1 |
 | [CHAT — Chat composer sender review](#chat) | proposed | P2 | [1](ISSUES.md#chat) | CHAT-1 |
@@ -16,7 +16,7 @@ Priorities are recommendations assigned in this reorganization: P1 privacy/data 
 | [AI — AI development workflows](#ai) | deferred | P3 | [1](ISSUES.md#ai) | G4 deferred; no eligible work |
 | [WAILS — Desktop framework migration assessment](#wails) | proposed | P3 | [0](ISSUES.md#wails) | W3-M0 assessment only |
 
-**Recommended next selection:** SEND-1 (encrypted autosave policy), or SYNC-1 (API move data integrity). Both need an explicit request and scope reconciliation. External privacy gate SEND-2 is high priority but cannot run live without separately specified authorization. No automatic selection or status transition occurs here.
+**Recommended next selection:** SYNC-1 (API move data integrity), requiring an explicit request and scope reconciliation. External privacy gate SEND-2 is high priority but cannot run live without separately specified authorization. No automatic selection or status transition occurs here.
 
 ## Scope and preserved decisions
 
@@ -26,7 +26,7 @@ No live provider access, test emails, credentials changes, mailbox migration, pr
 
 ## Progress
 
-No active milestone or execution plan. Proposed: all milestones below except blocked SEND-2, SEND-3, API-3, MAINT-3 and deferred G4, D2. No product work was selected during the documentation reorganization. Create `docs/plans/<milestone-id>.md` only when explicitly selected substantial work needs a detailed checkpoint; simple work can checkpoint directly under its roadmap milestone.
+No active milestone. SEND-1 is done and CD2 resolved; see [validation evidence](docs/validation/send-1.md). Other proposed milestones remain unselected; SEND-2/3, API-3 and MAINT-3 retain their gates, and G4/D2 remain deferred. SYNC-1 is a candidate requiring separate selection.
 
 <a id="send"></a>
 
@@ -42,11 +42,11 @@ No active milestone or execution plan. Proposed: all milestones below except blo
 
 ### SEND-1 — Autosave encryption failure policy
 
-- **Status / proposed priority:** proposed / P1. **Dependencies / gates:** none.
+- **Status / proposed priority:** done / P1. **Dependencies / gates:** none.
 - **Scope / deliverable:** Define and implement the separately scoped ordinary-autosave failure policy; preserve pre-submission recovery protections.
 - **Acceptance:** Missing-key and encryption-failure fixtures prove the selected policy never silently downgrades requested encryption; retain existing draft behavior outside that policy.
 - **Validation:** Focused draft Go tests with disposable data; frontend lint/check and guarded UI if prompts change.
-- **Issues:** [CD2](ISSUES.md#cd2). **Progress:** not started.
+- **Issues:** [CD2](ISSUES.md#cd2). **Progress:** Verified fail-closed saves in both composers, with plaintext and encrypted success regressions. [Evidence](docs/validation/send-1.md); [completed checkpoint](docs/plans/send-1.md).
 
 <a id="send-2"></a>
 

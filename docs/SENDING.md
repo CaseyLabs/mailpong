@@ -45,8 +45,18 @@ The journal stores outcomes, recipient responses, and a content fingerprint,
 not another copy of the body or attachments. Existing encrypted draft storage,
 account routes, credentials, and signing/encryption choices are retained. A
 pre-submission recovery copy that cannot honor requested encryption stops the
-submission rather than storing a new plaintext recovery copy. Existing draft
-autosave/account-ownership limitations are tracked separately in ISSUES.md.
+submission rather than storing a new plaintext recovery copy.
+
+Ordinary autosave also rejects a save when requested S/MIME or PGP encrypt-to-self
+fails, including missing or unusable sender keys. It writes neither plaintext
+bodies nor plaintext attachments and starts no new remote sync for those edits.
+The previous saved draft remains unchanged; a new draft is not created. The
+composer shows its existing save-error status. Unsaved edits remain in the open
+composer only: repair the key/certificate and save successfully before closing.
+There is no automatic plaintext retry. Explicitly turning encryption off uses
+the ordinary unencrypted save path. This policy does not encrypt draft metadata
+such as subjects or recipient lists, rewrite older drafts, or change send recovery
+protections.
 SMTP failure and restart behavior is verified with disposable local fixtures.
 Live provider behavior remains subject to separately authorized checks.
 
