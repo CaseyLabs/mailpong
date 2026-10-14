@@ -36,8 +36,11 @@ type apiRouteState struct {
 	http     *http.Client
 	// migrationStep, if set, runs before each migration step (test seam).
 	migrationStep func(step string) error
-	gmailBase     string
-	graphBase     string
+	// triggerIMAPSync replaces the scheduler request in disposable route tests.
+	// Like Scheduler.TriggerSync, it reports no start/completion outcome.
+	triggerIMAPSync func(accountID string)
+	gmailBase       string
+	graphBase       string
 }
 
 func (s *apiRouteState) lock(accountID string) *gosync.Mutex {
@@ -289,22 +292,24 @@ func (a *App) activateAPIRoute(accountID string) error {
 func (a *App) DeactivateMailAPIRoute(accountID string) error {
 	a.apiRoutes.transition.Lock()
 	defer a.apiRoutes.transition.Unlock()
-	return a.deactivateAPIRoute(accountID)
+	_, err := a.deactivateAPIRoute(accountID)
+	return err
 }
 
-func (a *App) deactivateAPIRoute(accountID string) error {
+// deactivateAPIRoute returns whether IMAP sync was requested, not completed.
+func (a *App) deactivateAPIRoute(accountID string) (bool, error) {
 	rs := &a.apiRoutes
 	route, err := a.accountStore.GetMailAPIRoute(accountID)
 	switch {
 	case err != nil:
-		return err
+		return false, err
 	case route == nil || route.State != account.MailRouteStateActive:
-		return errors.New("API route is not active")
+		return false, errors.New("API route is not active")
 	}
 	next := *route
 	next.State = account.MailRouteStateStaged
 	if err := a.accountStore.SetMailAPIRoute(next); err != nil {
-		return err
+		return false, err
 	}
 	rs.mu.Lock()
 	cancel := rs.cancels[accountID]
@@ -324,12 +329,17 @@ func (a *App) deactivateAPIRoute(accountID string) error {
 		// Roll the state back so rows and route stay consistent.
 		route.State = account.MailRouteStateActive
 		_ = a.accountStore.SetMailAPIRoute(*route)
-		return fmt.Errorf("failed to switch folders: %w", err)
+		return false, fmt.Errorf("failed to switch folders: %w", err)
 	}
 	a.startAccountIdle(accountID)
 	a.refreshAPIAccount(accountID)
+	if rs.triggerIMAPSync != nil {
+		rs.triggerIMAPSync(accountID)
+		return true, nil
+	}
 	if a.syncScheduler != nil {
 		a.syncScheduler.TriggerSync(accountID)
+		return true, nil
 	}
-	return nil
+	return false, nil
 }

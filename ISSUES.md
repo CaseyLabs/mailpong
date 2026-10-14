@@ -97,12 +97,9 @@ Project: [API](PLAN.md#api).
 ### F5b-3 — Rollback sync progress and scheduler coverage
 
 - **Owner / milestone:** [API](PLAN.md#api) / [API-5](PLAN.md#api-5).
-- **Severity / proposed priority / status:** low / P2 / deferred.
-- **Dependencies / gates:** Scheduler seam and rollback progress contract required.
-- **Resolution criteria:** Fixture asserts the rollback sync trigger and any promised completion/progress behavior.
-- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
-
-- **F5b-3 (low)** — `app/api_migration.go` `RollbackMailAPIMigration`: the IMAP reconcile is only the async `syncScheduler.TriggerSync` inside `deactivateAPIRoute`; rollback does not wait for it and no test asserts the trigger (the scheduler is a concrete type). Add a scheduler seam and a test when F5c needs rollback progress.
+- **Severity / proposed priority / status:** low / P2 / resolved.
+- **Resolution / evidence:** API-5 verified 2026-10-14. A narrow scheduler seam proves one request after restoring the IMAP route/rows, return before reconciliation completes, and no new request on failed/absent-scheduler/already-inactive paths. The report's `syncRequested` flag and UI describe invocation only, not start/completion/success; false directs users to manual Sync. Focused Go checks and full UI suite pass, including Accounts expanded/collapsed. [Evidence and limits](docs/validation/api-5.md).
+- **Preserved limits:** Async sync can fail or be skipped by the scheduler; rollback does not restore a snapshot or replay provider actions. No live provider/migration check was performed.
 
 <a id="sync"></a>
 

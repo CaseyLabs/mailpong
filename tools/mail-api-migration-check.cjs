@@ -27,7 +27,7 @@ A.PlanMailAPIMigration = async () => ({ accountId: 'x', route: route.route, rout
 A.StartMailAPIConsent = async (id, shared) => { window.__accountId = id; window.__calls.push(['consent', id, shared]); route = { ...route, route: 'gmail-api', state: route.state === 'active' ? 'active' : 'staged', shared: false, authorized: true, failure: '' }; setTimeout(() => window.runtime.EventsEmit && 0, 0); window.__consentDone = () => window.__emit('mail-api:success', { accountId: id }) };
 A.CancelMailAPIConsent = async () => { window.__calls.push(['cancel-consent']); window.__emit('mail-api:cancelled', null) };
 A.MigrateMailAPIAccount = async id => { window.__calls.push(['migrate', id]); route = { ...route, state: 'active' }; record = { accountId: id, state: 'completed', route: 'gmail-api', snapshotPath: '/home/u/snapshots/pre.db', correlated: 110, uncorrelated: 8, error: '' }; return record };
-A.RollbackMailAPIMigration = async id => { window.__calls.push(['rollback', id]); route = { ...route, state: 'staged' }; record = { ...record, state: 'rolled-back' }; return { accountId: id, snapshotPath: record.snapshotPath, appliedSince: 3, unfinished: [{ op: 'move', status: 'pending', error: '' }] } };
+A.RollbackMailAPIMigration = async id => { window.__calls.push(['rollback', id]); route = { ...route, state: 'staged' }; record = { ...record, state: 'rolled-back' }; return { accountId: id, snapshotPath: record.snapshotPath, appliedSince: 3, syncRequested: true, unfinished: [{ op: 'move', status: 'pending', error: '' }] } };
 A.ClearMailAPIRoute = async id => { window.__calls.push(['clear', id]); route = { route: 'protocol', state: '', shared: false, authorized: false, failure: '' } };
 `
 async function main() {

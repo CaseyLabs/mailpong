@@ -44,6 +44,10 @@ type MailAPIRollbackReport struct {
 	AccountID    string                  `json:"accountId"`
 	SnapshotPath string                  `json:"snapshotPath"`
 	Unfinished   []MailAPIRollbackAction `json:"unfinished"`
+	// SyncRequested means the scheduler was asked to reconcile IMAP. It does
+	// not promise that sync started, completed or succeeded. The route/folder
+	// transition is synchronous; reconciliation happens separately.
+	SyncRequested bool `json:"syncRequested"`
 	// AppliedSince counts actions applied at the provider after the migration
 	// started; the IMAP reconcile picks their effect up from the server.
 	AppliedSince int `json:"appliedSince"`
@@ -201,7 +205,7 @@ func (a *App) MigrateMailAPIAccount(accountID string) (*apimigrate.Record, error
 			return rec, cause
 		}
 		if r, err := a.accountStore.GetMailAPIRoute(accountID); err == nil && r != nil && r.State == account.MailRouteStateActive {
-			if err := a.deactivateAPIRoute(accountID); err != nil {
+			if _, err := a.deactivateAPIRoute(accountID); err != nil {
 				cause = errors.Join(cause, fmt.Errorf("could not return to IMAP: %w", err))
 			}
 		}
@@ -256,7 +260,8 @@ func (a *App) MigrateMailAPIAccount(accountID string) (*apimigrate.Record, error
 }
 
 // RollbackMailAPIMigration returns the account to IMAP: the hidden IMAP
-// folders and rows come back, an IMAP reconcile runs, and nothing is replayed
+// folders and rows come back, an IMAP reconcile is requested when a scheduler
+// is available, and nothing is replayed
 // to the provider. API-side actions that did not reach IMAP are reported and
 // stay queued. Restoring the full pre-migration snapshot is a separate choice
 // that would lose later local changes; the report names the snapshot.
@@ -280,12 +285,13 @@ func (a *App) RollbackMailAPIMigration(accountID string) (*MailAPIRollbackReport
 	if rec != nil && rec.State == apimigrate.StateRolledBack && !active {
 		return nil, errors.New("migration was already rolled back")
 	}
+	syncRequested := false
 	if active {
-		if err := a.deactivateAPIRoute(accountID); err != nil {
+		if syncRequested, err = a.deactivateAPIRoute(accountID); err != nil {
 			return nil, err
 		}
 	}
-	report := &MailAPIRollbackReport{AccountID: accountID, Unfinished: []MailAPIRollbackAction{}}
+	report := &MailAPIRollbackReport{AccountID: accountID, SyncRequested: syncRequested, Unfinished: []MailAPIRollbackAction{}}
 	started := int64(0)
 	if rec != nil {
 		report.SnapshotPath, started = rec.SnapshotPath, rec.StartedAt

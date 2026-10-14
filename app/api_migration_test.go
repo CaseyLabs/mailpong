@@ -225,6 +225,90 @@ func TestMigrationRollbackRestoresIMAPAndReportsQueuedActions(t *testing.T) {
 	}
 }
 
+func TestMigrationRollbackRequestsSyncAfterRouteTransition(t *testing.T) {
+	r := newMigrationRig(t)
+	if _, err := r.app.MigrateMailAPIAccount(r.acc.ID); err != nil {
+		t.Fatal(err)
+	}
+	requested := 0
+	finishSync := make(chan struct{})
+	syncDone := make(chan struct{})
+	defer close(finishSync)
+	r.app.apiRoutes.triggerIMAPSync = func(id string) {
+		requested++
+		if id != r.acc.ID || r.state(t) != account.MailRouteStateStaged {
+			t.Fatal("sync requested before returning the account to IMAP")
+		}
+		if got := r.visibleSubjects(t); len(got) != 1 || got[0] != "imap" {
+			t.Fatalf("sync requested before restoring IMAP rows: %v", got)
+		}
+		// Model TriggerSync's separate work without a real provider connection.
+		go func() {
+			<-finishSync
+			close(syncDone)
+		}()
+	}
+	report, err := r.app.RollbackMailAPIMigration(r.acc.ID)
+	if err != nil || report == nil || !report.SyncRequested || requested != 1 {
+		t.Fatalf("rollback = %+v, %v; requests = %d", report, err, requested)
+	}
+	select {
+	case <-syncDone:
+		t.Fatal("fixture sync finished before rollback returned")
+	default:
+	}
+	if _, err := r.app.RollbackMailAPIMigration(r.acc.ID); err == nil || requested != 1 {
+		t.Fatalf("repeat rollback = %v; requests = %d", err, requested)
+	}
+}
+
+func TestMigrationRollbackSyncRequestLimits(t *testing.T) {
+	for _, tc := range []struct {
+		name      string
+		active    bool
+		scheduler bool
+		failSwap  bool
+		wantError bool
+	}{
+		{name: "no scheduler", active: true},
+		{name: "already on IMAP", scheduler: true},
+		{name: "failed folder transition", active: true, scheduler: true, failSwap: true, wantError: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r := newMigrationRig(t)
+			if _, err := r.app.MigrateMailAPIAccount(r.acc.ID); err != nil {
+				t.Fatal(err)
+			}
+			if !tc.active {
+				if err := r.app.DeactivateMailAPIRoute(r.acc.ID); err != nil {
+					t.Fatal(err)
+				}
+			}
+			requested := 0
+			if tc.scheduler {
+				r.app.apiRoutes.triggerIMAPSync = func(string) { requested++ }
+			}
+			if tc.failSwap {
+				if _, err := r.db.Exec(`CREATE TRIGGER fail_rollback_folder_swap BEFORE UPDATE ON folders
+					BEGIN SELECT RAISE(ABORT, 'injected folder swap failure'); END`); err != nil {
+					t.Fatal(err)
+				}
+			}
+			report, err := r.app.RollbackMailAPIMigration(r.acc.ID)
+			if (err != nil) != tc.wantError || requested != 0 {
+				t.Fatalf("rollback = %+v, %v; requests = %d", report, err, requested)
+			}
+			if tc.wantError {
+				if r.state(t) != account.MailRouteStateActive {
+					t.Fatal("failed rollback did not keep the API route active")
+				}
+			} else if report == nil || report.SyncRequested || r.state(t) != account.MailRouteStateStaged {
+				t.Fatalf("rollback without new sync request = %+v", report)
+			}
+		})
+	}
+}
+
 func TestMigrationResumeRechecksSubmissions(t *testing.T) {
 	for _, state := range []string{apimigrate.StateSnapshotted, apimigrate.StateActivated} {
 		t.Run(state, func(t *testing.T) {

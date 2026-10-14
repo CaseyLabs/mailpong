@@ -425,7 +425,7 @@ func (a *App) ClearMailAPIRoute(accountID string) error {
 	a.apiRoutes.transition.Lock()
 	defer a.apiRoutes.transition.Unlock()
 	if a.apiRouted(accountID) != nil {
-		if err := a.deactivateAPIRoute(accountID); err != nil {
+		if _, err := a.deactivateAPIRoute(accountID); err != nil {
 			return err
 		}
 	}

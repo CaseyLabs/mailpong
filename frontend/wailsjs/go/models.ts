@@ -728,6 +728,7 @@ export namespace app {
 	    accountId: string;
 	    snapshotPath: string;
 	    unfinished: MailAPIRollbackAction[];
+	    syncRequested: boolean;
 	    appliedSince: number;
 
 	    static createFrom(source: any = {}) {
@@ -739,6 +740,7 @@ export namespace app {
 	        this.accountId = source["accountId"];
 	        this.snapshotPath = source["snapshotPath"];
 	        this.unfinished = this.convertValues(source["unfinished"], MailAPIRollbackAction);
+	        this.syncRequested = source["syncRequested"];
 	        this.appliedSince = source["appliedSince"];
 	    }
 

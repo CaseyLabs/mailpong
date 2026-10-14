@@ -70,7 +70,7 @@
     try {
       report = await RollbackMailAPIMigration(accountId)
       confirmRollback = false
-      message = $_('mailApi.rolledBack', { values: { applied: report.appliedSince } })
+      message = $_(report.syncRequested ? 'mailApi.rolledBackSyncRequested' : 'mailApi.rolledBackSyncNotRequested', { values: { applied: report.appliedSince } })
     } catch (e) { error = $_('mailApi.failed', { values: { error: String(e) } }) }
     finally { rolling = false; await load() }
   }
@@ -158,7 +158,7 @@
       <div class="space-y-2 rounded border border-border p-3 text-sm" role="group" aria-label={$_('mailApi.rollback')}>
         <p>{$_('mailApi.rollbackConfirm')}</p>
         <div class="flex flex-wrap gap-2">
-          <Button size="sm" variant="destructive" onclick={rollback} disabled={rolling}>{$_('mailApi.rollbackConfirmAction')}</Button>
+          <Button size="sm" variant="destructive" onclick={rollback} disabled={rolling}>{rolling ? $_('mailApi.rollingBack') : $_('mailApi.rollbackConfirmAction')}</Button>
           <Button size="sm" variant="outline" onclick={() => confirmRollback = false} disabled={rolling}>{$_('common.cancel')}</Button>
         </div>
       </div>
@@ -171,5 +171,5 @@
   {/if}
   {#if plan?.migration?.state === 'failed' && plan.migration.error}<p role="alert" class="text-sm text-destructive">{$_('mailApi.migrateFailed', { values: { error: plan.migration.error } })}</p>{/if}
   {#if error}<p role="alert" class="text-sm text-destructive">{error}</p>{/if}
-  <div aria-live="polite" class="text-sm">{#if waiting}{$_('mailApi.waiting')}{:else if migrating}{$_('mailApi.migrating')}{:else if message}{message}{/if}</div>
+  <div aria-live="polite" class="text-sm">{#if waiting}{$_('mailApi.waiting')}{:else if migrating}{$_('mailApi.migrating')}{:else if rolling}{$_('mailApi.rollingBack')}{:else if message}{message}{/if}</div>
 </section>
