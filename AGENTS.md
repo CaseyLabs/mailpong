@@ -95,12 +95,15 @@ When all of a feature's milestones are done or an audit pass is complete, land t
 ## Planning Files
 
 - `PLAN.md`: guides new features. Create it when needed with Scope; Milestones, each with acceptance criteria and validation steps; and these living `##` sections: Progress (one checkbox per milestone), Surprises & Discoveries, Decision Log, and Outcomes & Retrospective. Track progress in Progress, not a separate file.
+- Before starting or resuming a milestone, reconcile its premises and acceptance criteria with the existing implementation and recorded validation. Revise stale details within the authorized scope; ask when a change would materially alter that scope. Implemented work with outstanding verification is not complete: retain the unproved criteria and validation limits explicitly.
+- Update the plan at meaningful sub-step completions, blockers, scope changes and validation results, as well as before handoff or compaction. Keep the current step, changed files, remaining work and exact check commands/results sufficient for continuation without chat history.
+- Before pruning completed work, move lasting behavior, configuration, architecture and decision rationale into the relevant `docs/` page; reusable agent rules into AGENTS.md; workflow procedures into the relevant skill; and important validation evidence and limits into `docs/validation/`. Update existing references rather than duplicating them. Keep unresolved defects in `ISSUES.md` and deferred work, dependencies and authorization limits explicit; cleanup does not authorize resuming them.
 - `ISSUES.md`: issues found that may need fixing in this or a future session. Its `## Recurring problems` section is a tally of environment and tooling problems: one line each with the symptom, the workaround, and how many times it has occurred. Check it before debugging, and bump the count when a problem recurs.
 - Record every confirmed finding you leave unfixed (review, audit, or noticed in passing) in `ISSUES.md` in the same task, with a severity, the location, and the failure. Don't leave it only in a report or commit message. Unconfirmed or style-only nits don't need an entry.
 - Promote, don't log: when a problem recurs (second occurrence) or costs a session more than a few minutes the first time, move the fix into `AGENTS.md` or the relevant skill and delete its tally line. Don't record every error.
 - Prune: when a guidance line no longer matches reality (for example, "no display in cloud"), correct or delete it in the same task.
 - Keep task-specific progress out of `AGENTS.md`.
-- **Required:** remove completed plan and issue items once they no longer need to be referenced, so these files stay short and current.
+- **Required:** after preserving lasting information, remove completed or superseded milestone sections, Progress entries and stale discoveries/decisions/outcomes once remaining work no longer depends on them; remove resolved issue items too. Retain only the brief completion context or links needed by remaining work. With no active milestone, state that plainly and keep deferred work explicit. PLAN.md describes remaining work; durable documentation describes the current project. Use Git history for routine chronology rather than archiving whole plans by default.
 
 ## Compaction
 

@@ -68,6 +68,10 @@ from the invocation working directory (default plan: `PLAN.md` there), before
 changing directory. Quote resolved paths. For example, from the checkout root:
 `sh .agents/skills/project-next-milestone/plan-outline.sh PLAN.md`.
 Read Scope, Progress, the actionable milestone and relevant decisions only.
+Follow AGENTS.md's Planning Files lifecycle: reconcile the selected milestone before
+work, update checkpoints as work changes, and preserve lasting information in
+documentation or guidance before pruning completed work. Keep outstanding
+verification, deferred work and authorization limits explicit.
 The run-mailven core links optional UI references by task; its safeguards always
 apply. Handoffs persist checkpoints before committing and include a host-neutral
 prompt. Remaining G4 runtime/context verification and future provider work are tracked
