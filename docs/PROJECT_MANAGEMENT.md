@@ -48,7 +48,7 @@ Keep the active checkpoint current at meaningful completions, discoveries, block
 
 ### Session boundaries
 
-Run one milestone per session; start the next milestone in a fresh session from the committed roadmap and checkpoint, not by continuing a long conversation. A persisted handoff is preferred to repeated compaction: when the host reports context usage nearing its compaction point (Claude Code `/context`, Codex `/status`), finish the current sub-step, checkpoint everything the remaining work needs and use project-handoff. Automatic compaction stays enabled as the fallback for work interrupted mid-step; the checkpoint, not the summary, is the continuation state. No fixed token threshold applies: context windows and compaction points vary by model and host configuration.
+Run one milestone per session; start the next milestone in a fresh session from the committed roadmap and checkpoint, not by continuing a long conversation. A persisted handoff is preferred to repeated compaction: when the host reports context usage nearing its compaction point (Claude Code `/context`, Codex `/status`), finish the current sub-step, checkpoint everything the remaining work needs and use project-handoff. Because that signal is easy to miss, a session that has already been compacted once (it resumes from a summary) does not continue into a second compaction: it hands off at the next sub-step boundary. Automatic compaction stays enabled as the fallback for work interrupted mid-step; the checkpoint, not the summary, is the continuation state. No fixed token threshold applies: context windows and compaction points vary by model and host configuration.
 
 ### Complete and stop
 

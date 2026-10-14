@@ -67,7 +67,7 @@ Toolchain: Go 1.26, Node.js 24 (matches CI), Wails v2 CLI. Linux needs GTK 3 and
 
 ## Milestones
 
-Use project-next-milestone for one explicitly selected or previously authorized milestone and project-finish-milestone to close out implemented work. These steps apply to roadmap milestones and their linked execution plans. For a small independent fix, run the relevant checks, review the diff, and commit; skip steps 2 and 4.
+Use project-next-milestone for one explicitly selected or previously authorized milestone and project-finish-milestone to close out implemented work. These steps apply to roadmap milestones and their linked execution plans. For a small independent fix, run the relevant checks, review the diff, update the `ISSUES.md` and `PLAN.md` entries it resolves or affects without being asked, and commit them together; skip steps 2 and 4.
 
 Before marking a milestone done:
 
