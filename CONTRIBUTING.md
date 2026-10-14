@@ -98,6 +98,14 @@ linked Git worktrees pointing to their own skill files.
 
 Use Go 1.26, Node.js 24 (matching CI), and the Wails v2 CLI. On Linux, install GTK 3 and WebKitGTK 4.1 development libraries.
 
+Enable the tracked Git hooks once per clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+`commit-msg` rejects AI co-author lines, assistant session trailers, and "Generated with/by" attribution, for people and agents alike.
+
 The frontend uses TypeScript 6, the newest major accepted by both the lint and Svelte check tools.
 Before upgrading TypeScript, check the published peer ranges of both tools:
 

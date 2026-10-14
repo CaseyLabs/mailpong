@@ -1,0 +1,16 @@
+#!/bin/sh
+# Rejects AI attribution in commit messages (AGENTS.md: no generated-by lines,
+# AI co-authors, or AI/session trailers). Enable per clone with:
+#   git config core.hooksPath .githooks
+
+hits=$(grep -v '^#' "$1" | grep -inE \
+	-e '^co-authored-by:.*(claude|anthropic|codex|openai|chatgpt|copilot|gpt-)' \
+	-e '^(claude|codex|ai|agent)-session:' \
+	-e 'generated (with|by) (.*[^a-z])?(claude|codex|chatgpt|copilot|ai)([^a-z]|$)' \
+	-e 'claude\.ai/code/session_')
+
+[ -z "$hits" ] && exit 0
+
+echo "commit-msg: AI attribution is not allowed (see AGENTS.md):" >&2
+echo "$hits" >&2
+exit 1
