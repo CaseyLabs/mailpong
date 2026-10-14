@@ -7,7 +7,7 @@
 - Keep output bounded and inspect targeted log excerpts. Run servers/watchers in the host's background facility and stop those you started before finishing.
 - Use subagents for independent, well-scoped work when isolation or specialization helps; this is an explicit request to delegate suitable work. Give each agent a distinct scope. Keep architecture, integration, and security decisions in the main session. Verify consequential agent claims before acting; change approach after failed or partial delegation.
 - In Claude Code and Codex, use the native `project-worker` for general delegated project work instead of a generic worker. Use `project-acceptance-checker` for milestone acceptance. For mechanical file retrieval, listings, or exact text extraction in Codex, use `file_reader` or deterministic tools directly; do not use it for investigation or acceptance review. Specialist tools/agents (including bounded exploration and skill-owned reviews) keep their own routing. If a named agent is unavailable, disclose the fallback; do not silently claim its model/effort settings. Definitions live in `.claude/agents/` and `.codex/agents/`.
-- Codex project-native roles require checkout trust; parent-directory trust may not cover a nested Git clone. Diagnose `unknown agent_type` through the project layer's `config/read` `disabledReason`; see CONTRIBUTING.md before changing configuration.
+- If Codex reports `unknown agent_type`, see CONTRIBUTING.md (checkout trust) before changing configuration.
 - Only one agent may run builds or tests in a checkout at a time. Independent read-only work and light static checks may run concurrently; use agent teams only when requested.
 - Use the configured Git identity. Never add generated-by attribution, AI co-authors, or AI/session trailers to commits or PRs, or override identity for an assistant. The `.githooks/commit-msg` hook rejects such lines once enabled (see CONTRIBUTING.md); never bypass it with `--no-verify`.
 - This file is shared policy. Links are pointers, not automatic imports: read references when their stated trigger applies. Host-specific configuration (permissions, models, agent definitions, tool schemas) belongs in native host adapters, not shared policy. The documented Claude-only next-milestone `model` frontmatter is the sole shared-skill exception.
@@ -67,15 +67,7 @@ Toolchain: Go 1.26, Node.js 24 (matches CI), Wails v2 CLI. Linux needs GTK 3 and
 
 ## Milestones
 
-Use project-next-milestone for one explicitly selected or previously authorized milestone and project-finish-milestone to close out implemented work. These steps apply to roadmap milestones and their linked execution plans. For a small independent fix, run the relevant checks, review the diff, update the `ISSUES.md` and `PLAN.md` entries it resolves or affects without being asked, and commit them together; skip steps 2 and 4.
-
-Before marking a milestone done:
-
-1. Review the diff for correctness and regressions.
-2. Have a read-only subagent check the milestone's acceptance criteria. If no subagent or review tool is available, do the equivalent review directly and report the missing independent check.
-3. Fix gaps that affect correctness or stated requirements; treat style-only findings as optional.
-4. Simplify the changed code without changing behavior.
-5. Follow applicable commit/push policy subject to explicit user authorization and runtime limits, staging only task files and preserving unrelated changes.
+Use project-next-milestone for one explicitly selected or previously authorized milestone and project-finish-milestone to close out implemented work; the latter owns the done checklist (checks, review, independent acceptance check, fixes, simplification, commit). Without the skill, do those steps directly and report any missing independent check. For a small independent fix, run the relevant checks, review the diff, update the `ISSUES.md` and `PLAN.md` entries it resolves or affects without being asked, and commit them together.
 
 ## Commits and PRs
 
