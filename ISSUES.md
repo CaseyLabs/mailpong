@@ -1,20 +1,274 @@
-# Issues
+# Issue register
 
-## Deferred follow-ups
+Authoritative unresolved findings and follow-ups, grouped by primary project. [Roadmap](PLAN.md) and [lifecycle rules](docs/PROJECT_MANAGEMENT.md) define selection, statuses and closure. Severity describes impact; priority describes recommended execution order and does not authorize work. All P1/P2/P3 assignments below are proposals from the 2026-10-14 reorganization; original severities are unchanged.
 
-Found by the full audit on 2026-10-08. Each entry gives a severity, the
-location, and the failure. "Unverified" means a reviewer reported it and it
-has not yet been confirmed against the code.
+The 2026-10-08 audit used “unverified” for reported findings not confirmed against source. This reorganization preserves recorded evidence without independently verifying product defects. The P1 provider audit confirmed findings statically; F1–F3b fixed PD1/PD9, PD3–PD8 and U3 within their local scope, while PD2 remains a live gate. See [provider review](docs/validation/provider-deliverability-review.md), [implementation evidence](docs/validation/provider-implementation.md) and [P2 architecture](docs/validation/provider-transport-recommendations.md). Resolved findings are not reopened.
 
-### Mail APIs
+## Index
+
+- [SEND — Sending, privacy and compatibility](#send): [MA1](#ma1), [PD2](#pd2), [CD2](#cd2)
+- [API — Provider API activation and migration](#api): [MA4](#ma4), [F5b-1](#f5b-1), [F5b-2](#f5b-2), [F5b-3](#f5b-3)
+- [SYNC — Mail synchronization and action reliability](#sync): [R2](#r2), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6), [R3](#r3), [R4](#r4)
+- [CHAT — Chat composer sender review](#chat): [R1](#r1)
+- [MAINT — Maintenance and documentation](#maint): [MA2](#ma2), [D2](#d2), [SY1](#sy1), [DOC4](#doc4), [DOC5](#doc5), [L2](#l2), [L3](#l3)
+- [AI — AI development workflows](#ai): [AI6](#ai6)
+- [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
+
+<a id="send"></a>
+
+## SEND — Sending, privacy and compatibility
+
+Project: [SEND](PLAN.md#send).
+
+<a id="ma1"></a>
+
+### MA1 — API Bcc privacy and local size ceiling
+
+- **Owner / milestone:** [SEND](PLAN.md#send) / [SEND-2](PLAN.md#send-2).
+- **Severity / proposed priority / status:** medium / P1 / blocked.
+- **Dependencies / gates:** Separate live authorization; provider stripping and size allowance unverified.
+- **Resolution criteria:** Authorized controlled Bcc evidence establishes privacy, and the local ceiling is documented or justified; retain failed or unrun rollout gates.
+- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
 
 - **MA1 medium** `internal/gmailapi/send.go`, `internal/graphapi/send.go`: API clients add a `Bcc:` header for hidden envelope recipients because both providers read recipients from headers. Provider stripping of that header from delivered copies is undocumented and unverified; a Bcc recipient could be exposed. F4e implemented route activation, but the required separately authorized live Bcc check remains an unsatisfied rollout gate; activation does not establish privacy. Message size limit (25 MiB) is also a local, undocumented ceiling.
 
+<a id="pd2"></a>
+
+### PD2 — Existing Microsoft account live compatibility
+
+- **Owner / milestone:** [SEND](PLAN.md#send) / [SEND-3](PLAN.md#send-3).
+- **Severity / proposed priority / status:** medium / P1 / blocked.
+- **Dependencies / gates:** Explicit account-type evidence and separately authorized live checks; no endpoint migration approval.
+- **Resolution criteria:** Recorded endpoint/account-type evidence and authorized compatibility results resolve the gate; any migration is separately scoped.
+- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
+
+- **PD2 medium — live compatibility gate** `app/oauth.go`, `internal/credentials/oauth_grants.go`: F1 corrects the setup guides and new personal/work defaults, verified by disposable fixtures and guarded UI checks. Existing Microsoft accounts retain their configured endpoints and unknown account type where no explicit evidence was recorded. Their prior `smtp.office365.com` endpoint can still differ from Outlook.com's published default; actual endpoint failure and migration compatibility remain unverified. Confirm account type and separately authorize live evidence before proposing any existing-account endpoint migration.
+
+<a id="cd2"></a>
+
+### CD2 — Autosave encryption failure policy
+
+- **Owner / milestone:** [SEND](PLAN.md#send) / [SEND-1](PLAN.md#send-1).
+- **Severity / proposed priority / status:** medium / P1 / deferred.
+- **Dependencies / gates:** Select an encryption-failure policy; do not change real drafts.
+- **Resolution criteria:** Missing-key/encryption-failure fixtures prove ordinary autosave follows the approved policy without unintended plaintext persistence.
+- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
+
+- **CD2 medium** `app/draft.go:128–166`: existing autosave falls back to plaintext body/attachments when requested S/MIME or PGP encrypt-to-self fails. F2a rejects this downgrade for its new pre-submission recovery writes; ordinary autosave still needs a separately scoped encryption-failure policy. Confirmed by static inspection and disposable missing-key fixtures; no real drafts were changed.
+
+<a id="api"></a>
+
+## API — Provider API activation and migration
+
+Project: [API](PLAN.md#api).
+
+<a id="ma4"></a>
+
+### MA4 — Shared mailbox API activation
+
+- **Owner / milestone:** [API](PLAN.md#api) / [API-1](PLAN.md#api-1).
+- **Severity / proposed priority / status:** low / P2 / deferred.
+- **Dependencies / gates:** Shared identity/schema/delegate/read-write design first.
+- **Resolution criteria:** Shared identity storage and activation are designed and verified before shared migration is offered.
+- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
+
 - **MA4 low** `app/api_route.go` `ActivateMailAPIRoute`: shared (delegated) mailbox routes cannot be activated because the Graph shared-mailbox address is not stored and `apiRemote` rejects shared routes. Found in F4e-3; needs shared-mailbox identity storage before a later milestone. F5a left it open: storing the address is not cheap (route schema, Graph delegate flow, read/write clients); shared routes stay unmigratable with that reason.
+
+<a id="f5b-1"></a>
+
+### F5b-1 — Full migration snapshot restoration
+
+- **Owner / milestone:** [API](PLAN.md#api) / [API-2](PLAN.md#api-2); implementation: [API-3](PLAN.md#api-3).
+- **Severity / proposed priority / status:** low / P2 / deferred.
+- **Dependencies / gates:** Live-DB replacement design and data-loss UX before implementation API-3.
+- **Resolution criteria:** Approved restore design and later isolated restore validation prove data/credential safety and explicit loss consent.
+- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
+
+- **F5b-1 (low)** — `app/api_migration.go` `RollbackMailAPIMigration`: full snapshot restore is not implemented; after a rollback only route state changes, so API-era local changes stay. F5c shows the snapshot path with a note but does not offer restore; it needs its own live-DB replacement design and data-loss UX.
+
+<a id="f5b-2"></a>
+
+### F5b-2 — Ambiguous migration correlation
+
+- **Owner / milestone:** [API](PLAN.md#api) / [API-4](PLAN.md#api-4).
+- **Severity / proposed priority / status:** low / P2 / deferred.
+- **Dependencies / gates:** Do not guess identity for ambiguous duplicates.
+- **Resolution criteria:** Fixtures and user guidance establish explicit handling of absent/ambiguous Message-ID without falsely carrying state.
+- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
+
+- **F5b-2 (low)** — `internal/apimigrate` `Correlate`: messages with no Message-ID, or ambiguous duplicates, stay uncorrelated and appear once from the API with no carried local state.
+
+<a id="f5b-3"></a>
+
+### F5b-3 — Rollback sync progress and scheduler coverage
+
+- **Owner / milestone:** [API](PLAN.md#api) / [API-5](PLAN.md#api-5).
+- **Severity / proposed priority / status:** low / P2 / deferred.
+- **Dependencies / gates:** Scheduler seam and rollback progress contract required.
+- **Resolution criteria:** Fixture asserts the rollback sync trigger and any promised completion/progress behavior.
+- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
+
+- **F5b-3 (low)** — `app/api_migration.go` `RollbackMailAPIMigration`: the IMAP reconcile is only the async `syncScheduler.TriggerSync` inside `deactivateAPIRoute`; rollback does not wait for it and no test asserts the trigger (the scheduler is a concrete type). Add a scheduler seam and a test when F5c needs rollback progress.
+
+<a id="sync"></a>
+
+## SYNC — Mail synchronization and action reliability
+
+Project: [SYNC](PLAN.md#sync).
+
+<a id="r2"></a>
+
+### R2 — Sent-copy reconciliation cost
+
+- **Owner / milestone:** [SYNC](PLAN.md#sync) / [SYNC-4](PLAN.md#sync-4).
+- **Severity / proposed priority / status:** low / P3 / deferred.
+- **Dependencies / gates:** Measure journal growth before selecting a bound.
+- **Resolution criteria:** Focused fixtures show bounded reconciliation work while preserving copy correctness.
+- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
+
+- **R2 low** `internal/submission/sent.go` `ReconcileCopies`: each send runs the
+  observation UPDATE and returns every accepted copy for the account, so cost
+  grows with journal size. Scope it to the new attempt or pending copies.
+
+<a id="sy2"></a>
+
+### SY2 — Oversized Graph message blocks cursor
+
+- **Owner / milestone:** [SYNC](PLAN.md#sync) / [SYNC-3](PLAN.md#sync-3).
+- **Severity / proposed priority / status:** low / P2 / deferred.
+- **Dependencies / gates:** Define explicit oversize handling; do not silently discard mail.
+- **Resolution criteria:** Oversize fixture demonstrates explicit handling and cursor progress without hiding the skipped-message condition.
+- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
+
+- **Low** `internal/graphapi/read.go` `GetRaw`: a message larger than the 64 MiB cap fails the whole folder run with no skip, so one oversized message blocks that folder's cursor. Found by F4d-3.
+
+<a id="sy3"></a>
+
+### SY3 — Graph delta reconciliation cost
+
+- **Owner / milestone:** [SYNC](PLAN.md#sync) / [SYNC-4](PLAN.md#sync-4).
+- **Severity / proposed priority / status:** low / P3 / deferred.
+- **Dependencies / gates:** Measure large-folder behavior.
+- **Resolution criteria:** Documented bounds and fixtures establish correctness of any selected optimization.
+- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
+
+- **Low** `internal/sync/graphapi.go` `deltaRun`: the reconcile keeps every seen ID in memory and per-message GETs run for each local ID the enumeration missed; large folders are slow but bounded. Found by F4d-3.
+
+<a id="sy4"></a>
+
+### SY4 — Gmail reconciliation memory
+
+- **Owner / milestone:** [SYNC](PLAN.md#sync) / [SYNC-4](PLAN.md#sync-4).
+- **Severity / proposed priority / status:** low / P3 / deferred.
+- **Dependencies / gates:** Measure mailbox-size memory growth.
+- **Resolution criteria:** Chosen strategy limits memory without losing IDs or committing incomplete enumeration.
+- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
+
+- **Low** `internal/sync/gmailapi.go` `reconcile`: collects every remote ID into one slice before committing, so memory grows with mailbox size (ID strings only; page requests stay bounded). Found by F4d-2 acceptance.
+
+<a id="sy5"></a>
+
+### SY5 — Gmail reset requests and 5xx classification
+
+- **Owner / milestone:** [SYNC](PLAN.md#sync) / [SYNC-4](PLAN.md#sync-4).
+- **Severity / proposed priority / status:** low / P3 / deferred.
+- **Dependencies / gates:** Investigate reset work and retry classification separately.
+- **Resolution criteria:** Reset correctness and bounded retries remain verified; 5xx handling and request cost have an explicit policy.
+- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
+
+- **Low** `internal/sync/gmailapi.go` `reconcile`: costs one `minimal` GET per known message on the rare reset path; 5xx responses are treated like rate limits (bounded retries).
+
+<a id="sy6"></a>
+
+### SY6 — Missing Date uses ingest time
+
+- **Owner / milestone:** [SYNC](PLAN.md#sync) / [SYNC-3](PLAN.md#sync-3).
+- **Severity / proposed priority / status:** low / P2 / deferred.
+- **Dependencies / gates:** Provider received-time provenance must be preserved.
+- **Resolution criteria:** Missing/invalid Date fixtures use provider time consistently across full ingests.
+- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
+
+- **Low** `internal/sync/apicommon.go` `parseAPIRaw`: a message with no parseable `Date:` header gets `time.Now()`, not the provider's received time (Gmail `internalDate`, Graph `receivedDateTime`). Such messages sort as new on every full ingest. Found by the branch review.
+
+<a id="r3"></a>
+
+### R3 — API move re-key failure
+
+- **Owner / milestone:** [SYNC](PLAN.md#sync) / [SYNC-1](PLAN.md#sync-1).
+- **Severity / proposed priority / status:** medium / P1 / deferred.
+- **Dependencies / gates:** Fault injection for provider-success/local-re-key failure.
+- **Resolution criteria:** A failed local re-key is retried or kept open; queued actions do not delete the message due to a stale ID.
+- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
+
+- **R3 medium** `internal/apiactions/worker.go` `applied`: when a provider move
+  returns a new remote ID and `ApplyAPIMove` fails, the error is only logged. Later
+  queued actions keep the old remote ID, the provider answers 404, and `gone()`
+  deletes the message locally until the next sync restores it. Retry the re-key
+  or keep the action open instead of only logging.
+
+<a id="r4"></a>
+
+### R4 — Partial batch move UI refresh
+
+- **Owner / milestone:** [SYNC](PLAN.md#sync) / [SYNC-2](PLAN.md#sync-2).
+- **Severity / proposed priority / status:** low / P2 / deferred.
+- **Dependencies / gates:** Partial batch failure fixture.
+- **Resolution criteria:** Already moved rows and counts refresh when a later batch item fails.
+- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
+
+- **R4 low** `app/api_actions.go` `apiMove`: a mid-batch failure returns before
+  `apiMoveLocal` emits `messages:moved`/counts, so rows already moved locally stay
+  shown in the source list until the next refresh. (The queued moves are now
+  kicked.)
+
+<a id="chat"></a>
+
+## CHAT — Chat composer sender review
+
+Project: [CHAT](PLAN.md#chat).
+
+<a id="r1"></a>
+
+### R1 — Chat sender review
+
+- **Owner / milestone:** [CHAT](PLAN.md#chat) / [CHAT-1](PLAN.md#chat-1).
+- **Severity / proposed priority / status:** medium / P2 / deferred.
+- **Dependencies / gates:** Retain existing sender review policy.
+- **Resolution criteria:** Chat can perform required sender review with keyboard-accessible UI and verified queue guards.
+- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
+
+- **R1 medium** `app/chat_reply.go` `QueueChatReply`: the chat composer has no
+  sender review UI, so a reply from a sender needing review (Microsoft, shared
+  mailboxes, non-Google OAuth, stale Gmail send-as) is refused at queue time and
+  must be sent from the full composer. Add the review prompt to chat.
+
+<a id="maint"></a>
+
+## MAINT — Maintenance and documentation
+
+Project: [MAINT](PLAN.md#maint).
+
+<a id="ma2"></a>
+
+### MA2 — Go formatting follow-up
+
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-2](PLAN.md#maint-2).
+- **Severity / proposed priority / status:** low / P3 / deferred.
+- **Dependencies / gates:** Own the affected package before formatting.
+- **Resolution criteria:** gofmt reports no formatting changes for the affected file.
+- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
 
 - **MA2 low** `internal/extensions/store.go`: `gofmt -l` lists the file as unformatted (noticed during F4e-1; untouched there). Run `gofmt -w` on it in a change that owns that package.
 
-### Dependencies
+<a id="d2"></a>
+
+### D2 — TypeScript 7 tooling compatibility
+
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / [D2](PLAN.md#d2).
+- **Severity / proposed priority / status:** low / P3 / deferred.
+- **Dependencies / gates:** Both tooling peer ranges block upgrade; recheck before proposing it.
+- **Resolution criteria:** Both tools accept TypeScript 7 and a separately authorized upgrade passes required frontend checks.
+- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
 
 - **D2 low** `frontend/package.json`: TypeScript 7 remains blocked upstream.
   Verified on 2026-10-12 with `npm view <package>@latest version peerDependencies --json`:
@@ -23,51 +277,83 @@ has not yet been confirmed against the code.
   Both tools are already current here; retain TypeScript ~6.0.3 until both accept 7.
   Recheck using the commands in `CONTRIBUTING.md`.
 
-### Provider compatibility and deliverability (P1, 2026-10-12)
+<a id="sy1"></a>
 
-Confirmed by static inspection in P1; F1 verified the PD1/PD9 local fixes and new-account PD2 guidance/defaults; F2a verified the PD3 submission-outcome fix; F2b verified PD4/PD6/PD8 MIME/header/SIZE/international-envelope preflight, F3a verified PD5 sender evidence, review and blocking; and F3b verified the PD7 explicit route/destination policy and durable copy reconciliation plus U3 linked auth ownership/locks with disposable fixtures. Remaining findings and the PD2 live compatibility gate stay open. Details, provider sources, applicability and live-check limits are in [the provider review](docs/validation/provider-deliverability-review.md). Architecture and follow-up prioritization belong to P2.
+### SY1 — Duplicated API reader logic
 
-- **PD2 medium — live compatibility gate** `app/oauth.go`, `internal/credentials/oauth_grants.go`: F1 corrects the setup guides and new personal/work defaults, verified by disposable fixtures and guarded UI checks. Existing Microsoft accounts retain their configured endpoints and unknown account type where no explicit evidence was recorded. Their prior `smtp.office365.com` endpoint can still differ from Outlook.com's published default; actual endpoint failure and migration compatibility remain unverified. Confirm account type and separately authorize live evidence before proposing any existing-account endpoint migration.
-
-### Draft storage
-
-- **CD2 medium** `app/draft.go:128–166`: existing autosave falls back to plaintext body/attachments when requested S/MIME or PGP encrypt-to-self fails. F2a rejects this downgrade for its new pre-submission recovery writes; ordinary autosave still needs a separately scoped encryption-failure policy. Confirmed by static inspection and disposable missing-key fixtures; no real drafts were changed.
-
-### Branch review: provider implementation (2026-10-13)
-
-- **R1 medium** `app/chat_reply.go` `QueueChatReply`: the chat composer has no
-  sender review UI, so a reply from a sender needing review (Microsoft, shared
-  mailboxes, non-Google OAuth, stale Gmail send-as) is refused at queue time and
-  must be sent from the full composer. Add the review prompt to chat.
-- **R2 low** `internal/submission/sent.go` `ReconcileCopies`: each send runs the
-  observation UPDATE and returns every accepted copy for the account, so cost
-  grows with journal size. Scope it to the new attempt or pending copies.
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-2](PLAN.md#maint-2).
+- **Severity / proposed priority / status:** low / P3 / deferred.
+- **Dependencies / gates:** Behavior-preserving extraction only.
+- **Resolution criteria:** Shared reader behavior preserves refresh, caps and error classification in both clients.
+- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
 
 - **Low** `internal/gmailapi/read.go`, `internal/graphapi/read.go`: `Reader`/`ReadError`/fetch (401-once refresh, size cap, classification) are duplicated across the two read clients. Found by F4d-3.
-- **Low** `internal/graphapi/read.go` `GetRaw`: a message larger than the 64 MiB cap fails the whole folder run with no skip, so one oversized message blocks that folder's cursor. Found by F4d-3.
-- **Low** `internal/sync/graphapi.go` `deltaRun`: the reconcile keeps every seen ID in memory and per-message GETs run for each local ID the enumeration missed; large folders are slow but bounded. Found by F4d-3.
-- **Low** `internal/sync/gmailapi.go` `reconcile`: collects every remote ID into one slice before committing, so memory grows with mailbox size (ID strings only; page requests stay bounded). Found by F4d-2 acceptance.
-- **Low** `internal/sync/gmailapi.go` `reconcile`: costs one `minimal` GET per known message on the rare reset path; 5xx responses are treated like rate limits (bounded retries).
-- **Low** `internal/sync/apicommon.go` `parseAPIRaw`: a message with no parseable `Date:` header gets `time.Now()`, not the provider's received time (Gmail `internalDate`, Graph `receivedDateTime`). Such messages sort as new on every full ingest. Found by the branch review.
 
-- **F5b-1 (low)** — `app/api_migration.go` `RollbackMailAPIMigration`: full snapshot restore is not implemented; after a rollback only route state changes, so API-era local changes stay. F5c shows the snapshot path with a note but does not offer restore; it needs its own live-DB replacement design and data-loss UX.
-- **F5b-2 (low)** — `internal/apimigrate` `Correlate`: messages with no Message-ID, or ambiguous duplicates, stay uncorrelated and appear once from the API with no carried local state.
-- **F5b-3 (low)** — `app/api_migration.go` `RollbackMailAPIMigration`: the IMAP reconcile is only the async `syncScheduler.TriggerSync` inside `deactivateAPIRoute`; rollback does not wait for it and no test asserts the trigger (the scheduler is a concrete type). Add a scheduler seam and a test when F5c needs rollback progress.
-- **R3 medium** `internal/apiactions/worker.go` `applied`: when a provider move
-  returns a new remote ID and `ApplyAPIMove` fails, the error is only logged. Later
-  queued actions keep the old remote ID, the provider answers 404, and `gone()`
-  deletes the message locally until the next sync restores it. Retry the re-key
-  or keep the action open instead of only logging.
-- **R4 low** `app/api_actions.go` `apiMove`: a mid-batch failure returns before
-  `apiMoveLocal` emits `messages:moved`/counts, so rows already moved locally stay
-  shown in the source list until the next refresh. (The queued moves are now
-  kicked.)
+<a id="doc4"></a>
 
-## Documentation audit (2026-10-14)
+### DOC4 — All Inboxes shortcut guidance
+
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-1](PLAN.md#maint-1).
+- **Severity / proposed priority / status:** low / P3 / deferred.
+- **Dependencies / gates:** Compare canonical shortcut and current sidebar behavior.
+- **Resolution criteria:** User guide describes first visible item and conditional All Inboxes correctly.
+- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
 
 - **DOC4 low** `docs/user-guide/features/keyboard-shortcuts.md:73`: Alt+G is described unconditionally as All Inboxes, but `Sidebar.svelte` selects the first visible item, with All Inboxes only when present. Align with `docs/KEYBOARD_SHORTCUTS.md:37`.
+
+<a id="doc5"></a>
+
+### DOC5 — Broken FAQ and log links
+
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-1](PLAN.md#maint-1).
+- **Severity / proposed priority / status:** low / P3 / deferred.
+- **Dependencies / gates:** Check destinations in existing guides.
+- **Resolution criteria:** Svelte URL and log-location link resolve to intended existing guidance.
+- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
+
 - **DOC5 low** `docs/user-guide/faq.md:25` has malformed `https:/svelte.dev`; `docs/user-guide/troubleshooting.md:269` links to the absent FAQ anchor `where-are-log-files-located`. Correct the URL and point log guidance to an existing section or supply the missing section.
+
+<a id="l2"></a>
+
+### L2 — Legal review flag
+
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-3](PLAN.md#maint-3).
+- **Severity / proposed priority / status:** unspecified (legal review flag, not a legal conclusion) / P2 / blocked.
+- **Problem / evidence:** Terms wording: indemnity, limitation of liability and governing law. Current [draft](docs/TERMS.md) still carries a legal-review comment naming L2/L3. Original flags and review process are traceable with `git show 33c1851:PLAN.md` (Legal review flags). Current sign-off is not established by that comment or this task; do not assume the historical concern remains a verified defect.
+- **Dependencies / closure:** owner supplies authoritative sign-off or selects review; record the decision and align draft markers only after verified approval. No legal text changes are authorized by backlog entry.
+
+<a id="l3"></a>
+
+### L3 — Legal review flag
+
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-3](PLAN.md#maint-3).
+- **Severity / proposed priority / status:** unspecified (legal review flag, not a legal conclusion) / P2 / blocked.
+- **Problem / evidence:** Privacy wording under bring-your-own OAuth, Google API policy statements and historical dictionary distribution. Current [draft](docs/PRIVACY.md) still carries a legal-review comment naming L2/L3. Original flags and review process are traceable with `git show 33c1851:PLAN.md` (Legal review flags). Current sign-off is not established by that comment or this task; do not assume the historical concern remains a verified defect.
+- **Dependencies / closure:** owner supplies authoritative sign-off or selects review; record the decision and align draft markers only after verified approval. No legal text changes are authorized by backlog entry.
+
+<a id="ai"></a>
+
+## AI — AI development workflows
+
+Project: [AI](PLAN.md#ai).
+
+<a id="ai6"></a>
+
+### AI6 — Remaining workflow routing and context evidence
+
+- **Owner / milestone:** [AI](PLAN.md#ai) / [G4](PLAN.md#g4).
+- **Severity / proposed priority / status:** unspecified (verification follow-up, not a confirmed defect) / P3 / deferred.
+- **Problem / evidence:** broader Claude workflow compliance/routing beyond handoff and comparable context savings remain unverified. [G1–G3 record](docs/validation/shared-skills-g3.md) distinguishes discovery, parsing and runtime evidence; [AI5](docs/validation/shared-handoff-ai5.md) completed bidirectional handoff verification on 2026-10-14. Those results do not establish the remaining G4 claims.
+- **Dependencies / closure:** explicit selection on a new branch; configured-host availability, comparable measurements and representative routing trials. Close only with recorded evidence or an explicit decision to retire the claims; do not alter personal CLI settings.
+
+<a id="wails"></a>
+
+## WAILS — Desktop framework migration assessment
+
+Project: [WAILS](PLAN.md#wails).
+
+No verified issue recorded. Proposed research questions and risks remain in [the assessment brief](docs/PLAN-migration.md); do not turn them into confirmed defects.
 
 ## Recurring problems
 
-None.
+None. Track environment/tooling symptoms, workaround and count here; on a second occurrence or a costly first occurrence, promote the solution into applicable guidance and remove the tally.

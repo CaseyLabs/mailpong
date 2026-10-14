@@ -2,7 +2,8 @@
 
 **Status:** Proposed. Analysis and design only; **migration implementation is not authorized**.
 **Repository:** `https://github.com/CaseyLabs/mailven`
-**Intended path:** `plans/wails-v3/PLAN.md` (not the existing root `PLAN.md`)
+**Roadmap:** [WAILS](../PLAN.md#wails); original M0–M7 below map to W3-M0–W3-M7 there. Status/selection belongs to the root roadmap.
+**Original intended path:** `plans/wails-v3/PLAN.md` (never created). This file retains the assessment scope; on explicit selection, use a linked `docs/plans/<milestone-id>.md` checkpoint and reconcile deliverable paths before writing them.
 **Prepared:** 2026-10-11
 **Decision required:** GO / DEFER / NO-GO, with evidence and an implementation-ready blueprint.
 
@@ -42,13 +43,13 @@ At preparation time, the latest checked v3 prerelease was `v3.0.0-beta.28` (2026
 
 If a prototype or other implementation is needed to answer a question, describe the smallest **separately approvable** spike with a disposable worktree and synthetic fixtures. Do not perform the spike as part of this plan.
 
-## Claude Code execution contract
+## Agent execution contract
 
-- Read the shared `AGENTS.md` guidance, `CLAUDE.md`, `ISSUES.md` and relevant `.claude/skills/` instructions **selectively** before beginning; current repository instructions take precedence over assumptions in this file. The root `PLAN.md` is a different historical project; do not overwrite or use its first incomplete milestone for this task.
-- Work on one milestone at a time. Use `/project-next-milestone plans/wails-v3/PLAN.md` (or equivalent explicit instruction). Finish the milestone, update **Progress**, **Surprises & Discoveries**, and **Decision Log**, then stop. Do not claim to have completed unexecuted checks.
+- Read the shared `AGENTS.md` guidance, `CLAUDE.md`, `ISSUES.md` and relevant `.agents/skills/` instructions **selectively** before beginning; current repository instructions take precedence over assumptions in this file. The root `PLAN.md` is the authoritative portfolio; select WAILS work by its stable W3-M ID, never by the first incomplete milestone in file order.
+- Work on one milestone at a time. Use the project-next-milestone skill with the selected W3-M ID and linked checkpoint (in either host). Finish the milestone, update **Progress**, **Surprises & Discoveries**, and **Decision Log**, then stop. Do not claim to have completed unexecuted checks.
 - Read the current milestone and only the relevant code/docs; use `rg`, targeted `sed`, and small command outputs rather than reading huge files or printing exhaustive logs. Parallel read-only investigation is acceptable; use `project-worker` only for a bounded, independent research question. Avoid unnecessary subagent duplication.
 - Use the latest **official** Claude Code and Wails documentation at execution time. Consult exact pinned v3 API references/source if docs and examples conflict. Record the URL, release/tag/date and verification method for conclusions; mark unknowns explicitly. Wails docs occasionally contain sample versions older than the latest release: examples are not version pin recommendations.
-- Planning deliverables may be edited under `plans/wails-v3/` only. Inspect `git status --short`, do not overwrite uncommitted work, and follow repository commit conventions for documentation changes. Never silently perform implementation because the research identifies an obvious fix.
+- The original proposal scoped planning deliverables to `plans/wails-v3/`; reconcile that location with `docs/plans/<milestone-id>.md` checkpoints when selecting work. This reorganization does not authorize assessment execution or deliverable creation. Inspect `git status --short`, do not overwrite uncommitted work, and follow repository commit conventions for documentation changes. Never silently perform implementation because the research identifies an obvious fix.
 - When a check needs credentials, live accounts, destructive actions, package installs, CI minutes, platform hardware or a GUI unavailable locally: record it as **not run**, with a precise proposed validation method. Do not fabricate output or substitute an unrelated test.
 - Security/data invariant: preserve Mailven's existing application IDs, data directories, database schema/migration semantics, stored credentials, OAuth flows, mailbox integrity, encryption compatibility and isolation from Aerion. Never print or embed secrets, `.env` contents or private messages in artifacts.
 - The existing `/project-finish-milestone` skill may be used for checks and independent acceptance review; ensure that any automated commit/merge/push behavior is limited to the documentation-only branch according to repo policy. **No migration implementation is authorized by this plan.**
@@ -169,7 +170,7 @@ Keep documents compact and actionable. Use tables where useful. Every claim abou
 **Tasks**
 - Create a reproducible **v2 baseline vs proposed v3** test matrix with commands, fixtures, expected outcome, platform and pass/fail rule. Test with synthetic accounts/mail and isolated data directories.
 - Minimum functional flows: initial launch, account creation/auth, IMAP sync and background resume, thread display, sent/replied mail, draft persistence/recovery, attachment save/open, clipboard, Tiptap typing/paste, notifications, `mailto:`, single instance, multi-window lifecycle, calendar/contacts extensions, settings, themes, restore/maximize, and shutdown.
-- UI acceptance on both dark/light themes, both wide/narrow layouts, **Accounts column expanded and collapsed**, on KDE Plasma Wayland and, where possible, GNOME. Prefer existing `.claude/skills/run-mailven` tooling; document what cannot be automated.
+- UI acceptance on both dark/light themes, both wide/narrow layouts, **Accounts column expanded and collapsed**, on KDE Plasma Wayland and, where possible, GNOME. Prefer existing `.agents/skills/run-mailven` tooling; document what cannot be automated.
 - Baseline performance measurements using identical fixtures: cold/warm launch, time to usable UI, idle process-tree RSS/CPU, scroll smoothness/input responsiveness, multiple composer overhead, long-session stability. Repeat measurements (e.g., 5 runs); define measurement method and regression investigation thresholds, not unsupported guaranteed improvements.
 - Include security/data integrity checks: byte-for-byte data preservation where applicable, no implicit migrations, keyring and secrets isolation, WebKit policy for untrusted HTML, no loss of drafts/sent messages, and no effects on Aerion installations.
 
@@ -198,7 +199,7 @@ Keep documents compact and actionable. Use tables where useful. Every claim abou
 - For any blocker that cannot be answered without compiling v3, add a **separately approvable bounded spike** (exact objective, disposable worktree, no user data, exit criteria, cleanup) to the blueprint. **Do not run it now.**
 - Include a fallback to staying on v2 with targeted updates and a revisit trigger, e.g., fixed upstream issue or stable release.
 
-**Deliverable:** `MIGRATION_BLUEPRINT.md`, executable by a later Claude Code session only **after separate owner approval**.
+**Deliverable:** `MIGRATION_BLUEPRINT.md`, executable by a later coding-agent session only **after separate owner approval**.
 
 **Acceptance criteria**
 - [ ] Every implementation milestone has files/systems affected, done criteria, narrow tests, dependencies, risk and rollback.
@@ -255,7 +256,7 @@ Tick a milestone only after its acceptance criteria are evidenced. Keep entries 
 ## Decision Log
 
 - 2026-10-11: This is **analysis/design only**. No Wails/GTK migration, no release and no change to existing app data is authorized.
-- 2026-10-11: Keep the existing root `PLAN.md`; use `plans/wails-v3/PLAN.md` so `/project-next-milestone` can select the correct workstream explicitly.
+- 2026-10-11 (original proposal): keep the root plan separate and use `plans/wails-v3/PLAN.md`. Superseded for routing only on 2026-10-14: root PLAN.md now owns the WAILS roadmap; select W3-M IDs and create linked checkpoints only when authorized.
 - 2026-10-11: Treat native v3 composer windows as an architectural **option**, not an automatic requirement for minimum parity.
 
 ## Outcomes & Retrospective

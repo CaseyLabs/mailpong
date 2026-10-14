@@ -51,7 +51,7 @@ Toolchain: Go 1.26, Node.js 24 (matches CI), Wails v2 CLI. Linux needs GTK 3 and
 - Run `make test` when a change affects multiple Go packages or shared behavior, or when focused checks leave unresolved risks.
 - Use table-driven Go tests for critical paths and edge cases.
 - `internal/database/database_test.go` rewinds the schema and reapplies later migrations: a new `ADD COLUMN` needs matching `DROP COLUMN` lines in its rewind blocks, and every migration must be rerunnable (`IF NOT EXISTS`, and backfills that clear their table first).
-- There is no frontend test script. For frontend changes, run `npm run lint` and `npm run check` in `frontend/`, then verify the UI with the `run-mailven` skill. In cloud sessions use the skill's headless path (Xvfb + Playwright); if no UI check can run at all, say so in the PLAN.md Progress entry and in your report.
+- There is no frontend test script. For frontend changes, run `npm run lint` and `npm run check` in `frontend/`, then verify the UI with the `run-mailven` skill. In cloud sessions use the skill's headless path (Xvfb + Playwright); if no UI check can run at all, say so in the active execution checkpoint and in your report.
 - When intercepting the frontend entry point for fakes, match `src/main.ts` with or without Wails' hot-reload query string.
 - In guarded Wails setter fakes, copy reactive arguments with `JSON.parse(JSON.stringify(value))`; `structuredClone` cannot copy Svelte state proxies.
 - Give native selects explicit accessible names (`aria-label` or a separate `for`/`id` label); wrapping labels can absorb option text and break exact-name UI checks.
@@ -66,7 +66,7 @@ Toolchain: Go 1.26, Node.js 24 (matches CI), Wails v2 CLI. Linux needs GTK 3 and
 
 ## Milestones
 
-Use project-next-milestone for the next planned milestone and project-finish-milestone to close out implemented work. These steps apply to `PLAN.md` milestones. For a small independent fix, run the relevant checks, review the diff, and commit; skip steps 2 and 4.
+Use project-next-milestone for one explicitly selected or previously authorized milestone and project-finish-milestone to close out implemented work. These steps apply to roadmap milestones and their linked execution plans. For a small independent fix, run the relevant checks, review the diff, and commit; skip steps 2 and 4.
 
 Before marking a milestone done:
 
@@ -74,7 +74,7 @@ Before marking a milestone done:
 2. Have a read-only subagent check the milestone's acceptance criteria. If no subagent or review tool is available, do the equivalent review directly and report the missing independent check.
 3. Fix gaps that affect correctness or stated requirements; treat style-only findings as optional.
 4. Simplify the changed code without changing behavior.
-5. Commit and push, staging only files changed for the task and preserving unrelated user changes.
+5. Follow applicable commit/push policy subject to explicit user authorization and runtime limits, staging only task files and preserving unrelated changes.
 
 ## Commits and PRs
 
@@ -95,16 +95,11 @@ When all of a feature's milestones are done or an audit pass is complete, land t
 
 ## Planning Files
 
-- `PLAN.md`: guides new features. Create it when needed with Scope; Milestones, each with acceptance criteria and validation steps; and these living `##` sections: Progress (one checkbox per milestone), Surprises & Discoveries, Decision Log, and Outcomes & Retrospective. Track progress in Progress, not a separate file.
-- Before starting or resuming a milestone, reconcile its premises and acceptance criteria with the existing implementation and recorded validation. Revise stale details within the authorized scope; ask when a change would materially alter that scope. Implemented work with outstanding verification is not complete: retain the unproved criteria and validation limits explicitly.
-- Update the plan at meaningful sub-step completions, blockers, scope changes and validation results, as well as before handoff or compaction. Keep the current step, changed files, remaining work and exact check commands/results sufficient for continuation without chat history.
-- Before pruning completed work, move lasting behavior, configuration, architecture and decision rationale into the relevant `docs/` page; reusable agent rules into AGENTS.md; workflow procedures into the relevant skill; and important validation evidence and limits into `docs/validation/`. Update existing references rather than duplicating them. Keep unresolved defects in `ISSUES.md` and deferred work, dependencies and authorization limits explicit; cleanup does not authorize resuming them.
-- `ISSUES.md`: issues found that may need fixing in this or a future session. Its `## Recurring problems` section is a tally of environment and tooling problems: one line each with the symptom, the workaround, and how many times it has occurred. Check it before debugging, and bump the count when a problem recurs.
-- Record every confirmed finding you leave unfixed (review, audit, or noticed in passing) in `ISSUES.md` in the same task, with a severity, the location, and the failure. Don't leave it only in a report or commit message. Unconfirmed or style-only nits don't need an entry.
-- Promote, don't log: when a problem recurs (second occurrence) or costs a session more than a few minutes the first time, move the fix into `AGENTS.md` or the relevant skill and delete its tally line. Don't record every error.
-- Prune: when a guidance line no longer matches reality (for example, "no display in cloud"), correct or delete it in the same task.
-- Keep task-specific progress out of `AGENTS.md`.
-- **Required:** after preserving lasting information, remove completed or superseded milestone sections, Progress entries and stale discoveries/decisions/outcomes once remaining work no longer depends on them; remove resolved issue items too. Retain only the brief completion context or links needed by remaining work. With no active milestone, state that plainly and keep deferred work explicit. PLAN.md describes remaining work; durable documentation describes the current project. Use Git history for routine chronology rather than archiving whole plans by default.
+- `PLAN.md` is the authoritative project roadmap; `ISSUES.md` is the unresolved issue register grouped by the same stable project IDs. Start roadmap tasks with Portfolio/Progress, then read only the selected project/milestone and linked issues. Unrelated changes do not require loading either whole file.
+- For selection, issue recording, completion or handoff, follow [the lifecycle rules](docs/PROJECT_MANAGEMENT.md). Require explicit or recorded authorization; check dependencies/gates, preserve severity and evidence limits, and keep bidirectional ID links. Proposed priorities do not approve work; deferred work is not automatically reopened.
+- Substantial selected milestones use linked `docs/plans/<milestone-id>.md` execution plans; small tasks checkpoint inline. Update current step, changed files, remaining work, decisions and exact check outcomes at meaningful changes and before handoff. Keep task progress out of guidance.
+- Done means verified acceptance. Resolve only fixed/verified issues. Preserve lasting decisions in technical docs and evidence/limits in `docs/validation/` before pruning completed detail; retain IDs/links needed by remaining work. With no active milestone, say so and list candidates without activating them. Do not start another milestone without authorization.
+- Record every confirmed finding left unfixed in `ISSUES.md` in the same task. Its Recurring problems section records environment/tool symptoms, workaround and count; check it before debugging. On a second occurrence or a costly first occurrence, promote the solution into applicable guidance and delete the tally. Correct obsolete guidance as discovered.
 
 ## Compaction
 

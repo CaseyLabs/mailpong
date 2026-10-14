@@ -52,7 +52,7 @@ Current API routes support sending, receiving and queued flag/folder actions, wi
 - Drafts are saved locally; remote API draft synchronization is unavailable.
 - Permanent delete, empty trash/spam, copy, cross-account moves and undoing API moves are unavailable.
 - There is no automatic SMTP/IMAP fallback after migration and no automatic resend of an uncertain submission.
-- Bcc privacy, provider message-size limits and real-account migration/rollback remain unverified live. Local fixtures and UI checks do not establish provider compatibility. See [open findings](../ISSUES.md#mail-apis).
+- Bcc privacy, provider message-size limits and real-account migration/rollback remain unverified live. Local fixtures and UI checks do not establish provider compatibility. See [open findings](../ISSUES.md#ma1).
 
 ## Sending, limits and troubleshooting
 

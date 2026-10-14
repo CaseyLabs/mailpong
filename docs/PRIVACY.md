@@ -2,7 +2,7 @@
 
 **Last Updated:** October 11, 2026
 
-<!-- Draft for legal review (PLAN.md flags L2/L3); remove this comment once signed off. -->
+<!-- Draft for legal review (ISSUES.md tracks L2/L3; PLAN.md milestone MAINT-3); remove this comment once signed off. -->
 
 ## Introduction
 

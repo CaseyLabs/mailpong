@@ -67,15 +67,13 @@ skill path from another checkout. User-supplied relative plan/output paths resol
 from the invocation working directory (default plan: `PLAN.md` there), before
 changing directory. Quote resolved paths. For example, from the checkout root:
 `sh .agents/skills/project-next-milestone/plan-outline.sh PLAN.md`.
-Read Scope, Progress, the actionable milestone and relevant decisions only.
-Follow AGENTS.md's Planning Files lifecycle: reconcile the selected milestone before
-work, update checkpoints as work changes, and preserve lasting information in
-documentation or guidance before pruning completed work. Keep outstanding
+Read Portfolio/Progress and the explicitly selected or already authorized milestone, its linked issues and execution checkpoint only.
+Follow the shared [project-management lifecycle](docs/PROJECT_MANAGEMENT.md): `PLAN.md` owns the roadmap, `ISSUES.md` owns findings, and substantial selected milestones checkpoint in `docs/plans/<milestone-id>.md`. Reconcile before work and preserve lasting evidence before pruning. A bare continuation request with no authorized active milestone lists candidates for selection; it does not execute proposed/deferred work. Keep outstanding
 verification, deferred work and authorization limits explicit.
 The run-mailven core links optional UI references by task; its safeguards always
 apply. Handoffs persist checkpoints before committing and include a host-neutral
 prompt. Remaining G4 runtime/context verification and future provider work are tracked
-in `PLAN.md`; completed provider checks are retained in
+in [AI / G4](PLAN.md#g4) and [the provider projects](PLAN.md#api); completed provider checks are retained in
 [the implementation validation record](docs/validation/provider-implementation.md).
 The [verification record](docs/validation/shared-skills-g3.md) documents completed
 Codex and guarded UI checks. [Bidirectional handoff trials](docs/validation/shared-handoff-ai5.md)
