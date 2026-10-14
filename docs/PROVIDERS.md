@@ -44,7 +44,7 @@ Mailbox access, Send As and Send on Behalf permissions are distinct from OAuth c
 
 For an eligible OAuth account, open **Settings → Accounts → Edit → Server → Mail API route**. Authorizing stages a separate grant; it does not change the active route. Review migration and its blockers before confirming the switch. See the [Settings guide](user-guide/features/settings.md#server-tab) for the workflow and [API migration reference](MAIL_APIS.md#migration-and-rollback) for storage and recovery details.
 
-Migration saves a local database snapshot, preserves the account and credentials, and hides the old IMAP folders while correlating API messages. Ambiguous message matches remain uncorrelated; migration does not promise to carry every local flag across those matches. **Return to IMAP / SMTP** switches routes back and reports unfinished API actions. It does not restore the snapshot or undo provider changes made while the API route was active. Full snapshot restoration is not implemented.
+Migration saves a local database snapshot, preserves the account and credentials, and hides the old IMAP folders while correlating API messages. Messages without a Message-ID and ambiguous or duplicate matches remain uncorrelated (they show once from the API without local-only state such as cached bodies); migration does not promise to carry every local flag across those matches. **Return to IMAP / SMTP** switches routes back and reports unfinished API actions. It does not restore the snapshot or undo provider changes made while the API route was active. Full snapshot restoration is not implemented.
 
 Current API routes support sending, receiving and queued flag/folder actions, with these limits:
 

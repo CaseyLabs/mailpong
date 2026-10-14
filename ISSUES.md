@@ -7,10 +7,10 @@ The 2026-10-08 audit used “unverified” for reported findings not confirmed a
 ## Index
 
 - [SEND — Sending, privacy and compatibility](#send): [MA1](#ma1), [PD2](#pd2) (resolved: [CD2](#cd2))
-- [API — Provider API activation and migration](#api): [MA4](#ma4), [F5b-1](#f5b-1), [F5b-2](#f5b-2), [F5b-3](#f5b-3)
-- [SYNC — Mail synchronization and action reliability](#sync): [R2](#r2), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6) (resolved: [R3](#r3), [R4](#r4))
+- [API — Provider API activation and migration](#api): [MA4](#ma4), [F5b-1](#f5b-1), [F5b-3](#f5b-3)
+- [SYNC — Mail synchronization and action reliability](#sync): none (resolved: [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [CHAT — Chat composer sender review](#chat): [CH1](#ch1) (resolved: [R1](#r1))
-- [MAINT — Maintenance and documentation](#maint): [MA2](#ma2), [D2](#d2), [SY1](#sy1), [DOC4](#doc4), [DOC5](#doc5), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI3](#ui3)
+- [MAINT — Maintenance and documentation](#maint): [MA2](#ma2), [D2](#d2), [SY1](#sy1), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI3](#ui3) (resolved: [DOC4](#doc4), [DOC5](#doc5))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
 - [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
 
@@ -82,18 +82,6 @@ Project: [API](PLAN.md#api).
 
 - **F5b-1 (low)** — `app/api_migration.go` `RollbackMailAPIMigration`: full snapshot restore is not implemented; after a rollback only route state changes, so API-era local changes stay. F5c shows the snapshot path with a note but does not offer restore; it needs its own live-DB replacement design and data-loss UX.
 
-<a id="f5b-2"></a>
-
-### F5b-2 — Ambiguous migration correlation
-
-- **Owner / milestone:** [API](PLAN.md#api) / [API-4](PLAN.md#api-4).
-- **Severity / proposed priority / status:** low / P2 / deferred.
-- **Dependencies / gates:** Do not guess identity for ambiguous duplicates.
-- **Resolution criteria:** Fixtures and user guidance establish explicit handling of absent/ambiguous Message-ID without falsely carrying state.
-- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
-
-- **F5b-2 (low)** — `internal/apimigrate` `Correlate`: messages with no Message-ID, or ambiguous duplicates, stay uncorrelated and appear once from the API with no carried local state.
-
 <a id="f5b-3"></a>
 
 ### F5b-3 — Rollback sync progress and scheduler coverage
@@ -117,74 +105,48 @@ Project: [SYNC](PLAN.md#sync).
 ### R2 — Sent-copy reconciliation cost
 
 - **Owner / milestone:** [SYNC](PLAN.md#sync) / [SYNC-4](PLAN.md#sync-4).
-- **Severity / proposed priority / status:** low / P3 / deferred.
-- **Dependencies / gates:** Measure journal growth before selecting a bound.
-- **Resolution criteria:** Focused fixtures show bounded reconciliation work while preserving copy correctness.
-- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
-
-- **R2 low** `internal/submission/sent.go` `ReconcileCopies`: each send runs the
-  observation UPDATE and returns every accepted copy for the account, so cost
-  grows with journal size. Scope it to the new attempt or pending copies.
+- **Severity / proposed priority / status:** low / P3 / resolved.
+- **Resolution / evidence:** SYNC-4 verified 2026-10-14. `saveSentCopies` calls `Store.ReconcileAttempt`, which scopes the observation UPDATE and the copy query to the new attempt; `ReconcileCopies` keeps the whole-account view. Scoped fixture passes. [Validation and limits](docs/validation/sync-4.md).
 
 <a id="sy2"></a>
 
 ### SY2 — Oversized Graph message blocks cursor
 
 - **Owner / milestone:** [SYNC](PLAN.md#sync) / [SYNC-3](PLAN.md#sync-3).
-- **Severity / proposed priority / status:** low / P2 / deferred.
-- **Dependencies / gates:** Define explicit oversize handling; do not silently discard mail.
-- **Resolution criteria:** Oversize fixture demonstrates explicit handling and cursor progress without hiding the skipped-message condition.
-- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
-
-- **Low** `internal/graphapi/read.go` `GetRaw`: a message larger than the 64 MiB cap fails the whole folder run with no skip, so one oversized message blocks that folder's cursor. Found by F4d-3.
+- **Severity / proposed priority / status:** low / P2 / resolved.
+- **Resolution / evidence:** SYNC-3 verified 2026-10-14. A Graph message over the download cap is kept as a header-only row, logged and counted in `GraphResult.Oversize`; the folder cursor advances. Fixture passes. [Validation and limits](docs/validation/sync-3.md).
 
 <a id="sy3"></a>
 
 ### SY3 — Graph delta reconciliation cost
 
 - **Owner / milestone:** [SYNC](PLAN.md#sync) / [SYNC-4](PLAN.md#sync-4).
-- **Severity / proposed priority / status:** low / P3 / deferred.
-- **Dependencies / gates:** Measure large-folder behavior.
-- **Resolution criteria:** Documented bounds and fixtures establish correctness of any selected optimization.
-- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
-
-- **Low** `internal/sync/graphapi.go` `deltaRun`: the reconcile keeps every seen ID in memory and per-message GETs run for each local ID the enumeration missed; large folders are slow but bounded. Found by F4d-3.
+- **Severity / proposed priority / status:** low / P3 / resolved.
+- **Resolution / evidence:** SYNC-4 verified 2026-10-14. `deltaRun` collects listed IDs only for a reconcile and diffs them with the sorted-slice `localOnly` instead of a map; the per-ID verification GETs stay, since they protect moved messages, and are bounded by the missed IDs. [Validation and limits](docs/validation/sync-4.md).
 
 <a id="sy4"></a>
 
 ### SY4 — Gmail reconciliation memory
 
 - **Owner / milestone:** [SYNC](PLAN.md#sync) / [SYNC-4](PLAN.md#sync-4).
-- **Severity / proposed priority / status:** low / P3 / deferred.
-- **Dependencies / gates:** Measure mailbox-size memory growth.
-- **Resolution criteria:** Chosen strategy limits memory without losing IDs or committing incomplete enumeration.
-- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
-
-- **Low** `internal/sync/gmailapi.go` `reconcile`: collects every remote ID into one slice before committing, so memory grows with mailbox size (ID strings only; page requests stay bounded). Found by F4d-2 acceptance.
+- **Severity / proposed priority / status:** low / P3 / resolved.
+- **Resolution / evidence:** SYNC-4 verified 2026-10-14. The duplicate ID map is replaced by `localOnly` (sort and binary search). Synthetic 1M-ID benchmark: 56.6 MB/op to about 0.7 MB/op extra, 162 ms to 75 ms. The enumerated ID slice remains, because nothing commits before enumeration completes. [Validation and limits](docs/validation/sync-4.md).
 
 <a id="sy5"></a>
 
 ### SY5 — Gmail reset requests and 5xx classification
 
 - **Owner / milestone:** [SYNC](PLAN.md#sync) / [SYNC-4](PLAN.md#sync-4).
-- **Severity / proposed priority / status:** low / P3 / deferred.
-- **Dependencies / gates:** Investigate reset work and retry classification separately.
-- **Resolution criteria:** Reset correctness and bounded retries remain verified; 5xx handling and request cost have an explicit policy.
-- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
-
-- **Low** `internal/sync/gmailapi.go` `reconcile`: costs one `minimal` GET per known message on the rare reset path; 5xx responses are treated like rate limits (bounded retries).
+- **Severity / proposed priority / status:** low / P3 / resolved.
+- **Resolution / evidence:** SYNC-4 verified 2026-10-14. Recorded as policy and pinned by tests: a reset costs one `minimal` GET per known message and no raw GET for unchanged ones; a 5xx shares the throttle path with at most `apiRetryLimit` retries and raises no authorization failure. [Validation and limits](docs/validation/sync-4.md).
 
 <a id="sy6"></a>
 
 ### SY6 — Missing Date uses ingest time
 
 - **Owner / milestone:** [SYNC](PLAN.md#sync) / [SYNC-3](PLAN.md#sync-3).
-- **Severity / proposed priority / status:** low / P2 / deferred.
-- **Dependencies / gates:** Provider received-time provenance must be preserved.
-- **Resolution criteria:** Missing/invalid Date fixtures use provider time consistently across full ingests.
-- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
-
-- **Low** `internal/sync/apicommon.go` `parseAPIRaw`: a message with no parseable `Date:` header gets `time.Now()`, not the provider's received time (Gmail `internalDate`, Graph `receivedDateTime`). Such messages sort as new on every full ingest. Found by the branch review.
+- **Severity / proposed priority / status:** low / P2 / resolved.
+- **Resolution / evidence:** SYNC-3 verified 2026-10-14. `parseAPIRaw` uses the provider receive time (Gmail `internalDate`, Graph `receivedDateTime`) for `Date` and `ReceivedAt` when the header is missing. Fixtures pass. [Validation and limits](docs/validation/sync-3.md).
 
 <a id="r3"></a>
 
@@ -294,24 +256,16 @@ Project: [MAINT](PLAN.md#maint).
 ### DOC4 — All Inboxes shortcut guidance
 
 - **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-1](PLAN.md#maint-1).
-- **Severity / proposed priority / status:** low / P3 / deferred.
-- **Dependencies / gates:** Compare canonical shortcut and current sidebar behavior.
-- **Resolution criteria:** User guide describes first visible item and conditional All Inboxes correctly.
-- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
-
-- **DOC4 low** `docs/user-guide/features/keyboard-shortcuts.md:73`: Alt+G is described unconditionally as All Inboxes, but `Sidebar.svelte` selects the first visible item, with All Inboxes only when present. Align with `docs/KEYBOARD_SHORTCUTS.md:37`.
+- **Severity / proposed priority / status:** low / P3 / resolved.
+- **Resolution / evidence:** MAINT-1 verified 2026-10-14. The user guide now describes `Alt+G` as jumping to the top of the sidebar, All Inboxes when present, matching `docs/KEYBOARD_SHORTCUTS.md` and `Sidebar.svelte` `selectFirstFolder`. Docs-only; checked by source comparison and anchor/link grep.
 
 <a id="doc5"></a>
 
 ### DOC5 — Broken FAQ and log links
 
 - **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-1](PLAN.md#maint-1).
-- **Severity / proposed priority / status:** low / P3 / deferred.
-- **Dependencies / gates:** Check destinations in existing guides.
-- **Resolution criteria:** Svelte URL and log-location link resolve to intended existing guidance.
-- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
-
-- **DOC5 low** `docs/user-guide/faq.md:25` has malformed `https:/svelte.dev`; `docs/user-guide/troubleshooting.md:269` links to the absent FAQ anchor `where-are-log-files-located`. Correct the URL and point log guidance to an existing section or supply the missing section.
+- **Severity / proposed priority / status:** low / P3 / resolved.
+- **Resolution / evidence:** MAINT-1 verified 2026-10-14. `faq.md` Svelte URL is `https://svelte.dev`; the `troubleshooting.md` log link points to the existing "Produce debug logs" section. Docs-only; checked by source comparison and anchor/link grep.
 
 <a id="l2"></a>
 

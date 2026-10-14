@@ -50,6 +50,7 @@ type GraphResult struct {
 	Added      int
 	Updated    int
 	Removed    int
+	Oversize   int // messages kept as header-only rows because they exceed the download cap
 }
 
 // Run syncs every mapped folder once: incrementally from its stored delta
@@ -181,7 +182,7 @@ func (g *GraphSync) syncFolder(ctx context.Context, folderID string, fm message.
 func (g *GraphSync) deltaRun(ctx context.Context, folderID, scope string, cur message.APICursor, start string,
 	fm message.GraphFolderMap, res *GraphResult) error {
 	reconcile := start == ""
-	seen := map[string]bool{}
+	var seen []string // IDs the enumeration listed; collected only for a reconcile
 	link := start
 	var final string
 	for final == "" {
@@ -191,9 +192,11 @@ func (g *GraphSync) deltaRun(ctx context.Context, folderID, scope string, cur me
 		}
 		page := v.(*graphapi.DeltaPage)
 		items := page.Items
-		for _, it := range items {
-			if !it.Removed {
-				seen[it.ID] = true
+		if reconcile {
+			for _, it := range items {
+				if !it.Removed {
+					seen = append(seen, it.ID)
+				}
 			}
 		}
 		if err := g.commitBatches(ctx, scope, cur, cur.Cursor, cur.Kind, items, fm, res); err != nil {
@@ -211,10 +214,8 @@ func (g *GraphSync) deltaRun(ctx context.Context, folderID, scope string, cur me
 			return err
 		}
 		var missing []graphapi.Meta
-		for _, id := range local {
-			if !seen[id] {
-				missing = append(missing, graphapi.Meta{ID: id, Removed: true})
-			}
+		for _, id := range localOnly(local, seen) {
+			missing = append(missing, graphapi.Meta{ID: id, Removed: true})
 		}
 		if err := g.commitBatches(ctx, scope, cur, cur.Cursor, cur.Kind, missing, fm, res); err != nil {
 			return err
@@ -236,10 +237,11 @@ func (g *GraphSync) commitBatches(ctx context.Context, scope string, cur message
 			up       *message.APIUpsert
 			gone     bool
 			existing bool
+			oversize bool
 		}
 		outs, err := apiFanOut(ctx, workers, chunk, func(ctx context.Context, m graphapi.Meta) (outcome, error) {
-			up, gone, existing, e := g.process(ctx, m, fm)
-			return outcome{up, gone, existing}, e
+			up, gone, existing, oversize, e := g.process(ctx, m, fm)
+			return outcome{up, gone, existing, oversize}, e
 		})
 		if err != nil {
 			return err
@@ -253,6 +255,9 @@ func (g *GraphSync) commitBatches(ctx context.Context, scope string, cur message
 				res.Removed++
 			case o.up != nil:
 				page.Upserts = append(page.Upserts, *o.up)
+				if o.oversize {
+					res.Oversize++
+				}
 				if o.existing {
 					res.Updated++
 				} else {
@@ -271,20 +276,20 @@ func (g *GraphSync) commitBatches(ctx context.Context, scope string, cur message
 // a flags-only refresh when only the change key moved, and otherwise a full
 // ingest from the raw message. A removed entry is verified first, since a
 // message moved to another folder leaves this folder's delta as removed.
-func (g *GraphSync) process(ctx context.Context, meta graphapi.Meta, fm message.GraphFolderMap) (up *message.APIUpsert, gone, existing bool, err error) {
+func (g *GraphSync) process(ctx context.Context, meta graphapi.Meta, fm message.GraphFolderMap) (up *message.APIUpsert, gone, existing, oversize bool, err error) {
 	store := g.Engine.messageStore
 	ref, rows, err := store.GetAPIRef(g.AccountID, graphProvider, meta.ID)
 	if err != nil {
-		return nil, false, false, err
+		return nil, false, false, false, err
 	}
 	existing = ref != nil
 	if meta.Removed {
 		v, err := g.backoff(ctx, func() (any, error) { return g.Reader.GetMeta(ctx, meta.ID) })
 		if errors.Is(err, graphapi.ErrMessageGone) {
-			return nil, existing, existing, nil
+			return nil, existing, existing, false, nil
 		}
 		if err != nil {
-			return nil, false, existing, err
+			return nil, false, existing, false, err
 		}
 		meta = *v.(*graphapi.Meta)
 	}
@@ -295,13 +300,13 @@ func (g *GraphSync) process(ctx context.Context, meta graphapi.Meta, fm message.
 	for _, f := range mapping.Folders {
 		id, err := g.folderCache.ensure(f)
 		if err != nil {
-			return nil, false, existing, err
+			return nil, false, existing, false, err
 		}
 		folderIDs = append(folderIDs, id)
 	}
 	if existing && len(rows) == len(folderIDs) && !slices.ContainsFunc(folderIDs, func(id string) bool { _, ok := rows[id]; return !ok }) {
 		if ref.Version == meta.ChangeKey && slices.Equal(ref.Containers, newRef.Containers) {
-			return nil, false, true, nil
+			return nil, false, true, false, nil
 		}
 		if !meta.IsDraft { // only drafts change content in place; everything else is flags/categories
 			up := &message.APIUpsert{Ref: newRef}
@@ -309,20 +314,31 @@ func (g *GraphSync) process(ctx context.Context, meta graphapi.Meta, fm message.
 				up.Rows = append(up.Rows, message.APIRow{FlagsOnly: true, Message: message.Message{
 					FolderID: id, IsRead: meta.IsRead, IsStarred: meta.Flagged, IsDraft: meta.IsDraft}})
 			}
-			return up, false, true, nil
+			return up, false, true, false, nil
 		}
 	}
 	if len(folderIDs) == 0 { // moved into a folder with no mapping: keep the identity, drop the rows
-		return &message.APIUpsert{Ref: newRef}, false, existing, nil
+		return &message.APIUpsert{Ref: newRef}, false, existing, false, nil
 	}
 	v, err := g.backoff(ctx, func() (any, error) { return g.Reader.GetRaw(ctx, meta.ID) })
 	if errors.Is(err, graphapi.ErrMessageGone) {
-		return nil, existing, existing, nil
+		return nil, existing, existing, false, nil
 	}
-	if err != nil {
-		return nil, false, existing, err
+	var m message.Message
+	var extras *message.APIRowExtras
+	switch {
+	case errors.Is(err, graphapi.ErrMessageTooLarge):
+		// Keep the message as a header-only row so the folder cursor advances
+		// and the mail stays visible; opening it reports the size limit.
+		g.Engine.log.Warn().Str("account", g.AccountID).Str("remoteID", meta.ID).Msg("Graph message exceeds the download size limit; kept as a header-only row")
+		m = oversizeMessage(g.AccountID, meta)
+		m.ThreadID = g.Engine.computeThreadID(g.AccountID, &m)
+		oversize = true
+	case err != nil:
+		return nil, false, existing, false, err
+	default:
+		m, extras = g.Engine.parseAPIRaw(g.AccountID, meta.ID, "graph.invalid", meta.ReceivedAt, v.([]byte))
 	}
-	m, extras := g.Engine.parseAPIRaw(g.AccountID, meta.ID, "graph.invalid", v.([]byte))
 	m.IsRead, m.IsStarred, m.IsDraft = meta.IsRead, meta.Flagged, meta.IsDraft
 	out := &message.APIUpsert{Ref: newRef}
 	for _, id := range folderIDs {
@@ -330,7 +346,7 @@ func (g *GraphSync) process(ctx context.Context, meta graphapi.Meta, fm message.
 		row.FolderID = id
 		out.Rows = append(out.Rows, message.APIRow{Message: row, Extras: extras})
 	}
-	return out, false, existing, nil
+	return out, false, existing, oversize, nil
 }
 
 // dropFolder reconciles a folder that no longer exists: each message it held
@@ -393,4 +409,18 @@ func (g *GraphSync) backoff(ctx context.Context, do func() (any, error)) (any, e
 		}
 		return false, 0
 	}, do)
+}
+
+// oversizeMessage builds the header-only row for a message past the download
+// cap from its metadata. The body stays unfetched, and the snippet says why.
+func oversizeMessage(accountID string, meta graphapi.Meta) message.Message {
+	m := message.Message{
+		AccountID: accountID, Subject: meta.Subject, FromName: meta.FromName, FromEmail: meta.FromEmail,
+		MessageID: meta.ID + "@graph.invalid", Snippet: "This message is too large to download.",
+	}
+	applyInternalDate(&m, meta.ReceivedAt)
+	if m.Date.IsZero() {
+		m.Date = time.Now().UTC()
+	}
+	return m
 }

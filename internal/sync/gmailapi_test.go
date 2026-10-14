@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	gosync "sync"
 	"testing"
@@ -30,6 +31,8 @@ type fakeGmailMsg struct {
 	labels  []string
 	thread  string
 	history string
+	// internalMS is the internalDate answer in epoch milliseconds ("" omits it).
+	internalMS string
 }
 
 // fakeGmail serves the read endpoints from memory. Hooks let a test inject
@@ -105,6 +108,9 @@ func (f *fakeGmail) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		resp := map[string]any{"id": id, "threadId": m.thread, "labelIds": m.labels, "historyId": m.history}
+		if m.internalMS != "" {
+			resp["internalDate"] = m.internalMS
+		}
 		if r.URL.Query().Get("format") == "raw" {
 			f.rawGets = append(f.rawGets, id)
 			resp["raw"] = base64.RawURLEncoding.EncodeToString([]byte(m.raw))
@@ -598,5 +604,87 @@ func TestGmailAPIRequiresReadCapability(t *testing.T) {
 	}
 	if len(r.fails) != 1 || r.fails[0] != oauth2.MailAPIFailurePartialConsent {
 		t.Fatalf("failures = %v", r.fails)
+	}
+}
+
+func TestGmailAPIMissingDateUsesInternalDate(t *testing.T) {
+	r := newGmailRig(t)
+	noDate := "From: S <s@example.com>\r\nSubject: No date\r\nMessage-ID: <nd@example.com>\r\nContent-Type: text/plain\r\n\r\nbody\r\n"
+	r.add("nd", []string{"INBOX"}, noDate, "50")
+	want := time.Date(2025, 3, 4, 5, 6, 7, 0, time.UTC)
+	r.fake.msgs["nd"].internalMS = strconv.FormatInt(want.UnixMilli(), 10)
+	if _, err := r.run(); err != nil {
+		t.Fatal(err)
+	}
+	rows := r.folderRows("INBOX")
+	if len(rows) != 1 || !rows[0].Date.Equal(want) {
+		t.Fatalf("rows = %+v, want Date %v", rows, want)
+	}
+	m, err := r.store.Get(rows[0].ID)
+	if err != nil || !m.ReceivedAt.Equal(want) {
+		t.Fatalf("ReceivedAt = %v, %v; want %v", m.ReceivedAt, err, want)
+	}
+}
+
+// TestGmailAPIResetRequestCost pins the reset-path cost policy (SY5): the
+// reconcile list returns IDs only, so each known message costs exactly one
+// minimal GET to compare versions, and unchanged messages are never fetched raw.
+func TestGmailAPIResetRequestCost(t *testing.T) {
+	r := newGmailRig(t)
+	const known = 25
+	for i := range known {
+		id := fmt.Sprintf("m%d", i)
+		r.add(id, []string{"INBOX"}, plainMail(id, id, "b"), "10")
+	}
+	if _, err := r.run(); err != nil {
+		t.Fatal(err)
+	}
+	r.fake.expired, r.fake.profile = true, "200"
+	minimal := 0
+	r.fake.setHook(func(req *http.Request) (int, string, map[string]string) {
+		if strings.HasPrefix(req.URL.Path, "/messages/") && req.URL.Query().Get("format") == "minimal" {
+			minimal++
+		}
+		return 0, "", nil
+	})
+	r.fake.mu.Lock()
+	r.fake.rawGets = nil
+	r.fake.mu.Unlock()
+	res, err := r.run()
+	if err != nil || !res.Reconciled || res.Added != 0 || res.Updated != 0 {
+		t.Fatalf("Run = %+v, %v", res, err)
+	}
+	r.fake.mu.Lock()
+	raw := len(r.fake.rawGets)
+	r.fake.mu.Unlock()
+	if minimal != known || raw != 0 {
+		t.Fatalf("reset cost: %d minimal GETs (want %d), %d raw GETs (want 0)", minimal, known, raw)
+	}
+}
+
+// TestGmailAPIServerErrorBounded pins the 5xx policy (SY5): a 5xx pauses like a
+// throttle, is retried at most apiRetryLimit times, and never raises an
+// authorization failure.
+func TestGmailAPIServerErrorBounded(t *testing.T) {
+	r := newGmailRig(t)
+	r.add("a", []string{"INBOX"}, plainMail("a", "A", "b"), "1")
+	attempts := 0
+	r.fake.setHook(func(req *http.Request) (int, string, map[string]string) {
+		if req.URL.Path == "/messages/a" {
+			attempts++
+			return 503, "{}", nil
+		}
+		return 0, "", nil
+	})
+	_, err := r.run()
+	var re *gmailapi.ReadError
+	if !asReadError(err, &re) || re.Status != 503 {
+		t.Fatalf("err = %#v", err)
+	}
+	if attempts != apiRetryLimit+1 || len(r.sleeps) != apiRetryLimit {
+		t.Fatalf("attempts = %d, sleeps = %v; want %d attempts", attempts, r.sleeps, apiRetryLimit+1)
+	}
+	if len(r.fails) != 0 {
+		t.Fatalf("a 5xx must not raise an authorization failure: %v", r.fails)
 	}
 }

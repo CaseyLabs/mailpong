@@ -62,6 +62,8 @@ func (a *App) fetchAPIRaw(ctx context.Context, route *account.MailAPIRoute, msg 
 	switch {
 	case errors.Is(err, gmailapi.ErrMessageGone), errors.Is(err, graphapi.ErrMessageGone):
 		return nil, errors.New("this message no longer exists on the server")
+	case errors.Is(err, graphapi.ErrMessageTooLarge):
+		return nil, errors.New("this message is too large to download")
 	case err != nil:
 		return nil, fmt.Errorf("failed to read message from the mail API: %w", err)
 	}

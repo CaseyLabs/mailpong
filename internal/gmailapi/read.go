@@ -77,6 +77,9 @@ type Message struct {
 	LabelIDs  []string
 	HistoryID string
 	Raw       []byte
+	// InternalDate is Gmail's receive time (zero when absent), used when the
+	// message has no usable Date header.
+	InternalDate time.Time
 }
 
 // HistoryRecord is one change; only the fields the sync uses are decoded.
@@ -284,11 +287,15 @@ func (r *Reader) getMessage(ctx context.Context, id, format string) (*Message, e
 		LabelIDs  []string `json:"labelIds"`
 		HistoryID string   `json:"historyId"`
 		Raw       string   `json:"raw"`
+		Internal  string   `json:"internalDate"` // milliseconds since the epoch
 	}
 	if err := json.Unmarshal(body, &out); err != nil {
 		return nil, fmt.Errorf("decode message %s: %w", id, err)
 	}
 	m := &Message{ID: out.ID, ThreadID: out.ThreadID, LabelIDs: out.LabelIDs, HistoryID: out.HistoryID}
+	if ms, perr := strconv.ParseInt(out.Internal, 10, 64); perr == nil && ms > 0 {
+		m.InternalDate = time.UnixMilli(ms).UTC()
+	}
 	if m.ID == "" {
 		return nil, fmt.Errorf("gmail message %s: response has no id", id)
 	}

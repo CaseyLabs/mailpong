@@ -162,3 +162,38 @@ func TestCountSubmissionsAndRecordRoundTrip(t *testing.T) {
 		t.Fatalf("record = %+v, %v", r, err)
 	}
 }
+
+func TestCorrelateLeavesAbsentAndSharedIdentityUncorrelated(t *testing.T) {
+	db := openDB(t)
+	seed(t, db)
+	// a6: API row without Message-ID. a7/a8: two API rows claiming the one
+	// IMAP row i2. IMAP row i9 has no Message-ID and must never match.
+	mustExec(t, db, `INSERT INTO messages (id, account_id, folder_id, uid, message_id, date, body_fetched) VALUES
+		('a6','a','fa',6,NULL,'2026-01-06 10:00:00',0),
+		('a7','a','fa',7,'<two@x>','2026-01-02 10:00:00',0),
+		('a8','a','fa',8,'<two@x>','2026-01-02 10:00:00',0),
+		('i9','a','fi',9,'','2026-01-06 10:00:00',1)`)
+	for _, id := range []string{"a6", "a7", "a8"} {
+		mustExec(t, db, `INSERT OR IGNORE INTO api_message_refs(account_id,provider,remote_id) VALUES('a','gmail',?)`, "r-"+id)
+		mustExec(t, db, `INSERT INTO api_message_rows(message_id,account_id,provider,remote_id) VALUES(?,'a','gmail',?)`, id, "r-"+id)
+	}
+	res, err := NewStore(db).Correlate("a")
+	if err != nil {
+		t.Fatal(err)
+	}
+	// a1 correlates; a3 (IMAP duplicates), a7+a8 (shared IMAP row) are ambiguous;
+	// a5 has no IMAP counterpart; a6 has no Message-ID.
+	want := CorrelateResult{Correlated: 1, Uncorrelated: 5, Ambiguous: 3, NoMessageID: 1}
+	if res != want {
+		t.Fatalf("result = %+v, want %+v", res, want)
+	}
+	for _, id := range []string{"a3", "a5", "a6", "a7", "a8"} {
+		var fetched int
+		if err := db.QueryRow(`SELECT body_fetched FROM messages WHERE id=?`, id).Scan(&fetched); err != nil {
+			t.Fatal(err)
+		}
+		if fetched != 0 {
+			t.Fatalf("%s received carried state", id)
+		}
+	}
+}

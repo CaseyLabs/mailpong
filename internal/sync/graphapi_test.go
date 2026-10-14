@@ -23,6 +23,7 @@ import (
 
 type fakeGraphMsg struct {
 	parent, change, conv, raw string
+	subject, received         string // metadata answers; "" omits them
 	read, flagged, draft      bool
 }
 
@@ -67,8 +68,12 @@ func (f *fakeGraph) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if m.flagged {
 			flag = "flagged"
 		}
-		return map[string]any{"id": id, "parentFolderId": m.parent, "changeKey": m.change, "conversationId": m.conv,
-			"isRead": m.read, "isDraft": m.draft, "flag": map[string]string{"flagStatus": flag}}
+		w := map[string]any{"id": id, "parentFolderId": m.parent, "changeKey": m.change, "conversationId": m.conv,
+			"isRead": m.read, "isDraft": m.draft, "flag": map[string]string{"flagStatus": flag}, "subject": m.subject, "from": map[string]any{"emailAddress": map[string]string{"name": "Sender", "address": "s@example.com"}}}
+		if m.received != "" {
+			w["receivedDateTime"] = m.received
+		}
+		return w
 	}
 	p := strings.TrimPrefix(r.URL.Path, "/me/")
 	switch parts := strings.Split(p, "/"); {
@@ -450,5 +455,54 @@ func TestGraphSyncFixturesParseLikeIMAP(t *testing.T) {
 	atts, err := message.NewAttachmentStore(r.db).GetByMessage(m.ID)
 	if err != nil || len(atts) != 1 || atts[0].Filename != "r.pdf" {
 		t.Fatalf("attachments = %+v, %v", atts, err)
+	}
+}
+
+func TestGraphSyncOversizeMessageKeepsFolderMoving(t *testing.T) {
+	r := newGraphRig(t)
+	r.g.Reader.MaxRawBytes = 2048
+	r.add("small", "inbox-id", "k1", plainMail("small", "Small", "body"))
+	r.add("big", "inbox-id", "k1", plainMail("big", "Big", strings.Repeat("x", 4096)))
+	r.fake.msgs["big"].subject, r.fake.msgs["big"].received = "Big", "2025-05-06T07:08:09Z"
+	res, err := r.run()
+	if err != nil || res.Added != 2 || res.Oversize != 1 {
+		t.Fatalf("Run = %+v, %v", res, err)
+	}
+	if c, _ := r.store.LoadAPICursor("acct-1", "folder:inbox-id"); c.Cursor == "" || c.Invalid {
+		t.Fatalf("cursor did not advance: %+v", c)
+	}
+	var big *message.MessageHeader
+	for _, h := range r.rows("Inbox") {
+		if h.Subject == "Big" {
+			big = h
+		}
+	}
+	if big == nil || !big.Date.Equal(time.Date(2025, 5, 6, 7, 8, 9, 0, time.UTC)) || big.FromEmail != "s@example.com" {
+		t.Fatalf("header-only row = %+v", big)
+	}
+	if m, err := r.store.Get(big.ID); err != nil || m.BodyFetched {
+		t.Fatalf("oversize row should be unfetched: %+v, %v", m, err)
+	}
+	// An unchanged second run neither refetches nor recounts it.
+	if res, err = r.run(); err != nil || res.Oversize != 0 || res.Added+res.Updated != 0 {
+		t.Fatalf("idle run = %+v, %v", res, err)
+	}
+}
+
+func TestGraphSyncMissingDateUsesReceivedTime(t *testing.T) {
+	r := newGraphRig(t)
+	noDate := "From: S <s@example.com>\r\nSubject: No date\r\nMessage-ID: <nd@example.com>\r\nContent-Type: text/plain\r\n\r\nbody\r\n"
+	r.add("nd", "inbox-id", "k1", noDate)
+	r.fake.msgs["nd"].received = "2025-03-04T05:06:07Z"
+	if _, err := r.run(); err != nil {
+		t.Fatal(err)
+	}
+	want := time.Date(2025, 3, 4, 5, 6, 7, 0, time.UTC)
+	rows := r.rows("Inbox")
+	if len(rows) != 1 || !rows[0].Date.Equal(want) {
+		t.Fatalf("rows = %+v, want Date %v", rows, want)
+	}
+	if m, err := r.store.Get(rows[0].ID); err != nil || !m.ReceivedAt.Equal(want) {
+		t.Fatalf("ReceivedAt = %v, %v; want %v", m.ReceivedAt, err, want)
 	}
 }

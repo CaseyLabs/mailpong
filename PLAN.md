@@ -9,10 +9,10 @@ Priorities are recommendations assigned in this reorganization: P1 privacy/data 
 | Project | Status | Proposed priority | Unresolved issues | Candidate / gate |
 | --- | --- | --- | --- | --- |
 | [SEND — Sending, privacy and compatibility](#send) | proposed | P1 | [2](ISSUES.md#send) | SEND-2/3 require live authorization |
-| [API — Provider API activation and migration](#api) | proposed | P2 | [4](ISSUES.md#api) | API-1 or API-2 design; API-3 gated by API-2 |
-| [SYNC — Mail synchronization and action reliability](#sync) | proposed | P1 | [6](ISSUES.md#sync) | SYNC-3/4 |
+| [API — Provider API activation and migration](#api) | proposed | P2 | [3](ISSUES.md#api) | API-1 or API-2 design; API-3 gated by API-2 |
+| [SYNC — Mail synchronization and action reliability](#sync) | proposed | P1 | [0](ISSUES.md#sync) | none; SYNC-1–4 done |
 | [CHAT — Chat composer sender review](#chat) | proposed | P3 | [1](ISSUES.md#chat) | CH1 unassigned (cosmetic) |
-| [MAINT — Maintenance and documentation](#maint) | proposed | P2 | [10](ISSUES.md#maint) | MAINT-1; MAINT-3 external; D2 deferred/upstream blocked |
+| [MAINT — Maintenance and documentation](#maint) | proposed | P2 | [8](ISSUES.md#maint) | MAINT-3 external; D2 deferred/upstream blocked |
 | [AI — AI development workflows](#ai) | deferred | P3 | [1](ISSUES.md#ai) | G4 deferred; no eligible work |
 | [WAILS — Desktop framework migration assessment](#wails) | proposed | P3 | [0](ISSUES.md#wails) | W3-M0 assessment only |
 
@@ -26,7 +26,7 @@ No live provider access, test emails, credentials changes, mailbox migration, pr
 
 ## Progress
 
-CHAT-1 is done and R1 resolved. MAINT-4 is done ([validation evidence](docs/validation/maint-4.md)); its findings UI1–UI3 remain open. SEND-1 is done and CD2 resolved; SYNC-1 is done and R3 resolved ([evidence](docs/validation/sync-1.md)); SYNC-2 is done and R4 resolved ([evidence](docs/validation/sync-2.md)); see [validation evidence](docs/validation/send-1.md). Other proposed milestones remain unselected; SEND-2/3, API-3 and MAINT-3 retain their gates, and G4/D2 remain deferred.
+CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-4 is done ([validation evidence](docs/validation/maint-4.md)); its findings UI1–UI3 remain open. SEND-1 is done and CD2 resolved; SYNC-1 is done and R3 resolved ([evidence](docs/validation/sync-1.md)); SYNC-2 is done and R4 resolved ([evidence](docs/validation/sync-2.md)); SYNC-3 is done and SY2/SY6 resolved ([evidence](docs/validation/sync-3.md)); API-4 is done and F5b-2 resolved ([evidence](docs/validation/api-4.md)); SYNC-4 is done and R2/SY3/SY4/SY5 resolved ([evidence](docs/validation/sync-4.md)); see [validation evidence](docs/validation/send-1.md). Other proposed milestones remain unselected; SEND-2/3, API-3 and MAINT-3 retain their gates, and G4/D2 remain deferred.
 
 <a id="send"></a>
 
@@ -112,11 +112,11 @@ CHAT-1 is done and R1 resolved. MAINT-4 is done ([validation evidence](docs/vali
 
 ### API-4 — Migration correlation follow-up
 
-- **Status / proposed priority:** proposed / P2. **Dependencies / gates:** none.
+- **Status / proposed priority:** done / P2. **Dependencies / gates:** none.
 - **Scope / deliverable:** Investigate absent/ambiguous Message-ID handling and propose safe state-carrying behavior or explicit limitation guidance.
 - **Acceptance:** No ambiguous identity is guessed; fixtures cover absent IDs and duplicates; selected behavior and limitations are documented.
 - **Validation:** Focused internal/apimigrate fixtures; guarded migration UI if changed.
-- **Issues:** [F5b-2](ISSUES.md#f5b-2). **Progress:** not started.
+- **Issues:** F5b-2 (resolved). **Progress:** done ([evidence](docs/validation/api-4.md)).
 
 <a id="api-5"></a>
 
@@ -162,21 +162,21 @@ CHAT-1 is done and R1 resolved. MAINT-4 is done ([validation evidence](docs/vali
 
 ### SYNC-3 — Ingest cursor and timestamp correctness
 
-- **Status / proposed priority:** proposed / P2. **Dependencies / gates:** none.
+- **Status / proposed priority:** done / P2. **Dependencies / gates:** none.
 - **Scope / deliverable:** Scope oversize Graph handling and provider received-time preservation as separate substeps.
 - **Acceptance:** Oversize messages do not silently block an entire folder; missing Date uses stable provider time without falsely sorting as newly received.
 - **Validation:** Disposable Graph/Gmail raw-message and cursor fixtures; relevant sync tests.
-- **Issues:** [SY2](ISSUES.md#sy2), [SY6](ISSUES.md#sy6). **Progress:** not started.
+- **Issues:** [SY2](ISSUES.md#sy2), [SY6](ISSUES.md#sy6). **Progress:** Oversize Graph messages become header-only rows and the cursor advances; missing Date uses the provider receive time. Fixtures pass; no live check. [Evidence](docs/validation/sync-3.md).
 
 <a id="sync-4"></a>
 
 ### SYNC-4 — Bounded reconciliation investigation
 
-- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** none; [SYNC-1](#sync-1) takes priority among independent work.
+- **Status / proposed priority:** done / P3. **Dependencies / gates:** none; [SYNC-1](#sync-1) takes priority among independent work.
 - **Scope / deliverable:** Measure journal/folder growth, reset request cost and 5xx policy; select bounded optimizations from evidence.
 - **Acceptance:** Reproducible synthetic measurements and correctness fixtures justify changes; enumeration/copy correctness and retry bounds remain intact.
 - **Validation:** Focused synthetic large-folder/journal tests; no live mailbox benchmarking.
-- **Issues:** [R2](ISSUES.md#r2), [SY3](ISSUES.md#sy3), [SY4](ISSUES.md#sy4), [SY5](ISSUES.md#sy5). **Progress:** not started.
+- **Issues:** [R2](ISSUES.md#r2), [SY3](ISSUES.md#sy3), [SY4](ISSUES.md#sy4), [SY5](ISSUES.md#sy5). **Progress:** R2 scoped to the new attempt; SY3/SY4 drop the per-ID map for a sorted-slice diff (1M IDs: 56.6 MB to ~0.7 MB extra); SY5 pinned as policy by request-count and bounded-5xx fixtures. No live check. [Evidence](docs/validation/sync-4.md).
 
 <a id="chat"></a>
 
@@ -212,11 +212,11 @@ CHAT-1 is done and R1 resolved. MAINT-4 is done ([validation evidence](docs/vali
 
 ### MAINT-1 — User guide corrections
 
-- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** none.
+- **Status / proposed priority:** done / P3. **Dependencies / gates:** none.
 - **Scope / deliverable:** Correct conditional shortcut guidance, malformed Svelte URL and log-location link.
 - **Acceptance:** Guides match canonical shortcut behavior and all corrected destinations exist.
 - **Validation:** Targeted source/doc comparison and Markdown/link checks; no product code needed.
-- **Issues:** [DOC4](ISSUES.md#doc4), [DOC5](ISSUES.md#doc5). **Progress:** not started.
+- **Issues:** [DOC4](ISSUES.md#doc4), [DOC5](ISSUES.md#doc5). **Progress:** `Alt+G` guidance, Svelte URL and log link corrected (docs only, base `0a0ea88`); source comparison and link grep pass; no live check.
 
 <a id="maint-2"></a>
 

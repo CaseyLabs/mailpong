@@ -108,12 +108,25 @@ func (s *Store) SetCopyState(c Copy, state, evidence string) error {
 
 // ReconcileCopies only observes already-synced messages, by stable Message-ID
 // and exact destination. Missing local evidence may mean delayed discovery.
-// It does not send, append, or infer delivery from a Sent copy.
+// It does not send, append, or infer delivery from a Sent copy. It covers every
+// accepted attempt for the account; per-send callers use ReconcileAttempt.
 func (s *Store) ReconcileCopies(accountID string) ([]Copy, error) {
-	if err := s.write(`UPDATE submission_copies SET state='observed', evidence='Message-ID found in intended destination' WHERE state<>'observed' AND EXISTS(SELECT 1 FROM submission_attempts a JOIN messages m ON TRIM(m.message_id,'<>')=TRIM(a.message_id,'<>') JOIN folders f ON f.id=m.folder_id WHERE a.id=submission_copies.attempt_id AND a.account_id=? AND a.outcome='accepted' AND m.account_id=submission_copies.account_id AND f.account_id=submission_copies.account_id AND f.path=submission_copies.folder_path)`, accountID); err != nil {
+	return s.reconcile(accountID, "")
+}
+
+// ReconcileAttempt is ReconcileCopies scoped to one attempt, so the cost of a
+// send does not grow with the account's submission journal.
+func (s *Store) ReconcileAttempt(accountID, attemptID string) ([]Copy, error) {
+	return s.reconcile(accountID, attemptID)
+}
+
+// reconcile observes copies for the account's accepted attempts, or only for
+// attemptID when it is non-empty.
+func (s *Store) reconcile(accountID, attemptID string) ([]Copy, error) {
+	if err := s.write(`UPDATE submission_copies SET state='observed', evidence='Message-ID found in intended destination' WHERE state<>'observed' AND (?='' OR attempt_id=?) AND EXISTS(SELECT 1 FROM submission_attempts a JOIN messages m ON TRIM(m.message_id,'<>')=TRIM(a.message_id,'<>') JOIN folders f ON f.id=m.folder_id WHERE a.id=submission_copies.attempt_id AND a.account_id=? AND a.outcome='accepted' AND m.account_id=submission_copies.account_id AND f.account_id=submission_copies.account_id AND f.path=submission_copies.folder_path)`, attemptID, attemptID, accountID); err != nil {
 		return nil, err
 	}
-	rows, err := s.db.Query(`SELECT c.attempt_id,a.message_id,c.account_id,c.folder_path,c.mode,c.state,c.evidence,c.mailbox_route FROM submission_copies c JOIN submission_attempts a ON a.id=c.attempt_id WHERE a.account_id=? AND a.outcome='accepted' ORDER BY a.created_at DESC`, accountID)
+	rows, err := s.db.Query(`SELECT c.attempt_id,a.message_id,c.account_id,c.folder_path,c.mode,c.state,c.evidence,c.mailbox_route FROM submission_copies c JOIN submission_attempts a ON a.id=c.attempt_id WHERE a.account_id=? AND a.outcome='accepted' AND (?='' OR c.attempt_id=?) ORDER BY a.created_at DESC`, accountID, attemptID, attemptID)
 	if err != nil {
 		return nil, err
 	}

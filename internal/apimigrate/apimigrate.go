@@ -169,8 +169,12 @@ func (s *Store) Snapshot(dir, accountID string, route json.RawMessage, now time.
 type CorrelateResult struct {
 	Correlated   int `json:"correlated"`
 	Uncorrelated int `json:"uncorrelated"`
-	// Ambiguous API rows matched more than one IMAP row and were left alone.
+	// Ambiguous API rows matched more than one IMAP row, or shared their one
+	// match with another API row, and were left alone.
 	Ambiguous int `json:"ambiguous"`
+	// NoMessageID API rows carry no Message-ID, so no identity exists to match
+	// on; they are also counted in Uncorrelated.
+	NoMessageID int `json:"noMessageId"`
 }
 
 type localRow struct {
@@ -182,7 +186,8 @@ type localRow struct {
 // that represent the same messages. A pair shares a Message-ID and a date
 // (to the second); when several IMAP rows match, the ones in a folder of the
 // same type win, and a remaining tie leaves the API row uncorrelated rather
-// than guessing. IMAP rows are never deleted or changed, so rollback keeps
+// than guessing. An IMAP row claimed by several API rows (duplicate API
+// messages) is likewise ambiguous: none of them receives its state. IMAP rows are never deleted or changed, so rollback keeps
 // them. It is idempotent: it only fills values the API row lacks.
 func (s *Store) Correlate(accountID string) (CorrelateResult, error) {
 	var res CorrelateResult
@@ -246,9 +251,15 @@ func (s *Store) Correlate(accountID string) (CorrelateResult, error) {
 		return res, fmt.Errorf("failed to begin correlation: %w", err)
 	}
 	defer func() { _ = tx.Rollback() }()
+	// First pass: pick each API row's single IMAP match, if any, and count how
+	// many API rows claim each IMAP row.
+	type pair struct{ api, imap string }
+	var matches []pair
+	claims := map[string]int{}
 	for _, r := range api {
 		if r.mid == "" {
 			res.Uncorrelated++
+			res.NoMessageID++
 			continue
 		}
 		cands := imap[key(r.mid, r.date)]
@@ -264,13 +275,21 @@ func (s *Store) Correlate(accountID string) (CorrelateResult, error) {
 		switch {
 		case len(same) == 0:
 			res.Uncorrelated++
-			continue
 		case len(same) > 1:
+			res.Uncorrelated++
+			res.Ambiguous++
+		default:
+			matches = append(matches, pair{r.id, same[0].id})
+			claims[same[0].id]++
+		}
+	}
+	for _, m := range matches {
+		if claims[m.imap] > 1 {
 			res.Uncorrelated++
 			res.Ambiguous++
 			continue
 		}
-		if err := carryState(tx, same[0].id, r.id, hasContent); err != nil {
+		if err := carryState(tx, m.imap, m.api, hasContent); err != nil {
 			return res, err
 		}
 		res.Correlated++

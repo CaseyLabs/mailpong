@@ -70,7 +70,7 @@ These shortcuts depend on which pane is focused. They are disabled when typing i
 |----------|--------|
 | `Up` / `K` | Navigate to previous folder |
 | `Down` / `J` | Navigate to next folder |
-| `Alt+G` | Jump to All Inboxes |
+| `Alt+G` | Jump to the top of the sidebar (All Inboxes when present) |
 | `Alt+Shift+G` | Jump to the last expanded folder or account |
 | `Alt + Enter` / `Space` | Expand/collapse account (when account header is focused) |
 | `Alt(L) + Alt(R)` | Brings up context menu for the focused folder |

@@ -144,16 +144,7 @@ func (g *GmailSync) reconcile(ctx context.Context, cur message.APICursor, labels
 	if err != nil {
 		return err
 	}
-	inRemote := make(map[string]bool, len(remote))
-	for _, id := range remote {
-		inRemote[id] = true
-	}
-	var removals []string
-	for _, id := range local {
-		if !inRemote[id] {
-			removals = append(removals, id)
-		}
-	}
+	removals := localOnly(local, remote)
 	for chunk := range slices.Chunk(remote, gmailBatchSize) {
 		gone, err := g.commitBatch(ctx, chunk, labels, cur, "", "", res)
 		if err != nil {
@@ -164,6 +155,20 @@ func (g *GmailSync) reconcile(ctx context.Context, cur message.APICursor, labels
 	res.Removed += len(removals)
 	return store.CommitAPIPage(message.APIPage{AccountID: g.AccountID, Provider: gmailAPIProviderName, Scope: gmailScope,
 		Generation: cur.Generation, Removals: removals, Cursor: start, CursorKind: gmailCursorKind, ClearInvalid: true})
+}
+
+// localOnly returns the local IDs absent from remote. It sorts remote in place
+// (callers only chunk it, so order is irrelevant) and binary-searches it, so a
+// large mailbox needs no second per-ID structure beyond the ID slice itself.
+func localOnly(local, remote []string) []string {
+	slices.Sort(remote)
+	var out []string
+	for _, id := range local {
+		if _, ok := slices.BinarySearch(remote, id); !ok {
+			out = append(out, id)
+		}
+	}
+	return out
 }
 
 // incremental replays history after the stored cursor. Net state per message
@@ -323,7 +328,7 @@ func gmailRef(m *gmailapi.Message, mapping message.APIMapping) message.APIRef {
 // The Gmail thread ID is stored on the ref; the local thread ID derives from headers.
 func (g *GmailSync) ingest(raw *gmailapi.Message, labels []message.GmailLabel) (*message.APIUpsert, error) {
 	mapping := message.MapGmailLabels(raw.LabelIDs, labels)
-	m, extras := g.Engine.parseAPIRaw(g.AccountID, raw.ID, "gmail.invalid", raw.Raw)
+	m, extras := g.Engine.parseAPIRaw(g.AccountID, raw.ID, "gmail.invalid", raw.InternalDate, raw.Raw)
 	m.IsRead, m.IsStarred, m.IsDraft = mapping.IsRead, mapping.IsStarred, mapping.IsDraft
 	up := &message.APIUpsert{Ref: gmailRef(raw, mapping)}
 	for _, f := range mapping.Folders {

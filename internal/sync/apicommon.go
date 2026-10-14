@@ -101,8 +101,11 @@ func apiBackoff[T any](ctx context.Context, sleep func(context.Context, time.Dur
 // parseAPIRaw parses a raw RFC 5322 message with the IMAP pipeline's parser,
 // so signed, encrypted, attachment, charset and threading handling is
 // identical to IMAP rows. Flags and folder are left for the caller. A message
-// without a Message-ID gets a deterministic one from the remote ID.
-func (e *Engine) parseAPIRaw(accountID, remoteID, fallbackDomain string, raw []byte) (message.Message, *message.APIRowExtras) {
+// without a Message-ID gets a deterministic one from the remote ID. received is
+// the provider's receive time (zero when unknown): it becomes ReceivedAt and
+// stands in for a missing Date, so such a message does not sort as new on every
+// full ingest.
+func (e *Engine) parseAPIRaw(accountID, remoteID, fallbackDomain string, received time.Time, raw []byte) (message.Message, *message.APIRowExtras) {
 	header, _, _ := bytes.Cut(raw, []byte("\r\n\r\n"))
 	if len(header) == len(raw) {
 		header, _, _ = bytes.Cut(raw, []byte("\n\n"))
@@ -118,6 +121,7 @@ func (e *Engine) parseAPIRaw(accountID, remoteID, fallbackDomain string, raw []b
 	}
 	m.ReadReceiptTo = e.extractDispositionNotificationTo(raw)
 	applyHeaderFlags(&m, header)
+	applyInternalDate(&m, received)
 	if m.Date.IsZero() {
 		m.Date = time.Now().UTC()
 	}
@@ -179,5 +183,5 @@ func (e *Engine) ParseAPIBody(accountID, provider, remoteID string, raw []byte) 
 	if provider == message.APIProviderGmail {
 		domain = "gmail.invalid"
 	}
-	return e.parseAPIRaw(accountID, remoteID, domain, raw)
+	return e.parseAPIRaw(accountID, remoteID, domain, time.Time{}, raw)
 }

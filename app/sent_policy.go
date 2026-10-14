@@ -127,13 +127,13 @@ func (ops *composeOps) planSentCopies(attempt *submission.Attempt, acc *account.
 	return ops.submissions.PlanCopies(attempt, *p)
 }
 func (ops *composeOps) saveSentCopies(ctx context.Context, a *submission.Attempt, raw []byte) {
-	copies, err := ops.submissions.ReconcileCopies(a.AccountID)
+	copies, err := ops.submissions.ReconcileAttempt(a.AccountID, a.ID)
 	if err != nil {
 		a.Warnings += "Sent copy reconciliation failed: " + err.Error() + "\n"
 		return
 	}
 	for _, c := range copies {
-		if c.AttemptID != a.ID || c.State == "observed" {
+		if c.State == "observed" {
 			continue
 		}
 		if c.Mode == "append" {

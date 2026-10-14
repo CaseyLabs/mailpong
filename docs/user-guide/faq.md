@@ -22,7 +22,7 @@ No. Mailven connects directly to your email provider's servers via IMAP/SMTP. Th
 
 ### What makes Mailven lightweight?
 
-Mailven was designed from the ground up with being "lightweight" in mind. It is built with [Wails](https://wails.io), a lightweight and fast Electron alternative for Go. This means it gets the performance of Go and gives the flexibility to the developer to choose whichever JS/TS framework for frontend development. Wails uses native system components for rendering instead of bundling a full Chromium browser, resulting in significantly lower memory usage and faster startup. For the frontend, [Svelte](https:/svelte.dev) was chosen as the compiler plays a huge role in optimizing TS performance.
+Mailven was designed from the ground up with being "lightweight" in mind. It is built with [Wails](https://wails.io), a lightweight and fast Electron alternative for Go. This means it gets the performance of Go and gives the flexibility to the developer to choose whichever JS/TS framework for frontend development. Wails uses native system components for rendering instead of bundling a full Chromium browser, resulting in significantly lower memory usage and faster startup. For the frontend, [Svelte](https://svelte.dev) was chosen as the compiler plays a huge role in optimizing TS performance.
 
 ### Is Mailven safe to use?
 

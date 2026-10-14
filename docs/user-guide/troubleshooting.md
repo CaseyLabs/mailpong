@@ -266,4 +266,4 @@ If your issue isn't covered here:
    - Mailven version
    - Steps to reproduce the problem
    - Any error messages you see
-   - Relevant log files (see [FAQ](/docs/faq#where-are-log-files-located) for locations)
+   - Relevant log output (see [Produce debug logs](#produce-debug-logs-for-further-investigator-with-the-maintainer) above)

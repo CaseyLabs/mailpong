@@ -187,3 +187,52 @@ func TestAbruptExitSentAppendClaim(t *testing.T) {
 		t.Fatal("crash invited resubmission")
 	}
 }
+
+// TestReconcileAttemptScope proves a per-send reconciliation reads and updates
+// only that attempt's copies, however large the account's journal is.
+func TestReconcileAttemptScope(t *testing.T) {
+	s := testStore(t, filepath.Join(t.TempDir(), "mail.db"))
+	if _, err := s.db.Exec(`INSERT INTO accounts(id,name,email,imap_host,smtp_host,username) VALUES('acc','acc','acc@example.test','imap.example.test','smtp.example.test','acc')`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := s.db.Exec(`INSERT INTO folders(id,account_id,name,path) VALUES('accSent','acc','Sent','Sent')`); err != nil {
+		t.Fatal(err)
+	}
+	var attempts []*Attempt
+	for i, subject := range []string{"one", "two", "three"} {
+		msg := testMessage()
+		msg.Subject = subject
+		a, err := s.Begin("acc", "draft"+subject, msg)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := s.PlanCopies(a, SentPolicy{Destinations: []Destination{{AccountID: "acc", FolderPath: "Sent", Mode: "provider"}}}); err != nil {
+			t.Fatal(err)
+		}
+		a.Outcome = "accepted"
+		if err := s.Update(a); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := s.db.Exec(`INSERT INTO messages(id,account_id,folder_id,uid,message_id) VALUES(?,?,?,?,?)`, "m"+subject, "acc", "accSent", i+1, a.MessageID); err != nil {
+			t.Fatal(err)
+		}
+		attempts = append(attempts, a)
+	}
+	got, err := s.ReconcileAttempt("acc", attempts[1].ID)
+	if err != nil || len(got) != 1 || got[0].AttemptID != attempts[1].ID || got[0].State != "observed" {
+		t.Fatalf("scoped reconcile: %+v %v", got, err)
+	}
+	var pending int
+	if err := s.db.QueryRow(`SELECT COUNT(*) FROM submission_copies WHERE state='pending'`).Scan(&pending); err != nil || pending != 2 {
+		t.Fatalf("other attempts touched: %d pending, %v", pending, err)
+	}
+	all, err := s.ReconcileCopies("acc")
+	if err != nil || len(all) != 3 {
+		t.Fatalf("full reconcile: %+v %v", all, err)
+	}
+	for _, c := range all {
+		if c.State != "observed" {
+			t.Fatalf("full reconcile missed %+v", c)
+		}
+	}
+}

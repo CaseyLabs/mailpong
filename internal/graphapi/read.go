@@ -44,7 +44,13 @@ var (
 	ErrFolderGone = errors.New("graph: folder not found")
 	// ErrMessageGone means the message no longer exists (404 on a message).
 	ErrMessageGone = errors.New("graph: message not found")
+	// ErrMessageTooLarge means the raw message exceeds the download cap; the
+	// message exists, so callers keep it as a header-only row instead of failing.
+	ErrMessageTooLarge = errors.New("graph: message exceeds the download size limit")
 )
+
+// errTooLarge marks a response past its byte cap.
+var errTooLarge = errors.New("response too large")
 
 // ReadError is a failed read request. Rate limits pause sync; policy and
 // reauthorization failures are reported; none of them clears credentials.
@@ -69,6 +75,8 @@ type Reader struct {
 	// Shared names a shared mailbox (read through users/{Shared}); "" is the
 	// signed-in user's own mailbox. The caller checks the Shared grant first.
 	Shared string
+	// MaxRawBytes caps one raw message download; 0 uses the default (64 MiB).
+	MaxRawBytes int64
 }
 
 // Folder is one mail folder.
@@ -88,6 +96,11 @@ type Meta struct {
 	IsRead         bool
 	IsDraft        bool
 	Flagged        bool
+	// Subject, FromName, FromEmail and ReceivedAt describe the message without
+	// its MIME content: ReceivedAt stands in for a missing Date header and the
+	// rest build a header-only row for a message too large to download.
+	Subject, FromName, FromEmail string
+	ReceivedAt                   time.Time
 	// Removed marks an @removed delta entry (the other fields are empty).
 	Removed bool
 }
@@ -100,7 +113,7 @@ type DeltaPage struct {
 	DeltaLink string
 }
 
-const messageSelect = "id,parentFolderId,changeKey,conversationId,isRead,isDraft,flag"
+const messageSelect = "id,parentFolderId,changeKey,conversationId,isRead,isDraft,flag,subject,from,receivedDateTime"
 
 type wireMeta struct {
 	ID             string `json:"id"`
@@ -112,6 +125,14 @@ type wireMeta struct {
 	Flag           struct {
 		Status string `json:"flagStatus"`
 	} `json:"flag"`
+	Subject          string    `json:"subject"`
+	ReceivedDateTime time.Time `json:"receivedDateTime"`
+	From             struct {
+		EmailAddress struct {
+			Name    string `json:"name"`
+			Address string `json:"address"`
+		} `json:"emailAddress"`
+	} `json:"from"`
 	Removed *struct {
 		Reason string `json:"reason"`
 	} `json:"@removed"`
@@ -119,7 +140,8 @@ type wireMeta struct {
 
 func (w wireMeta) meta() Meta {
 	return Meta{ID: w.ID, ParentFolderID: w.ParentFolderID, ChangeKey: w.ChangeKey, ConversationID: w.ConversationID,
-		IsRead: w.IsRead, IsDraft: w.IsDraft, Flagged: strings.EqualFold(w.Flag.Status, "flagged"), Removed: w.Removed != nil}
+		IsRead: w.IsRead, IsDraft: w.IsDraft, Flagged: strings.EqualFold(w.Flag.Status, "flagged"), Removed: w.Removed != nil,
+		Subject: w.Subject, FromName: w.From.EmailAddress.Name, FromEmail: w.From.EmailAddress.Address, ReceivedAt: w.ReceivedDateTime.UTC()}
 }
 
 func (r *Reader) base() string {
@@ -177,7 +199,7 @@ func (r *Reader) fetch(ctx context.Context, target string, maxBytes int64, extra
 				return nil, fmt.Errorf("graph read: %w", readErr)
 			}
 			if int64(len(body)) > maxBytes {
-				return nil, fmt.Errorf("graph read: response exceeds %d bytes", maxBytes)
+				return nil, fmt.Errorf("graph read: response exceeds %d bytes: %w", maxBytes, errTooLarge)
 			}
 			return body, nil
 		}
@@ -364,9 +386,16 @@ func (r *Reader) GetMeta(ctx context.Context, id string) (*Meta, error) {
 // GetRaw reads the message's MIME content (messages/{id}/$value), byte-identical
 // to what the service stores. A 404 is ErrMessageGone.
 func (r *Reader) GetRaw(ctx context.Context, id string) ([]byte, error) {
-	body, err := r.fetch(ctx, r.base()+r.mailbox()+"/messages/"+url.PathEscape(id)+"/$value", maxRawBytes, "")
-	if status(err) == http.StatusNotFound {
+	limit := r.MaxRawBytes
+	if limit <= 0 {
+		limit = maxRawBytes
+	}
+	body, err := r.fetch(ctx, r.base()+r.mailbox()+"/messages/"+url.PathEscape(id)+"/$value", limit, "")
+	switch {
+	case status(err) == http.StatusNotFound:
 		return nil, ErrMessageGone
+	case errors.Is(err, errTooLarge):
+		return nil, ErrMessageTooLarge
 	}
 	return body, err
 }
