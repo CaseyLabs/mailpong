@@ -38,13 +38,17 @@ Create an ExecPlan only for sufficiently complex selected work. Include:
 - Dependencies, risks, concrete steps and checkboxes under `## Progress`.
 - Acceptance criteria mapped to exact commands, fixtures, expected outcomes and external gates.
 - `## Surprises & Discoveries`, `## Decision Log`, `## Outcomes & Retrospective` as living sections.
-- Checkpoint: branch/base revision, current step, changed files, remaining work, exact command results, unrun checks and blockers; distinguish pre-commit base from subsequent revision.
+- Checkpoint: branch/base revision, current step, next concrete action, changed files, remaining work, exact command results, unrun checks and blockers; distinguish pre-commit base from subsequent revision.
 
 An ExecPlan must support continuation without chat history. Include essential facts in the plan and link maintained local references for detail; avoid creating parallel sources of status. Link the plan from the roadmap; roadmap status/summary stays authoritative, detailed progress stays in that plan. Small tasks use the same checkpoint facts inline without the full structure.
 
 ### Implement and checkpoint
 
 Keep the active checkpoint current at meaningful completions, discoveries, blockers, scope changes and before handoff/compaction. Update related issue evidence when facts change; avoid rewriting unrelated projects. Run proportionate checks and distinguish failed, passed and unrun results. Do not claim live compatibility from local fixtures. Respect external authorization gates in PLAN, issues and technical references; roadmap organization grants no provider, email, credential, migration, tenant/DNS or dependency permissions.
+
+### Session boundaries
+
+Run one milestone per session; start the next milestone in a fresh session from the committed roadmap and checkpoint, not by continuing a long conversation. A persisted handoff is preferred to repeated compaction: when the host reports context usage nearing its compaction point (Claude Code `/context`, Codex `/status`), finish the current sub-step, checkpoint everything the remaining work needs and use project-handoff. Automatic compaction stays enabled as the fallback for work interrupted mid-step; the checkpoint, not the summary, is the continuation state. No fixed token threshold applies: context windows and compaction points vary by model and host configuration.
 
 ### Complete and stop
 
@@ -58,6 +62,6 @@ State “No active milestone” in roadmap Progress; identify candidates and blo
 
 ## Basis and conventions
 
-Reviewed official guidance on 2026-10-14: [AGENTS.md discovery](https://learn.chatgpt.com/docs/agent-configuration/agents-md) supports concise layered instructions; [skills](https://learn.chatgpt.com/docs/build-skills) load detail progressively; [Codex commands](https://learn.chatgpt.com/docs/developer-commands) document `/plan` for proposing execution before implementation. Plan mode is a host behavior, distinct from these Git documents; obey the actual host restrictions.
+Reviewed official guidance on 2026-10-14: [AGENTS.md discovery](https://learn.chatgpt.com/docs/agent-configuration/agents-md) supports concise layered instructions; [skills](https://learn.chatgpt.com/docs/build-skills) load detail progressively; [Codex commands](https://learn.chatgpt.com/docs/developer-commands) document `/plan` for proposing execution before implementation. Plan mode is a host behavior, distinct from these Git documents; obey the actual host restrictions. Session guidance follows Codex [best practices](https://learn.chatgpt.com/guides/best-practices) (one chat per coherent unit of work; `/compact` and automatic compaction for long chats) and Claude Code [best practices](https://code.claude.com/docs/en/best-practices) (`/clear` between unrelated tasks; a fresh session with a precise prompt over accumulated corrections). Claude re-injects project CLAUDE.md and invoked skill bodies after [compaction](https://code.claude.com/docs/en/context-window); conversation-only state is summarized, so it must be checkpointed.
 
 The [OpenAI ExecPlan recipe](https://developers.openai.com/cookbook/articles/codex_exec_plans) is currently marked archived. We adopt its living, restartable, outcome/validation-focused principles, not its model suggestions, automatic next-milestone execution or frequent-commit instructions. An additional `.agent/PLANS.md` would duplicate this existing shared policy/skill arrangement and is unnecessary. `CLAUDE.md` imports AGENTS.md; `.claude/skills` links the canonical `.agents/skills` tree. Keep one workflow policy, with native settings in existing adapters.

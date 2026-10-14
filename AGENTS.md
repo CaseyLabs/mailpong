@@ -104,4 +104,4 @@ When all of a feature's milestones are done or an audit pass is complete, land t
 
 ## Compaction
 
-When compacting, preserve the checklist path and state, current milestone/sub-step, modified files, exact failing checks, and discoveries or user answers not yet persisted.
+When compacting, preserve the checkpoint path and state, current milestone/sub-step and next action, modified files, blockers, exact failing checks, and discoveries or user answers not yet persisted. Compaction is the fallback; prefer fresh sessions from persisted checkpoints at milestone and sub-step boundaries ([session boundaries](docs/PROJECT_MANAGEMENT.md#session-boundaries)).

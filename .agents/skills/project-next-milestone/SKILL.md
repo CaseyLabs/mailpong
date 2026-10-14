@@ -18,10 +18,10 @@ The `model` frontmatter is a Claude-only override. In Codex, retain the selected
 
 ## Work
 
-Search for existing implementation before adding code. Complete each sub-step without stubs or fake returns. Update the selected execution checkpoint and roadmap summary, relevant decisions, discoveries, changed files and exact validation results at meaningful sub-step completions, blockers, scope changes and check results, keeping them sufficient for continuation without chat history. Record baseline failures and confirmed deferred findings under project policy.
+Search for existing implementation before adding code. Complete each sub-step without stubs or fake returns. Update the selected execution checkpoint and roadmap summary, relevant decisions, discoveries, changed files and exact validation results at meaningful sub-step completions, blockers, scope changes and check results, keeping them sufficient for continuation without chat history. Record baseline failures and confirmed deferred findings under project policy. If the host reports context usage nearing its compaction point before the milestone finishes, you may hand off at a sub-step boundary under [session boundaries](../../../docs/PROJECT_MANAGEMENT.md#session-boundaries) instead of continuing into compaction.
 
 Ask only material unresolved questions after checking recorded decisions. Use the host's available question tool or plain text, batching questions; continue independent work. Respect runtime restrictions and execution authorization.
 
 ## Finish
 
-Read the active checkout's `.agents/skills/project-finish-milestone/SKILL.md` and perform that workflow using available capabilities. A slash-command dispatcher is not required. Stop after its summary; do not start a second milestone.
+Read the active checkout's `.agents/skills/project-finish-milestone/SKILL.md` and perform that workflow using available capabilities. A slash-command dispatcher is not required. Stop after its summary; do not start a second milestone. Any next milestone starts in a fresh session.
