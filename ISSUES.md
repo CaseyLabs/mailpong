@@ -62,13 +62,23 @@ Project: [API](PLAN.md#api).
 
 ### MA4 — Shared mailbox API activation
 
-- **Owner / milestone:** [API](PLAN.md#api) / [API-1](PLAN.md#api-1).
+- **Owner / milestone:** [API](PLAN.md#api) / [API-1](PLAN.md#api-1), proposed [API-6](PLAN.md#api-6).
 - **Severity / proposed priority / status:** low / P2 / deferred.
 - **Dependencies / gates:** Shared identity/schema/delegate/read-write design first.
 - **Resolution criteria:** Shared identity storage and activation are designed and verified before shared migration is offered.
-- **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
+- **Evidence / impact / reproduction:** original recorded finding below; blockers rechecked read-only on 2026-10-14; [design](docs/SHARED_MAILBOX_API_DESIGN.md) documents identity/grant/activation requirements. Implementation and live verification remain unselected. Use its named symbol and fixtures when selecting work.
 
 - **MA4 low** `app/api_route.go` `ActivateMailAPIRoute`: shared (delegated) mailbox routes cannot be activated because the Graph shared-mailbox address is not stored and `apiRemote` rejects shared routes. Found in F4e-3; needs shared-mailbox identity storage before a later milestone. F5a left it open: storing the address is not cheap (route schema, Graph delegate flow, read/write clients); shared routes stay unmigratable with that reason.
+
+<a id="ma5"></a>
+
+### MA5 — Parent removal can leave linked shared accounts orphaned
+
+- **Owner / milestone:** [API](PLAN.md#api) / discovered during [API-1](PLAN.md#api-1); lifecycle fix included in proposed [API-6](PLAN.md#api-6) (not selected).
+- **Severity / proposed priority / status:** medium / P2 / open.
+- **Problem / evidence:** Read-only trace on 2026-10-14: `app/account.go:276-289` ignores child enumeration errors and logs/continues on recursive removal failure, then deletes the parent and credentials. Migration 28 adds `shared_mailbox_parent_id` without a parent foreign key (`internal/database/migrations.go:712-715`). A failure can therefore retain a child whose credential owner no longer exists.
+- **Impact / limits:** Orphan child data/credentials linkage; no fault-injection or real deletion was run. Future shared API references must fail closed. Existing behavior is unchanged by this design milestone.
+- **Dependencies / closure:** Separately select a lifecycle fix; disposable enumeration/removal failure fixtures must prove parent and owner credentials remain until children are safely removed, and orphan consumers send no requests. See [proposal](docs/SHARED_MAILBOX_API_DESIGN.md#identity-and-grant-lifecycle-requirements).
 
 <a id="f5b-1"></a>
 

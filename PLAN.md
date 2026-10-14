@@ -26,6 +26,8 @@ No live provider access, test emails, credentials changes, mailbox migration, pr
 
 ## Progress
 
+No active milestone. API-1 design is done ([evidence](docs/validation/api-1.md), [checkpoint](docs/plans/api-1.md)); shared support remains unsupported, MA4 stays deferred and MA5 is open. API-6 is proposed and requires selection; API-2 and API-5 remain other API candidates. No next milestone is activated.
+
 CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 is done and MA2/SY1 resolved ([evidence](docs/validation/maint-2.md)). MAINT-4 is done ([validation evidence](docs/validation/maint-4.md)); its findings UI1–UI3 remain open. SEND-1 is done and CD2 resolved; SYNC-1 is done and R3 resolved ([evidence](docs/validation/sync-1.md)); SYNC-2 is done and R4 resolved ([evidence](docs/validation/sync-2.md)); SYNC-3 is done and SY2/SY6 resolved ([evidence](docs/validation/sync-3.md)); API-4 is done and F5b-2 resolved ([evidence](docs/validation/api-4.md)); SYNC-4 is done and R2/SY3/SY4/SY5 resolved ([evidence](docs/validation/sync-4.md)); see [validation evidence](docs/validation/send-1.md). Other proposed milestones remain unselected; SEND-2/3, API-3 and MAINT-3 retain their gates, and G4/D2 remain deferred.
 
 <a id="send"></a>
@@ -82,11 +84,11 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 
 ### API-1 — Shared mailbox activation design
 
-- **Status / proposed priority:** proposed / P2. **Dependencies / gates:** none; implementation requires later selection.
+- **Status / proposed priority:** done / P2. **Dependencies / gates:** none; implementation requires later selection.
 - **Scope / deliverable:** Design shared identity storage, route schema, delegate flow and read/write identity semantics; produce a bounded implementation proposal.
 - **Acceptance:** Proposal maps all shared route blockers and data/security invariants with validation and migration gates; do not claim shared support from design alone.
 - **Validation:** Trace apiRemote/activation and Graph clients; read-only review against MAIL_APIS and provider architecture.
-- **Issues:** [MA4](ISSUES.md#ma4). **Progress:** not started.
+- **Issues:** [MA4](ISSUES.md#ma4), [MA5](ISSUES.md#ma5). **Progress:** design verified by source review and independent acceptance ([evidence](docs/validation/api-1.md), [checkpoint](docs/plans/api-1.md)); implementation remains proposed under API-6.
 
 <a id="api-2"></a>
 
@@ -127,6 +129,16 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 - **Acceptance:** A test asserts rollback triggers IMAP sync; UI and API distinguish route transition from asynchronous reconcile completion.
 - **Validation:** Focused rollback/scheduler fixtures; frontend checks and guarded UI for progress changes.
 - **Issues:** [F5b-3](ISSUES.md#f5b-3). **Progress:** not started.
+
+<a id="api-6"></a>
+
+### API-6 — Shared mailbox API route
+
+- **Status / proposed priority:** proposed / P2. **Dependencies / gates:** API-1 design; separate implementation selection. Exposing shared activation/migration additionally requires separately authorized live validation.
+- **Scope / deliverable:** Implement the bounded [shared route design](docs/SHARED_MAILBOX_API_DESIGN.md), including parent-owned grants, child identity isolation, consent/refresh/removal safety, migration blockers and route-aware sender review.
+- **Acceptance:** Disposable fixtures prove owner/child isolation and failure handling; no shared migration is exposed before recorded live identity/delegation/sender/Sent/Bcc evidence. Design alone does not establish support.
+- **Validation:** [Acceptance mapping and gates](docs/SHARED_MAILBOX_API_DESIGN.md#acceptance-to-validation-mapping-for-later-implementation); Go checks, frontend lint/check and full UI suite if implemented; live checks only with separate authorization.
+- **Issues:** [MA4](ISSUES.md#ma4), [MA5](ISSUES.md#ma5); [MA1](ISSUES.md#ma1) remains the sending privacy gate. **Progress:** not selected.
 
 <a id="sync"></a>
 

@@ -263,6 +263,8 @@ The local-first action queue is used only when `apiRouted` sees a route in state
 
 **Draft ownership.** `saveDraftToDB` moves a draft to the selected account: the previous account's remote copy is deleted, `account_id` is rewritten and the IMAP link reset, so encryption, sync and deletion use one account.
 
+The [API-1 shared-mailbox design](SHARED_MAILBOX_API_DESIGN.md) maps the identity, grant-owner and lifecycle changes required before shared activation; it does not implement them or establish live compatibility.
+
 **Deferred.** Gmail permanent delete stays excluded from the ordinary API profile (needs a separate scope request and UX). Shared-mailbox routes remain unmigratable (MA4).
 
 **Tests.** `go test ./app -run 'APIBody|APIAttachment|APIMove|Draft'`.
