@@ -14,7 +14,7 @@ New accounts use IMAP for mail access and SMTP for sending. Existing accounts re
 | Google Workspace, including custom domains | Google OAuth, or an app password if the organization permits it | Gmail API for the authorized user's own mailbox | Same Google setup; organization policy can restrict client access and consent; Gmail delegated-mailbox API access is unsupported |
 | Personal Outlook.com, Hotmail or Live | Microsoft OAuth | Not supported by Mailven's API route | [Outlook setup](user-guide/getting-started/first-account/outlook.md); select Personal and enable IMAP in Outlook.com |
 | Microsoft 365 work or school | Microsoft OAuth | Delegated Microsoft Graph for the user's own mailbox | Select Work or school; app consent, IMAP and SMTP AUTH are separate organization controls |
-| Linked Microsoft shared mailbox | Parent account's OAuth credentials; shared mailbox identity for IMAP | Cannot be activated or migrated yet | Mailbox access and permission to send as/on behalf of it must be granted separately; a successful login is insufficient |
+| Linked Microsoft shared mailbox | Parent account's OAuth credentials; shared mailbox identity for IMAP | Consent stages under the parent's grant; activation and migration stay closed until live checks are recorded | Mailbox access and permission to send as/on behalf of it must be granted separately; a successful login is insufficient |
 | Yahoo, iCloud, Fastmail, Zoho, AOL, GMX, Mail.com | Password or app password appropriate to the service | None | [Other providers](user-guide/getting-started/first-account/other-providers.md); presets are configuration defaults, not live compatibility evidence |
 | Proton Mail through Bridge | Credentials supplied by the locally running Bridge | None | [Bridge setup](user-guide/getting-started/first-account/other-providers.md#protonmail-via-proton-bridge); use Bridge's actual local endpoints and credentials |
 | Manual/custom provider | Server credentials or explicitly configured custom OAuth | None | Configure IMAP/SMTP endpoints, TLS and the provider's OAuth metadata when applicable |
@@ -48,7 +48,7 @@ Migration saves a local database snapshot, preserves the account and credentials
 
 Current API routes support sending, receiving and queued flag/folder actions, with these limits:
 
-- Shared mailboxes cannot be migrated; Gmail delegated-mailbox and personal Outlook.com API routes are unsupported.
+- Shared mailboxes cannot be activated or migrated until live Graph checks are recorded (the gate is `sharedMailboxLiveVerified`); Gmail delegated-mailbox and personal Outlook.com API routes are unsupported.
 - Drafts are saved locally; remote API draft synchronization is unavailable.
 - Permanent delete, empty trash/spam, copy, cross-account moves and undoing API moves are unavailable.
 - There is no automatic SMTP/IMAP fallback after migration and no automatic resend of an uncertain submission.

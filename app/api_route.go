@@ -95,9 +95,6 @@ func (a *App) syncAPIAccount(ctx context.Context, acc *account.Account) (bool, e
 // another pass for the account is running.
 func (a *App) runAPISync(ctx context.Context, route *account.MailAPIRoute, wait bool) error {
 	id := route.AccountID
-	if route.Shared {
-		return errors.New("shared mailbox sync is not supported yet")
-	}
 	if a.apiPaused(id) {
 		return errAPIPaused
 	}
@@ -144,7 +141,7 @@ func (a *App) runAPISync(ctx context.Context, route *account.MailAPIRoute, wait 
 		_, err = (&sync.GmailSync{Engine: a.syncEngine, Reader: &gmailapi.Reader{Tokens: tokens, HTTP: a.apiRoutes.http, Base: a.apiRoutes.gmailBase}, AccountID: id,
 			Tokens: func() (*credentials.OAuthTokens, error) { return ops.validToken(id) }, OnFailure: onFailure}).Run(ctx)
 	case account.MailRouteGraphAPI:
-		_, err = (&sync.GraphSync{Engine: a.syncEngine, Reader: &graphapi.Reader{Tokens: tokens, HTTP: a.apiRoutes.http, Base: a.apiRoutes.graphBase}, AccountID: id,
+		_, err = (&sync.GraphSync{Engine: a.syncEngine, Reader: &graphapi.Reader{Tokens: tokens, HTTP: a.apiRoutes.http, Base: a.apiRoutes.graphBase, Shared: sharedTarget(route)}, AccountID: id,
 			Tokens: func() (*credentials.OAuthTokens, error) { return ops.validToken(id) }, OnFailure: onFailure}).Run(ctx)
 	default:
 		err = fmt.Errorf("route %q is not an API route", route.Route)
@@ -226,8 +223,8 @@ func (a *App) activateAPIRoute(accountID string) error {
 		return errors.New("account has no API route to activate")
 	case route.State == account.MailRouteStateActive:
 		return errors.New("API route is already active")
-	case route.Shared:
-		return errors.New("shared mailbox routes cannot be activated yet")
+	case route.Shared && !sharedMailboxLiveVerified:
+		return errSharedMailboxGate
 	}
 	status, err := a.mailAPIOps().status(accountID)
 	if err != nil {
@@ -235,6 +232,11 @@ func (a *App) activateAPIRoute(accountID string) error {
 	}
 	if !status.Authorized {
 		return fmt.Errorf("API authorization is not usable (%s); reauthorize first", status.Failure)
+	}
+	if route.Shared {
+		if err := a.mailAPIOps().requireSharedCapabilities(accountID); err != nil {
+			return err
+		}
 	}
 	open, err := a.messageStore.ListAPIActions(accountID, message.APIActionInFlight, message.APIActionUnknown)
 	if err != nil {

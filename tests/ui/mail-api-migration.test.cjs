@@ -56,3 +56,34 @@ test('rollback explains when no sync was requested', ui.run({ beforeMount: fakes
   await page.evaluate(() => window.__finishRollback(false))
   await section.getByText(/A sync was not requested; use Sync manually\./).waitFor()
 }))
+
+const sharedFakes = `
+{
+  const A = window.go.app.App
+  const getAccounts = A.GetAccounts
+  A.GetAccounts = async () => (await getAccounts()).map((a, i) => i === 0 ? { ...a, authType: 'oauth2', imapHost: 'outlook.office365.com' } : a)
+  A.GetMicrosoftSharedMailboxes = async () => (await getAccounts()).slice(1, 2).map(a => ({ ...a, name: 'Support', email: 'support@example.com', authType: 'oauth2', sharedMailboxParentId: 'acc1' }))
+  window.__consentArgs = null
+  A.GetMailAPIRouteStatus = async () => ({ route: 'protocol', state: '', shared: false, authorized: false, failure: '' })
+  A.StartMailAPIConsent = async (id, shared) => { window.__consentArgs = [id, shared] }
+  A.CancelMailAPIConsent = async () => undefined
+}
+`
+
+for (const accounts of ['expanded', 'collapsed']) {
+  test(`linked shared mailbox offers shared API consent (Accounts ${accounts})`, ui.run({ accounts, beforeMount: sharedFakes }, async page => {
+    await page.getByRole('button', { name: 'Settings', exact: true }).click()
+    await page.getByRole('tab', { name: 'Accounts', exact: true }).click()
+    await page.getByRole('button', { name: 'Edit account', exact: true }).first().click()
+    await page.getByRole('tab', { name: 'Identity', exact: true }).click()
+    await page.getByRole('button', { name: 'Edit', exact: true }).last().click()
+    const editor = page.getByRole('dialog', { name: 'Edit Shared Mailbox' })
+    await editor.getByRole('tab', { name: 'Server', exact: true }).click()
+    const section = editor.getByRole('region', { name: 'Mail API route', exact: true })
+    await section.getByText(/shared mailbox uses your parent account/).waitFor()
+    assert.equal(await section.getByRole('button', { name: /Review migration|Migrate/ }).count(), 0, 'no migration is offered before consent')
+    await section.getByRole('button', { name: 'Authorize API access', exact: true }).click()
+    const args = await page.evaluate(() => window.__consentArgs)
+    assert.equal(args[1], true, 'consent is started in shared mode')
+  }))
+}

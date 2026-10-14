@@ -168,6 +168,11 @@ func TestMigrationV32_LocalRecordIDsRewrittenToUUIDs(t *testing.T) {
 	// Clear v32 AND any later markers so Migrate() sees v32 as pending.
 	// Migrate compares against MAX(version), so leaving a later marker
 	// (e.g., v33) would cause v32 to be skipped on the re-run.
+	for _, column := range []string{"mailbox_address", "grant_account_id"} {
+		if _, err := db.Exec(`ALTER TABLE account_mail_api_routes DROP COLUMN ` + column); err != nil {
+			t.Fatalf("drop v62 column %s: %v", column, err)
+		}
+	}
 	if _, err := db.Exec(`DELETE FROM migrations WHERE version >= 32`); err != nil {
 		t.Fatalf("clear migration 32+ markers: %v", err)
 	}
@@ -357,6 +362,8 @@ func TestMigrationV33_CleansExistingOrphans(t *testing.T) {
 		);
 		CREATE INDEX idx_carddav_record_state_addressbook
 			ON carddav_record_state(addressbook_id);
+		ALTER TABLE account_mail_api_routes DROP COLUMN mailbox_address;
+		ALTER TABLE account_mail_api_routes DROP COLUMN grant_account_id;
 		DELETE FROM migrations WHERE version >= 33;
 		PRAGMA foreign_keys = ON;
 	`); err != nil {
@@ -619,6 +626,8 @@ func TestMigrationV46_ChatTriage(t *testing.T) {
 		`ALTER TABLE messages DROP COLUMN delivered_to`,
 		`ALTER TABLE accounts DROP COLUMN last_sync_error`,
 		`ALTER TABLE accounts DROP COLUMN last_sync_error_folder`,
+		`ALTER TABLE account_mail_api_routes DROP COLUMN mailbox_address`,
+		`ALTER TABLE account_mail_api_routes DROP COLUMN grant_account_id`,
 		`DELETE FROM migrations WHERE version >= 46`,
 		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username)
 			VALUES ('acct-1', 'Test', 'user@example.com', 'imap.example.com', 'smtp.example.com', 'user@example.com')`,
@@ -688,6 +697,8 @@ func TestMigrationV48_SenderChat(t *testing.T) {
 		`ALTER TABLE accounts DROP COLUMN last_sync_error`,
 		`ALTER TABLE accounts DROP COLUMN last_sync_error_folder`,
 		`ALTER TABLE attachments DROP COLUMN embedded`,
+		`ALTER TABLE account_mail_api_routes DROP COLUMN mailbox_address`,
+		`ALTER TABLE account_mail_api_routes DROP COLUMN grant_account_id`,
 		`DELETE FROM migrations WHERE version >= 48`,
 		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username)
 			VALUES ('acct-1', 'Test', 'user@example.com', 'imap.example.com', 'smtp.example.com', 'user@example.com')`,
@@ -743,6 +754,8 @@ func TestMigrationV49_EmbeddedAttachments(t *testing.T) {
 		`ALTER TABLE messages DROP COLUMN delivered_to`,
 		`ALTER TABLE accounts DROP COLUMN last_sync_error`,
 		`ALTER TABLE accounts DROP COLUMN last_sync_error_folder`,
+		`ALTER TABLE account_mail_api_routes DROP COLUMN mailbox_address`,
+		`ALTER TABLE account_mail_api_routes DROP COLUMN grant_account_id`,
 		`DELETE FROM migrations WHERE version >= 49`,
 		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username)
 			VALUES ('acct-1', 'Test', 'user@example.com', 'imap.example.com', 'smtp.example.com', 'user@example.com')`,
@@ -832,6 +845,8 @@ func TestMigrationV50_SenderChatCombined(t *testing.T) {
 		`ALTER TABLE messages DROP COLUMN delivered_to`,
 		`ALTER TABLE accounts DROP COLUMN last_sync_error`,
 		`ALTER TABLE accounts DROP COLUMN last_sync_error_folder`,
+		`ALTER TABLE account_mail_api_routes DROP COLUMN mailbox_address`,
+		`ALTER TABLE account_mail_api_routes DROP COLUMN grant_account_id`,
 		`DELETE FROM migrations WHERE version >= 50`,
 		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username)
 			VALUES ('acct-1', 'Test', 'user@example.com', 'imap.example.com', 'smtp.example.com', 'user@example.com')`,
@@ -870,6 +885,8 @@ func TestMigrationV51_IdentityReplyTo(t *testing.T) {
 		`ALTER TABLE messages DROP COLUMN delivered_to`,
 		`ALTER TABLE accounts DROP COLUMN last_sync_error`,
 		`ALTER TABLE accounts DROP COLUMN last_sync_error_folder`,
+		`ALTER TABLE account_mail_api_routes DROP COLUMN mailbox_address`,
+		`ALTER TABLE account_mail_api_routes DROP COLUMN grant_account_id`,
 		`DELETE FROM migrations WHERE version >= 51`,
 		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username)
 			VALUES ('acct-1', 'Test', 'user@example.com', 'imap.example.com', 'smtp.example.com', 'user@example.com')`,
@@ -903,6 +920,8 @@ func TestMigrationV52_DeliveredTo(t *testing.T) {
 		`ALTER TABLE messages DROP COLUMN delivered_to`,
 		`ALTER TABLE accounts DROP COLUMN last_sync_error`,
 		`ALTER TABLE accounts DROP COLUMN last_sync_error_folder`,
+		`ALTER TABLE account_mail_api_routes DROP COLUMN mailbox_address`,
+		`ALTER TABLE account_mail_api_routes DROP COLUMN grant_account_id`,
 		`DELETE FROM migrations WHERE version >= 52`,
 		`INSERT INTO accounts (id, name, email, imap_host, smtp_host, username)
 			VALUES ('acct-1', 'Test', 'user@example.com', 'imap.example.com', 'smtp.example.com', 'user@example.com')`,
@@ -948,6 +967,8 @@ func TestMigrationV55_ThreadStartersBackfill(t *testing.T) {
 		`DROP TRIGGER thread_starters_update_moved`,
 		`DROP INDEX idx_messages_folder_thread_key`,
 		`DROP TABLE thread_starters`,
+		`ALTER TABLE account_mail_api_routes DROP COLUMN mailbox_address`,
+		`ALTER TABLE account_mail_api_routes DROP COLUMN grant_account_id`,
 		`DELETE FROM migrations WHERE version >= 55`,
 		insert + `('a', 'acct-1', 'inbox', 1, '<t@x>', 'Bob@X', '2026-01-02 00:00:00'),
 			('b', 'acct-1', 'inbox', 2, 't@x', 'Carol@X', '2026-01-01 00:00:00'),

@@ -111,7 +111,7 @@ func TestAPIBodyGoneAndGuards(t *testing.T) {
 	route, _ := r.app.accountStore.GetMailAPIRoute(r.acc.ID)
 	shared := *route
 	shared.Shared = true
-	if _, err := r.app.fetchAPIRaw(r.app.ctx, &shared, m); err == nil || !strings.Contains(err.Error(), "shared") {
+	if _, err := r.app.fetchAPIRaw(r.app.ctx, &shared, m); err == nil || !strings.Contains(err.Error(), "unsupported") {
 		t.Fatalf("shared error = %v", err)
 	}
 

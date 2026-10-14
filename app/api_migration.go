@@ -66,7 +66,12 @@ func (a *App) migrationBlockers(route *account.MailAPIRoute, counts apimigrate.C
 	var out []string
 	accountID := route.AccountID
 	if route.Shared {
-		out = append(out, "Shared mailbox routes cannot be migrated yet.")
+		if !sharedMailboxLiveVerified {
+			out = append(out, errSharedMailboxGate.Error())
+		}
+		if err := a.mailAPIOps().requireSharedCapabilities(accountID); err != nil {
+			out = append(out, err.Error())
+		}
 	}
 	if status, err := a.mailAPIOps().status(accountID); err != nil {
 		out = append(out, "The API authorization could not be checked: "+err.Error())

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/caseylabs/mailven/internal/account"
 	"github.com/caseylabs/mailven/internal/gmailapi"
@@ -53,7 +54,25 @@ func (ops *mailAPIOps) submitViaAPI(ctx context.Context, store *submission.Store
 	if route == nil {
 		return smtp.SubmissionResult{Outcome: smtp.OutcomeNotSubmitted, Stage: "preflight"}, errors.New("account has no API route")
 	}
-	tokens, err := ops.credStore.GetOAuthTokensForClientConfig(acc.ID, route.ClientConfigID)
+	grant, err := ops.grantForRoute(route)
+	if err != nil {
+		return smtp.SubmissionResult{Outcome: smtp.OutcomeNotSubmitted, Stage: "preflight"}, err
+	}
+	// A linked shared mailbox sends as its own address through the owner's
+	// mailbox grant; the signed-in mailbox is the owner's.
+	own := acc.Email
+	if route.Linked() {
+		owner, oerr := ops.accountStore.Get(grant.ownerID)
+		if oerr != nil {
+			return smtp.SubmissionResult{Outcome: smtp.OutcomeNotSubmitted, Stage: "preflight"}, oerr
+		}
+		own = owner.Email
+		if !strings.EqualFold(strings.TrimSpace(req.From), route.MailboxAddress) {
+			return smtp.SubmissionResult{Outcome: smtp.OutcomeNotSubmitted, Stage: "preflight"},
+				fmt.Errorf("a shared mailbox sends only as %s through the API", route.MailboxAddress)
+		}
+	}
+	tokens, err := ops.credStore.GetOAuthTokensForClientConfig(grant.ownerID, grant.slot())
 	if err != nil {
 		return smtp.SubmissionResult{Outcome: smtp.OutcomeNotSubmitted, Stage: "preflight"}, fmt.Errorf("failed to get API authorization: %w", err)
 	}
@@ -70,10 +89,10 @@ func (ops *mailAPIOps) submitViaAPI(ctx context.Context, store *submission.Store
 		}
 		sender = &gmailapi.Sender{Tokens: source, HTTP: hc}
 	case account.MailRouteGraphAPI:
-		if err := graphapi.Preflight(route, tokens, acc.Email, req); err != nil {
+		if err := graphapi.Preflight(route, tokens, own, req); err != nil {
 			return smtp.SubmissionResult{Outcome: smtp.OutcomeNotSubmitted, Stage: "preflight"}, err
 		}
-		sender = &graphapi.Sender{Tokens: source, Own: acc.Email, HTTP: hc}
+		sender = &graphapi.Sender{Tokens: source, Own: own, HTTP: hc}
 	default:
 		return smtp.SubmissionResult{Outcome: smtp.OutcomeNotSubmitted, Stage: "preflight"}, fmt.Errorf("route %q is not an API route", route.Route)
 	}

@@ -1628,6 +1628,15 @@ var migrations = []Migration{
 			updated_at INTEGER NOT NULL
 		);`,
 	},
+	{
+		Version: 62,
+		// Shared mailbox API routes (API-6). Both columns are empty for an
+		// account's own mailbox. A linked shared-mailbox child names its
+		// target mailbox and the account that owns the API grant.
+		SQL: `
+			ALTER TABLE account_mail_api_routes ADD COLUMN mailbox_address TEXT NOT NULL DEFAULT '';
+			ALTER TABLE account_mail_api_routes ADD COLUMN grant_account_id TEXT NOT NULL DEFAULT '';`,
+	},
 }
 
 // ThreadKeyExpr is the normalized thread key of a messages row: row is ""

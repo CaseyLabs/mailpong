@@ -10,7 +10,7 @@
   import { EventsOn, EventsOff } from '../../../../../wailsjs/runtime/runtime'
   import { app } from '../../../../../wailsjs/go/models'
 
-  let { accountId }: { accountId: string } = $props()
+  let { accountId, shared = false }: { accountId: string; shared?: boolean } = $props()
   let status = $state<app.MailAPIRouteStatus | null>(null)
   let plan = $state<app.MailAPIMigrationPlan | null>(null)
   let waiting = $state(false)
@@ -45,7 +45,7 @@
   }
   async function authorize() {
     error = ''; message = ''; reauthRequired = false; waiting = true
-    try { await StartMailAPIConsent(accountId, false) }
+    try { await StartMailAPIConsent(accountId, shared) }
     catch (e) { waiting = false; error = $_('mailApi.failed', { values: { error: String(e) } }) }
   }
   async function cancelConsent() { await CancelMailAPIConsent() }
@@ -103,6 +103,7 @@
     <p class="text-sm text-muted-foreground">{$_('mailApi.scopes')}</p>
     <p class="text-sm text-muted-foreground">{$_('mailApi.limits')}</p>
   {/if}
+  {#if shared}<p class="text-sm text-muted-foreground">{$_('mailApi.sharedNote')}</p>{/if}
 
   {#if status && !staged && !active}
     <div class="flex flex-wrap gap-2">

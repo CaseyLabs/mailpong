@@ -273,18 +273,26 @@ func (a *App) UpdateAccount(id string, config account.AccountConfig) (*account.A
 func (a *App) RemoveAccount(id string) error {
 	log := logging.WithComponent("app")
 
-	// Cascade: delete any shared mailboxes linked to this account
-	sharedMailboxes, _ := a.accountStore.ListBySharedMailboxParent(id)
+	// Cascade: delete any shared mailboxes linked to this account. The parent
+	// and its credentials stay until every child is gone: a child whose
+	// removal failed would otherwise be orphaned (and a linked API child would
+	// lose the grant it depends on), so any failure aborts the whole removal.
+	sharedMailboxes, err := a.accountStore.ListBySharedMailboxParent(id)
+	if err != nil {
+		return fmt.Errorf("failed to list shared mailboxes of the account; nothing was removed: %w", err)
+	}
+	a.cancelAPISync(id)
 	for _, sm := range sharedMailboxes {
 		log.Info().Str("sharedID", sm.ID).Str("parentID", id).Msg("Cascade deleting shared mailbox")
 		if err := a.RemoveAccount(sm.ID); err != nil {
-			log.Warn().Err(err).Str("sharedID", sm.ID).Msg("Failed to cascade-delete shared mailbox")
+			log.Error().Err(err).Str("sharedID", sm.ID).Msg("Failed to cascade-delete shared mailbox")
+			return fmt.Errorf("failed to remove shared mailbox %s; the account was kept: %w", sm.Email, err)
 		}
 	}
 
 	// Stop IDLE, close the account's IMAP connections, and delete it from the
 	// database (cascades to folders, messages, etc.)
-	err := a.stopAccountIdle(id, func() error {
+	err = a.stopAccountIdle(id, func() error {
 		a.imapPool.CloseAccount(id)
 		return a.accountStore.Delete(id)
 	})

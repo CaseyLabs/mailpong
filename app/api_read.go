@@ -27,9 +27,6 @@ func (a *App) fetchRawMessage(ctx context.Context, msg *message.Message) ([]byte
 }
 
 func (a *App) fetchAPIRaw(ctx context.Context, route *account.MailAPIRoute, msg *message.Message) ([]byte, error) {
-	if route.Shared {
-		return nil, errors.New("shared mailbox messages cannot be read through the API yet")
-	}
 	if a.apiPaused(msg.AccountID) {
 		return nil, errors.New("the mail API needs reauthorization before messages can be read")
 	}
@@ -57,7 +54,7 @@ func (a *App) fetchAPIRaw(ctx context.Context, route *account.MailAPIRoute, msg 
 			raw = m.Raw
 		}
 	default:
-		raw, err = (&graphapi.Reader{Tokens: tokens, HTTP: a.apiRoutes.http, Base: a.apiRoutes.graphBase}).GetRaw(ctx, remoteID)
+		raw, err = (&graphapi.Reader{Tokens: tokens, HTTP: a.apiRoutes.http, Base: a.apiRoutes.graphBase, Shared: sharedTarget(route)}).GetRaw(ctx, remoteID)
 	}
 	switch {
 	case errors.Is(err, gmailapi.ErrMessageGone), errors.Is(err, graphapi.ErrMessageGone):

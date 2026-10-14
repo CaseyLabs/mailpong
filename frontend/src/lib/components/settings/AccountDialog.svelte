@@ -521,8 +521,8 @@
                 }
               }}
             />
-          {#if editAccount.authType === 'oauth2' && !editAccount.sharedMailboxParentId}
-              <MailAPISection accountId={editAccount.id} />
+          {#if editAccount.authType === 'oauth2' || editAccount.sharedMailboxParentId}
+              <MailAPISection accountId={editAccount.id} shared={!!editAccount.sharedMailboxParentId} />
             {/if}
           </Tabs.Content>
         </div>

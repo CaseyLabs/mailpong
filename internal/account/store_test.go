@@ -495,3 +495,51 @@ func TestMailAPIRouteStore(t *testing.T) {
 		t.Fatal("route survived account deletion")
 	}
 }
+
+func TestMailAPIRouteLinkedFields(t *testing.T) {
+	store := NewStore(openTestDB(t))
+	create := func(email string) *Account {
+		cfg := validAccountConfig()
+		cfg.Email, cfg.Username = email, email
+		acc, err := store.Create(cfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return acc
+	}
+	parent, child := create("parent@example.com"), create("shared@example.com")
+	base := MailAPIRoute{AccountID: child.ID, Route: MailRouteGraphAPI, ClientConfigID: "microsoft-mail-api", Shared: true}
+
+	linked := base
+	linked.MailboxAddress, linked.GrantAccountID = "  Shared@Example.COM ", parent.ID
+	if err := store.SetMailAPIRoute(linked); err != nil {
+		t.Fatal(err)
+	}
+	got, err := store.GetMailAPIRoute(child.ID)
+	if err != nil || got.MailboxAddress != "shared@example.com" || got.GrantAccountID != parent.ID || !got.Linked() || got.GrantOwnerID() != parent.ID {
+		t.Fatalf("linked route %+v: %v", got, err)
+	}
+	ids, err := store.ListMailAPIRoutesGrantedBy(parent.ID)
+	if err != nil || len(ids) != 1 || ids[0] != child.ID {
+		t.Fatalf("dependents %v: %v", ids, err)
+	}
+	if ids, _ = store.ListMailAPIRoutesGrantedBy(child.ID); len(ids) != 0 {
+		t.Fatalf("child owns no grant: %v", ids)
+	}
+	own := base
+	own.Shared = false
+	if r := (&own); r.Linked() || r.GrantOwnerID() != child.ID {
+		t.Fatalf("own route must resolve to itself: %+v", r)
+	}
+
+	for name, bad := range map[string]MailAPIRoute{
+		"target without owner":  {AccountID: child.ID, Route: MailRouteGraphAPI, ClientConfigID: "x", Shared: true, MailboxAddress: "s@example.com"},
+		"owner without target":  {AccountID: child.ID, Route: MailRouteGraphAPI, ClientConfigID: "x", Shared: true, GrantAccountID: parent.ID},
+		"self owner":            {AccountID: child.ID, Route: MailRouteGraphAPI, ClientConfigID: "x", Shared: true, MailboxAddress: "s@example.com", GrantAccountID: child.ID},
+		"target without shared": {AccountID: child.ID, Route: MailRouteGraphAPI, ClientConfigID: "x", MailboxAddress: "s@example.com", GrantAccountID: parent.ID},
+	} {
+		if store.SetMailAPIRoute(bad) == nil {
+			t.Errorf("%s: route accepted", name)
+		}
+	}
+}

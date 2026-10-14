@@ -85,11 +85,12 @@ func (a *App) apiRemote(accountID, provider string) (apiactions.Remote, error) {
 	if route == nil {
 		return nil, errors.New("account is not routed through its API")
 	}
-	if route.Shared {
-		return nil, errors.New("shared mailbox actions are not supported yet")
-	}
 	ops := a.mailAPIOps()
-	grant, err := a.credStore.GetOAuthTokensForClientConfig(accountID, route.ClientConfigID)
+	owner, err := ops.grantForRoute(route)
+	if err != nil {
+		return nil, err
+	}
+	grant, err := a.credStore.GetOAuthTokensForClientConfig(owner.ownerID, owner.slot())
 	if err != nil {
 		return nil, fmt.Errorf("failed to get API authorization: %w", err)
 	}
@@ -101,8 +102,8 @@ func (a *App) apiRemote(accountID, provider string) (apiactions.Remote, error) {
 			Reader: &gmailapi.Reader{Tokens: tokens, HTTP: a.apiRoutes.http, Base: a.apiRoutes.gmailBase}}, nil
 	case message.APIProviderGraph:
 		return &apiactions.Graph{
-			Writer: &graphapi.Writer{Tokens: tokens, Grant: grant, HTTP: a.apiRoutes.http, Base: a.apiRoutes.graphBase},
-			Reader: &graphapi.Reader{Tokens: tokens, HTTP: a.apiRoutes.http, Base: a.apiRoutes.graphBase}}, nil
+			Writer: &graphapi.Writer{Tokens: tokens, Grant: grant, HTTP: a.apiRoutes.http, Base: a.apiRoutes.graphBase, Shared: sharedTarget(route)},
+			Reader: &graphapi.Reader{Tokens: tokens, HTTP: a.apiRoutes.http, Base: a.apiRoutes.graphBase, Shared: sharedTarget(route)}}, nil
 	}
 	return nil, fmt.Errorf("unknown API provider %q", provider)
 }

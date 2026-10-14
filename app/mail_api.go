@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/mail"
 	"strings"
 	"time"
 
@@ -44,35 +45,58 @@ type mailAPIOps struct {
 
 // mailAPIConsent is a prepared authorization: the target and what it requests.
 type mailAPIConsent struct {
+	// owner is the account whose identity signs in and whose token slot holds
+	// the grant: the account itself, or the parent of a linked shared mailbox.
 	owner, route string
 	account      *account.Account
 	shared       bool
 	profile      oauth2.MailAPIProfile
+	// child is the linked shared-mailbox account the consent stages a route
+	// for; nil when the consent is for the account's own mailbox.
+	child *account.Account
 }
 
 // prepare validates that accountID can start API consent and builds its profile.
 func (ops *mailAPIOps) prepare(accountID string, shared bool) (*mailAPIConsent, error) {
-	acc, err := ops.accountStore.Get(accountID)
+	target, err := ops.accountStore.Get(accountID)
 	if err != nil {
 		return nil, err
+	}
+	acc, ownerID, child := target, accountID, (*account.Account)(nil)
+	if target.SharedMailboxParentID != "" {
+		// A linked shared mailbox signs in as its parent; the grant is the
+		// parent's and only the target mailbox belongs to the child.
+		if !shared {
+			return nil, fmt.Errorf("a linked shared mailbox needs shared-mailbox API access")
+		}
+		if err := validateMailboxTarget(target.Email); err != nil {
+			return nil, err
+		}
+		if acc, err = ops.accountStore.Get(target.SharedMailboxParentID); err != nil {
+			return nil, fmt.Errorf("the account that owns this shared mailbox is unavailable: %w", err)
+		}
+		if acc.SharedMailboxParentID != "" {
+			return nil, fmt.Errorf("nested shared mailbox links are not supported")
+		}
+		ownerID, child = acc.ID, target
 	}
 	if acc.AuthType != account.AuthOAuth2 {
 		return nil, fmt.Errorf("API authorization needs an OAuth account")
 	}
-	if acc.SharedMailboxParentID != "" {
-		return nil, fmt.Errorf("API routes for linked shared mailboxes are not available yet; authorize the owning account")
-	}
-	provider, err := ops.credStore.GetOAuthProvider(accountID)
+	provider, err := ops.credStore.GetOAuthProvider(ownerID)
 	if err != nil {
 		return nil, fmt.Errorf("could not determine OAuth provider for account: %w", err)
 	}
-	consent := &mailAPIConsent{owner: accountID, account: acc, shared: shared}
+	if child != nil && provider != "microsoft" {
+		return nil, fmt.Errorf("shared-mailbox API access is available for Microsoft work/school accounts only")
+	}
+	consent := &mailAPIConsent{owner: ownerID, account: acc, shared: shared, child: child}
 	switch provider {
 	case "google":
 		consent.route = account.MailRouteGmailAPI
 	case "microsoft":
 		consent.route = account.MailRouteGraphAPI
-		tokens, err := ops.credStore.GetOAuthTokens(accountID)
+		tokens, err := ops.credStore.GetOAuthTokens(ownerID)
 		if err != nil {
 			return nil, fmt.Errorf("could not load account authorization: %w", err)
 		}
@@ -138,19 +162,36 @@ func (ops *mailAPIOps) finish(consent *mailAPIConsent, response *oauth2.TokenRes
 		}
 	}
 	// Reauthorizing an active route keeps it active; it may not change route
-	// type or mailbox scope while accounts are routed through it.
-	state := account.MailRouteStateStaged
-	if existing, gerr := ops.accountStore.GetMailAPIRoute(consent.owner); gerr == nil && existing != nil && existing.State == account.MailRouteStateActive {
-		if existing.Route != consent.route || existing.Shared != consent.shared {
+	// type or mailbox scope while accounts are routed through it. A child
+	// consent never changes the owner's own route: scope upgrades preserve its
+	// state and its /me target.
+	state, existing := account.MailRouteStateStaged, (*account.MailAPIRoute)(nil)
+	if r, gerr := ops.accountStore.GetMailAPIRoute(consent.owner); gerr == nil {
+		existing = r
+	}
+	if existing != nil && existing.State == account.MailRouteStateActive {
+		if existing.Route != consent.route || (consent.child == nil && existing.Shared != consent.shared) {
 			return errors.New("deactivate the active API route before changing its route or mailbox scope")
 		}
 		state = account.MailRouteStateActive
+	}
+	if existing != nil && existing.Linked() {
+		return errors.New("this account holds a linked shared-mailbox route, not an API authorization")
 	}
 	unlock, err := ops.credStore.LockOAuthRefresh(consent.owner, slot)
 	if err != nil {
 		return err
 	}
 	defer unlock()
+	if consent.child == nil && !consent.shared {
+		// Re-read under the lock: dropping the Shared scopes would silently
+		// pause every shared mailbox that uses this grant.
+		if children, derr := ops.dependents(consent.owner); derr != nil {
+			return derr
+		} else if len(children) > 0 {
+			return errors.New("shared mailbox API routes use this authorization; keep shared-mailbox access when reauthorizing")
+		}
+	}
 	prior, priorErr := ops.credStore.GetOAuthTokensForClientConfig(consent.owner, slot)
 	if priorErr != nil && !errors.Is(priorErr, credentials.ErrCredentialNotFound) {
 		return fmt.Errorf("could not read prior API authorization: %w", priorErr)
@@ -162,11 +203,17 @@ func (ops *mailAPIOps) finish(consent *mailAPIConsent, response *oauth2.TokenRes
 		return fmt.Errorf("failed to store API authorization: %w", err)
 	}
 	p := consent.profile.Provider
+	snapshot := account.MailAPISnapshot{Provider: p.Name, AuthURL: p.AuthURL, TokenURL: p.TokenURL,
+		ClientID: p.ClientID, Scopes: append([]string(nil), p.Scopes...), Resource: oauth2.ScopeResource(p)}
 	route := account.MailAPIRoute{
 		AccountID: consent.owner, Route: consent.route, State: state,
-		ClientConfigID: slot, Shared: consent.shared,
-		Snapshot: account.MailAPISnapshot{Provider: p.Name, AuthURL: p.AuthURL, TokenURL: p.TokenURL,
-			ClientID: p.ClientID, Scopes: append([]string(nil), p.Scopes...), Resource: oauth2.ScopeResource(p)},
+		ClientConfigID: slot, Shared: consent.shared, Snapshot: snapshot,
+	}
+	if consent.child != nil {
+		route.Shared, route.State = false, account.MailRouteStateStaged
+		if existing != nil {
+			route.Shared, route.State = existing.Shared, existing.State
+		}
 	}
 	if err := ops.accountStore.SetMailAPIRoute(route); err != nil {
 		// Do not leave a grant without the route that describes it: drop a new
@@ -177,6 +224,33 @@ func (ops *mailAPIOps) finish(consent *mailAPIConsent, response *oauth2.TokenRes
 			_ = ops.credStore.SetOAuthTokensForClientConfig(consent.owner, slot, prior)
 		}
 		return err
+	}
+	if consent.child == nil {
+		return nil
+	}
+	// The upgraded owner grant stays valid if staging the child fails.
+	childState := account.MailRouteStateStaged
+	if r, gerr := ops.accountStore.GetMailAPIRoute(consent.child.ID); gerr == nil && r != nil && r.State == account.MailRouteStateActive {
+		childState = account.MailRouteStateActive
+	}
+	childRoute := account.MailAPIRoute{
+		AccountID: consent.child.ID, Route: consent.route, State: childState, ClientConfigID: slot,
+		Shared: true, MailboxAddress: consent.child.Email, GrantAccountID: consent.owner, Snapshot: snapshot,
+	}
+	if err := ops.accountStore.SetMailAPIRoute(childRoute); err != nil {
+		return fmt.Errorf("the owning account's authorization was upgraded, but the shared mailbox route was not staged: %w", err)
+	}
+	return nil
+}
+
+// validateMailboxTarget accepts only a plain address: it becomes a Graph
+// /users/{id} path segment, so display names, separators and whitespace are
+// rejected before any request is built.
+func validateMailboxTarget(address string) error {
+	address = strings.TrimSpace(address)
+	parsed, err := mail.ParseAddress(address)
+	if err != nil || parsed.Name != "" || parsed.Address != address || strings.ContainsAny(address, "/\\?#%\x00 \t\r\n") {
+		return fmt.Errorf("the shared mailbox address %q cannot be used as a mailbox target", address)
 	}
 	return nil
 }
@@ -212,45 +286,43 @@ func (ops *mailAPIOps) tokenAfter(accountID, rejected string) (*credentials.OAut
 	usable := func(t *credentials.OAuthTokens) bool {
 		return !t.IsExpiringSoon(5*time.Minute) && (rejected == "" || t.AccessToken != rejected)
 	}
-	route, err := ops.accountStore.GetMailAPIRoute(accountID)
+	grant, err := ops.grantFor(accountID)
 	if err != nil {
 		return nil, err
 	}
-	if route == nil {
-		return nil, fmt.Errorf("account has no API route")
-	}
-	tokens, err := ops.credStore.GetOAuthTokensForClientConfig(accountID, route.ClientConfigID)
+	owner, slot := grant.ownerID, grant.slot()
+	tokens, err := ops.credStore.GetOAuthTokensForClientConfig(owner, slot)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get API authorization: %w", err)
 	}
 	if rejected == "" && usable(tokens) {
 		return tokens, nil
 	}
-	unlock, err := ops.credStore.LockOAuthRefresh(accountID, route.ClientConfigID)
+	unlock, err := ops.credStore.LockOAuthRefresh(owner, slot)
 	if err != nil {
 		return nil, fmt.Errorf("failed to acquire API refresh lock: %w", err)
 	}
 	defer unlock()
 	// Another holder may have rotated the token while this caller waited.
-	if tokens, err = ops.credStore.GetOAuthTokensForClientConfig(accountID, route.ClientConfigID); err != nil {
+	if tokens, err = ops.credStore.GetOAuthTokensForClientConfig(owner, slot); err != nil {
 		return nil, fmt.Errorf("failed to get API authorization: %w", err)
 	}
 	if usable(tokens) {
 		return tokens, nil
 	}
 	if tokens.RefreshToken == "" {
-		return nil, ops.refreshFailed(accountID, route, fmt.Errorf("%w: no refresh token stored", oauth2.ErrInvalidGrant))
+		return nil, ops.refreshFailed(grant, fmt.Errorf("%w: no refresh token stored", oauth2.ErrInvalidGrant))
 	}
-	provider, err := ops.snapshotProvider(route)
+	provider, err := ops.snapshotProvider(grant.ownerRoute)
 	if err != nil {
-		return nil, ops.refreshFailed(accountID, route, err)
+		return nil, ops.refreshFailed(grant, err)
 	}
 	response, err := ops.oauth2Manager.RefreshTokenWithProvider(provider, tokens.RefreshToken)
 	if err != nil {
-		return nil, ops.refreshFailed(accountID, route, err)
+		return nil, ops.refreshFailed(grant, err)
 	}
 	tokens.ApplyTokenResponse(response, nil, "", true)
-	if err := ops.credStore.SetOAuthTokensForClientConfig(accountID, route.ClientConfigID, tokens); err != nil {
+	if err := ops.credStore.SetOAuthTokensForClientConfig(owner, slot, tokens); err != nil {
 		return nil, fmt.Errorf("failed to persist refreshed API authorization: %w", err)
 	}
 	return tokens, nil
@@ -274,17 +346,25 @@ func (ops *mailAPIOps) snapshotProvider(route *account.MailAPIRoute) (oauth2.Pro
 
 // refreshFailed reports a refresh failure. Only a rejected grant clears the
 // refresh token and asks for reauthorization; other failures are retried later.
-func (ops *mailAPIOps) refreshFailed(accountID string, route *account.MailAPIRoute, err error) error {
+// A rejected owner grant raises the event for the owner and every dependent.
+func (ops *mailAPIOps) refreshFailed(grant *apiGrant, err error) error {
 	log := logging.WithComponent("app.mailapi")
+	accountID := grant.route.AccountID
 	kind := classifyMailAPI(err)
 	if errors.Is(err, oauth2.ErrInvalidGrant) {
-		if clearErr := ops.credStore.ClearOAuthRefreshTokenForClientConfig(accountID, route.ClientConfigID); clearErr != nil {
-			log.Warn().Err(clearErr).Str("account_id", accountID).Msg("Failed to clear rejected API refresh token")
+		if clearErr := ops.credStore.ClearOAuthRefreshTokenForClientConfig(grant.ownerID, grant.slot()); clearErr != nil {
+			log.Warn().Err(clearErr).Str("account_id", grant.ownerID).Msg("Failed to clear rejected API refresh token")
 		}
 		if kind == oauth2.MailAPIFailureNone || kind == oauth2.MailAPIFailureOther {
 			kind = oauth2.MailAPIFailureReauthorize
 		}
-		ops.emit("mail-api:reauth-required", map[string]any{"accountId": accountID, "route": route.Route, "failure": string(kind), "error": err.Error()})
+		affected := []string{grant.ownerID}
+		if children, derr := ops.dependents(grant.ownerID); derr == nil {
+			affected = append(affected, children...)
+		}
+		for _, id := range affected {
+			ops.emit("mail-api:reauth-required", map[string]any{"accountId": id, "route": grant.route.Route, "failure": string(kind), "error": err.Error()})
+		}
 	}
 	log.Error().Err(err).Str("account_id", accountID).Str("failure", string(kind)).Msg("API token refresh failed")
 	return fmt.Errorf("API token refresh failed (%s): %w", kind, err)
@@ -299,7 +379,11 @@ func (ops *mailAPIOps) status(accountID string) (MailAPIRouteStatus, error) {
 		return MailAPIRouteStatus{Route: mailAPIProtocolRoute}, nil
 	}
 	status := MailAPIRouteStatus{Route: route.Route, State: route.State, Shared: route.Shared}
-	tokens, err := ops.credStore.GetOAuthTokensForClientConfig(accountID, route.ClientConfigID)
+	grant, err := ops.grantForRoute(route)
+	if err != nil {
+		return status, err
+	}
+	tokens, err := ops.credStore.GetOAuthTokensForClientConfig(grant.ownerID, grant.slot())
 	switch {
 	case errors.Is(err, credentials.ErrCredentialNotFound):
 		status.Failure = string(oauth2.MailAPIFailureReauthorize)
@@ -307,7 +391,7 @@ func (ops *mailAPIOps) status(accountID string) (MailAPIRouteStatus, error) {
 		return status, err
 	case tokens.RefreshToken == "":
 		status.Failure = string(oauth2.MailAPIFailureReauthorize)
-	case ops.clientChanged(route):
+	case ops.clientChanged(grant.ownerRoute):
 		status.Failure = string(oauth2.MailAPIFailureReauthorize)
 	default:
 		operations := []string{"read", "write", "send"}
@@ -329,17 +413,29 @@ func (ops *mailAPIOps) clientChanged(route *account.MailAPIRoute) bool {
 	return err != nil || current.ClientID != route.Snapshot.ClientID
 }
 
-// clear returns the account to its protocol route and deletes only the API grant.
+// clear returns the account to its protocol route. A linked child removes only
+// its own route and never the owner's grant; an owner's grant is kept while any
+// child route still references it.
 func (ops *mailAPIOps) clear(accountID string) error {
 	route, err := ops.accountStore.GetMailAPIRoute(accountID)
 	if err != nil || route == nil {
 		return err
+	}
+	if route.Linked() {
+		return ops.accountStore.ClearMailAPIRoute(accountID)
 	}
 	unlock, err := ops.credStore.LockOAuthRefresh(accountID, route.ClientConfigID)
 	if err != nil {
 		return err
 	}
 	defer unlock()
+	children, err := ops.dependents(accountID)
+	if err != nil {
+		return err
+	}
+	if len(children) > 0 {
+		return errors.New("shared mailbox API routes still use this authorization; roll them back or remove them first")
+	}
 	if err := ops.accountStore.ClearMailAPIRoute(accountID); err != nil {
 		return err
 	}
@@ -399,8 +495,18 @@ func (a *App) StartMailAPIConsent(accountID string, shared bool) error {
 			fail(err)
 			return
 		}
-		a.apiRoutes.setPaused(accountID, false)
-		a.kickAPIActions(accountID)
+		// The grant is shared: resume the consenting account, its owner and
+		// every dependent route. Each resumes only if its own status passes.
+		resume := map[string]bool{accountID: true, consent.owner: true}
+		if children, derr := ops.dependents(consent.owner); derr == nil {
+			for _, id := range children {
+				resume[id] = true
+			}
+		}
+		for id := range resume {
+			a.apiRoutes.setPaused(id, false)
+			a.kickAPIActions(id)
+		}
 		eventsEmit(a.ctx, "mail-api:success", map[string]any{"accountId": accountID, "route": consent.route, "shared": shared})
 	}()
 	return nil
