@@ -65,7 +65,7 @@
   let pendingFocus = $state<{ replyAll?: boolean; until: number } | null>(null)
   const imagesLoaded = new Set<string>()
 
-  const scroll = new ChatScroll(() => messageIds)
+  const scroll = new ChatScroll()
   const thread = new ChatThread({
     onGone: (next) => onActionComplete?.(next),
     onLoaded: () => void scroll.toStart(thread.messages.find((m) => !m.isRead)?.id ?? null),

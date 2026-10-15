@@ -2,7 +2,7 @@
 // fold into one expandable row. The latest KEEP_RECENT messages, unread
 // messages, drafts and subject-heading messages never fold.
 
-import type { ThreadItem } from './chatFormat'
+import { dayKey, type ThreadItem } from './chatFormat'
 
 export const KEEP_RECENT = 5
 export const MIN_RUN = 3
@@ -33,12 +33,19 @@ export function compactItems(items: ThreadItem[], expanded: ReadonlySet<string>,
     const open = expanded.has(id)
     out.push({ kind: 'run', id, count: end - i, open })
     if (open) {
-      for (let j = i; j < end; j++) out.push({ kind: 'message', item: items[j] })
+      // The run row separates its first message from the one before: show its sender.
+      out.push({ kind: 'message', item: { ...items[i], groupStart: true } })
+      for (let j = i + 1; j < end; j++) out.push({ kind: 'message', item: items[j] })
       i = end
       continue
     }
-    // The message after a folded run starts a new run: show its sender.
-    if (end < items.length) out.push({ kind: 'message', item: { ...items[end], groupStart: true } })
+    // The message after a folded run starts a new run: show its sender, and
+    // its date when the run hid a day change since the last visible message.
+    if (end < items.length) {
+      const next = items[end]
+      const newDay = next.newDay || i === 0 || dayKey(items[i - 1].date) !== dayKey(next.date)
+      out.push({ kind: 'message', item: { ...next, groupStart: true, newDay } })
+    }
     i = end + 1
   }
   return out

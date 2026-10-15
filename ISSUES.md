@@ -12,7 +12,7 @@ All Microsoft work, including Microsoft 365 and regular/personal Outlook.com, is
 - [API — Provider API activation and migration](#api): [MA4](#ma4) (resolved: [F5b-1](#f5b-1), [F5b-3](#f5b-3))
 - [SYNC — Mail synchronization and action reliability](#sync): none (resolved: [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [CHAT — Chat composer sender review](#chat): [CH1](#ch1) (resolved: [R1](#r1))
-- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [UI3](#ui3), [UI4](#ui4) (resolved: [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
+- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [UI3](#ui3), [UI4](#ui4), [UI5](#ui5) (resolved: [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
 - [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
 
@@ -355,6 +355,16 @@ Project: [MAINT](PLAN.md#maint).
 - **Problem / evidence (2026-10-14):** Static review confirms Mail's `App.svelte` viewer and kit `DetailPane.svelte` remain mounted in closed responsive overlays. `app.css` `.responsive-viewer-overlay` only translates them off-screen; neither container disables focus on its descendant controls, including the Back button. This affects medium and narrow layouts. Runtime viewer-specific audit and native WebKitGTK verification remain unrun.
 - **Impact / reproduction:** Return from a viewer to the list in a responsive layout; hidden viewer controls can still receive keyboard focus. The existing Mail UI audit does not establish coverage of every such control.
 - **Dependencies / closure:** Separately select viewer scope; closed viewers must reject focus while opening, closing, selection and focus-mode behavior remain correct, with regression coverage for Mail and the shared detail pane.
+
+<a id="ui5"></a>
+
+### UI5 — App.svelte exceeds the component size limit
+
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / found by the 2026-10-15 review of the UIX commit; fix not selected.
+- **Severity / proposed priority / status:** low / P3 / open.
+- **Problem / evidence (2026-10-15):** `frontend/src/App.svelte` is about 1,700 lines against the 500-line component limit in AGENTS.md. It holds folder and conversation selection, composer state, global keyboard shortcuts, dialogs and layout. The review fix moved the sidebar actions' narrow-overlay close into `SidebarActions.svelte` and shared one list-search helper, so the file shrank slightly, but the limit is still exceeded.
+- **Impact / reproduction:** `wc -l frontend/src/App.svelte`. New shell features tend to land here, which makes review and testing harder.
+- **Dependencies / closure:** Separately select a split (for example keyboard shortcuts and composer state into modules); App.svelte under 500 lines with `make test-ui` passing.
 
 <a id="ai"></a>
 

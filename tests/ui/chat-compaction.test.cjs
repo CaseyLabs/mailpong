@@ -24,9 +24,13 @@ describe('chat compaction', () => {
   it('compactItems keeps the tail, unread, drafts and headings; shows the sender after a fold', ui.run({}, async (page) => {
     const r = await page.evaluate(async () => {
       const { compactItems } = await import('/src/lib/components/chat/chatCompact.ts')
+      // o[i].day sets the message's day (default day 0); newDay follows buildThreadItems.
       const mk = (n, o = {}) => Array.from({ length: n }, (_, i) => ({ msg: { id: 'm' + i, isRead: true, isDraft: false, ...(o[i] ?? {}) },
-        subject: o[i]?.subject, groupStart: false }))
-      const shape = (es) => es.map((e) => (e.kind === 'run' ? 'run' + e.count + (e.open ? '+' : '') : e.item.msg.id + (e.item.groupStart ? '*' : '')))
+        subject: o[i]?.subject, groupStart: false, date: new Date(2026, 0, 5 + (o[i]?.day ?? 0), 9, i) }))
+        .map((it, i, all) => ({ ...it, newDay: i === 0 || it.date.getDate() !== all[i - 1].date.getDate() }))
+      // * marks a sender line (groupStart), @ a date separator (newDay).
+      const shape = (es) => es.map((e) => (e.kind === 'run' ? 'run' + e.count + (e.open ? '+' : '') : e.item.msg.id + (e.item.groupStart ? '*' : '') + (e.item.newDay ? '@' : '')))
+      const days = (list) => Object.fromEntries(list.map((d, i) => [i, { day: d }]))
       return {
         short: shape(compactItems(mk(7), new Set())),
         long: shape(compactItems(mk(10), new Set())),
@@ -35,15 +39,20 @@ describe('chat compaction', () => {
         draft: shape(compactItems(mk(10, { 1: { isDraft: true } }), new Set())),
         heading: shape(compactItems(mk(10, { 0: { subject: 'Hikes' } }), new Set())),
         keep: shape(compactItems(mk(10), new Set(), new Set(['m2']))),
+        // m0 (a heading, day 0) stays; m1-m4 (days 1-2) fold; m5 is on day 2 like m4.
+        hiddenDay: shape(compactItems(mk(10, { ...days([0, 1, 1, 2, 2, 2, 2, 2, 2, 2]), 0: { subject: 'Hikes', day: 0 } }), new Set())),
+        sameDay: shape(compactItems(mk(10, { ...days([0, 0, 0, 0, 0, 1, 1, 1, 1, 1]), 0: { subject: 'Hikes', day: 0 } }), new Set())),
       }
     })
-    assert.deepEqual(r.short, ['m0', 'm1', 'm2', 'm3', 'm4', 'm5', 'm6'], 'two older messages are below the run minimum')
-    assert.deepEqual(r.long, ['run5', 'm5*', 'm6', 'm7', 'm8', 'm9'], 'five older fold; the message after starts a run')
-    assert.deepEqual(r.open.slice(0, 7), ['run5+', 'm0', 'm1', 'm2', 'm3', 'm4', 'm5'], 'an open run lists its messages')
-    assert.deepEqual(r.unread, ['m0', 'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9'], 'an unread message splits the older messages into short runs')
-    assert.deepEqual(r.draft, ['m0', 'm1', 'run3', 'm5*', 'm6', 'm7', 'm8', 'm9'], 'a draft never folds')
-    assert.deepEqual(r.heading, ['m0', 'run4', 'm5*', 'm6', 'm7', 'm8', 'm9'], 'a subject heading message stays')
-    assert.deepEqual(r.keep.slice(0, 5), ['m0', 'm1', 'm2', 'm3', 'm4'], 'a kept message splits the run below the minimum')
+    assert.deepEqual(r.short, ['m0@', 'm1', 'm2', 'm3', 'm4', 'm5', 'm6'], 'two older messages are below the run minimum')
+    assert.deepEqual(r.long, ['run5', 'm5*@', 'm6', 'm7', 'm8', 'm9'], 'five older fold; the message after starts a run and, first shown, carries the date')
+    assert.deepEqual(r.open.slice(0, 7), ['run5+', 'm0*@', 'm1', 'm2', 'm3', 'm4', 'm5'], 'an open run lists its messages, the first with its sender')
+    assert.deepEqual(r.unread, ['m0@', 'm1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7', 'm8', 'm9'], 'an unread message splits the older messages into short runs')
+    assert.deepEqual(r.draft, ['m0@', 'm1', 'run3', 'm5*', 'm6', 'm7', 'm8', 'm9'], 'a draft never folds')
+    assert.deepEqual(r.heading, ['m0@', 'run4', 'm5*', 'm6', 'm7', 'm8', 'm9'], 'a subject heading message stays')
+    assert.deepEqual(r.hiddenDay, ['m0@', 'run4', 'm5*@', 'm6', 'm7', 'm8', 'm9'], 'a run that hid a day change dates the next message')
+    assert.deepEqual(r.sameDay, ['m0@', 'run4', 'm5*@', 'm6', 'm7', 'm8', 'm9'], 'a message on a new day keeps its date')
+    assert.deepEqual(r.keep.slice(0, 5), ['m0@', 'm1', 'm2', 'm3', 'm4'], 'a kept message splits the run below the minimum')
   }))
 
   it('folds runs of earlier read messages and never the unread or recent ones', ui.run({ beforeMount: longTrip }, async (page) => {
@@ -70,6 +79,34 @@ describe('chat compaction', () => {
     await page.keyboard.press('Space')
     assert.equal(await first.getAttribute('aria-expanded'), 'false')
     assert.deepEqual((await articles(page)).slice(0, 2), ['trip-4', 'trip-9'], 'and fold again')
+  }))
+
+  it('Tab reaches folded-run rows between messages, in order', ui.run({ beforeMount: longTrip }, async (page) => {
+    await rows(page).first().waitFor()
+    await page.locator('[data-message-id="trip-4"]').focus()
+    const at = () => page.evaluate(() => document.activeElement?.dataset.messageId ?? (document.activeElement?.hasAttribute('data-compact-row') ? 'row' : document.activeElement?.tagName))
+    const steps = []
+    for (const key of ['Tab', 'Tab', 'Shift+Tab', 'Shift+Tab', 'Shift+Tab']) { await page.keyboard.press(key); steps.push(await at()) }
+    assert.deepEqual(steps, ['row', 'trip-9', 'row', 'trip-4', 'row'], 'Tab and Shift+Tab stop on both runs around trip-4')
+    assert.equal(await page.evaluate(() => document.activeElement === document.querySelectorAll('[data-compact-row]')[0]), true, 'the last stop is the first run')
+  }))
+
+  it('scrolling or sending ends the hold on an expanded row', ui.run({}, async (page) => {
+    const r = await page.evaluate(async () => {
+      const { ChatScroll } = await import('/src/lib/components/chat/chatScroll.svelte.ts')
+      const held = async (act) => {
+        const s = new ChatScroll(), sc = document.createElement('div'), el = document.createElement('div')
+        sc.append(el); document.body.append(sc); s.scroller = sc
+        await s.holdPosition(el, () => {})
+        const before = s.keep !== null
+        await act(s)
+        sc.remove()
+        return [before, s.keep !== null]
+      }
+      return { by: await held((s) => s.by(1)), toEnd: await held((s) => s.toEnd()) }
+    })
+    assert.deepEqual(r.by, [true, false], 'keyboard scrolling releases the row')
+    assert.deepEqual(r.toEnd, [true, false], 'scrolling to a sent reply releases the row')
   }))
 
   it('a message read while open stays visible', ui.run({ beforeMount: longTrip }, async (page) => {

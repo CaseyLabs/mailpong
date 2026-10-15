@@ -1,9 +1,11 @@
 <script lang="ts">
   // SidebarActions — the labeled primary actions at the top of the Accounts
   // sidebar. The chat list header keeps its icon-only Compose and Search for
-  // when this sidebar is collapsed.
+  // when this sidebar is collapsed. In the narrow overlay an action closes
+  // the sidebar first.
   import Icon from '@iconify/svelte'
   import { _ } from '$lib/i18n'
+  import { getLayoutMode, hideSidebar } from '$lib/stores/layout.svelte'
 
   interface Props {
     onCompose: () => void
@@ -11,6 +13,11 @@
   }
 
   let { onCompose, onSearch }: Props = $props()
+
+  function run(action: () => void) {
+    if (getLayoutMode() === 'narrow') hideSidebar()
+    action()
+  }
 </script>
 
 <div class="flex flex-col gap-0.5 px-3 pb-2">
@@ -20,7 +27,7 @@
   ] as action (action.icon)}
     <button
       class="flex items-center gap-2 px-3 py-2 text-left text-body text-fg-secondary hover:bg-muted/50 hover:text-foreground rounded-md transition-colors"
-      onclick={action.onclick}
+      onclick={() => run(action.onclick)}
     >
       <Icon icon={action.icon} class="w-4 h-4 shrink-0" />
       <span class="truncate">{action.label}</span>

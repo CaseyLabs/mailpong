@@ -1,9 +1,11 @@
 <script lang="ts">
   // ChatPendingBubble — a reply sent from the docked composer, shown until
   // the synced thread holds it. Queued sends count down with Undo; failed
-  // sends offer Retry and Edit.
+  // sends offer Retry and Edit. In the flat transcript it matches a flat own
+  // message: no bubble or avatar spacer, a name line and an accent rule.
   import Icon from '@iconify/svelte'
   import { _ } from '$lib/i18n'
+  import { getChatDisplayStyle } from '$lib/stores/settings.svelte'
   import type { PendingSend } from './chatComposerState.svelte'
   import { MINE_BUBBLE_GUTTER } from './chatFormat'
 
@@ -11,12 +13,16 @@
     pending: PendingSend
     // First bubble of a run of mine: leave a gap above.
     groupStart: boolean
+    // My name, for the flat transcript's name line.
+    name: string
     onRetry: () => void
     onEdit: () => void
     onUndo: () => void
   }
 
-  let { pending, groupStart, onRetry, onEdit, onUndo }: Props = $props()
+  let { pending, groupStart, name, onRetry, onEdit, onUndo }: Props = $props()
+
+  const flat = $derived(getChatDisplayStyle() === 'flat')
 
   let now = $state(Date.now())
   $effect(() => {
@@ -29,11 +35,14 @@
 </script>
 
 <!-- Keep the avatar spacer to align pending replies with synced own messages. -->
-<div class="flex gap-2 w-full {MINE_BUBBLE_GUTTER} {groupStart ? 'mt-3' : 'mt-0.5'}" role="status">
-  <div class="w-8 shrink-0" aria-hidden="true"></div>
-  <div class="flex flex-col items-start gap-1 min-w-0 max-w-[min(75%,var(--chat-bubble))]">
+<div class="flex gap-2 {flat ? 'mx-auto w-full max-w-(--chat-stream) px-4' : `w-full ${MINE_BUBBLE_GUTTER}`} {groupStart ? 'mt-3' : 'mt-0.5'}" role="status">
+  {#if !flat}<div class="w-8 shrink-0" aria-hidden="true"></div>{/if}
+  <div class="flex flex-col items-start gap-1 min-w-0 {flat ? 'flex-1' : 'max-w-[min(75%,var(--chat-bubble))]'}">
+    {#if flat && groupStart}
+      <div class="px-1 text-xs font-medium text-fg-primary">{name}</div>
+    {/if}
     <div
-      class="px-3.5 py-2 text-[1rem] leading-[1.45] whitespace-pre-wrap wrap-anywhere rounded-2xl rounded-br-md bg-bubble-own text-foreground {pending.status === 'queued' ? 'opacity-70' : ''} {pending.status === 'failed' ? 'ring-2 ring-destructive' : ''}"
+      class="text-[1rem] leading-[1.45] whitespace-pre-wrap wrap-anywhere text-foreground {flat ? 'w-full pl-4 pr-1 py-0.5 border-l-2 border-primary/50' : 'px-3.5 py-2 rounded-2xl rounded-br-md bg-bubble-own'} {pending.status === 'queued' ? 'opacity-70' : ''} {pending.status === 'failed' ? 'ring-2 ring-destructive' : ''}"
     >
       {pending.text}
       {#each pending.attachmentNames as name (name)}

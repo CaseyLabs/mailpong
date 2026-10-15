@@ -219,7 +219,7 @@ function threadNames(messages: messageModels.Message[], wanted: Set<string>): Ma
   return names
 }
 
-function dayKey(d: Date): string {
+export function dayKey(d: Date): string {
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
 }
 

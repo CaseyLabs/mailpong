@@ -538,19 +538,12 @@
     return accountStore.accounts[0]?.account.id
   }
 
-  // Handle compose button click (new message)
-  // The Accounts sidebar's labeled actions; in the narrow overlay they close it first.
-  function handleSidebarCompose() {
-    if (getLayoutMode() === 'narrow') hideSidebar()
-    handleCompose()
-  }
-
-  function handleSidebarSearch() {
-    if (getLayoutMode() === 'narrow') hideSidebar()
+  function focusListSearch() {
     messageListRef?.toggleSearchFocus()
     setFocusedPane('messageList')
   }
 
+  // Handle compose button click (new message)
   function handleCompose() {
     // Use the selected account, or the first account if none selected
     const accountId = resolveAccountId(selectedAccountId)
@@ -871,8 +864,7 @@
       if (e.key.toLowerCase() === 's' && !e.shiftKey) {
         e.preventDefault()
         if (isMailActive()) {
-          messageListRef?.toggleSearchFocus()
-          setFocusedPane('messageList')
+          focusListSearch()
           return
         }
         getPaneNav('messageList')?.focusSearch?.()
@@ -1373,8 +1365,7 @@
       return true
     }
     if (KEY.CHAT_SEARCH(e)) {
-      list?.toggleSearchFocus()
-      setFocusedPane('messageList')
+      focusListSearch()
       return true
     }
     if (KEY.CHAT_DONE(e)) {
@@ -1533,8 +1524,8 @@
         onUnifiedFolderSelect={handleUnifiedFolderSelect}
         onUnifiedInboxSelect={handleUnifiedInboxSelect}
         onMessagesMoved={() => messageListRef?.handleActionComplete(false)}
-        onCompose={handleSidebarCompose}
-        onSearch={handleSidebarSearch}
+        onCompose={handleCompose}
+        onSearch={focusListSearch}
         selectedAccountId={selectedAccountId}
         selectedFolderId={selectedFolderId}
         selectionSource={selectionSource}

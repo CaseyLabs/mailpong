@@ -309,9 +309,9 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 ## UIX — UI refresh
 
 - **Objective / outcome:** Refine the Mail view toward a calmer, lower-noise look inspired by bb: quieter Nord surfaces, a minimal header, list status glyphs, conversation compaction, a carded composer and an optional flat transcript.
-- **Status / proposed priority:** proposed / P3. UIX-1 to UIX-6 done.
+- **Status / proposed priority:** proposed / P3. UIX-1 to UIX-6 done. A 2026-10-15 review fix (branch `fix/uix-review`): Tab and Shift+Tab stop on folded-run rows between messages; scrolling or sending ends an expanded row's position hold; an expanded run's first message shows its sender, and the message after a folded run shows its date when the run hid a day change; pending replies follow flat mode; a snoozed or sending chat with unread mail shows a small unread dot on its glyph; the App.svelte size finding is [UI5](ISSUES.md#ui5).
 - **Dependencies / blockers:** UIX-1 first (tokens); UIX-2–5 independent; UIX-6 last.
-- **Issues:** [UI1](ISSUES.md#ui1).
+- **Issues:** [UI1](ISSUES.md#ui1), [UI5](ISSUES.md#ui5).
 - **Technical references:** [design plan](docs/plans/ui-refresh.md), [UI_TOKENS](docs/UI_TOKENS.md), [UI tests](tests/ui/README.md).
 
 Each milestone's scope, acceptance and validation are in the [design plan's milestone table](docs/plans/ui-refresh.md#milestones).

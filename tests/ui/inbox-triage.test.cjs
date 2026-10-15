@@ -48,6 +48,14 @@ describe('inbox triage', () => {
     assert.deepEqual(await argsOf(page, 'UnsnoozeChat'), [['acc1', 't-grace']])
   }))
 
+  it('a snoozed chat with unread mail keeps an unread dot on its glyph', ui.run({
+    beforeMount: `{ const A = window.go.app.App, get = A.GetChats
+      A.GetChats = async (...a) => (await get(...a)).map((c) => c.threadId === 't-grace' ? { ...c, unreadCount: 2, snoozedUntil: new Date(Date.now() + 864e5).toISOString() } : c.threadId === 't-omar' ? { ...c, unreadCount: 0, snoozedUntil: new Date(Date.now() + 864e5).toISOString() } : c) }`,
+  }, async (page) => {
+    await row(page, 'Grace Okafor').locator('[data-row-status="snoozed"] [data-row-unread]').waitFor()
+    assert.equal(await row(page, 'Omar Haddad').locator('[data-row-status="snoozed"] [data-row-unread]').count(), 0, 'a read snoozed chat has no dot')
+  }))
+
   it('archive and undo', ui.run({ allow: ['Archive', 'Undo'] }, async (page) => {
     await menu(page, 'Omar Haddad', 'Archive')
     assert.deepEqual(await argsOf(page, 'Archive'), [[['t-omar-m']]], 'Archive moves every listed message of the chat')

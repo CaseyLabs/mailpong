@@ -1,6 +1,6 @@
 // ChatScroll — scrolling and message focus for the open chat: the anchor that
 // keeps the first unread message in view while bodies render, and Tab
-// navigation between messages.
+// navigation between messages and folded-run rows.
 
 import { tick } from 'svelte'
 
@@ -25,8 +25,6 @@ export class ChatScroll {
   private anchor: { id: string | null; until: number } | null = null
   // An element held at a fixed offset while content around it resizes.
   private keep: { el: HTMLElement; top: number; until: number } | null = null
-
-  constructor(private messageIds: () => string[]) {}
 
   // Back to a clean slate for a newly opened thread.
   reset() {
@@ -105,13 +103,13 @@ export class ChatScroll {
 
   // Keep a new pending bubble in view.
   async toEnd() {
-    this.anchor = null
+    this.release()
     await tick()
     if (this.scroller) toBottom(this.scroller)
   }
 
   by(direction: 1 | -1) {
-    this.anchor = null
+    this.release()
     this.scroller?.scrollBy({ top: direction * SCROLL_AMOUNT, behavior: 'smooth' })
   }
 
@@ -124,15 +122,17 @@ export class ChatScroll {
     this.messageEl(id)?.focus()
   }
 
-  // Tab moves between messages; at either end native Tab leaves the view.
+  // Tab moves between messages and folded-run rows, in stream order; at
+  // either end native Tab leaves the view.
   handleTab(e: KeyboardEvent) {
-    // Folded messages have no element; a compact row keeps its native Tab.
-    if ((e.target as HTMLElement | null)?.closest('[data-compact-row]')) return
-    const ids = this.messageIds().filter((id) => this.messageEl(id))
-    if (e.key !== 'Tab' || ids.length === 0) return
-    const idx = this.focusedId ? ids.indexOf(this.focusedId) : -1
-    if (e.shiftKey ? idx <= 0 : idx >= ids.length - 1) return
+    if (e.key !== 'Tab' || !this.scroller) return
+    const stops = [...this.scroller.querySelectorAll<HTMLElement>('[role="article"][data-message-id], [data-compact-row]')]
+    const row = (e.target as HTMLElement | null)?.closest<HTMLElement>('[data-compact-row]')
+    const idx = row ? stops.indexOf(row) : stops.findIndex((el) => el.dataset.messageId === this.focusedId)
+    if (stops.length === 0 || (e.shiftKey ? idx <= 0 : idx >= stops.length - 1)) return
     e.preventDefault()
-    this.focus(ids[e.shiftKey ? idx - 1 : idx + 1])
+    const next = stops[e.shiftKey ? idx - 1 : idx + 1]
+    if (next.dataset.messageId) this.focus(next.dataset.messageId)
+    else next.focus()
   }
 }

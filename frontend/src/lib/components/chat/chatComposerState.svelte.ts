@@ -57,11 +57,17 @@ export async function flushChatComposers(): Promise<void> {
   await Promise.allSettled([...live].map((c) => c.flush()))
 }
 
+// Keys of chats with a reply waiting out its undo delay or going out, derived
+// once from every mounted composer's pending for all chat rows to share.
+class Sending {
+  keys = $derived(new Set([...live].flatMap((c) => c.pending.filter((p) => p.status === 'queued').map((p) => p.key))))
+}
+const sending = new Sending()
+
 // Whether a reply to the chat is waiting out its undo delay or going out, for
-// the chat list's row status. Reactive: reads every mounted composer's pending.
+// the chat list's row status. Reactive.
 export function isSendingChat(accountId: string, threadKey: string): boolean {
-  const key = `${accountId}|${threadKey}`
-  return [...live].some((c) => c.pending.some((p) => p.key === key && p.status === 'queued'))
+  return sending.keys.has(`${accountId}|${threadKey}`)
 }
 
 export class ChatComposer {

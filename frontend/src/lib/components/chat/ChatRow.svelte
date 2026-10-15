@@ -257,14 +257,18 @@
       {/if}
     </div>
 
-    <!-- Status glyph: one slot at the right edge, kept even when empty so rows align. -->
-    <span class="flex items-center justify-center w-4 shrink-0" data-row-status={status ?? undefined} aria-hidden="true">
+    <!-- Status glyph: one slot at the right edge, kept even when empty so rows align.
+         Unread under a higher-priority glyph shows as a small dot on its corner. -->
+    <span class="relative flex items-center justify-center w-4 shrink-0" data-row-status={status ?? undefined} aria-hidden="true">
       {#if status === 'sending'}
         <span title={$_('chat.sending')}><Icon icon="mdi:loading" class="w-4 h-4 animate-spin text-fg-tertiary" /></span>
       {:else if status === 'snoozed'}
         <span title={$_('chat.snoozedUntil', { values: { time: snoozeTime } })}><Icon icon="mdi:alarm-snooze" class="w-4 h-4 text-fg-tertiary" /></span>
       {:else if status === 'unread'}
         <span class="w-2 h-2 rounded-full bg-primary"></span>
+      {/if}
+      {#if hasUnread && status !== 'unread'}
+        <span class="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-primary ring-1 ring-background" data-row-unread></span>
       {/if}
     </span>
 

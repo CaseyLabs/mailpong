@@ -1,10 +1,13 @@
 // Flat transcript mode: chat_display_style 'flat' drops the bubbles and avatar column, shows a name and time
 // line for every message and marks my messages with an accent rule; 'bubbles' (the default) is unchanged.
+const fs = require('node:fs')
+const path = require('node:path')
 const { describe, it } = require('node:test')
 const assert = require('node:assert/strict')
 const ui = require('./harness.cjs')
 
 const flatStyle = `{ window.go.app.App.GetChatDisplayStyle = async () => 'flat' }`
+const composerFakes = fs.readFileSync(path.resolve(__dirname, '../../.agents/skills/run-mailven/composer-fakes.js'), 'utf8')
 // Settings → Save writes every setting; the fake rejects writes unless allowed.
 const SETTINGS_SAVE = ['SetReadReceiptResponsePolicy', 'SetMarkAsReadDelay', 'SetAccentBarUnread', 'SetAccentUnreadStyle', 'SetAlwaysLoadImages', 'SetAlwaysShowMessageCheckbox', 'SetAutostart', 'SetChatAutoAdvance', 'SetChatCombineSenders', 'SetChatDisplayStyle', 'SetChatIncludeQuote', 'SetChatNotifyPriorityOnly', 'SetChatReadingWidth', 'SetChatSendKey', 'SetChatShowLowGroup', 'SetComposerFormat', 'SetComposerMode', 'SetDarkComposerBody', 'SetDarkMailContent', 'SetLanguage', 'SetMailtoMode', 'SetMessageListDensity', 'SetNativeTitleBar', 'SetRunBackground', 'SetShowMessageListCircles', 'SetShowMessageListProfilePics', 'SetShowMessagePreview', 'SetShowTitleBar', 'SetShowViewerCircles', 'SetSpellcheckEnabled', 'SetSpellcheckLanguages', 'SetStartHidden', 'SetThemeMode']
 
@@ -33,6 +36,16 @@ describe('chat flat transcript', () => {
     })
     for (const m of all) assert.equal(m.rule, mine.includes(m.id), `accent rule only on my messages (${m.id})`)
     assert.ok(await page.locator('[data-message-id] .font-medium').count() > 0, 'a name line shows')
+  }))
+
+  it('a pending reply is flat too', ui.run({ beforeMount: `${flatStyle}\n${composerFakes}\nwindow.__installComposerFakes(window)` }, async (page) => {
+    const box = page.getByPlaceholder('Type a reply...')
+    await box.fill('Flat pending reply')
+    await box.press('Enter')
+    const pending = page.getByRole('status').filter({ hasText: 'Flat pending reply' })
+    await pending.getByText(/Sending in \d+s/).waitFor()
+    const r = await pending.evaluate((el) => ({ bubble: !!el.querySelector('.bg-bubble-own'), avatar: !!el.querySelector('[aria-hidden="true"].w-8'), rule: !!el.querySelector('.border-l-2') }))
+    assert.deepEqual(r, { bubble: false, avatar: false, rule: true }, 'no bubble or avatar spacer; an accent rule like a flat own message')
   }))
 
   it('settings choose the style and save it', ui.run({ allow: SETTINGS_SAVE }, async (page) => {
