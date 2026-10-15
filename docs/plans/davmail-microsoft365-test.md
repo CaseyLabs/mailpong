@@ -1,10 +1,14 @@
 # DavMail + Mailven Microsoft 365 compatibility test
 
-Created: 2026-10-14. Status: proposed test procedure; execution has not started.
+Created: 2026-10-14. Status: deferred by owner decision 2026-10-14; Outlook-client-ID evidence preserved under [SEND-4](../../PLAN.md#send-4).
 Target: an authorized user's own Microsoft 365 mailbox at `cityuniversity.edu`.
-Authorization for this task: write this plan only. No application installation, tenant change, sign-in, mailbox access or test message has been performed. The test user's credentials are saved in `.env` and you have permission to use it.
+Authorization: on 2026-10-14 the user requested implementation on a new branch and explicitly authorized the test account in `.env` for DavMail sign-in, OAuth consent/token storage and synthetic **self-mail only**. Local installation/configuration and an isolated Mailven profile are within scope. External recipients, tenant changes, custom application registration, existing-account migration and grant revocation remain excluded.
 
-This is a standalone investigation proposal, not a selected roadmap milestone. If selected for substantial implementation work, reconcile it with [project management conventions](../PROJECT_MANAGEMENT.md) and link the selected milestone here before starting that work.
+Authorization update: the user selected the DavMail Outlook-client-ID route after comparison with email-oauth2-proxy. This authorizes one documented Outlook desktop client-ID test, Graph resource authorization and inspection of actual permissions; the own account/self-mail scope persists. Do not accept an unexpected permission-expansion prompt without presenting its concrete permissions. Other client IDs, policy changes and admin requests remain excluded.
+
+## Scope
+
+Selected investigation: [SEND-4](../../PLAN.md#send-4), governed by [project management conventions](../PROJECT_MANAGEMENT.md). Execute this one milestone and record an evidence-based result; do not infer tenant compatibility from local readiness. Stop live work at an unsatisfied institutional or user-interaction gate and preserve exact redacted evidence.
 
 ## Goal and decision
 
@@ -47,12 +51,13 @@ No public evidence reviewed establishes the tenant's consent, Conditional Access
 ## Progress
 
 - [x] Write the proposed procedure and acceptance matrix.
-- [ ] Confirm live-test scope, account, controlled recipients and profile isolation.
-- [ ] Inventory versions and configure a loopback-only Graph gateway.
-- [ ] Authenticate DavMail and establish mailbox access.
-- [ ] Connect Mailven and test receiving, sending and limited synchronization.
-- [ ] Verify restart and token refresh behavior.
-- [ ] Clean up, record evidence and make the compatibility decision.
+- [x] Confirm live-test scope and account; recipients are self-mail only.
+- [x] Verify private XDG paths and forced encrypted credential fallback; shorten runtime path to satisfy Unix socket limits.
+- [x] Inventory versions and configure a loopback-only Graph gateway.
+- [x] Authenticate the Outlook client-ID flow through embedded SWT; Graph folder enumeration succeeds. Initial refresh-audience defect recorded as [DAV1](../../ISSUES.md#dav1), workaround restores folders.
+- [x] Connect Mailven; verify self-mail/attachments/reply/flags; record failed move convergence as DAV3.
+- [x] Observe actual expiry-driven renewal and reconnect; full lifecycle convergence fails and fresh-message receipt after final restart is unrun.
+- [x] Restore UI, remove isolated account with rollback, stop task processes and record partial verification; SEND-4 is deferred; acceptance remains incomplete.
 
 ## Test procedure
 
@@ -139,22 +144,38 @@ If this investigation leads to code changes, validate them under the repository'
 ## Surprises & Discoveries
 
 - The FAQ emphasizes EWS, while current setup docs and release notes describe Graph. Test the installed release's Graph configuration rather than treating the FAQ as a complete current setup recipe.
-- Tenant compatibility and live Mailven/DavMail interoperability remain unverified.
+- Live sign-in reached an administrator-approval gate for DavMail, with basic profile, persistent access, mail read/write and sending shown. No request was submitted.
+- Standalone/system Java lacks an embedded SWT/OpenJFX browser; pinned manual-mode source supports console authentication in server mode despite the setup documentation caveat.
+- Outlook-ID SWT authentication and self-mail interoperability succeeded, with a broad Office grant and refresh-audience workaround. Folder moves remain unconverged; see DAV1–DAV3.
 
 ## Decision Log
 
+- On 2026-10-14 the owner requested landing this experiment into main for preservation and deferring all further Microsoft 365 and regular/personal Outlook.com development. This supersedes the earlier keep-branch/no-landing instruction; it does not accept failed D7/D8 or resolve DAV1–DAV3. Explicit reopening is required before any further live work.
+
 - Prefer Graph; keep EWS outside the primary test because of Exchange Online retirement.
 - Test an additional manual account rather than migrating an existing Mailven route.
-- Separate plan authoring from live execution; the present request is to save a test plan.
+- The 2026-10-14 implementation request selects SEND-4; the subsequent scope answer authorizes the test account and self-mail only.
 
 ## Outcomes & Retrospective
 
-Pending live execution. No tenant compatibility outcome has been established.
+Initial DavMail-ID execution was **blocked by tenant policy**. The authorized Outlook-ID follow-up is **partially verified**: D1–D6 and D9 pass; D7/D8 fail full convergence. [Sanitized results](../validation/davmail-microsoft365.md) contain configuration, complete scopes, live evidence and limits.
 
 ## Checkpoint
 
-Planning checkout: branch `docs/outlook-redirect-uri`, base revision `64db5a1`. An unrelated modification to `frontend/wailsjs/go/models.ts` was present and is outside this task. Only this new plan is intended to change.
+Branch: `experiment/davmail-microsoft365`; milestone base: `1e1368e2c70ac5ddd5c6ab75a531a22a18884d9b`. Initial checkpoint commit `7904395` is superseded by the amended checkpoint for this same milestone. SEND-4 is deferred because the owner chose to save the experiment for future development. Landing is explicitly authorized despite incomplete compatibility acceptance; preserve failed D7/D8 and unresolved DAV1–DAV3.
 
-Current step: plan authored; live execution unrun. Next action when testing is selected: confirm the account/recipient scope and profile isolation, then inventory the installed runtime and gateway version. Remaining external gates: tenant authorization, test account access, consent and access policy. Record actual commands/results and update the progress/matrix during execution; no live test is implied by this document.
+Current step: experiment saved for landing, live evidence recorded and cleanup completed. Next authorized action after landing: wait for explicit owner reopening. Possible future investigation after reopening: isolate DAV3 using bounded IMAP pool/gateway evidence, reproduce a serialized synthetic move without a stale local destination copy, then rerun D7/D8 including new-message receipt after restart. Do not resend existing cases. Existing DAV1 workaround remains necessary; DAV2 search false negatives require targeted queries. Prior own-account/self-mail authorization is historical; deferral requires explicit reopening before resumption. Other client IDs, admin requests, tenant changes, migration and grant revocation remain excluded.
 
-Authoring validation: `python3 tools/check-doc-links.py docs/plans/davmail-microsoft365-test.md` passed (one file, zero errors); plan whitespace inspection passed. Repository-wide `git diff --check` failed on trailing whitespace in the pre-existing `frontend/wailsjs/go/models.ts` modification; that file was left untouched. Independent read-only plan review passed with no material gaps. Application builds, automated UI checks and live provider tests were not run for this documentation-only task.
+Changed files: `PLAN.md`, `ISSUES.md`, `docs/PROVIDERS.md`, this plan and `docs/validation/davmail-microsoft365.md`. No application source change; no code simplification warranted. Unfixed findings DAV1, DAV2 and DAV3 are in ISSUES.md. Application suites and native-window inspection are unrun; real dev launch/build, real-backend Accounts expanded/collapsed UI checks and live protocol tests ran. D7/D8 failure must not be reported as full compatibility.
+
+Private artifacts: `/home/user/.local/share/mailven-experiments/davmail-20261014T233015Z/outlook-followup` (private parent). Includes gateway/configuration, encrypted tokens/independent secret, raw logs, profiles, SQLite/config rollback before account removal and evidence. Keep contents out of Git. Existing profile/keyring isolation was verified through runtime paths and unavailable private session bus; credential fallback was encrypted database storage. Short runtime path is recorded in `runtime-path`.
+
+Key evidence: `grant-metadata.json`, `natural-refresh.json`, `mailven-receive.json`, `reply-result.json`, `background-flag.json`, `mailven-synthetic-state.json`, `final-server-inventory.json`, `final-sent-exact.json`, `lifecycle-outage.json`, `lifecycle-recovery.json`, `live-ui-check.json`, `account-removal.json`, and final cleanup/listener records, all under private `evidence/`. The final broad Sent search missed a message that the full-subject search found; do not treat broad search counts as authoritative delivery evidence.
+
+Cleanup: UI restored exactly, isolated account removed (zero accounts), task browser tabs closed and task gateway/dev processes stopped. Private encrypted gateway tokens retained for the authorized follow-up; no Office grant revoked. Server retains only the described synthetic messages/Sent copies and two dedicated folders; no permanent deletion. Before resumption, restore only the private profile rollback if needed, ensure all three local ports are free, remove the private coordinator stop marker and start using the documented isolated environment. Never launch this test through the existing profile or reuse stale authorization codes.
+
+Future resumption reference — use only after explicit owner reopening (private gateway/profile only): set `b` to the private follow-up path above, `XDG_CONFIG_HOME="$b/config"`, `XDG_DATA_HOME="$b/data"`, `XDG_CACHE_HOME="$b/cache"`, `XDG_RUNTIME_DIR="$(cat "$b/runtime-path")"`, `TMPDIR="$b/tmp"`, `DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/no-session-bus"`, `MAILVEN_DEBUG=1` and `MAILVEN_DEV_LOG="$b/evidence/mailven-resume.log"`; invoke `.agents/skills/run-mailven/dev.sh start` with that environment. Verify encrypted credential fallback again. Start private `gateway-run.py` only after removing its `stop` marker. Gateway coordinator uses existing encrypted tokens; no new browser authorization should be necessary. The profile currently has zero accounts; its rollback is under `rollback-before-account-removal/`, with the original encrypted credential key material retained in the private data tree. Restore only while stopped, or recreate only the explicitly isolated test account. Avoid frontend-mounted probes during serialized debugging; `mailbox-action.cjs` demonstrates the bindings-only method. Stop with the same TMPDIR helper and coordinator stop marker.
+
+Historical experiment verification (before deferral): `python3 tools/project-check.py --base 1e1368e2c70ac5ddd5c6ab75a531a22a18884d9b --run` passed whitespace and documentation links (five Markdown files, zero errors); the post-review rerun also passed. Independent `project-acceptance-checker` review agrees with D1–D6/D9 pass and D7/D8 fail, confirms broad grant disclosure, open DAV1–DAV3, no sensitive-data/stub patterns and active milestone status. Browser/MFA/webmail observations rely on the parent session and were not independently replayed. Direct per-file diff review corrected stale roadmap dependencies/status; no application source or simplification change was warranted. Automated application suites and native-window checks remain unrun. The private cleanup record confirms no task listeners, zero test accounts, restored UI and retained encrypted tokens/rollback.
+
+Preservation/deferral verification: `python3 tools/project-check.py --base main --run` passed whitespace and documentation links (six Markdown files, zero errors); `python3 tools/check-doc-links.py --base origin/main` passed eight Markdown files. Independent acceptance review confirmed deferral scope, unresolved DAV1–DAV3, failed D7/D8, retained evidence and no credential values. Future launch instructions remain reference-only behind explicit reopening. No application source changed in this task; application suites and new live/native checks were not run. No simplification was applicable. The landing helper retains local recovery branches; main is the durable experiment record after landing.

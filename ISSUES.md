@@ -4,9 +4,11 @@ Authoritative unresolved findings and follow-ups, grouped by primary project. [R
 
 The 2026-10-08 audit used “unverified” for reported findings not confirmed against source. This reorganization preserves recorded evidence without independently verifying product defects. The P1 provider audit confirmed findings statically; F1–F3b fixed PD1/PD9, PD3–PD8 and U3 within their local scope, while PD2 remains a live gate. See [provider review](docs/validation/provider-deliverability-review.md), [implementation evidence](docs/validation/provider-implementation.md) and [P2 architecture](docs/validation/provider-transport-recommendations.md). Resolved findings are not reopened.
 
+Microsoft 365 and regular/personal Outlook.com work is deferred by owner decision on 2026-10-14. PD2, DAV1–DAV3 and remaining MA4 work are retained unresolved for future development; Microsoft-specific MA1 work is also deferred. Explicit reopening is required before further investigation, implementation or live checks. Existing severity and rollout gates remain in force.
+
 ## Index
 
-- [SEND — Sending, privacy and compatibility](#send): [MA1](#ma1), [PD2](#pd2) (resolved: [CD2](#cd2))
+- [SEND — Sending, privacy and compatibility](#send): [MA1](#ma1), [PD2](#pd2), [DAV1](#dav1), [DAV2](#dav2), [DAV3](#dav3) (resolved: [CD2](#cd2))
 - [API — Provider API activation and migration](#api): [MA4](#ma4) (resolved: [F5b-1](#f5b-1), [F5b-3](#f5b-3))
 - [SYNC — Mail synchronization and action reliability](#sync): none (resolved: [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [CHAT — Chat composer sender review](#chat): [CH1](#ch1) (resolved: [R1](#r1))
@@ -37,12 +39,44 @@ Project: [SEND](PLAN.md#send).
 ### PD2 — Existing Microsoft account live compatibility
 
 - **Owner / milestone:** [SEND](PLAN.md#send) / [SEND-3](PLAN.md#send-3).
-- **Severity / proposed priority / status:** medium / P1 / blocked.
+- **Severity / proposed priority / status:** medium / P1 / deferred.
 - **Dependencies / gates:** Explicit account-type evidence and separately authorized live checks; no endpoint migration approval.
 - **Resolution criteria:** Recorded endpoint/account-type evidence and authorized compatibility results resolve the gate; any migration is separately scoped.
 - **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
 
 - **PD2 medium — live compatibility gate** `app/oauth.go`, `internal/credentials/oauth_grants.go`: F1 corrects the setup guides and new personal/work defaults, verified by disposable fixtures and guarded UI checks. Existing Microsoft accounts retain their configured endpoints and unknown account type where no explicit evidence was recorded. Their prior `smtp.office365.com` endpoint can still differ from Outlook.com's published default; actual endpoint failure and migration compatibility remain unverified. Confirm account type and separately authorize live evidence before proposing any existing-account endpoint migration.
+
+<a id="dav1"></a>
+
+### DAV1 — DavMail 7.0.0 classic Graph refresh uses the wrong audience (upstream)
+
+- **Owner / milestone:** [SEND](PLAN.md#send) / [SEND-4](PLAN.md#send-4).
+- **Severity / proposed priority / status:** unspecified / P2 / deferred; external gateway defect, not a confirmed Mailven defect.
+- **Evidence / reproduction (2026-10-14):** With `O365Graph`, Outlook desktop client ID and `enableOidc=false`, first sign-in enumerates eight folders. Restart loads the stored refresh token but `O365Token.refreshToken()` requests `Settings.getOutlookUrl()` (default Outlook resource), while `O365Authenticator.buildAuthorizeUrl()` requests Graph. Subsequent LIST returns no folders and EXAMINE INBOX fails HTTP 401 `InvalidAuthenticationToken`, “Access token validation failure. Invalid audience.” Pinned upstream source: [7.0.0 O365Token](https://github.com/mguessan/davmail/blob/7.0.0/src/java/davmail/exchange/auth/O365Token.java). [Live evidence](docs/validation/davmail-microsoft365.md).
+- **Impact / workaround:** Restart/token renewal can break a working Graph connection. Local experiment sets `davmail.outlookUrl=https://graph.microsoft.com`; restart with the stored refresh token then enumerated eight folders and logged successful Graph refresh. This override is specific to the tested Graph-only configuration; normal expiry-driven renewal subsequently passed; full folder-move convergence remains unverified. No upstream patch or report submitted.
+- **Dependencies / closure criteria:** Upstream fix or supported release must request the Graph audience during classic Graph refresh and pass initial sign-in, restart and actual expiry/refresh tests without this override. A local workaround does not close the upstream issue.
+
+<a id="dav2"></a>
+
+### DAV2 — DavMail Graph search false negatives in synthetic messages
+
+- **Owner / milestone:** [SEND](PLAN.md#send) / [SEND-4](PLAN.md#send-4).
+- **Severity / proposed priority / status:** unspecified / P3 / deferred; external gateway behavior, cause unverified.
+- **Evidence / reproduction (2026-10-14):** A delivered Python-generated synthetic self-mail was visible in webmail. In one fresh gateway IMAP connection, `UID SEARCH HEADER SUBJECT <unique-subject>` returned zero and `UID SEARCH SUBJECT <same-subject>` returned one; BODY.PEEK verified its body/attachment. A later Mailven-generated synthetic message returned one with both searches. Final Sent inventory also omitted that original send with broad SUBJECT `MAILVEN-DAVMAIL-`, while its full unique subject returned the original plus reply. [Experiment evidence](docs/validation/davmail-microsoft365.md).
+- **Source / uncertainty:** Pinned 7.0.0 `GraphExchangeSession.HeaderCondition` searches the MAPI `String 0x007D` transport-header property; SUBJECT searches the normal Graph subject field. This explains distinct filter paths, but not whether the first message's transport-header property is absent, formatted differently or indexed later. Fetching one message and successfully searching a different one does not prove a cache repair.
+- **Impact / workaround:** Header-search false negatives can invalidate a delivery check. This experiment uses targeted SUBJECT search plus independent webmail/content evidence and never resends an uncertain message. Mailven interoperability is assessed separately.
+- **Dependencies / closure criteria:** Controlled same-message comparisons and service-side property evidence identify the cause; a supported gateway release/configuration must return the expected messages for HEADER SUBJECT and broad SUBJECT queries, or its limitation must be explicitly documented upstream. No upstream report submitted.
+
+<a id="dav3"></a>
+
+### DAV3 — Mailven/DavMail move reconciliation stalls on pool acquisition
+
+- **Owner / milestone:** [SEND](PLAN.md#send) / [SEND-4](PLAN.md#send-4).
+- **Severity / proposed priority / status:** unspecified / P2 / deferred; failing layer not isolated.
+- **Evidence (2026-10-14):** Synthetic Mailven move appeared in the dedicated server destination. Subsequent folder reconciliation stalled, and Mailven logged repeated “Timed out waiting for connection from pool” with a 120000 ms timeout. The local synthetic seed retained a negative temporary UID in the move destination while the message was moved back through webmail. Concurrent UI/background synchronization was present; one probe also received `context canceled`. [Experiment evidence](docs/validation/davmail-microsoft365.md).
+- **Relevant code:** `app/actions.go` (`MoveToFolder`), `internal/sync/folders.go`, `internal/sync/messages.go`, `internal/sync/fetch.go` and `internal/imap/pool.go`. Folder sync, body fetch and move operations share the per-account pool (three connections; two-minute waiter timeout). This matches the warning duration but does not identify which operation held a lease.
+- **Impact / uncertainty:** Local folder state can remain unconverged during this tested workflow. Neither a Mailven pool leak nor a DavMail deadlock is established. A duplicated read-only verification probe was stopped; earlier timeout evidence predates that duplicate. After Mailven restart, manual-only polling and serialized refresh, the cache still showed the seed in both synthetic folders; a fresh server inventory showed one in the root and none in the destination. Gateway restart restored connectivity but did not remove the stale local copy. Clean reproduction and cause isolation are still needed.
+- **Dependencies / closure criteria:** Identify the failing layer using bounded pool/gateway evidence and reproduce a serialized synthetic move in both directions, with no temporary UID left behind, no pool timeout and convergence within the configured observation window. Resolve only after a proved fix or supported configuration; do not weaken concurrency checks to hide the symptom.
 
 <a id="cd2"></a>
 
@@ -63,7 +97,7 @@ Project: [API](PLAN.md#api).
 ### MA4 — Shared mailbox API activation
 
 - **Owner / milestone:** [API](PLAN.md#api) / [API-1](PLAN.md#api-1), proposed [API-6](PLAN.md#api-6).
-- **Severity / proposed priority / status:** low / P2 / open (local implementation done in API-6; live evidence pending).
+- **Severity / proposed priority / status:** low / P2 / deferred (local implementation done in API-6; remaining Microsoft work deferred 2026-10-14; live evidence pending).
 - **Dependencies / gates:** Recorded live Graph identity, delegation, sender/Sent/Bcc evidence under separate authorization.
 - **Resolution criteria:** Shared identity storage and activation are designed and verified before shared migration is offered.
 - **Evidence / impact / reproduction:** original recorded finding below; blockers rechecked read-only on 2026-10-14; [design](docs/SHARED_MAILBOX_API_DESIGN.md) documents identity/grant/activation requirements. API-6 implemented identity storage, parent-owned grants and consent locally ([evidence](docs/validation/api-6.md)); activation and migration stay closed by `sharedMailboxLiveVerified=false` until live checks are recorded.

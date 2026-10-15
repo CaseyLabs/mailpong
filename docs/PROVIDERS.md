@@ -54,6 +54,8 @@ Current API routes support sending, receiving and queued flag/folder actions, wi
 - There is no automatic SMTP/IMAP fallback after migration and no automatic resend of an uncertain submission.
 - Bcc privacy, provider message-size limits and real-account migration/rollback remain unverified live. Local fixtures and UI checks do not establish provider compatibility. See [open findings](../ISSUES.md#ma1).
 
+The [DavMail Microsoft 365 experiment](validation/davmail-microsoft365.md) verified self-mail through a local Graph gateway using the Outlook desktop OAuth client ID. It required a refresh-audience workaround, obtained a broad Office grant, and failed full folder-move convergence. It remains experimental and does not establish a supported replacement for the routes above.
+
 ## Sending, limits and troubleshooting
 
 An authenticated mailbox is not proof that an alias can send. Mailven checks route-specific sender evidence and may require review before sending, in the full composer or in chat. Review **Sent copy policy** for SMTP routes to avoid unintended copies. API routes rely on the provider's Sent behavior. See [Sending and recovery](SENDING.md) for sender evidence, uncertain outcomes and Sent-copy handling.
@@ -75,3 +77,5 @@ Use the account's **Check account setup** diagnostic for endpoint, TLS, protocol
 When provider behavior changes, update this matrix and the affected setup/technical sections in the same change. Keep unsupported behavior and live evidence separate from implementation status. Preserve stored OAuth identifiers and independent token slots. Verify external requirements against official sources before changing them. Never use research notes as proof that a route has passed live testing.
 
 The [deliverability review](validation/provider-deliverability-review.md) and [transport recommendations](validation/provider-transport-recommendations.md) are dated design evidence. Current behavior belongs here and in the linked technical/user guides; unfinished work belongs in `PLAN.md` and `ISSUES.md`.
+
+Further Microsoft 365 and regular/personal Outlook.com development is deferred by owner decision on 2026-10-14, including DavMail, native routes and shared-mailbox rollout. The experiment and unresolved findings are preserved in the [roadmap](../PLAN.md#send-4); explicit reopening is required before further work. Existing compatibility limits and rollout gates remain in force.

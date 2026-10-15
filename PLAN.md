@@ -1,6 +1,6 @@
 # Project roadmap
 
-Authoritative portfolio of remaining work. [Issue register](ISSUES.md) owns findings; [project-management rules](docs/PROJECT_MANAGEMENT.md) define IDs, statuses, authorization and execution plans. **No milestone is active.** No proposed or deferred work below is authorized for implementation by this roadmap.
+Authoritative portfolio of remaining work. [Issue register](ISSUES.md) owns findings; [project-management rules](docs/PROJECT_MANAGEMENT.md) define IDs, statuses, authorization and execution plans. **No active milestone.** Microsoft 365 and personal Outlook.com development is deferred by owner decision on 2026-10-14; the DavMail experiment is preserved for future work. Other proposed or deferred work remains unauthorized.
 
 ## Portfolio
 
@@ -8,8 +8,8 @@ Priorities are recommendations assigned in this reorganization: P1 privacy/data 
 
 | Project | Status | Proposed priority | Unresolved issues | Candidate / gate |
 | --- | --- | --- | --- | --- |
-| [SEND — Sending, privacy and compatibility](#send) | proposed | P1 | [2](ISSUES.md#send) | SEND-2/3 require live authorization |
-| [API — Provider API activation and migration](#api) | proposed | P2 | [3](ISSUES.md#api) | API-3 done (snapshot restore), shared rollout gated by live checks |
+| [SEND — Sending, privacy and compatibility](#send) | proposed | P1 | [5](ISSUES.md#send) | SEND-3/4 deferred; SEND-2 retains its live gate, with Microsoft work deferred |
+| [API — Provider API activation and migration](#api) | proposed | P2 | [3](ISSUES.md#api) | API-3 done (snapshot restore); Microsoft shared rollout deferred and live-gated |
 | [SYNC — Mail synchronization and action reliability](#sync) | proposed | P1 | [0](ISSUES.md#sync) | none; SYNC-1–4 done |
 | [CHAT — Chat composer sender review](#chat) | proposed | P3 | [1](ISSUES.md#chat) | CH1 unassigned (cosmetic) |
 | [MAINT — Maintenance and documentation](#maint) | proposed | P2 | [6](ISSUES.md#maint) | MAINT-3 external; D2 deferred/upstream blocked |
@@ -22,9 +22,11 @@ Priorities are recommendations assigned in this reorganization: P1 privacy/data 
 
 Provider F1–F5 is complete for its local scope; completion does not establish live provider compatibility. Retain full Gmail API and delegated Microsoft Graph direction, future shared-mailbox support and explicit opt-in migration. Shared API activation remains unsupported. Existing accounts retain configured routes until explicitly migrated; there is no automatic route switch or fallback. Snapshot rollback currently changes route only and does not restore data or undo remote actions.
 
-No live provider access, test emails, credentials changes, mailbox migration, provider registrations, tenant/DNS changes, dependency upgrades or personal CLI configuration changes are authorized by this roadmap. Live checks need accounts, From identities, controlled recipients and cases specified separately; see [live limits](docs/MAIL_APIS.md#live-verification-limits) and [P2 parity scenarios](docs/validation/provider-transport-recommendations.md). Wails research additionally prohibits application/dependency/packaging changes, real data, releases and unapproved prototypes or installs under its existing brief. G4 and D2 remain deferred.
+No live provider access, test emails, credentials changes, mailbox migration, provider registrations, tenant/DNS changes, dependency upgrades or personal CLI configuration changes are authorized by this roadmap. Live checks need accounts, From identities, controlled recipients and cases specified separately; see [live limits](docs/MAIL_APIS.md#live-verification-limits) and [P2 parity scenarios](docs/validation/provider-transport-recommendations.md). Wails research additionally prohibits application/dependency/packaging changes, real data, releases and unapproved prototypes or installs under its existing brief. G4 and D2 remain deferred. All further Microsoft 365 and regular/personal Outlook.com work—including native OAuth, IMAP/SMTP, Graph, shared mailboxes, DavMail, live validation and migration—is deferred until explicitly reopened. This also applies to Microsoft-specific work inside mixed-provider milestones; unrelated provider work retains its existing status and gates.
 
 ## Progress
+
+No active milestone. On 2026-10-14 the owner requested merging the `experiment/davmail-microsoft365` evidence into main and deferring all further Microsoft 365 and regular/personal Outlook.com development. SEND-3, SEND-4 and the remaining API-6/MA4 work are deferred, as are Microsoft-specific portions of SEND-2/MA1. Resumption requires explicit owner selection; prior experiment authorization does not authorize continued live work while deferred. The [experiment checkpoint](docs/plans/davmail-microsoft365-test.md) preserves results, private artifact locations and possible future investigation steps. D7/D8 remain failed; no compatibility acceptance is implied by landing.
 
 API-3 is done and F5b-1 resolved: offline snapshot restore with consent, backup and undo ([evidence](docs/validation/api-3.md), [checkpoint](docs/plans/api-3.md)); native and real-account restore remain unrun. API-6 local implementation is done ([evidence](docs/validation/api-6.md), [checkpoint](docs/plans/api-6.md)); shared activation stays closed pending live checks. MAINT-5 is done: all four compact workflow helpers, logged check evidence and guarded landing are implemented and verified ([evidence](docs/validation/maint-5.md), [checkpoint](docs/plans/maint-5.md)). API-5 is done and F5b-3 resolved: rollback reports only a sync request, with scheduler-ordering and UI coverage ([evidence](docs/validation/api-5.md), [checkpoint](docs/plans/api-5.md)). API-1 design is done ([evidence](docs/validation/api-1.md), [checkpoint](docs/plans/api-1.md)); MA5 was resolved by API-6 (verified by fixture) and MA4 stays open for live evidence. No next milestone is activated.
 
@@ -58,17 +60,27 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 - **Scope / deliverable:** Investigate provider header stripping and the local 25 MiB ceiling; specify controlled Bcc and limit cases before requesting live access.
 - **Acceptance:** Recorded authorized delivered-copy evidence establishes Bcc handling; document the ceiling and provider uncertainty. An unrun or failed privacy check keeps the rollout gate open.
 - **Validation:** Static/provider-source review first; live checks only for authorized accounts, From identities, controlled recipients and cases.
-- **Issues:** [MA1](ISSUES.md#ma1). **Progress:** not started.
+- **Issues:** [MA1](ISSUES.md#ma1). **Progress:** not started; Microsoft-specific work deferred by owner decision 2026-10-14.
 
 <a id="send-3"></a>
 
 ### SEND-3 — Existing Microsoft compatibility assessment
 
-- **Status / proposed priority:** blocked / P1. **Dependencies / gates:** explicit account-type evidence and live authorization.
+- **Status / proposed priority:** deferred / P1. **Dependencies / gates:** owner decision 2026-10-14; explicit reopening, account-type evidence and live authorization.
 - **Scope / deliverable:** Assess existing account endpoints without automatically migrating them; preserve new-account defaults.
 - **Acceptance:** Account-type/endpoint evidence and authorized results are recorded; local fixtures are distinguished from live compatibility. Any existing-account migration requires separate scope.
 - **Validation:** Disposable endpoint fixtures and separately authorized live scenarios from provider references.
 - **Issues:** [PD2](ISSUES.md#pd2). **Progress:** not started.
+
+<a id="send-4"></a>
+
+### SEND-4 — DavMail Microsoft 365 experiment
+
+- **Status / proposed priority:** deferred / P3. **Dependencies / gates:** owner decision 2026-10-14; explicit reopening required. Outlook-client-ID sign-in and Graph self-mail verified with a broad Office grant and refresh-audience workaround. Full folder-move/lifecycle convergence remains failed; original DavMail-client administrator gate is historical.
+- **Scope / deliverable:** Execute the selected [test plan](docs/plans/davmail-microsoft365-test.md), using an isolated local profile and the authorized account; synthetic recipients are self-mail only. No project dependency upgrades, account migration or tenant changes.
+- **Acceptance:** Record D1–D9 as PASS, FAIL, BLOCKED or UNRUN with redacted evidence and a supported compatibility decision. A blocked investigation can conclude with an evidenced gate; it cannot claim live compatibility or passing unrun criteria.
+- **Validation:** Actual listener inspection, protocol checks and live Mailven tests where authorization/policy permit; documentation link checks and independent acceptance review. Live results remain distinct from static evidence.
+- **Issues:** [DAV1](ISSUES.md#dav1), upstream refresh-audience defect with tested workaround; [DAV2](ISSUES.md#dav2), observed search false negatives; [DAV3](ISSUES.md#dav3), move/pool reconciliation stall. **Progress:** D1–D6 and D9 passed; D7/D8 failed full convergence. Self-mail delivery, attachments, replies, flags and real expiry-driven token renewal verified; DAV3 stale move copy persists after restart/serialized refresh. Task processes stopped, isolated account removed; private tokens and synthetic server evidence retained. [Live evidence](docs/validation/davmail-microsoft365.md); [continuation checkpoint](docs/plans/davmail-microsoft365-test.md).
 
 <a id="api"></a>
 
@@ -134,7 +146,7 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 
 ### API-6 — Shared mailbox API route
 
-- **Status / proposed priority:** active / P2. **Dependencies / gates:** API-1 design; separate implementation selection. Exposing shared activation/migration additionally requires separately authorized live validation.
+- **Status / proposed priority:** deferred / P2. **Dependencies / gates:** owner decision 2026-10-14 defers remaining Microsoft work; local implementation retained. API-1 design; explicit reopening required. Exposing shared activation/migration additionally requires separately authorized live validation.
 - **Scope / deliverable:** Implement the bounded [shared route design](docs/SHARED_MAILBOX_API_DESIGN.md), including parent-owned grants, child identity isolation, consent/refresh/removal safety, migration blockers and route-aware sender review.
 - **Acceptance:** Disposable fixtures prove owner/child isolation and failure handling; no shared migration is exposed before recorded live identity/delegation/sender/Sent/Bcc evidence. Design alone does not establish support.
 - **Validation:** [Acceptance mapping and gates](docs/SHARED_MAILBOX_API_DESIGN.md#acceptance-to-validation-mapping-for-later-implementation); Go checks, frontend lint/check and full UI suite if implemented; live checks only with separate authorization.

@@ -19,3 +19,5 @@ Live gate: activation/migration of a shared route stays refused by a single reco
 ## Checkpoint
 
 Current step: done. All checks passed (Go targeted + make test, make lint, make test-ui 52 passed, doc links, diff --check); independent acceptance: all criteria pass, live checks unverifiable by design.
+
+Owner decision 2026-10-14: remaining Microsoft 365 and regular/personal Outlook.com work, including shared-mailbox live validation and rollout, is deferred. Local implementation and prior evidence remain preserved; explicit reopening is required. See [roadmap](../../PLAN.md#api-6).
