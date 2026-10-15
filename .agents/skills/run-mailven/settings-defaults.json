@@ -6,6 +6,7 @@
   "GetAutostart": false,
   "GetChatAutoAdvance": "next",
   "GetChatCombineSenders": true,
+  "GetChatDisplayStyle": "bubbles",
   "GetChatIncludeQuote": true,
   "GetChatNotifyPriorityOnly": true,
   "GetChatReadingWidth": "standard",

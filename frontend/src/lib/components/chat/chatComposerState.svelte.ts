@@ -6,6 +6,7 @@
 // @ts-ignore - wailsjs path
 import { GetSubmissionAttempt, GetChatSubmissionReview, GetChatSenderEvidence, SaveChatDraft, GetChatDraft, QueueChatReply, ReleaseChatDraft, PickAttachmentFiles, DeleteDraft } from '../../../../wailsjs/go/app/App'
 import { get } from 'svelte/store'
+import { SvelteSet } from 'svelte/reactivity'
 import { _ } from '$lib/i18n'
 import { UNDO_SEND_MS, undoSend, whenSent } from '$lib/stores/sendQueue'
 import { SubmissionReview } from '../composer/submissionReview.svelte'
@@ -50,10 +51,17 @@ interface Options {
 let nextPendingId = 1
 
 // Mounted composers, flushed together at shutdown.
-const live = new Set<ChatComposer>()
+const live = new SvelteSet<ChatComposer>()
 
 export async function flushChatComposers(): Promise<void> {
   await Promise.allSettled([...live].map((c) => c.flush()))
+}
+
+// Whether a reply to the chat is waiting out its undo delay or going out, for
+// the chat list's row status. Reactive: reads every mounted composer's pending.
+export function isSendingChat(accountId: string, threadKey: string): boolean {
+  const key = `${accountId}|${threadKey}`
+  return [...live].some((c) => c.pending.some((p) => p.key === key && p.status === 'queued'))
 }
 
 export class ChatComposer {

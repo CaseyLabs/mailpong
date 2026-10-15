@@ -63,19 +63,27 @@ and the selected-row fill (`--selected`), plus primary text on my bubbles
 (`--bubble-own`), for both themes, and exits 1 if any pair is below 4.5:1.
 `--selected` and `--bubble-own` are the Frost accent mixed over
 `--surface-list` and `--surface-content` (Dark nord8 at 14 % and 25 %, Light
-nord10 at 14 % and 18 %); keep that relation if the surfaces change.
+nord10 at 14 % and 18 %, approximated on the low-chroma surfaces); keep that relation if the
+surfaces change. The surfaces are near-neutral greys (10-14 % saturation) so the Frost and Aurora
+accents carry the colour.
+
+Light `--primary` (and `--ring`) is 213 40% 40%, a darker nord10 that gives 4.5:1 or more for
+`--primary-foreground` on it and for primary text on `--selected` and the sidebar fills. The audit
+checks both (UI1). Corner radius is `--radius: 0.625rem` in `app.css`; `rounded-lg`, `-md` and `-sm`
+derive from it (10, 8 and 6 px). The base type sizes are unchanged: row and header heights are
+computed from them.
 
 Final values (HSL triples, `built-in.css`):
 
 | Token | Dark | Light |
 |---|---|---|
-| `--surface-rail` | 220 16% 16% | 219 27% 89% |
-| `--surface-sidebar` | 220 16% 18.5% | 219 27% 92% |
-| `--surface-list` | 220 16% 20.5% | 219 28% 95% |
-| `--surface-content` | 220 16% 22% | 219 28% 97.5% |
-| `--divider` | 220 16% 13% | 219 20% 84% |
-| `--selected` | 209 18% 27% | 215 30% 89% |
-| `--bubble-own` | 205 19% 33.2% | 214 31% 89.3% |
+| `--surface-rail` | 220 10% 15% | 220 12% 90% |
+| `--surface-sidebar` | 220 10% 18% | 220 12% 93% |
+| `--surface-list` | 220 10% 20.5% | 220 14% 96% |
+| `--surface-content` | 220 10% 22% | 220 14% 98% |
+| `--divider` | 220 10% 12% | 220 10% 84% |
+| `--selected` | 209 12% 27% | 216 18% 90% |
+| `--bubble-own` | 205 13% 32.5% | 214 20% 90.5% |
 | `--fg-primary` | 219 28% 95% | 220 16% 22% |
 | `--fg-secondary` | 219 24% 85% | 220 17% 30% |
 | `--fg-tertiary` | 219 14% 72% | 220 11% 39% |

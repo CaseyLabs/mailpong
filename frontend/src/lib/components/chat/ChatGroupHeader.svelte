@@ -19,10 +19,11 @@
   let { label, open, onToggle, fewerLabel, onToggleFewer, children }: Props = $props()
 </script>
 
-<div role="group" aria-label={label}>
+<!-- A group without a header (the flat list) is not announced as a group. -->
+<div role={onToggle || label ? 'group' : undefined} aria-label={label || undefined}>
   {#if onToggle}
     <button
-      class="flex items-center gap-1 w-full px-4 pt-4 pb-1 text-left text-meta font-semibold text-fg-tertiary hover:text-fg-primary"
+      class="flex items-center gap-1 w-full px-4 pt-4 pb-1 text-left text-meta font-normal text-fg-tertiary hover:text-fg-primary"
       aria-expanded={open}
       onclick={onToggle}
     >

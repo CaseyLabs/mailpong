@@ -193,6 +193,10 @@ Options for the chat-style mail list, thread view, and reply box.
 
 **Enter** (default) sends from the reply box, with Shift+Enter for a new line. **Ctrl+Enter** sends instead, and Enter adds a new line.
 
+### Message Style
+
+**Bubbles** (default) shows messages in colored speech bubbles. **Flat** shows a plain transcript: no bubbles or avatars, a name and time above each message, and a thin accent line beside your own messages, which stay on the left with everyone else's. Email cards, full bodies, the "N earlier messages" lines and the chat list work the same in both styles.
+
 ### Reading Width
 
 How wide message bubbles can grow in an open chat: **Narrow**, **Standard** (default) or **Wide**. Messages always use the whole conversation pane, with other people's on the left and yours on the right. **Wide** also widens email cards and full email bodies, which stay wide enough for a 600 px HTML email at every setting.

@@ -539,6 +539,18 @@
   }
 
   // Handle compose button click (new message)
+  // The Accounts sidebar's labeled actions; in the narrow overlay they close it first.
+  function handleSidebarCompose() {
+    if (getLayoutMode() === 'narrow') hideSidebar()
+    handleCompose()
+  }
+
+  function handleSidebarSearch() {
+    if (getLayoutMode() === 'narrow') hideSidebar()
+    messageListRef?.toggleSearchFocus()
+    setFocusedPane('messageList')
+  }
+
   function handleCompose() {
     // Use the selected account, or the first account if none selected
     const accountId = resolveAccountId(selectedAccountId)
@@ -1521,6 +1533,8 @@
         onUnifiedFolderSelect={handleUnifiedFolderSelect}
         onUnifiedInboxSelect={handleUnifiedInboxSelect}
         onMessagesMoved={() => messageListRef?.handleActionComplete(false)}
+        onCompose={handleSidebarCompose}
+        onSearch={handleSidebarSearch}
         selectedAccountId={selectedAccountId}
         selectedFolderId={selectedFolderId}
         selectionSource={selectionSource}

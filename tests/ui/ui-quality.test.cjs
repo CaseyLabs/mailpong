@@ -16,6 +16,15 @@ for (const theme of ['light', 'dark']) {
   }
 }
 
+// Flat transcript mode (chat_display_style) is audited in both themes at the full and medium widths,
+// with the Accounts column expanded and collapsed.
+const flatStyle = `{ window.go.app.App.GetChatDisplayStyle = async () => 'flat' }`
+for (const theme of ['light', 'dark']) {
+  for (const width of [1400, 900]) {
+    for (const accounts of ['expanded', 'collapsed']) matrix.push({ theme, width, accounts, previews: false, style: 'flat', beforeMount: flatStyle })
+  }
+}
+
 describe('UI quality audit', () => {
   const used = new Set()
   let completed = 0

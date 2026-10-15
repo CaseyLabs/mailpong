@@ -18,6 +18,8 @@
   import { canToggleSenderChat, displayName, displaySubject, rowPeople } from './chatFormat'
   import type { ChatRowActions } from './chatTriage'
   import { formatSnoozedUntil } from './chatSnooze'
+  import { isSendingChat } from './chatComposerState.svelte'
+  import { rowStatus } from './chatStatus'
 
   interface Props {
     chat: ChatItem
@@ -105,6 +107,9 @@
   const time = $derived(formatListDate(chat.latestDate))
   const snoozeTime = $derived(chat.snoozedUntil ? formatSnoozedUntil(chat.snoozedUntil) : '')
 
+  // The highest-priority state, shown as one glyph at the row's right edge.
+  const status = $derived(rowStatus(chat, isSendingChat(chat.accountId, chat.threadKey)))
+
   const subject = $derived(displaySubject(chat.subject) || $_('viewer.noSubject'))
   // Screen-reader summary of the row's visual signals.
   const ariaLabel = $derived(
@@ -112,6 +117,7 @@
       title,
       subject,
       // The row shows only a dot for unread; screen readers still hear the count.
+      status === 'sending' ? $_('chat.sending') : '',
       hasUnread ? $_('chat.unreadCount', { values: { count: chat.unreadCount } }) : '',
       chat.isPinned ? $_('chat.pinnedLabel') : '',
       snoozeTime ? $_('chat.snoozedUntil', { values: { time: snoozeTime } }) : '',
@@ -156,11 +162,7 @@
   <span class="flex items-center gap-1 shrink-0 text-muted-foreground" aria-hidden="true">
     {#if chat.isEncrypted}<Icon icon="mdi:lock" class="w-3.5 h-3.5" />{/if}
     {#if chat.hasAttachments}<Icon icon="mdi:paperclip" class="w-3.5 h-3.5" />{/if}
-    {#if chat.snoozedUntil}<span title={$_('chat.snoozedUntil', { values: { time: snoozeTime } })}><Icon icon="mdi:alarm-snooze" class="w-3.5 h-3.5" /></span>{/if}
     {#if chat.isPinned && !inPinned}<Icon icon="mdi:pin" class="w-3.5 h-3.5" />{/if}
-    {#if hasUnread}
-      <span class="w-2 h-2 rounded-full bg-primary"></span>
-    {/if}
   </span>
 {/snippet}
 
@@ -254,6 +256,17 @@
         </div>
       {/if}
     </div>
+
+    <!-- Status glyph: one slot at the right edge, kept even when empty so rows align. -->
+    <span class="flex items-center justify-center w-4 shrink-0" data-row-status={status ?? undefined} aria-hidden="true">
+      {#if status === 'sending'}
+        <span title={$_('chat.sending')}><Icon icon="mdi:loading" class="w-4 h-4 animate-spin text-fg-tertiary" /></span>
+      {:else if status === 'snoozed'}
+        <span title={$_('chat.snoozedUntil', { values: { time: snoozeTime } })}><Icon icon="mdi:alarm-snooze" class="w-4 h-4 text-fg-tertiary" /></span>
+      {:else if status === 'unread'}
+        <span class="w-2 h-2 rounded-full bg-primary"></span>
+      {/if}
+    </span>
 
     {#if snoozeMounted}
       <!-- Hidden anchor so the snooze menu opens at the row's top-right. -->

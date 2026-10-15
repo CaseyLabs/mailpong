@@ -186,6 +186,11 @@
     cursor: pointer;
   }
 
+  :root {
+    /* Base corner radius behind rounded-lg/md/sm (10/8/6 px). */
+    --radius: 0.625rem;
+  }
+
   html {
     height: 100%;
     /* Smooth transition for theme changes */

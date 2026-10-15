@@ -12,12 +12,12 @@ Priorities are recommendations assigned in this reorganization: P1 privacy/data 
 | [API — Provider API activation and migration](#api) | proposed | P2 | [3](ISSUES.md#api) | API-3 done (snapshot restore); Microsoft shared rollout deferred and live-gated |
 | [SYNC — Mail synchronization and action reliability](#sync) | proposed | P1 | [0](ISSUES.md#sync) | none; SYNC-1–4 done |
 | [CHAT — Chat composer sender review](#chat) | proposed | P3 | [1](ISSUES.md#chat) | CH1 unassigned (cosmetic) |
-| [MAINT — Maintenance and documentation](#maint) | proposed | P2 | [4](ISSUES.md#maint) | D2 deferred/upstream blocked; UI1/UI3/UI4 remain open |
-| [UIX — UI refresh](#uix) | proposed | P3 | [1](ISSUES.md#ui1) | none selected; UIX-1 (Nord retune, fixes UI1) first |
+| [MAINT — Maintenance and documentation](#maint) | proposed | P2 | [3](ISSUES.md#maint) | D2 deferred/upstream blocked; UI3/UI4 remain open |
+| [UIX — UI refresh](#uix) | proposed | P3 | 0 | UIX-1 (UI1 resolved) to UIX-6 done |
 | [AI — AI development workflows](#ai) | deferred | P3 | [1](ISSUES.md#ai) | G4 deferred; no eligible work |
 | [WAILS — Desktop framework migration assessment](#wails) | deferred | P3 | [0](ISSUES.md#wails) | W3-M0–M7 deferred until official stable Wails v3 release and owner selection |
 
-**Remaining nondeferred scope:** SEND-2 has non-Microsoft privacy/size-limit investigation and separately gated live verification; MAINT-3 is complete following owner disposition. Product follow-ups CH1, UI3 and UI4 remain open in ISSUES.md, without implementation milestones; UI1 is planned under proposed UIX-1; UI2 is the P2 keyboard-accessibility finding. Completed milestones are not new implementation work. No automatic selection or status transition occurs here.
+**Remaining nondeferred scope:** SEND-2 has non-Microsoft privacy/size-limit investigation and separately gated live verification; MAINT-3 is complete following owner disposition. Product follow-ups CH1, UI3 and UI4 remain open in ISSUES.md, without implementation milestones; UI1 and UI2 are resolved. Completed milestones are not new implementation work. No automatic selection or status transition occurs here.
 
 ## Scope and preserved decisions
 
@@ -27,11 +27,11 @@ No live provider access, test emails, credentials changes, mailbox migration, pr
 
 ## Progress
 
-No active milestone. MAINT-3 is done following owner approval and factual privacy/Terms revisions; L2/L3 are resolved by recorded owner disposition, with legal enforceability limits retained ([evidence](docs/validation/maint-3.md), [checkpoint](#maint-3)). MAINT-6 is done and UI2 resolved: closed narrow Mail and shared extension sidebars reject focus, with open/close/resize regressions and the full UI audit passing ([evidence](docs/validation/maint-6.md), [checkpoint](#maint-6)). UI4 records the separately scoped hidden-viewer follow-up. On 2026-10-14 the owner additionally deferred all future Wails work, including W3-M0–W3-M7 assessment, until the official stable Wails v3 release, and confirmed indefinite deferral of all Microsoft work until explicit owner reopening. Wails work still requires selection after the release gate is met. On 2026-10-14 the owner requested merging the `experiment/davmail-microsoft365` evidence into main and deferring all further Microsoft 365 and regular/personal Outlook.com development. SEND-3, SEND-4 and the remaining API-6/MA4 work are deferred, as are Microsoft-specific portions of SEND-2/MA1. Resumption requires explicit owner selection; prior experiment authorization does not authorize continued live work while deferred. The [experiment checkpoint](docs/plans/davmail-microsoft365-test.md) preserves results, private artifact locations and possible future investigation steps. D7/D8 remain failed; no compatibility acceptance is implied by landing.
+No active milestone. UIX-6 is done: Settings → Chat → Message style switches the thread between bubbles (default) and a flat transcript with no bubbles or avatars, a name line on every message and an accent rule on mine ([evidence](docs/validation/uix-6.md), [checkpoint](#uix-6)); the UIX project is complete. UIX-5 is done: runs of three or more older read messages fold into one "N earlier messages" row (latest five, unread, drafts and subject headings never fold); rows are `aria-expanded` buttons and hold the scroll position; the low-priority-sender "Notice from X" variant is deferred because messages carry no sender-priority data ([evidence](docs/validation/uix-5.md), [checkpoint](#uix-5)); UIX-6 remains unselected. UIX-4 is done: the chat composer is a rounded card with the sender, Attach and Send inside and the Reply-to/recipients/Topic chip row below; the From is a read-only label and the attachment summary card is deferred ([evidence](docs/validation/uix-4.md), [checkpoint](#uix-4)); UIX-5–6 remain unselected. UIX-3 is done: labeled New message and Search rows lead the expanded Accounts sidebar, section labels are quieter, and each chat row shows one status glyph (sending, snoozed, unread); the needs-reply glyph is deferred because `ChatItem` has no latest-sender data ([evidence](docs/validation/uix-3.md), [checkpoint](#uix-3)); UIX-4–6 remain unselected. UIX-2 is done: the chat header is title, `⋯`, bordered Archive and Delete, with Snooze and Pin in the menu ([evidence](docs/validation/uix-2.md), [checkpoint](#uix-2)); UIX-3–6 remain unselected. UIX-1 is done and UI1 resolved: Nord surfaces retuned to near-neutral greys, light primary darkened to 4.5:1, `--radius` restored, audit allowlist empty ([evidence](docs/validation/uix-1.md), [checkpoint](#uix-1)); UIX-3–6 remain unselected. MAINT-3 is done following owner approval and factual privacy/Terms revisions; L2/L3 are resolved by recorded owner disposition, with legal enforceability limits retained ([evidence](docs/validation/maint-3.md), [checkpoint](#maint-3)). MAINT-6 is done and UI2 resolved: closed narrow Mail and shared extension sidebars reject focus, with open/close/resize regressions and the full UI audit passing ([evidence](docs/validation/maint-6.md), [checkpoint](#maint-6)). UI4 records the separately scoped hidden-viewer follow-up. On 2026-10-14 the owner additionally deferred all future Wails work, including W3-M0–W3-M7 assessment, until the official stable Wails v3 release, and confirmed indefinite deferral of all Microsoft work until explicit owner reopening. Wails work still requires selection after the release gate is met. On 2026-10-14 the owner requested merging the `experiment/davmail-microsoft365` evidence into main and deferring all further Microsoft 365 and regular/personal Outlook.com development. SEND-3, SEND-4 and the remaining API-6/MA4 work are deferred, as are Microsoft-specific portions of SEND-2/MA1. Resumption requires explicit owner selection; prior experiment authorization does not authorize continued live work while deferred. The [experiment checkpoint](docs/plans/davmail-microsoft365-test.md) preserves results, private artifact locations and possible future investigation steps. D7/D8 remain failed; no compatibility acceptance is implied by landing.
 
 API-3 is done and F5b-1 resolved: offline snapshot restore with consent, backup and undo ([evidence](docs/validation/api-3.md), [checkpoint](docs/plans/api-3.md)); native and real-account restore remain unrun. API-6 local implementation is done ([evidence](docs/validation/api-6.md), [checkpoint](docs/plans/api-6.md)); shared activation stays closed pending live checks. MAINT-5 is done: all four compact workflow helpers, logged check evidence and guarded landing are implemented and verified ([evidence](docs/validation/maint-5.md), [checkpoint](docs/plans/maint-5.md)). API-5 is done and F5b-3 resolved: rollback reports only a sync request, with scheduler-ordering and UI coverage ([evidence](docs/validation/api-5.md), [checkpoint](docs/plans/api-5.md)). API-1 design is done ([evidence](docs/validation/api-1.md), [checkpoint](docs/plans/api-1.md)); MA5 was resolved by API-6 (verified by fixture) and MA4 stays open for live evidence. No next milestone is activated.
 
-CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 is done and MA2/SY1 resolved ([evidence](docs/validation/maint-2.md)). MAINT-4 is done ([validation evidence](docs/validation/maint-4.md)); its findings UI1 and UI3 remain open; UI2 is resolved by MAINT-6. SEND-1 is done and CD2 resolved; SYNC-1 is done and R3 resolved ([evidence](docs/validation/sync-1.md)); SYNC-2 is done and R4 resolved ([evidence](docs/validation/sync-2.md)); SYNC-3 is done and SY2/SY6 resolved ([evidence](docs/validation/sync-3.md)); API-4 is done and F5b-2 resolved ([evidence](docs/validation/api-4.md)); SYNC-4 is done and R2/SY3/SY4/SY5 resolved ([evidence](docs/validation/sync-4.md)); see [validation evidence](docs/validation/send-1.md). Other proposed milestones remain unselected; SEND-2/3 retain their gates, and G4/D2 remain deferred.
+CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 is done and MA2/SY1 resolved ([evidence](docs/validation/maint-2.md)). MAINT-4 is done ([validation evidence](docs/validation/maint-4.md)); its finding UI3 remains open; UI1 is resolved by UIX-1 and UI2 by MAINT-6. SEND-1 is done and CD2 resolved; SYNC-1 is done and R3 resolved ([evidence](docs/validation/sync-1.md)); SYNC-2 is done and R4 resolved ([evidence](docs/validation/sync-2.md)); SYNC-3 is done and SY2/SY6 resolved ([evidence](docs/validation/sync-3.md)); API-4 is done and F5b-2 resolved ([evidence](docs/validation/api-4.md)); SYNC-4 is done and R2/SY3/SY4/SY5 resolved ([evidence](docs/validation/sync-4.md)); see [validation evidence](docs/validation/send-1.md). Other proposed milestones remain unselected; SEND-2/3 retain their gates, and G4/D2 remain deferred.
 
 <a id="send"></a>
 
@@ -309,7 +309,7 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 ## UIX — UI refresh
 
 - **Objective / outcome:** Refine the Mail view toward a calmer, lower-noise look inspired by bb: quieter Nord surfaces, a minimal header, list status glyphs, conversation compaction, a carded composer and an optional flat transcript.
-- **Status / proposed priority:** proposed / P3. No milestone selected.
+- **Status / proposed priority:** proposed / P3. UIX-1 to UIX-6 done.
 - **Dependencies / blockers:** UIX-1 first (tokens); UIX-2–5 independent; UIX-6 last.
 - **Issues:** [UI1](ISSUES.md#ui1).
 - **Technical references:** [design plan](docs/plans/ui-refresh.md), [UI_TOKENS](docs/UI_TOKENS.md), [UI tests](tests/ui/README.md).
@@ -320,61 +320,61 @@ Each milestone's scope, acceptance and validation are in the [design plan's mile
 
 ### UIX-1 — Nord retune and type tokens
 
-- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** selection.
+- **Status / proposed priority:** done / P3. **Authorization:** owner selected UIX-1 on 2026-10-14.
 - **Scope / deliverable:** Lower-chroma Nord surfaces, light primary/selected contrast, base type/radius tokens; UI_TOKENS updated.
 - **Acceptance:** UI1 audit allowlist entry removed; contrast check and full UI suite pass.
 - **Validation:** `make lint`, full `make test-ui`, both themes with Accounts expanded/collapsed.
-- **Issues:** [UI1](ISSUES.md#ui1). **Progress:** not started.
+- **Issues:** [UI1](ISSUES.md#ui1). **Checkpoint:** branch `feat/uix-1-nord-retune`, base `d5d3bec`; done and verified ([evidence](docs/validation/uix-1.md)). Base type sizes deliberately unchanged; `--radius` was undefined since the theme reduction and is now defined. Native WebKitGTK and visual review unrun.
 
 <a id="uix-2"></a>
 
 ### UIX-2 — Header simplification
 
-- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** selection; UIX-1.
+- **Status / proposed priority:** done / P3. **Authorization:** owner selected UIX-2 on 2026-10-14; owner chose to keep a Delete button.
 - **Scope / deliverable:** Conversation header with title, `⋯` menu and one Archive primary action.
 - **Acceptance:** Every header action stays reachable by mouse, menu and keyboard.
 - **Validation:** Header/triage regression tests, frontend lint/check, full UI suite.
-- **Issues:** none. **Progress:** not started.
+- **Issues:** none. **Checkpoint:** branch `feat/uix-1-nord-retune`, base `ddd94f6`; done and verified ([evidence](docs/validation/uix-2.md)). Header is title, `⋯` beside it, bordered Archive and a Delete button; Snooze and Pin moved into the `⋯` menu at every width. Native WebKitGTK and visual review unrun.
 
 <a id="uix-3"></a>
 
 ### UIX-3 — List and sidebar polish
 
-- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** selection; UIX-1.
+- **Status / proposed priority:** done / P3. **Dependencies / gates:** selection; UIX-1.
 - **Scope / deliverable:** Labeled sidebar actions, quieter section labels, row status glyphs; `ChatList.svelte` extraction first.
 - **Acceptance:** Glyph priority regression test; components under 500 lines; audit passes in both Accounts states.
 - **Validation:** New glyph test, frontend lint/check, full UI suite.
-- **Issues:** none. **Progress:** not started.
+- **Issues:** none. **Progress:** done 2026-10-15; [evidence](docs/validation/uix-3.md). Owner selected UIX-3 on 2026-10-15 (branch `feat/uix-1-nord-retune`, base 23f529a). Decisions: the needs-reply glyph is deferred (no latest-sender data on `ChatItem`; Go changes out of scope), so the glyph slot shows sending/queued, then snoozed, then unread; labeled "New message" and "Search" rows go at the top of the expanded Accounts sidebar, and the list-header Compose stays. Steps: (1) extract `ChatListSection`; (2) status glyph + priority test; (3) quieter section labels; (4) sidebar actions; (5) lint/check/full UI suite, visual check in both Accounts states. All done except the screenshot review, which was not performed (see evidence). Follow-up when selected: a needs-reply glyph needs a latest-sender field from the backend summary.
 
 <a id="uix-4"></a>
 
 ### UIX-4 — Composer card and chips
 
-- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** selection; UIX-1.
-- **Scope / deliverable:** Carded chat composer with in-card From picker, chip row and attachment summary card.
+- **Status / proposed priority:** done / P3. **Dependencies / gates:** selection; UIX-1.
+- **Scope / deliverable:** Carded chat composer with in-card sender, chip row; attachment summary card deferred.
 - **Acceptance:** `chat-compose` suite passes; send key and sender review unchanged.
 - **Validation:** `node tests/ui/run.mjs chat-compose`, full UI suite.
-- **Issues:** none ([CH1](ISSUES.md#ch1) adjacent, out of scope). **Progress:** not started.
+- **Issues:** none ([CH1](ISSUES.md#ch1) adjacent, out of scope). **Progress:** done 2026-10-15; [evidence](docs/validation/uix-4.md). Owner selected UIX-4 on 2026-10-15 (branch `feat/uix-1-nord-retune`, base 23d40a4). Decisions: the From stays a read-only label inside the card (no sender picker: the backend resolves the alias and the sender-review flow is unchanged); the optional conversation-attachment summary card is deferred (attachments load per message, no thread-level source). Native WebKitGTK and visual review unrun.
 
 <a id="uix-5"></a>
 
 ### UIX-5 — Conversation compaction
 
-- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** selection; UIX-1.
-- **Scope / deliverable:** Expandable one-line rows for earlier read and low-priority messages.
+- **Status / proposed priority:** done / P3. **Dependencies / gates:** selection; UIX-1.
+- **Scope / deliverable:** Expandable one-line rows for earlier read messages (low-priority-sender variant deferred).
 - **Acceptance:** Latest/unread never collapse; keyboard expand/collapse; scroll position holds.
 - **Validation:** New compaction tests on fakes, full UI suite.
-- **Issues:** none. **Progress:** not started.
+- **Issues:** none. **Progress:** done 2026-10-15; [evidence](docs/validation/uix-5.md). Owner selected UIX-5 on 2026-10-15 (branch `feat/uix-1-nord-retune`, base 8e4a14b). Decisions: the latest 5 messages never fold and a run needs at least 3 older read messages (so short chats are unchanged; tune with the owner); unread, draft and subject-heading messages never fold, and a message unread at open stays visible once read; the "Notice from X" variant for low-priority senders is deferred (the frontend has only a per-chat `isLowPriority`, no per-message sender priority; needs backend data). Native WebKitGTK and visual review unrun.
 
 <a id="uix-6"></a>
 
 ### UIX-6 — Optional flat transcript mode
 
-- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** selection; UIX-1–5.
+- **Status / proposed priority:** done / P3. **Dependencies / gates:** selection; UIX-1–5.
 - **Scope / deliverable:** `chat_display_style` setting (bubbles default, flat) and a flat message variant.
 - **Acceptance:** Both modes pass the audit; Go settings test; user guide updated.
 - **Validation:** `go test ./internal/settings`, bindings regenerated per CONTRIBUTING, frontend checks, full UI suite in both modes.
-- **Issues:** none. **Progress:** not started.
+- **Issues:** none. **Progress:** done 2026-10-15; [evidence](docs/validation/uix-6.md). Owner selected UIX-6 on 2026-10-15 (branch `feat/uix-1-nord-retune`, base 24e37b4). Decisions: flat mode uses the wide stream width, drops the avatar column and distinguishes my messages by name line plus a left accent rule; the audit matrix adds eight flat configurations (both themes, 1400/900 px, Accounts expanded/collapsed) rather than doubling. Native WebKitGTK unrun.
 
 <a id="ai"></a>
 

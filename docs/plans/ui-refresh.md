@@ -55,7 +55,7 @@ Mailven already has the same skeleton (see [screenshot](../ss.png)):
 - **Primary actions:** labeled "New message" and "Search" rows at the top of the expanded Accounts sidebar. With the sidebar collapsed, the icon-only compose button in the list header stays.
 - **Section labels:** small and muted, without heavy weight or uppercase.
 - **Status glyph:** one right-aligned slot per row showing the highest-priority state: sending/queued, then needs reply, then snoozed, then unread. Each glyph has an accessible name. Lock, attachment and pin icons stay in the meta line.
-- **Needs reply:** shown when the latest message is not from the user and is addressed to them directly. Confirm during UIX-3 whether `ChatItem` already exposes this or whether the backend summary needs a field.
+- **Needs reply:** shown when the latest message is not from the user and is addressed to them directly. UIX-3 found that `ChatItem` has no latest-sender field, so this glyph is deferred until the backend summary exposes one; the slot currently shows sending, then snoozed, then unread.
 
 ### Header (UIX-2)
 
@@ -65,8 +65,8 @@ Weekend trip to the coast · snoozed until Fri
 ```
 
 - Title and subtitle are unchanged, with the `⋯` menu placed next to the title.
-- Archive is the single bordered primary action.
-- Delete, Snooze, Pin, Spam, Forward, Mark read and the sender actions live in the menu (the existing shared context menu via `openMenu`).
+- Archive is the bordered primary action. Owner decision (2026-10-14, UIX-2): Delete keeps its own ghost button beside it.
+- Snooze, Pin, Spam, Forward, Mark read and the sender actions live in the menu (the existing shared context menu via `openMenu`); Snooze opens the presets dropdown from a hidden anchor, which the H key also uses.
 - Keyboard shortcuts are unchanged.
 - Width-based icon collapsing is removed where the menu supersedes it.
 
@@ -81,10 +81,10 @@ Priya Shah  00:15
   Yes please!
 ```
 
-- Runs of older, already-read messages collapse into one muted, expandable row ("› N earlier messages").
-- Messages from low-priority senders inside a conversation collapse to "› Notice from X".
+- Runs of older, already-read messages collapse into one muted, expandable row ("› N earlier messages"). As built (UIX-5): the latest 5 messages never fold and a run needs at least 3 messages (`KEEP_RECENT`, `MIN_RUN` in `chatCompact.ts`); drafts and subject-heading messages never fold either.
+- Messages from low-priority senders inside a conversation collapse to "› Notice from X". As built (UIX-5): deferred, because messages carry no per-sender priority; only the run row exists.
 - The latest message and any unread message never collapse.
-- Grouping is pure frontend logic in `chatThread.svelte.ts`.
+- Grouping is pure frontend logic in `chatCompact.ts`; a message that was unread when the chat opened stays visible after it is read.
 - Expanded state is per view and resets on navigation.
 - Rows are buttons with `aria-expanded`.
 - Scroll anchoring (`chatScroll.svelte.ts`) holds when a row expands.
@@ -105,6 +105,7 @@ Priya Shah  00:15
 - The input becomes a rounded card with an in-card toolbar. The From identity picker sits on the left, reusing the CHAT-1 sender data and review flow. Attach and send sit on the right; expand moves to the top right.
 - The "Reply to / recipients / Topic" line becomes a chip row below the card, with the same controls and accessible names.
 - An optional collapsed summary card above the composer lists the conversation's attachments.
+- As built (UIX-4): the sender is a read-only label in the card toolbar (the backend resolves the alias; there is no picker), and the attachment summary card is deferred because attachments load per message.
 - Send-key behavior and sender review are unchanged. [CH1](../../ISSUES.md#ch1) is adjacent but out of scope.
 
 ### Palette and type (UIX-1)
@@ -115,7 +116,7 @@ Priya Shah  00:15
 
 ### Flat transcript mode (UIX-6)
 
-- New setting `chat_display_style`: `bubbles` (default) or `flat`.
+- New setting `chat_display_style`: `bubbles` (default) or `flat`. As built (UIX-6): Settings → Chat → Message style; `ChatBubble.svelte` reads `getChatDisplayStyle()` from `settings.svelte.ts`.
 - In flat mode, `ChatBubble.svelte` renders a name/time line and the body without a bubble background. Own messages are distinguished by name and a subtle accent rule, not alignment.
 - Compaction rows and the status glyphs work identically in both modes.
 
@@ -148,14 +149,13 @@ Order: UIX-1 first, because later milestones consume its tokens. UIX-2 to UIX-5 
 
 - **Needs reply:** the signal may need a backend summary field; if so, that extends UIX-3 into Go and needs focused tests.
 - **Compaction thresholds:** how many older read messages remain visible is unresolved. Start with "collapse all but the last two read messages before the first unread or the latest" and tune with the owner in UIX-5.
-- **Header:** moving Delete into the menu adds a click; confirm with the owner in UIX-2 whether Delete keeps a button.
 - **WebKitGTK:** the UI suite runs in Chromium, so rendering differences in WebKitGTK (fonts, radius, blur) need a native check per milestone, or a recorded unrun check.
 - **Viewer focus:** [UI4](../../ISSUES.md#ui4) (hidden viewer focus) touches the same panes. Fixing it is not in scope, but no milestone may regress it further.
 
 ## Progress
 
 - [x] Design plan and proposed milestones recorded (2026-10-14).
-- [ ] UIX-1 to UIX-6: not selected.
+- [x] UIX-1 to UIX-6 done (UIX-6 2026-10-15).
 
 ## Decision Log
 

@@ -16,27 +16,27 @@
     --card-foreground: 220 16% 22%;
     --popover: 219 28% 95%;                /* nord6 */
     --popover-foreground: 220 16% 22%;
-    --primary: 213 32% 52%;                /* nord10 #5E81AC — Frost dark blue */
+    --primary: 213 40% 40%;                /* nord10 darkened to 4.5:1 with --primary-foreground and on --selected */
     --primary-foreground: 219 28% 95%;     /* nord6 */
     --secondary: 219 27% 92%;              /* nord5 #E5E9F0 */
     --secondary-foreground: 220 16% 22%;
-    --muted: 219 27% 92%;                  /* nord5 */
+    --muted: 220 12% 93%;                  /* near-neutral nord5 */
     --muted-foreground: 220 17% 36%;       /* nord3 #4C566A */
     --accent: 219 27% 92%;                 /* nord5 */
     --accent-foreground: 220 16% 22%;
     --destructive: 354 39% 56%;            /* nord11 #BF616A — Aurora red */
     --destructive-foreground: 219 28% 95%; /* nord6 */
     --border: 219 28% 88%;                 /* nord4 #D8DEE9 */
-    --bubble-own: 214 31% 89.3%;           /* nord10 at 18% over surface-content — my bubbles */
-    --selected: 215 30% 89%;               /* nord10 at 14% over surface-list — selected chat row */
-    --divider: 219 20% 84%;                /* hairline darker than every pane surface */
+    --bubble-own: 214 20% 90.5%;           /* Frost at 18% over surface-content — my bubbles */
+    --selected: 216 18% 90%;               /* Frost at 14% over surface-list — selected chat row */
+    --divider: 220 10% 84%;                /* hairline darker than every pane surface */
     --input: 219 28% 88%;                  /* nord4 */
-    --ring: 213 32% 52%;                   /* nord10 */
+    --ring: 213 40% 40%;                   /* matches --primary */
     /* Pane surfaces: a subtle tone step from rail to conversation pane. */
-    --surface-rail:    219 27% 89%;
-    --surface-sidebar: 219 27% 92%;
-    --surface-list:    219 28% 95%;         /* nord6 */
-    --surface-content: 219 28% 97.5%;
+    --surface-rail:    220 12% 90%;
+    --surface-sidebar: 220 12% 93%;
+    --surface-list:    220 14% 96%;
+    --surface-content: 220 14% 98%;
     /* Text tiers: primary > secondary > tertiary, each >= 4.5:1 on every surface. */
     --fg-primary:   220 16% 22%;            /* nord0 */
     --fg-secondary: 220 17% 30%;
@@ -80,16 +80,16 @@
     --destructive: 354 39% 56%;            /* nord11 #BF616A — Aurora red */
     --destructive-foreground: 219 28% 95%; /* nord6 */
     --border: 220 17% 36%;                 /* nord3 #4C566A */
-    --bubble-own: 205 19% 33.2%;           /* nord8 at 25% over surface-content — my bubbles */
-    --selected: 209 18% 27%;               /* nord8 at 14% over surface-list — selected chat row */
-    --divider: 220 16% 13%;                /* hairline darker than every pane surface */
+    --bubble-own: 205 13% 32.5%;           /* Frost at 25% over surface-content — my bubbles */
+    --selected: 209 12% 27%;               /* Frost at 14% over surface-list — selected chat row */
+    --divider: 220 10% 12%;                /* hairline darker than every pane surface */
     --input: 220 17% 36%;                  /* nord3 */
     --ring: 193 43% 67%;                   /* nord8 */
     /* Pane surfaces: a subtle tone step from rail to conversation pane. */
-    --surface-rail:    220 16% 16%;
-    --surface-sidebar: 220 16% 18.5%;
-    --surface-list:    220 16% 20.5%;
-    --surface-content: 220 16% 22%;         /* nord0 */
+    --surface-rail:    220 10% 15%;
+    --surface-sidebar: 220 10% 18%;
+    --surface-list:    220 10% 20.5%;
+    --surface-content: 220 10% 22%;
     /* Text tiers: primary > secondary > tertiary, each >= 4.5:1 on every surface. */
     --fg-primary:   219 28% 95%;            /* nord6 */
     --fg-secondary: 219 24% 85%;

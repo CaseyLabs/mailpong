@@ -23,6 +23,8 @@ export class ChatScroll {
   content = $state<HTMLDivElement | null>(null)
   focusedId = $state<string | null>(null)
   private anchor: { id: string | null; until: number } | null = null
+  // An element held at a fixed offset while content around it resizes.
+  private keep: { el: HTMLElement; top: number; until: number } | null = null
 
   constructor(private messageIds: () => string[]) {}
 
@@ -30,11 +32,33 @@ export class ChatScroll {
   reset() {
     this.focusedId = null
     this.anchor = null
+    this.keep = null
   }
 
   // Stop following the anchor (the user is scrolling).
   release = () => {
     this.anchor = null
+    this.keep = null
+  }
+
+  // Run `change`, which grows or shrinks the content around `el`, and keep
+  // `el` where it is on screen, also while bodies render afterwards.
+  async holdPosition(el: HTMLElement, change: () => void) {
+    this.anchor = null
+    this.keep = { el, top: el.getBoundingClientRect().top, until: Date.now() + ANCHOR_MS }
+    change()
+    await tick()
+    this.applyKeep()
+  }
+
+  private applyKeep(): boolean {
+    const { keep, scroller } = this
+    if (!keep || !scroller || !keep.el.isConnected || Date.now() > keep.until) {
+      this.keep = null
+      return false
+    }
+    scroller.scrollTop += keep.el.getBoundingClientRect().top - keep.top
+    return true
   }
 
   // Scroll to the first unread message, else to the bottom.
@@ -66,6 +90,7 @@ export class ChatScroll {
       atBottom = nearBottom(scroller)
     }
     const observer = new ResizeObserver(() => {
+      if (this.applyKeep()) return
       if (this.anchor) this.apply()
       else if (atBottom) toBottom(scroller)
     })
@@ -101,7 +126,9 @@ export class ChatScroll {
 
   // Tab moves between messages; at either end native Tab leaves the view.
   handleTab(e: KeyboardEvent) {
-    const ids = this.messageIds()
+    // Folded messages have no element; a compact row keeps its native Tab.
+    if ((e.target as HTMLElement | null)?.closest('[data-compact-row]')) return
+    const ids = this.messageIds().filter((id) => this.messageEl(id))
     if (e.key !== 'Tab' || ids.length === 0) return
     const idx = this.focusedId ? ids.indexOf(this.focusedId) : -1
     if (e.shiftKey ? idx <= 0 : idx >= ids.length - 1) return

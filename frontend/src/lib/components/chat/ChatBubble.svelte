@@ -12,7 +12,7 @@
   import MessageContextMenu from '$lib/components/common/MessageContextMenu.svelte'
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu'
   import { contactPhotos } from '$lib/stores/contactPhotos.svelte'
-  import { getDarkMailContent } from '$lib/stores/settings.svelte'
+  import { getDarkMailContent, getChatDisplayStyle } from '$lib/stores/settings.svelte'
   import { getIsDarkActive } from '$lib/stores/theme.svelte'
   import { toasts } from '$lib/stores/toast'
   import ChatRichCard from './ChatRichCard.svelte'
@@ -64,8 +64,11 @@
     if (encrypted || showOriginal || !msg.chat) return 'full'
     return msg.chat.isRich ? 'card' : 'bubble'
   })
-  // Email cards and full bodies use the wider stream; the rest the chat column.
-  const wide = $derived(mode === 'card' || mode === 'full')
+  // Flat transcript: no bubble, avatar column or alignment; my messages carry
+  // an accent rule and a name line instead.
+  const flat = $derived(getChatDisplayStyle() === 'flat')
+  // Email cards and full bodies (and the flat transcript) use the wider stream; the rest the chat column.
+  const wide = $derived(mode === 'card' || mode === 'full' || flat)
   // Attachment-only mail: no empty colored bubble above the attachment list.
   const bare = $derived(mode === 'bubble' && msg.hasAttachments && !msg.chat?.hasQuoted && !msg.chat?.text.trim())
 
@@ -74,9 +77,9 @@
   const decryptedAttachments = $derived(pgp?.attachments ?? smime?.attachments)
   const hasAttachments = $derived(msg.hasAttachments || (decryptedAttachments?.length ?? 0) > 0)
   // Bubbles keep actions on their right; wide cards and bodies overlay the corner.
-  const actionsPos = $derived(mode === 'bubble' ? 'top-0 left-full ml-1' : 'top-1.5 right-1.5 rounded-md bg-background/90 shadow-sm')
+  const actionsPos = $derived(mode === 'bubble' && !flat ? 'top-0 left-full ml-1' : 'top-1.5 right-1.5 rounded-md bg-background/90 shadow-sm')
   // My messages sit a step in from the left edge (an extra 1.5rem).
-  const gutter = $derived(wide ? (item.mine ? 'pl-10 pr-4' : 'px-4') : (item.mine ? MINE_BUBBLE_GUTTER : 'px-6'))
+  const gutter = $derived(wide ? (item.mine && !flat ? 'pl-10 pr-4' : 'px-4') : (item.mine ? MINE_BUBBLE_GUTTER : 'px-6'))
   const canDarken = $derived(getDarkMailContent() && getIsDarkActive())
   const darken = $derived(canDarken && !darkOverride)
 
@@ -177,13 +180,13 @@
     onblur={() => onFocusChange(false)}
   >
     <!-- Avatar column; the spacer keeps a sender's grouped bubbles aligned -->
-    {@render avatar()}
+    {#if !flat}{@render avatar()}{/if}
 
-    <div class="flex flex-col min-w-0 {mode === 'bubble' ? 'max-w-[min(75%,var(--chat-bubble))]' : 'flex-1'} items-start">
+    <div class="flex flex-col min-w-0 {mode === 'bubble' && !flat ? 'max-w-[min(75%,var(--chat-bubble))]' : 'flex-1'} items-start">
       {#if item.groupStart || badges.length > 0}
         <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 px-1 mb-0.5 text-xs text-fg-tertiary" title={item.groupStart ? recipientsTitle : undefined}>
           {#if item.groupStart}
-            {#if !item.mine}<span class="font-medium text-fg-primary">{senderName}</span>{/if}
+            {#if !item.mine || flat}<span class="font-medium text-fg-primary">{senderName}</span>{/if}
             {#if msg.isDraft}<span class="text-destructive font-medium">{$_('chat.draft')}</span>{/if}
             <span class="tabular-nums">{time}</span>
           {/if}
@@ -200,7 +203,7 @@
         <ChatSecurityBanners {msg} {thread} lines={security} />
 
         <div
-          class="relative w-full rounded-2xl group-focus-visible:ring-2 group-focus-visible:ring-primary/40 {mode === 'bubble' && !bare ? `w-auto text-foreground ${item.mine ? 'rounded-br-md bg-bubble-own' : 'rounded-bl-md bg-muted'}` : ''}"
+          class="relative w-full {flat ? 'rounded-none' : 'rounded-2xl'} {flat && item.mine ? 'border-l-2 border-primary/50 pl-3' : ''} group-focus-visible:ring-2 group-focus-visible:ring-primary/40 {mode === 'bubble' && !bare && !flat ? `w-auto text-foreground ${item.mine ? 'rounded-br-md bg-bubble-own' : 'rounded-bl-md bg-muted'}` : ''}"
         >
           {#if notFetched && thread.bodyErrors.has(msg.id)}
             <div class="flex items-center gap-2 px-3.5 py-2 text-sm text-muted-foreground bg-muted rounded-2xl">
@@ -216,7 +219,7 @@
           {:else if bare}
             <!-- Attachment-only mail: the attachment list below is the message -->
           {:else if mode === 'bubble'}
-            <div class="px-3.5 py-2 text-[1rem] leading-[1.45] whitespace-pre-wrap wrap-anywhere">
+            <div class="{flat ? 'px-1 py-0.5' : 'px-3.5 py-2'} text-[1rem] leading-[1.45] whitespace-pre-wrap wrap-anywhere">
               {@render text(msg.chat!.text)}
               {#if msg.chat!.hasQuoted}
                 <!-- Quiet marker at the end of the text, not a pill below it -->
@@ -254,7 +257,7 @@
               <DropdownMenu.Trigger class="p-1 rounded hover:bg-muted" title={$_('chat.messageActions')} aria-label={$_('chat.messageActions')}>
                 <Icon icon="mdi:dots-horizontal" class="w-4 h-4 text-muted-foreground" />
               </DropdownMenu.Trigger>
-              <DropdownMenu.Content align={mode === 'bubble' ? 'start' : 'end'}>
+              <DropdownMenu.Content align={mode === 'bubble' && !flat ? 'start' : 'end'}>
                 <DropdownMenu.Item onSelect={() => reply('reply')}><Icon icon="mdi:reply" class="w-4 h-4 mr-2" />{$_('viewer.reply')}</DropdownMenu.Item>
                 <DropdownMenu.Item onSelect={() => reply('reply-all')}><Icon icon="mdi:reply-all" class="w-4 h-4 mr-2" />{$_('viewer.replyAll')}</DropdownMenu.Item>
                 <DropdownMenu.Item onSelect={() => reply('forward')}><Icon icon="mdi:share" class="w-4 h-4 mr-2" />{$_('viewer.forward')}</DropdownMenu.Item>

@@ -3,11 +3,4 @@
 // when the issue is fixed so the audit guards the fix.
 // { rule, element: RegExp over the finding's element descriptor, landmark?: RegExp over a keyboard finding's
 //   closest landmark (ui-audit.cjs), when?: (config) => bool, reason }
-module.exports = [
-  {
-    rule: 'contrast',
-    element: /^span "(Compose|Inbox)" in /,
-    when: (c) => c.theme === 'light',
-    reason: 'ISSUES.md UI1: light-theme primary text on primary/accent surfaces is below 4.5:1',
-  },
-]
+module.exports = []

@@ -392,6 +392,8 @@
           folderId={folderId ?? ''}
           folderType={effectiveFolderType}
           {imagesLoaded}
+          resetKey={threadId}
+          holdPosition={(el, change) => void scroll.holdPosition(el, change)}
           onFocusChange={(id, f) => { if (f) scroll.focusedId = id; else if (scroll.focusedId === id) scroll.focusedId = null }}
           {onReply}
           {onComposeToAddress}

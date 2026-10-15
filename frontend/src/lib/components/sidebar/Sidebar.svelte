@@ -4,6 +4,7 @@
   import { onMount } from 'svelte'
   import AccountSection from './AccountSection.svelte'
   import UnifiedInboxSection from './UnifiedInboxSection.svelte'
+  import SidebarActions from './SidebarActions.svelte'
   import AccountDialog from '$lib/components/settings/AccountDialog.svelte'
   import DeleteAccountDialog from '$lib/components/settings/DeleteAccountDialog.svelte'
   import SidebarFooter from '$lib/components/kit/SidebarFooter.svelte'
@@ -111,6 +112,8 @@
     onUnifiedFolderSelect?: (accountId: string, folderId: string, folderPath: string, folderName: string, folderType: string) => void
     onUnifiedInboxSelect?: () => void
     onMessagesMoved?: () => void
+    onCompose?: () => void
+    onSearch?: () => void
     selectedAccountId?: string | null
     selectedFolderId?: string | null
     selectionSource?: 'unified' | 'account' | null
@@ -125,6 +128,8 @@
     onUnifiedFolderSelect,
     onUnifiedInboxSelect,
     onMessagesMoved,
+    onCompose,
+    onSearch,
     selectedAccountId = null,
     selectedFolderId = null,
     selectionSource = null,
@@ -537,6 +542,8 @@
         </Button>
       </div>
     {:else}
+      {#if onCompose && onSearch}<SidebarActions {onCompose} {onSearch} />{/if}
+
       <!-- Unified Inbox Section (only show if more than 1 account) -->
       {#if accountStore.accounts.length > 1}
         <UnifiedInboxSection

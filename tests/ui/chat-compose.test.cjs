@@ -11,7 +11,8 @@ const composerFakes = fs.readFileSync(path.resolve(__dirname, '../../.agents/ski
 const withComposer = (extra = '') => `${composerFakes}\nwindow.__installComposerFakes(window)\n${extra}`
 
 const box = (page) => page.getByPlaceholder('Type a reply...')
-const replyLine = (page) => box(page).locator('xpath=ancestor::div[contains(@class,"border-t")][1]')
+// The whole composer (card and chip row): the chip row's controls and the in-card sender both live inside it.
+const replyLine = (page) => page.locator('[data-chat-composer]')
 const log = (page) => page.evaluate(() => window.__log.join(' | '))
 // Wait up to 5 s for the reply box to hold text; on a timeout the assertion that follows reports the actual value.
 const boxHolds = async (page, text) => {
@@ -36,6 +37,18 @@ describe('chat compose', () => {
     const [[reply]] = await argsOf(page, 'QueueChatReply')
     assert.deepEqual([reply.messageId, reply.replyAll, reply.text], ['trip-5', false, 'Count me in.'],
       'the reply answers the latest incoming message, with the chosen mode')
+  }))
+
+  it('the composer is a card: sender, attach and send inside, chips below', ui.run({
+    beforeMount: withComposer(`{ const A = window.go.app.App, ids = A.GetIdentities
+      A.GetIdentities = async (acc) => [...await ids(acc), { id: 'id-shop', accountId: acc, email: 'alex.shop@example.com', name: 'Alex Morgan', isDefault: false }]
+      A.ChatReplyFrom = async () => 'alex.shop@example.com' }`),
+  }, async (page) => {
+    const card = box(page).locator('xpath=ancestor::div[contains(@class,"rounded-2xl")][1]')
+    await card.getByText('from alex.shop@example.com').waitFor()
+    for (const name of ['Attach files', 'Send', 'Open in full composer']) assert.equal(await card.getByRole('button', { name: new RegExp(name, 'i') }).count(), 1, `${name} sits in the card`)
+    const [cardBox, chipBox] = await Promise.all([card.boundingBox(), page.getByText('2 recipients').boundingBox()])
+    assert.ok(chipBox.y >= cardBox.y + cardBox.height, 'the Reply-to chip row sits below the card')
   }))
 
   it('draft autosave and restore', ui.run({
@@ -73,6 +86,17 @@ describe('chat compose', () => {
     await box(page).press('Enter')
     await pending.getByText('Accepted by server; delivery not confirmed').waitFor()
     assert.match(await log(page), /fire send-2/, 'the resend goes out after the delay')
+  }))
+
+  it('the chat row shows a sending glyph while a reply waits out its undo delay', ui.run({ beforeMount: withComposer() }, async (page) => {
+    const tripRow = page.locator('[data-chat-row]', { hasText: 'Weekend trip' })
+    assert.equal(await tripRow.locator('[data-row-status]').count(), 0, 'a read, unsnoozed chat shows no glyph')
+    await box(page).fill('Glyph test reply')
+    await box(page).press('Enter')
+    await tripRow.locator('[data-row-status="sending"]').waitFor()
+    assert.match(await tripRow.getAttribute('aria-label'), /Sending/, 'the row name announces the send')
+    await page.getByRole('status').filter({ hasText: 'Glyph test reply' }).getByRole('button', { name: 'Undo' }).click()
+    await tripRow.locator('[data-row-status="sending"]').waitFor({ state: 'detached' })
   }))
 
   it('reply identity: the alias the message reached', ui.run({

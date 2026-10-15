@@ -620,3 +620,46 @@ func TestSetGetChatReadingWidth(t *testing.T) {
 		})
 	}
 }
+
+func TestSetGetChatDisplayStyle(t *testing.T) {
+	tests := []struct {
+		name    string
+		style   string
+		wantErr bool
+	}{
+		{name: "bubbles", style: "bubbles"},
+		{name: "flat", style: "flat"},
+		{name: "invalid", style: "plain", wantErr: true},
+		{name: "empty", style: "", wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := NewStore(openTestDB(t))
+
+			got, err := store.GetChatDisplayStyle()
+			if err != nil || got != ChatDisplayStyleBubbles {
+				t.Fatalf("default = %q, %v; want bubbles", got, err)
+			}
+
+			err = store.SetChatDisplayStyle(tt.style)
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected error, got nil")
+				}
+				if got, _ := store.GetChatDisplayStyle(); got != ChatDisplayStyleBubbles {
+					t.Errorf("rejected value changed the setting to %q", got)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			got, err = store.GetChatDisplayStyle()
+			if err != nil || got != tt.style {
+				t.Errorf("got %q, %v; want %q", got, err, tt.style)
+			}
+		})
+	}
+}

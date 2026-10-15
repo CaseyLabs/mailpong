@@ -10,10 +10,10 @@
   // triage actions on the selected chat. The chat list has no multi-select.
   import { onMount, untrack } from 'svelte'
   import { _ } from '$lib/i18n'
-  import ChatRow from './ChatRow.svelte'
+  import type ChatRow from './ChatRow.svelte'
+  import ChatListSection from './ChatListSection.svelte'
   import ChatListHeader from './ChatListHeader.svelte'
   import ChatLowGroupHeader from './ChatLowGroupHeader.svelte'
-  import ChatGroupHeader from './ChatGroupHeader.svelte'
   import ChatListEmpty from './ChatListEmpty.svelte'
   import SyncStatusDialog from '../list/SyncStatusDialog.svelte'
   import { ConfirmDialog } from '$lib/components/ui/confirm-dialog'
@@ -406,36 +406,27 @@
   })
 </script>
 
-{#snippet rows(list: ChatItem[], inPinned = false)}
-  {#each list as c (c.key)}
-    <ChatRow
-      bind:this={rowRefs[c.key]}
-      chat={c}
-      id={rowId(c)}
-      selected={selectedKey === c.key}
-      folderType={chatList.isUnified ? 'inbox' : folderType}
-      showAccount={chatList.isUnified}
-      {inPinned}
-      {myEmails}
-      onSelect={() => open(c)}
-      actions={rowActions(c)}
-      onFocusList={focusList}
-      onActionComplete={handleActionComplete}
-      {onReply}
-    />
-  {/each}
-{/snippet}
-
-{#snippet group(label: string, items: ChatItem[], id: ChatGroup, fewerLabel: string | undefined, header: boolean)}
-  <ChatGroupHeader
+{#snippet group(label: string, items: ChatItem[], id?: ChatGroup, fewerLabel?: string, header = false)}
+  <ChatListSection
     {label}
-    open={!header || isChatGroupExpanded(id)}
-    onToggle={header ? () => toggleChatGroupExpanded(id) : undefined}
+    {items}
+    open={!id || !header || isChatGroupExpanded(id)}
+    onToggle={id && header ? () => toggleChatGroupExpanded(id) : undefined}
     {fewerLabel}
-    onToggleFewer={() => toggleChatGroupShowFewer(id)}
-  >
-    {@render rows(items, id === 'pinned')}
-  </ChatGroupHeader>
+    onToggleFewer={() => id && toggleChatGroupShowFewer(id)}
+    inPinned={id === 'pinned'}
+    {selectedKey}
+    folderType={chatList.isUnified ? 'inbox' : folderType}
+    showAccount={chatList.isUnified}
+    {myEmails}
+    bind:rowRefs
+    {rowId}
+    {rowActions}
+    onOpen={open}
+    onFocusList={focusList}
+    onActionComplete={handleActionComplete}
+    {onReply}
+  />
 {/snippet}
 
 <div class="flex flex-col h-full {isFlashing ? 'pane-focus-flash' : ''}">
@@ -474,7 +465,7 @@
       {#if grouped}
         {#if main.length > 0}{@render group($_('chat.chats'), mainShown, 'chats', chatsFewer, chatsHeader)}{/if}
       {:else}
-        {@render rows(main)}
+        {@render group('', main)}
       {/if}
       {#if showLowGroup}
         <ChatLowGroupHeader onArchived={reloadAfterUndo} />

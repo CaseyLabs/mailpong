@@ -12,7 +12,7 @@ All Microsoft work, including Microsoft 365 and regular/personal Outlook.com, is
 - [API — Provider API activation and migration](#api): [MA4](#ma4) (resolved: [F5b-1](#f5b-1), [F5b-3](#f5b-3))
 - [SYNC — Mail synchronization and action reliability](#sync): none (resolved: [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [CHAT — Chat composer sender review](#chat): [CH1](#ch1) (resolved: [R1](#r1))
-- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [UI1](#ui1), [UI3](#ui3), [UI4](#ui4) (resolved: [L2](#l2), [L3](#l3), [UI2](#ui2), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
+- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [UI3](#ui3), [UI4](#ui4) (resolved: [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
 - [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
 
@@ -316,12 +316,13 @@ Project: [MAINT](PLAN.md#maint).
 
 ### UI1 — Light-theme primary text contrast
 
-- **Owner / milestone:** [MAINT](PLAN.md#maint) / found by [MAINT-4](PLAN.md#maint-4); fix planned in proposed [UIX-1](PLAN.md#uix-1), not selected.
-- **Severity / proposed priority / status:** low / P3 / open.
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / found by [MAINT-4](PLAN.md#maint-4); fixed by [UIX-1](PLAN.md#uix-1).
+- **Severity / proposed priority / status:** low / P3 / resolved.
 - **Problem / evidence:** 2026-10-14, `make test-ui` UI audit (runtime contrast, backend-free fake data). In the light theme the header "Compose" label measures 3.57:1 (rgb(239,241,246) on rgb(93,129,172)) at 900 and 700 px, and the selected sidebar "Inbox" label measures 2.99:1 (rgb(93,129,172) on rgb(215,222,234)); WCAG AA normal text needs 4.5:1. Dark theme passes. `tools/contrast-check.mjs` checks text tiers on pane surfaces only, so it does not cover primary-on-primary/accent pairs.
 - **Impact / limits:** reduced legibility for low-vision users in the light theme. Measured in Chromium against the dev build only; not checked on WebKitGTK.
 - **Reproduction:** delete the UI1 entry in `tests/ui/ui-audit-allow.cjs`, then `node tests/ui/run.mjs ui-quality`.
 - **Dependencies / closure:** theme token change reviewed for both themes; the UI1 allowlist entry is deleted and the audit passes.
+- **Resolution / evidence:** [UIX-1 evidence](docs/validation/uix-1.md): light `--primary` darkened to 213 40% 40%, allowlist entry removed, full audit and contrast check pass. Chromium only; WebKitGTK unchecked.
 
 <a id="ui2"></a>
 

@@ -290,6 +290,16 @@ func (a *App) SetChatCombineSenders(combine bool) error {
 	return moveErr
 }
 
+// GetChatDisplayStyle returns how chat messages render ("bubbles" or "flat")
+func (a *App) GetChatDisplayStyle() (string, error) {
+	return a.settingsStore.GetChatDisplayStyle()
+}
+
+// SetChatDisplayStyle sets how chat messages render
+func (a *App) SetChatDisplayStyle(style string) error {
+	return a.settingsStore.SetChatDisplayStyle(style)
+}
+
 // GetChatReadingWidth returns the chat reading column width ("narrow",
 // "standard" or "wide")
 func (a *App) GetChatReadingWidth() (string, error) {

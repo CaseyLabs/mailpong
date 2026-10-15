@@ -51,6 +51,7 @@ const (
 	KeyChatAutoAdvance            = "chat_auto_advance"         // "next" or "previous": which chat opens after Done, Snooze, delete, or move
 	KeyChatShowLowGroup           = "chat_show_low_group"       // show the Low priority group under the All filter (defaults on)
 	KeySMIMEOnlineRevocation      = "smime_online_revocation"   // opt-in online certificate revocation checking
+	KeyChatDisplayStyle           = "chat_display_style"        // "bubbles" or "flat": how chat messages render
 	KeyChatCombineSenders         = "chat_combine_senders"      // combine each sender's threads into one chat (defaults on); read in SQL by message.senderCombinedExpr
 )
 
@@ -111,6 +112,12 @@ const (
 const (
 	ChatSendKeyEnter     = "enter"
 	ChatSendKeyCtrlEnter = "ctrl-enter"
+)
+
+// Chat display styles
+const (
+	ChatDisplayStyleBubbles = "bubbles"
+	ChatDisplayStyleFlat    = "flat"
 )
 
 // Chat reading widths
@@ -702,6 +709,25 @@ func (s *Store) SetChatReadingWidth(width string) error {
 		return s.Set(KeyChatReadingWidth, width)
 	}
 	return fmt.Errorf("invalid chat reading width: %s", width)
+}
+
+// GetChatDisplayStyle returns how chat messages render: "bubbles" (default)
+// or "flat" (bubble-less transcript).
+func (s *Store) GetChatDisplayStyle() (string, error) {
+	value, err := s.Get(KeyChatDisplayStyle)
+	if value == ChatDisplayStyleFlat {
+		return value, err
+	}
+	return ChatDisplayStyleBubbles, err
+}
+
+// SetChatDisplayStyle sets how chat messages render.
+func (s *Store) SetChatDisplayStyle(style string) error {
+	switch style {
+	case ChatDisplayStyleBubbles, ChatDisplayStyleFlat:
+		return s.Set(KeyChatDisplayStyle, style)
+	}
+	return fmt.Errorf("invalid chat display style: %s", style)
 }
 
 // GetChatIncludeQuote returns whether chat replies quote the replied-to

@@ -133,4 +133,15 @@ describe('chat logic', () => {
     assert.deepEqual(r.sunday, ['laterToday', 'tomorrow'], 'no "Next week" on Sunday')
     assert.equal(r.tomorrow, 8)
   }))
+
+  it('row status glyph priority', ui.run(opts, async (page) => {
+    const r = await page.evaluate(async () => {
+      const { rowStatus } = await import('/src/lib/components/chat/chatStatus.ts')
+      const later = new Date(Date.now() + 36e5)
+      const st = (unreadCount, snoozedUntil, sending) => rowStatus({ unreadCount, snoozedUntil }, sending)
+      return [st(2, later, true), st(2, later, false), st(2, null, false), st(0, later, false), st(0, null, false), st(0, null, true)]
+    })
+    assert.deepEqual(r, ['sending', 'snoozed', 'unread', 'snoozed', null, 'sending'],
+      'sending outranks snoozed, which outranks unread; a read, unsnoozed chat has no glyph')
+  }))
 })

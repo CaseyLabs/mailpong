@@ -20,7 +20,7 @@ after(async () => { await browser?.close() })
 const expectedError = /^blocked: /
 
 // Human-readable configuration, used in failure messages and screenshot names.
-const describeConfig = (o) => `${o.theme} ${o.width}px accounts=${o.accounts} previews=${o.previews ? 'on' : 'off'}`
+const describeConfig = (o) => `${o.theme} ${o.width}px accounts=${o.accounts} previews=${o.previews ? 'on' : 'off'}${o.style ? ` style=${o.style}` : ''}`
 
 const defaults = { width: 1400, height: 800, theme: 'dark', accounts: 'expanded', previews: false, ready: '.chat-row' }
 
@@ -61,7 +61,7 @@ exports.describeConfig = describeConfig
 
 // run(options, fn) returns a node:test function that opens the app, runs fn(page, config, t) and closes it.
 // options: width, height, theme ('dark'|'light'), accounts ('expanded'|'collapsed'), previews (bool),
-// allow (binding names that resolve), beforeMount (browser source), ready (selector), path (URL path).
+// style (label suffix for a variant), allow (binding names that resolve), beforeMount (browser source), ready (selector), path (URL path).
 exports.run = (options, fn) => async (t) => {
   if (!baseURL) throw new Error('MAILVEN_UI_URL is not set; run the suite with `make test-ui` or `node tests/ui/run.mjs`')
   const o = { ...defaults, ...options }

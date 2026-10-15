@@ -9,6 +9,7 @@
   interface Props {
     sendKey: string
     readingWidth: string
+    displayStyle: string
     includeQuote: boolean
     autoAdvance: string
     notifyPriorityOnly: boolean
@@ -19,6 +20,7 @@
   let {
     sendKey = $bindable(),
     readingWidth = $bindable(),
+    displayStyle = $bindable(),
     includeQuote = $bindable(),
     autoAdvance = $bindable(),
     notifyPriorityOnly = $bindable(),
@@ -35,6 +37,11 @@
     { value: 'narrow', label: $_('settingsChat.readingWidthNarrow') },
     { value: 'standard', label: $_('settingsChat.readingWidthStandard') },
     { value: 'wide', label: $_('settingsChat.readingWidthWide') },
+  ])
+
+  const displayStyleOptions = $derived([
+    { value: 'bubbles', label: $_('settingsChat.displayStyleBubbles') },
+    { value: 'flat', label: $_('settingsChat.displayStyleFlat') },
   ])
 
   const autoAdvanceOptions = $derived([
@@ -60,6 +67,21 @@
       </Select.Content>
     </Select.Root>
     <p class="text-xs text-muted-foreground">{$_('settingsChat.sendKeyDescription')}</p>
+  </div>
+
+  <div class="space-y-2">
+    <Label>{$_('settingsChat.displayStyle')}</Label>
+    <Select.Root value={displayStyle} onValueChange={(v) => { if (v) displayStyle = v }}>
+      <Select.Trigger aria-label={$_('settingsChat.displayStyle')}>
+        <Select.Value placeholder={$_('settingsChat.displayStyle')}>{label(displayStyleOptions, displayStyle)}</Select.Value>
+      </Select.Trigger>
+      <Select.Content>
+        {#each displayStyleOptions as opt (opt.value)}
+          <Select.Item value={opt.value} label={opt.label} />
+        {/each}
+      </Select.Content>
+    </Select.Root>
+    <p class="text-xs text-muted-foreground">{$_('settingsChat.displayStyleDescription')}</p>
   </div>
 
   <div class="space-y-2">

@@ -506,6 +506,10 @@ export function GetChatCount(arg1, arg2) {
   return window['go']['app']['App']['GetChatCount'](arg1, arg2);
 }
 
+export function GetChatDisplayStyle() {
+  return window['go']['app']['App']['GetChatDisplayStyle']();
+}
+
 export function GetChatDraft(arg1, arg2) {
   return window['go']['app']['App']['GetChatDraft'](arg1, arg2);
 }
@@ -1332,6 +1336,10 @@ export function SetChatAutoAdvance(arg1) {
 
 export function SetChatCombineSenders(arg1) {
   return window['go']['app']['App']['SetChatCombineSenders'](arg1);
+}
+
+export function SetChatDisplayStyle(arg1) {
+  return window['go']['app']['App']['SetChatDisplayStyle'](arg1);
 }
 
 export function SetChatIncludeQuote(arg1) {
