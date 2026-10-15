@@ -13,7 +13,7 @@ All Microsoft work, including Microsoft 365 and regular/personal Outlook.com, is
 - [SYNC — Mail synchronization and action reliability](#sync): [SY9](#sy9) (resolved: [SY7](#sy7), [SY8](#sy8), [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [GOAUTH — Google OAuth client setup](#goauth): no unresolved issue recorded (resolved: [GO1](#go1), [GO2](#go2))
 - [CHAT — Chat composer sender review](#chat): [CH1](#ch1) (resolved: [R1](#r1))
-- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [DOC6](#doc6), [UI3](#ui3), [UI4](#ui4), [UI5](#ui5), [TF1](#tf1) (resolved: [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
+- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [DOC6](#doc6), [UI3](#ui3), [UI4](#ui4), [UI5](#ui5), [UI6](#ui6), [TF1](#tf1) (resolved: [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
 - [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
 
@@ -454,6 +454,16 @@ Project: [MAINT](PLAN.md#maint).
 - **Problem / evidence (2026-10-15):** `frontend/src/App.svelte` is about 1,700 lines against the 500-line component limit in AGENTS.md. It holds folder and conversation selection, composer state, global keyboard shortcuts, dialogs and layout. The review fix moved the sidebar actions' narrow-overlay close into `SidebarActions.svelte` and shared one list-search helper, so the file shrank slightly, but the limit is still exceeded.
 - **Impact / reproduction:** `wc -l frontend/src/App.svelte`. New shell features tend to land here, which makes review and testing harder.
 - **Dependencies / closure:** Separately select a split (for example keyboard shortcuts and composer state into modules); App.svelte under 500 lines with `make test-ui` passing.
+
+<a id="ui6"></a>
+
+### UI6 — Other components exceed the component size limit
+
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / found 2026-10-15 while checking Claude Code context guidance; fix not selected.
+- **Severity / proposed priority / status:** low / P3 / open.
+- **Problem / evidence (2026-10-15):** Besides `App.svelte` ([UI5](#ui5)), 15 tracked Svelte components exceed the 500-line component limit in AGENTS.md. The largest are `composer/Composer.svelte` (about 2,490 lines), `settings/AccountForm.svelte` (about 1,740) and `settings/account/AccountSecurityTab.svelte` (about 1,150). Five calendar-extension and settings components are between 870 and 910 lines, and seven more are between 510 and 870.
+- **Impact / reproduction:** `git ls-files '*.svelte' | grep -v '^archive/' | xargs wc -l | sort -n | awk '$1>500'`. Large components are harder to review and test, and an agent reading one whole costs tens of thousands of tokens of context.
+- **Dependencies / closure:** Separately select splits, largest first; calendar components also follow `docs/EXT_RULES.md`. Every tracked component under 500 lines, with `make test-ui` passing.
 
 <a id="ai"></a>
 
