@@ -17,9 +17,9 @@ import (
 // sendURL is a variable so tests can point it at an httptest server.
 var sendURL = "https://gmail.googleapis.com/gmail/v1/users/me/messages/send"
 
-// MaxRawBytes is the conservative message ceiling: Gmail's documented 25 MB
-// send limit (Gmail Help). The messages.send reference gives no API-specific
-// limit, so a larger message is rejected locally instead of probed or truncated.
+// MaxRawBytes is a local 25 MiB ceiling on req.Raw, measured before the added
+// Bcc header and base64url encoding. The messages.send reference gives no
+// API-specific limit, so a larger message is rejected locally, not truncated.
 const MaxRawBytes = 25 << 20
 
 // Preflight rejects, without fallback, a send the stored route and evidence do
@@ -45,8 +45,8 @@ var _ submission.Sender = (*Sender)(nil)
 
 // Send posts the raw MIME, base64url encoded. Gmail takes recipients from the
 // To, Cc and Bcc headers; hidden envelope recipients are added as a Bcc header.
-// Gmail's handling of that header is undocumented here (unverified), so the
-// route stays inert until a live check confirms it is not exposed.
+// Delivered-copy handling of that header is unverified (MA1); active routes
+// send through here.
 func (s *Sender) Send(ctx context.Context, req submission.Request, before func(smtp.SubmissionResult) error) (smtp.SubmissionResult, error) {
 	hidden, err := submission.HiddenBcc(req.Raw, req.Recipients)
 	if err != nil {

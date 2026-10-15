@@ -8,11 +8,11 @@ All Microsoft work, including Microsoft 365 and regular/personal Outlook.com, is
 
 ## Index
 
-- [SEND — Sending, privacy and compatibility](#send): [MA1](#ma1), [PD2](#pd2), [DAV1](#dav1), [DAV2](#dav2), [DAV3](#dav3) (resolved: [CD2](#cd2))
+- [SEND — Sending, privacy and compatibility](#send): [MA1](#ma1), [PD10](#pd10), [PD2](#pd2), [DAV1](#dav1), [DAV2](#dav2), [DAV3](#dav3) (resolved: [CD2](#cd2))
 - [API — Provider API activation and migration](#api): [MA4](#ma4), [MA7](#ma7), [MA8](#ma8) (resolved: [F5b-1](#f5b-1), [F5b-3](#f5b-3))
 - [SYNC — Mail synchronization and action reliability](#sync): (resolved: [SY7](#sy7), [SY8](#sy8), [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [CHAT — Chat composer sender review](#chat): [CH1](#ch1) (resolved: [R1](#r1))
-- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [UI3](#ui3), [UI4](#ui4), [UI5](#ui5) (resolved: [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
+- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [DOC6](#doc6), [UI3](#ui3), [UI4](#ui4), [UI5](#ui5) (resolved: [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
 - [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
 
@@ -32,7 +32,17 @@ Project: [SEND](PLAN.md#send).
 - **Resolution criteria:** Authorized controlled Bcc evidence establishes privacy, and the local ceiling is documented or justified; retain failed or unrun rollout gates.
 - **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
 
-- **MA1 medium** `internal/gmailapi/send.go`, `internal/graphapi/send.go`: API clients add a `Bcc:` header for hidden envelope recipients because both providers read recipients from headers. Provider stripping of that header from delivered copies is undocumented and unverified; a Bcc recipient could be exposed. F4e implemented route activation, but the required separately authorized live Bcc check remains an unsatisfied rollout gate; activation does not establish privacy. Message size limit (25 MiB) is also a local, undocumented ceiling. 2026-10-15 static review ([evidence](docs/validation/send-2.md)): Gmail documents only that recipients are read from To/Cc/Bcc headers; no provider document covers stripping or an API size limit; live cases are specified and unrun. 2026-10-15 live cases 1–4 (Gmail, plus-aliases of the sender): case 3 passed (no `Bcc:` header when the hidden address is also in Cc); cases 1–2 are inconclusive because only the Sent copy exists, which keeps `Bcc:` as expected. Separate-recipient evidence and size case 5 remain unrun.
+- **MA1 medium** `internal/gmailapi/send.go`, `internal/graphapi/send.go`: API clients add a `Bcc:` header for hidden envelope recipients because both providers read recipients from headers. Provider stripping of that header from delivered copies is undocumented and unverified; a Bcc recipient could be exposed. F4e implemented route activation, but the required separately authorized live Bcc check remains an unsatisfied rollout gate; activation does not establish privacy. Message size limit (25 MiB) is also a local, undocumented ceiling. 2026-10-15 static review ([evidence](docs/validation/send-2.md)): Gmail documents only that recipients are read from To/Cc/Bcc headers; no provider document covers stripping or an API size limit; live cases are specified and unrun. 2026-10-15 live cases 1–4 (Gmail, plus-aliases of the sender): case 3 passed (no `Bcc:` header when the hidden address is also in Cc); cases 1–2 are inconclusive because only the Sent copy exists, which keeps `Bcc:` as expected. Separate-recipient evidence and size case 5 remain unrun. The guard measures `req.Raw` before the added `Bcc:` header and base64url JSON encoding, so a message at the ceiling sends a larger request (34,952,544 JSON bytes with no Bcc); Gmail Help describes Bcc privacy as product behavior, and the discovery document's 35 MiB `mediaUpload.maxSize` covers the upload path Mailven does not use (branch review 2026-10-14).
+
+<a id="pd10"></a>
+
+### PD10 — Gmail API skips exact-final-MIME validation
+
+- **Owner / milestone:** [SEND](PLAN.md#send); found during [SEND-2](PLAN.md#send-2). Fix not selected.
+- **Severity / proposed priority / status:** unspecified (static follow-up) / P2 / open.
+- **Evidence (2026-10-14):** `app/compose.go` sends final signed/encrypted MIME down the active API branch; `app/mail_api_send.go` calls Gmail route/grant/send-as/size preflight and then `Sender.Send`. Neither invokes `smtp.ValidateMessage`, which is called by SMTP's `internal/smtp/preflight.go` path. `internal/submission/api.go` prepends the hidden-recipient Bcc list without folding/validating the resulting physical line. Composer `validateInput` checks addresses and header controls but is not the final MIME validator.
+- **Impact / limits:** a sufficiently long hidden-recipient list can construct an overlong Bcc line; other final MIME/header-policy failures may reach Gmail instead of being rejected locally. No live rejection, header exposure or exploit is established. Microsoft behavior was not investigated. No behavioral change was authorized by the local research selection.
+- **Reproduction / closure:** synthetic Gmail-only fixture with enough valid hidden recipients to exceed 998 bytes in the added Bcc line, plus final transformed-MIME edge cases. Separately select a design that validates final API MIME without breaking signatures/encryption or silently dropping recipients/content, add focused regressions and prove invalid messages cause no HTTP submission. Size measurement remains under MA1; this entry owns final-MIME/header validation parity.
 
 <a id="pd2"></a>
 
@@ -292,6 +302,15 @@ Project: [MAINT](PLAN.md#maint).
 - **Severity / proposed priority / status:** P2 (both review findings) / P2 / resolved.
 - **Problem / reproduction:** `tools/project_land.py` accepted evidence based on a later feature commit, allowing an earlier broken Markdown link to land unchecked. Fresh `project-check.py --base main --run` evidence was rejected before rebase when main had diverged.
 - **Resolution / evidence:** Check baselines normalize to a common ancestor; landing requires an ancestor of the landing merge base and complete feature-path coverage. Rebase still reruns checks. Both reproductions, restored-file coverage, older valid evidence and custom landing targets are covered by disposable fixtures; 35 helper tests and independent acceptance passed. See [validation](docs/validation/maint-5.md#review-follow-up-ma6).
+
+<a id="doc6"></a>
+
+### DOC6 — Provider and settings guides still deny snapshot restoration
+
+- **Owner / milestone:** [MAINT](PLAN.md#maint); found during [SEND-2](PLAN.md#send-2), documentation fix not selected.
+- **Severity / proposed priority / status:** unspecified / P3 / open.
+- **Evidence (2026-10-14):** `docs/PROVIDERS.md` Switching routes says full snapshot restoration is not implemented, and `docs/user-guide/features/settings.md` Mail API route says restoring the full snapshot is unavailable. These conflict with the implemented [API-3](PLAN.md#api-3) workflow in `app/snapshot_restore.go` and the current snapshot section of `docs/MAIL_APIS.md`.
+- **Impact / closure:** users may miss the offline whole-database restore/undo option. Correct both guides to describe current restore scope and link its consent/backup/undo instructions, preserving that ordinary route rollback does not restore the snapshot or undo provider changes. Documentation links/source review must pass; do not reopen live restore testing or migration work.
 
 <a id="d2"></a>
 

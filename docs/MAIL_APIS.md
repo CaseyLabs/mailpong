@@ -134,6 +134,8 @@ staged/active for the provider, a grant without `send`, a Gmail From that is not
 a verified send-as identity (Graph: a From other than the mailbox without the
 Shared permission), and raw MIME over 25 MiB. This is a local submission ceiling,
 not a verified provider allowance or a guarantee that a smaller message is accepted.
+For Gmail it measures `req.Raw` before the added Bcc header and base64url JSON
+encoding, so the request itself is larger ([SEND-2 evidence](validation/send-2.md)).
 
 Outcome mapping: 2xx is accepted (not delivered); 4xx is a definitive
 rejection classified with `oauth2.ClassifyMailAPIError` (403 rate-limit bodies
@@ -184,7 +186,7 @@ future callers must preserve that serialization.
 - *Folder lifecycle.* The folder ID to path map of the last complete run is stored under scope `folders`. A renamed folder reconciles into its new local folder, and the old, now empty, local folder is deleted; a deleted folder's messages are re-checked, then its empty local folder is removed. A local folder still holding messages is kept.
 - *Cursors and failures.* Pages commit with the old cursor; only the last page stores the delta link. Rate limits retry up to 3 times honoring `Retry-After` (capped at 60 s); failures report through `OnFailure` and never clear credentials.
 
-**Local Graph limits (`internal/graphapi/read.go`, `internal/sync/graphapi.go`).** Delta page size 50, folder page size 100, 4 concurrent requests, 64 MiB raw message cap and 3 rate-limit retries. A message over the cap is kept as a header-only row built from Graph metadata (subject, sender, receive time; snippet "This message is too large to download."), logged as a warning and counted in `GraphResult.Oversize`; the folder cursor advances and opening the message reports that it is too large. Gmail messages cannot exceed its own 25 MiB limit, well under the 40 MiB response cap. These bounds do not establish the mailbox's send/receive allowance.
+**Local Graph limits (`internal/graphapi/read.go`, `internal/sync/graphapi.go`).** Delta page size 50, folder page size 100, 4 concurrent requests, 64 MiB raw message cap and 3 rate-limit retries. A message over the cap is kept as a header-only row built from Graph metadata (subject, sender, receive time; snippet "This message is too large to download."), logged as a warning and counted in `GraphResult.Oversize`; the folder cursor advances and opening the message reports that it is too large. These bounds do not establish the mailbox's send/receive allowance.
 
 ### Provider limit source rationale
 
