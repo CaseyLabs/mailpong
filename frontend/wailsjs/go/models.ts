@@ -644,6 +644,41 @@ export namespace app {
 	        this.enabled = source["enabled"];
 	    }
 	}
+	export class GoogleSetupCheck {
+	    accountId: string;
+	    // Go type: time
+	    checkedAt: any;
+	    results: googlecheck.Result[];
+
+	    static createFrom(source: any = {}) {
+	        return new GoogleSetupCheck(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.accountId = source["accountId"];
+	        this.checkedAt = this.convertValues(source["checkedAt"], null);
+	        this.results = this.convertValues(source["results"], googlecheck.Result);
+	    }
+
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
 	export class LinkedAccountInfo {
 	    accountId: string;
 	    email: string;
@@ -800,6 +835,20 @@ export namespace app {
 	        this.bcc = source["bcc"];
 	        this.subject = source["subject"];
 	        this.body = source["body"];
+	    }
+	}
+	export class OAuthClientImportResult {
+	    slots: string[];
+	    clientIdFingerprint: string;
+
+	    static createFrom(source: any = {}) {
+	        return new OAuthClientImportResult(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.slots = source["slots"];
+	        this.clientIdFingerprint = source["clientIdFingerprint"];
 	    }
 	}
 	export class OAuthCredsChoice {
@@ -2368,6 +2417,31 @@ export namespace folder {
 		    }
 		    return a;
 		}
+	}
+
+}
+
+export namespace googlecheck {
+
+	export class Result {
+	    api: string;
+	    state: string;
+	    detail: string;
+	    enableUrl: string;
+	    project: string;
+
+	    static createFrom(source: any = {}) {
+	        return new Result(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.api = source["api"];
+	        this.state = source["state"];
+	        this.detail = source["detail"];
+	        this.enableUrl = source["enableUrl"];
+	        this.project = source["project"];
+	    }
 	}
 
 }

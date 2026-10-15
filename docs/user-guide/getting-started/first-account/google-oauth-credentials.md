@@ -22,11 +22,11 @@ Mailven ships with no Google OAuth credentials, so Gmail OAuth, the Calendar ext
 
 ## 2. Enable the APIs
 
-Mailven starts Gmail accounts on IMAP/SMTP and offers an explicit switch to the Gmail API. Enable the APIs for the features you intend to use in this project:
+Mailven starts Gmail accounts on IMAP/SMTP and offers an explicit switch to the Gmail API. Enable **Gmail API** for every Google OAuth account, even on IMAP/SMTP: sender review reads your Gmail "Send mail as" list through it, and without it sending from an address stays in review. Enable the other APIs for the features you intend to use in this project:
 
 1. In the console, go to **APIs & Services → Library**
 2. Search for and **Enable** each of the following:
-   - **Gmail API**
+   - **Gmail API** (required for sender review; also used by the optional Gmail API route)
    - **Google Calendar API**
    - **Google People API** (used for contacts)
 
@@ -77,7 +77,7 @@ You can also add your own Google accounts as test users under **Audience → Tes
 2. Click **Create Credentials → OAuth client ID** (or **Create client**)
 3. For **Application type**, select **Desktop app**
 4. Enter a name (e.g. "Mailven Desktop") and click **Create**
-5. Copy the **Client ID** and **Client Secret** shown — you'll paste both into Mailven next
+5. Copy the **Client ID** and **Client Secret** shown — you'll paste both into Mailven next. Google shows the secret only now, so also click **Download JSON** to keep a copy; you can import that file instead of pasting (see step 6)
 
 ## 6. Configure Mailven — Mail
 
@@ -85,6 +85,8 @@ You can also add your own Google accounts as test users under **Audience → Tes
 2. Scroll to the bottom where **OAuth Credentials** is located and expand it
 3. Under **Google Mail**, select **Custom** from the dropdown menu
 4. Copy and paste the **Client ID** and **Client Secret** into their respective fields and save
+
+**Or import the downloaded file:** above the Google Mail editor, click **Import JSON…**, tick the slots to fill (Google Mail, Google Contacts, Google Calendar — all ticked by default) and choose the file. Mailven reads the Desktop app client from it and saves it to every ticked slot at once, so steps 7 and 8 need no pasting. A file for any other client type (such as **Web application**), or one that is not valid Google JSON, is rejected with a message and changes nothing. Mailven never shows the secret after saving.
 
 If you already added your Gmail account, re-authorize it so it starts using your credentials: **Settings → Accounts → Edit** on the account → **Re-authorize**. Otherwise just [add your account with OAuth](/docs/getting-started/first-account/gmail) as usual.
 

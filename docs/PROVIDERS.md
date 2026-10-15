@@ -10,7 +10,7 @@ New accounts use IMAP for mail access and SMTP for sending. Existing accounts re
 
 | Account | IMAP/SMTP authentication in Mailven | Optional mail API route | Setup and requirements |
 | --- | --- | --- | --- |
-| Personal Gmail | Google OAuth, or an eligible app password | Gmail API for OAuth accounts | [Gmail setup](user-guide/getting-started/first-account/gmail.md); use a configured desktop OAuth client or bring your own |
+| Personal Gmail | Google OAuth, or an eligible app password | Gmail API for OAuth accounts | Gmail API must be enabled in the OAuth client's Cloud project for every OAuth account, because sender review reads the send-as list through it. [Gmail setup](user-guide/getting-started/first-account/gmail.md); use a configured desktop OAuth client or bring your own |
 | Google Workspace, including custom domains | Google OAuth, or an app password if the organization permits it | Gmail API for the authorized user's own mailbox | Same Google setup; organization policy can restrict client access and consent; Gmail delegated-mailbox API access is unsupported |
 | Personal Outlook.com, Hotmail or Live | Microsoft OAuth | Not supported by Mailven's API route | [Outlook setup](user-guide/getting-started/first-account/outlook.md); select Personal and enable IMAP in Outlook.com |
 | Microsoft 365 work or school | Microsoft OAuth | Delegated Microsoft Graph for the user's own mailbox | Select Work or school; app consent, IMAP and SMTP AUTH are separate organization controls |
@@ -58,7 +58,7 @@ The [DavMail Microsoft 365 experiment](validation/davmail-microsoft365.md) verif
 
 ## Sending, limits and troubleshooting
 
-An authenticated mailbox is not proof that an alias can send. Mailven checks route-specific sender evidence and may require review before sending, in the full composer or in chat. Review **Sent copy policy** for SMTP routes to avoid unintended copies. API routes rely on the provider's Sent behavior. See [Sending and recovery](SENDING.md) for sender evidence, uncertain outcomes and Sent-copy handling.
+An authenticated mailbox is not proof that an alias can send. Mailven checks route-specific sender evidence and may require review before sending, in the full composer or in chat. Review **Sent copy policy** for SMTP routes to avoid unintended copies. API routes rely on the provider's Sent behavior. See [Sending and recovery](SENDING.md) for sender evidence, uncertain outcomes and Sent-copy handling. Google OAuth accounts check this against the Gmail send-as list on either route, so the Gmail API must be enabled in the OAuth client's Cloud project; a disabled API is reported with the project and an enable link, and review stays required.
 
 Message limits apply to the encoded MIME, including attachments and encryption overhead. SMTP SIZE is a server advertisement, not a delivery guarantee. The API submission ceiling is a local 25 MiB bound, not a verified provider allowance; other local attachment/read limits do not establish what a mailbox can send or receive. Acceptance is not delivery or inbox placement.
 

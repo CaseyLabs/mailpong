@@ -138,6 +138,8 @@ export function ChatDraftsFlushed():Promise<void>;
 
 export function ChatReplyFrom(arg1:string):Promise<string>;
 
+export function CheckGoogleSetup(arg1:string):Promise<app.GoogleSetupCheck>;
+
 export function CheckRecipientCerts(arg1:Array<string>):Promise<Record<string, boolean>>;
 
 export function CheckRecipientPGPKeys(arg1:Array<string>):Promise<Record<string, boolean>>;
@@ -484,6 +486,8 @@ export function IMAPSearchFolder(arg1:string,arg2:string,arg3:string,arg4:number
 
 export function IgnoreReadReceipt(arg1:string,arg2:string):Promise<void>;
 
+export function ImportGoogleClientFile(arg1:string,arg2:Array<string>):Promise<app.OAuthClientImportResult>;
+
 export function ImportPGPKeyFromPath(arg1:string,arg2:string,arg3:string):Promise<pgp.ImportResult>;
 
 export function ImportRecipientCert(arg1:string,arg2:string):Promise<void>;
@@ -579,6 +583,8 @@ export function OpenFolder(arg1:string):Promise<void>;
 export function OpenURL(arg1:string):Promise<void>;
 
 export function PickAttachmentFiles():Promise<Array<app.ComposerAttachment>>;
+
+export function PickGoogleClientFile():Promise<string>;
 
 export function PickPGPKeyFile():Promise<string>;
 

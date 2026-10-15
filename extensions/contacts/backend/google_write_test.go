@@ -11,6 +11,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/caseylabs/mailven/internal/kit/googleerr"
 )
 
 func newTestWriter(srv *httptest.Server) *GoogleContactsWriter {
@@ -368,5 +370,36 @@ func TestExtractResourceName(t *testing.T) {
 		if got != tc.want {
 			t.Errorf("extractResourceName(%q): got %q, want %q", tc.in, got, tc.want)
 		}
+	}
+}
+
+func TestGoogleWriter_DisabledAPI(t *testing.T) {
+	tests := []struct {
+		name         string
+		body         string
+		wantDisabled bool
+	}{
+		{"people api disabled", `{"error":{"code":403,"details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","metadata":{"service":"people.googleapis.com","consumer":"projects/555"}}]}}`, true},
+		{"missing scope", `{"error":{"code":403,"message":"insufficient scope","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"ACCESS_TOKEN_SCOPE_INSUFFICIENT"}]}}`, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusForbidden)
+				_, _ = io.WriteString(w, tt.body)
+			}))
+			defer srv.Close()
+			err := newTestWriter(srv).DeleteContact(context.Background(), "people/c123")
+			var disabled *googleerr.DisabledError
+			if errors.As(err, &disabled) != tt.wantDisabled {
+				t.Fatalf("err = %v, disabled = %v", err, tt.wantDisabled)
+			}
+			if tt.wantDisabled && !strings.Contains(err.Error(), "Google People API is disabled in Google Cloud project 555") {
+				t.Errorf("err = %v", err)
+			}
+			if !tt.wantDisabled && (err == nil || !strings.Contains(err.Error(), "HTTP 403: insufficient scope")) {
+				t.Errorf("other 403 lost its handling: %v", err)
+			}
+		})
 	}
 }

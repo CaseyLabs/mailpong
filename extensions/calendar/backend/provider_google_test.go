@@ -18,6 +18,7 @@ import (
 	"time"
 
 	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
+	"github.com/caseylabs/mailven/internal/kit/googleerr"
 )
 
 // --- Fake Auth ---------------------------------------------------------------
@@ -554,5 +555,43 @@ func TestConferenceBlockHTML(t *testing.T) {
 	want := "Google Meet<br><a href=\"https://meet.google.com/abc-defg-hij\">https://meet.google.com/abc-defg-hij</a><br><br>Join by phone: +1 650-555-0100 (PIN: 123456789#)"
 	if got != want {
 		t.Errorf("conferenceBlockHTML =\n%q\nwant\n%q", got, want)
+	}
+}
+
+// --- Disabled API -------------------------------------------------------------
+
+func TestGoogleProvider_DeleteRemote_DisabledAPI(t *testing.T) {
+	tests := []struct {
+		name         string
+		body         string
+		wantDisabled bool
+	}{
+		{"calendar api disabled", `{"error":{"code":403,"status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","metadata":{"service":"calendar-json.googleapis.com","consumer":"projects/4242"}}]}}`, true},
+		{"missing scope", `{"error":{"code":403,"details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"ACCESS_TOKEN_SCOPE_INSUFFICIENT"}]}}`, false},
+		{"rate limit", `{"error":{"code":403,"errors":[{"reason":"rateLimitExceeded"}]}}`, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			srv := newTestServer(t, func(_ capturedReq, w http.ResponseWriter) {
+				w.WriteHeader(http.StatusForbidden)
+				_, _ = io.WriteString(w, tt.body)
+			})
+			defer srv.Close()
+			p := newTestGoogleProvider(srv.URL)
+			src := Source{ID: "src-g1", Type: SourceTypeGoogle, AccountID: "acct-1"}
+			err := p.DeleteRemote(t.Context(), src, Calendar{ID: "cal-g1", URL: "primary"}, Event{ProviderEventID: "abc"})
+			var disabled *googleerr.DisabledError
+			if errors.As(err, &disabled) != tt.wantDisabled {
+				t.Fatalf("err = %v, disabled = %v", err, tt.wantDisabled)
+			}
+			if tt.wantDisabled {
+				if disabled.Service != "calendar-json.googleapis.com" || disabled.Project != "4242" ||
+					!strings.Contains(err.Error(), "Google Calendar API is disabled in Google Cloud project 4242") {
+					t.Errorf("err = %v", err)
+				}
+			} else if err == nil || !strings.Contains(err.Error(), "403") {
+				t.Errorf("other 403 lost its status line: %v", err)
+			}
+		})
 	}
 }

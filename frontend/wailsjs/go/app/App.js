@@ -234,6 +234,10 @@ export function ChatReplyFrom(arg1) {
   return window['go']['app']['App']['ChatReplyFrom'](arg1);
 }
 
+export function CheckGoogleSetup(arg1) {
+  return window['go']['app']['App']['CheckGoogleSetup'](arg1);
+}
+
 export function CheckRecipientCerts(arg1) {
   return window['go']['app']['App']['CheckRecipientCerts'](arg1);
 }
@@ -926,6 +930,10 @@ export function IgnoreReadReceipt(arg1, arg2) {
   return window['go']['app']['App']['IgnoreReadReceipt'](arg1, arg2);
 }
 
+export function ImportGoogleClientFile(arg1, arg2) {
+  return window['go']['app']['App']['ImportGoogleClientFile'](arg1, arg2);
+}
+
 export function ImportPGPKeyFromPath(arg1, arg2, arg3) {
   return window['go']['app']['App']['ImportPGPKeyFromPath'](arg1, arg2, arg3);
 }
@@ -1116,6 +1124,10 @@ export function OpenURL(arg1) {
 
 export function PickAttachmentFiles() {
   return window['go']['app']['App']['PickAttachmentFiles']();
+}
+
+export function PickGoogleClientFile() {
+  return window['go']['app']['App']['PickGoogleClientFile']();
 }
 
 export function PickPGPKeyFile() {

@@ -31,6 +31,7 @@ npm install --prefix ~/.cache/mailven-upnote-ui --no-save playwright@1.63.0
 | `inbox-triage.test.cjs` | Pin, snooze, archive, read/unread, the automatic Low priority group, sender priority overrides, Undo |
 | `chat-compose.test.cjs` | Reply vs Reply All, draft autosave and restore, undo-send, reply identity, a refused reply (ISSUES.md R1) |
 | `mail-api-migration.test.cjs` | Rollback pending state, confirmation cancellation, protocol route display, and both sync-request report outcomes |
+| `google-setup-check.test.cjs` | Settings → Identity → Check Google setup: disabled, missing-scope, not-connected, error and OK states, Enable link, keyboard use, nothing runs until asked |
 
 ## Results
 

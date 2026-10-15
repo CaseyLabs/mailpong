@@ -9,14 +9,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
+
+	"github.com/caseylabs/mailven/internal/kit/googleerr"
 )
 
 // sendAsURL is a variable so tests can point it at an httptest server.
 var sendAsURL = "https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs"
 
 // ErrInsufficientScope means Gmail refused the send-as list (HTTP 403 other than a
-// rate or quota limit): the token lacks the scope, or the Gmail API is disabled for the OAuth client. Re-authorizing is the user's decision, never automatic.
+// rate or quota limit): the token lacks the scope. A disabled Gmail API is a *googleerr.DisabledError instead. Re-authorizing is the user's decision, never automatic.
 var ErrInsufficientScope = errors.New("gmail: token lacks permission to read send-as addresses")
 
 // SendAs is one "Send mail as" address of a Gmail account.
@@ -54,11 +55,14 @@ func ListSendAs(ctx context.Context, token string) ([]SendAs, error) {
 	if err != nil {
 		return nil, fmt.Errorf("read send-as response: %w", err)
 	}
+	if disabled := googleerr.ParseDisabled(resp.StatusCode, body); disabled != nil {
+		return nil, fmt.Errorf("list send-as: %w", disabled)
+	}
 	switch {
 	case resp.StatusCode == http.StatusForbidden && !isRateLimit(body):
-		return nil, fmt.Errorf("%w: HTTP 403: %s", ErrInsufficientScope, strings.TrimSpace(string(body[:min(len(body), 200)])))
+		return nil, fmt.Errorf("%w: HTTP 403: %s", ErrInsufficientScope, googleerr.Snippet(body, 200))
 	case resp.StatusCode != http.StatusOK:
-		return nil, fmt.Errorf("list send-as: HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body[:min(len(body), 200)])))
+		return nil, fmt.Errorf("list send-as: HTTP %d: %s", resp.StatusCode, googleerr.Snippet(body, 200))
 	}
 
 	var out struct {

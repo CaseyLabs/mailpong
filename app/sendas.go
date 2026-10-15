@@ -10,6 +10,7 @@ import (
 	"github.com/caseylabs/mailven/internal/account"
 	"github.com/caseylabs/mailven/internal/credentials"
 	"github.com/caseylabs/mailven/internal/gmailapi"
+	"github.com/caseylabs/mailven/internal/kit/googleerr"
 	"github.com/caseylabs/mailven/internal/logging"
 )
 
@@ -92,6 +93,28 @@ func (ops *composeOps) sendAsStatus(accountID string) (*SendAsStatus, error) {
 	return st, nil
 }
 
+// sendAsToken returns a valid token for reading the account's Gmail settings,
+// through the Gmail API route's grant when that route is active.
+func (ops *composeOps) sendAsToken(ctx context.Context, accountID string) (*credentials.OAuthTokens, error) {
+	route, err := ops.accountStore.GetMailAPIRoute(accountID)
+	if err != nil {
+		return nil, err
+	}
+	var tokens *credentials.OAuthTokens
+	if route != nil && route.State == account.MailRouteStateActive && route.Route == account.MailRouteGmailAPI {
+		tokens, err = ops.apiOps().validToken(accountID)
+		if err == nil {
+			err = tokens.RequireMailAPICapability("aliases", false)
+		}
+	} else {
+		tokens, err = ops.getValidOAuthToken(ctx, accountID)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get OAuth token: %w", err)
+	}
+	return tokens, nil
+}
+
 // refreshSendAs caches successful Gmail lookups. Failed refreshes retain old
 // observations for context but invalidate them as current sender evidence.
 func (ops *composeOps) refreshSendAs(ctx context.Context, accountID string) (refreshErr error) {
@@ -111,30 +134,23 @@ func (ops *composeOps) refreshSendAs(ctx context.Context, accountID string) (ref
 			}
 		}
 	}()
-	route, err := ops.accountStore.GetMailAPIRoute(accountID)
+	tokens, err := ops.sendAsToken(ctx, accountID)
 	if err != nil {
 		return err
-	}
-	var tokens *credentials.OAuthTokens
-	if route != nil && route.State == account.MailRouteStateActive && route.Route == account.MailRouteGmailAPI {
-		tokens, err = ops.apiOps().validToken(accountID)
-		if err == nil {
-			err = tokens.RequireMailAPICapability("aliases", false)
-		}
-	} else {
-		tokens, err = ops.getValidOAuthToken(ctx, accountID)
-	}
-	if err != nil {
-		return fmt.Errorf("failed to get OAuth token: %w", err)
 	}
 
 	fetchCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	list, err := gmailapi.ListSendAs(fetchCtx, tokens.AccessToken)
 	if err != nil {
+		var disabled *googleerr.DisabledError
+		if errors.As(err, &disabled) {
+			log.Warn().Str("account_id", accountID).Str("service", disabled.Service).Str("project", disabled.Project).Msg("Gmail send-as list: API disabled")
+			return disabled
+		}
 		if errors.Is(err, gmailapi.ErrInsufficientScope) {
 			log.Warn().Err(err).Str("account_id", accountID).Msg("Gmail send-as list denied")
-			return errors.New("Gmail denied access to the send-as list; the account may need to be re-authorized, or the Gmail API enabled for the OAuth client")
+			return errors.New("Gmail denied access to the send-as list; the account may need to be re-authorized")
 		}
 		log.Warn().Err(err).Str("account_id", accountID).Msg("Failed to fetch Gmail send-as list")
 		return err

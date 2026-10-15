@@ -6,6 +6,7 @@
   import SentPolicySection from './SentPolicySection.svelte'
   import IdentityEditor from './IdentityEditor.svelte'
   import SendAsSection from './SendAsSection.svelte'
+  import GoogleSetupCheck from './GoogleSetupCheck.svelte'
   import SenderEvidenceDetails from '../../composer/SenderEvidenceDetails.svelte'
   import AccountDialog from '../AccountDialog.svelte'
   import { addToast } from '$lib/stores/toast'
@@ -344,6 +345,7 @@
 
 {#if sendAs}
   <SendAsSection {accountId} status={sendAs} onStatus={(st) => { sendAs = st; void loadIdentities() }} onImported={loadIdentities} />
+  <GoogleSetupCheck {accountId} />
 {/if}
 
 {#if isMicrosoft}

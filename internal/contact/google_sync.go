@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/caseylabs/mailven/internal/kit/googleerr"
 	"github.com/caseylabs/mailven/internal/logging"
 	"github.com/rs/zerolog"
 )
@@ -138,7 +139,10 @@ func (s *GoogleContactsSyncer) SyncContactsDelta(accessToken, syncToken string) 
 			case http.StatusUnauthorized:
 				return nil, fmt.Errorf("Google API authentication failed (token may be expired): %s", string(bodyBytes))
 			case http.StatusForbidden:
-				return nil, fmt.Errorf("Google API access denied: %s", string(bodyBytes))
+				if disabled := googleerr.ParseDisabled(resp.StatusCode, bodyBytes); disabled != nil {
+					return nil, disabled
+				}
+				return nil, fmt.Errorf("Google API access denied: %s", googleerr.Snippet(bodyBytes, 300))
 			case http.StatusTooManyRequests:
 				return nil, fmt.Errorf("Google API rate limit exceeded")
 			default:

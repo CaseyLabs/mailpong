@@ -14,8 +14,11 @@
 
   import Icon from '@iconify/svelte'
   import OAuthCredsSlotEditor from '$lib/components/kit/OAuthCredsSlotEditor.svelte'
+  import GoogleClientImport from './GoogleClientImport.svelte'
 
   let isExpanded = $state(false)
+  // Bumped after an import so the slot editors reload their saved state.
+  let importedCount = $state(0)
 </script>
 
 <section class="mt-6 border-t border-border pt-4">
@@ -41,11 +44,14 @@
         Use your own credentials if your organization requires it, or to bypass
         Mailven's quota / verification status.
       </p>
-      <OAuthCredsSlotEditor
-        configID="google-mail"
-        label="Google Mail"
-        secretRequired={true}
-      />
+      <GoogleClientImport onImported={() => { importedCount++ }} />
+      {#key importedCount}
+        <OAuthCredsSlotEditor
+          configID="google-mail"
+          label="Google Mail"
+          secretRequired={true}
+        />
+      {/key}
       <OAuthCredsSlotEditor
         configID="microsoft-mail"
         label="Microsoft Mail"

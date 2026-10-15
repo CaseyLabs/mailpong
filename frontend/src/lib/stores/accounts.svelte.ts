@@ -5,6 +5,7 @@ import {
   SyncAllComplete,
   CancelAllSyncs,
   AddAccount,
+  CheckGoogleSetup,
   UpdateAccount,
   RemoveAccount,
   TestConnection,
@@ -18,6 +19,9 @@ import {
 import { account, app, folder } from '../../../wailsjs/go/models'
 // @ts-ignore - wailsjs runtime
 import { EventsOn } from '../../../wailsjs/runtime/runtime'
+import { addToast } from './toast'
+import { _ } from '$lib/i18n'
+import { get } from 'svelte/store'
 
 export interface AccountWithFolders {
   account: account.Account
@@ -467,8 +471,26 @@ class AccountStore {
     this.syncAccount(newAccount.id).catch(err => {
       console.error('Initial sync failed:', err)
     })
+    if (provider === 'google') void this.checkGoogleSetupOnce(newAccount.id)
 
     return newAccount
+  }
+
+  /**
+   * One read-only Google setup check after the first sign-in. It stays silent
+   * unless an API is disabled or lacks permission; failures to run it are ignored
+   * because the account's Identities settings has a Check button.
+   */
+  private async checkGoogleSetupOnce(accountId: string): Promise<void> {
+    try {
+      const res = await CheckGoogleSetup(accountId)
+      const problems = (res?.results ?? []).filter((r) => r.state === 'disabled' || r.state === 'missing-scope')
+      if (problems.length === 0) return
+      const names = problems.map((r) => get(_)(`identity.googleCheck${r.api[0].toUpperCase()}${r.api.slice(1)}`))
+      addToast({ type: 'error', message: get(_)('identity.googleCheckFirstRun', { values: { problems: names.join(', ') } }) })
+    } catch (err) {
+      console.warn('Google setup check failed:', err)
+    }
   }
 
   /**
@@ -494,6 +516,8 @@ class AccountStore {
     this.syncAccount(newAccount.id).catch(err => {
       console.error('Initial sync failed:', err)
     })
+
+    if (config.imapHost === 'imap.gmail.com') void this.checkGoogleSetupOnce(newAccount.id)
 
     return newAccount
   }

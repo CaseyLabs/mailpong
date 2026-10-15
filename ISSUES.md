@@ -11,9 +11,9 @@ All Microsoft work, including Microsoft 365 and regular/personal Outlook.com, is
 - [SEND — Sending, privacy and compatibility](#send): [MA1](#ma1), [PD10](#pd10), [PD2](#pd2), [DAV1](#dav1), [DAV2](#dav2), [DAV3](#dav3) (resolved: [CD2](#cd2))
 - [API — Provider API activation and migration](#api): [MA4](#ma4), [MA7](#ma7), [MA8](#ma8) (resolved: [F5b-1](#f5b-1), [F5b-3](#f5b-3))
 - [SYNC — Mail synchronization and action reliability](#sync): [SY9](#sy9) (resolved: [SY7](#sy7), [SY8](#sy8), [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
-- [GOAUTH — Google OAuth client setup](#goauth): [GO1](#go1), [GO2](#go2)
+- [GOAUTH — Google OAuth client setup](#goauth): no unresolved issue recorded (resolved: [GO1](#go1), [GO2](#go2))
 - [CHAT — Chat composer sender review](#chat): [CH1](#ch1) (resolved: [R1](#r1))
-- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [DOC6](#doc6), [UI3](#ui3), [UI4](#ui4), [UI5](#ui5) (resolved: [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
+- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [DOC6](#doc6), [UI3](#ui3), [UI4](#ui4), [UI5](#ui5), [TF1](#tf1) (resolved: [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
 - [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
 
@@ -269,28 +269,16 @@ Project: [GOAUTH](PLAN.md#goauth).
 ### GO1 — A disabled Google API is reported as an authorization problem
 
 - **Owner / milestone:** [GOAUTH](PLAN.md#goauth) / [GOAUTH-1](PLAN.md#goauth-1), [GOAUTH-2](PLAN.md#goauth-2); found during [SEND-2](PLAN.md#send-2).
-- **Severity / proposed priority / status:** medium / P2 / open.
-- **Evidence:**
-  - 2026-10-15: with the Gmail API disabled in the OAuth client's project, the Gmail send-as refresh returned 403 `SERVICE_DISABLED` ("Gmail API has not been used in project … or it is disabled"), and sender review stayed required.
-  - Mailven told the user to re-authorize or enable the Gmail API, and re-authorizing could not fix it.
-  - The response body is now kept in the error (`internal/gmailapi/sendas.go`), but nothing classifies it, and the People and Calendar clients are unchecked.
-- **Resolution criteria:**
-  - `SERVICE_DISABLED` is recognized for Gmail, People and Calendar.
-  - The message names the API and project and offers an Enable link that Mailven builds itself.
-  - Other 403s keep their handling.
-  - All of this is covered by tests.
+- **Severity / proposed priority / status:** medium / P2 / resolved.
+- **Resolution / evidence:** [GOAUTH-1 evidence](docs/validation/goauth-1.md): a 403 `SERVICE_DISABLED` is parsed into a typed error for the Gmail, People and Calendar clients, naming the API and project with an Enable URL that Mailven builds itself; other 403s keep their handling. Local fixtures only; GOAUTH-2 added the per-API health check and an Enable API button ([evidence](docs/validation/goauth-2.md)).
 
 <a id="go2"></a>
 
 ### GO2 — Docs say the Gmail API is needed only for the API route
 
 - **Owner / milestone:** [GOAUTH](PLAN.md#goauth) / [GOAUTH-1](PLAN.md#goauth-1).
-- **Severity / proposed priority / status:** low / P2 / open.
-- **Evidence:**
-  - 2026-10-15: [PROVIDERS.md](docs/PROVIDERS.md) and the [Gmail setup](docs/user-guide/getting-started/first-account/gmail.md) "Optional Gmail API route" section imply that IMAP/SMTP accounts do not need the Gmail API.
-  - Sender review reads the Gmail send-as list for every Google OAuth account, so without the API it stays in review.
-  - The [custom-credentials guide](docs/user-guide/getting-started/first-account/google-oauth-credentials.md) already says to enable the API.
-- **Resolution criteria:** The three documents agree that Google OAuth accounts need the Gmail API enabled, and say why.
+- **Severity / proposed priority / status:** low / P2 / resolved.
+- **Resolution / evidence:** [GOAUTH-1 evidence](docs/validation/goauth-1.md): PROVIDERS.md, gmail.md and the custom-credentials guide state that every Google OAuth account needs the Gmail API enabled, because sender review reads the send-as list.
 
 <a id="chat"></a>
 
@@ -472,6 +460,16 @@ Project: [MAINT](PLAN.md#maint).
 ## AI — AI development workflows
 
 Project: [AI](PLAN.md#ai).
+
+<a id="tf1"></a>
+
+### TF1 — TestSyncerSubscriptionsPerInstance flakes on TempDir cleanup
+
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / found during GOAUTH landing checks; fix not selected.
+- **Severity / proposed priority / status:** low / P3 / open.
+- **Problem / evidence (2026-10-15):** `go test ./extensions/calendar/backend` fails intermittently with `TempDir RemoveAll cleanup: unlinkat .../extensions/calendar: directory not empty`. Reproduced on `main` (1 failure in 30 runs with `-count=30`) and seen once in `make test`; the same package passed 30 of 30 runs on `feat/goauth-disabled-api`. A syncer goroutine probably still writes under the test directory when cleanup runs; not diagnosed.
+- **Impact / reproduction:** `make test` and `project-check.py --run` can fail spuriously, which tempts reruns without a fix. Reproduce with `go test ./extensions/calendar/backend -count=30`.
+- **Dependencies / closure:** Stop or wait for the syncer in the test before cleanup; the package passes at `-count=100`.
 
 <a id="ai6"></a>
 

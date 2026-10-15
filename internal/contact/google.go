@@ -4,11 +4,13 @@ package contact
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"sync"
 	"time"
 
+	"github.com/caseylabs/mailven/internal/kit/googleerr"
 	"github.com/caseylabs/mailven/internal/logging"
 	"github.com/rs/zerolog"
 )
@@ -97,6 +99,11 @@ func (c *GoogleContactsClient) Search(accessToken, query string, limit int) ([]*
 		case http.StatusUnauthorized:
 			return nil, fmt.Errorf("Google API authentication failed (token may be expired)")
 		case http.StatusForbidden:
+			body, _ := io.ReadAll(io.LimitReader(resp.Body, 64<<10))
+			if disabled := googleerr.ParseDisabled(resp.StatusCode, body); disabled != nil {
+				c.log.Warn().Str("service", disabled.Service).Str("project", disabled.Project).Msg("Google People API disabled")
+				return nil, disabled
+			}
 			c.log.Warn().Int("status", resp.StatusCode).Msg("Google People API access denied (scope may not be granted)")
 			// Return empty results instead of error - user may not have granted contacts scope
 			return []*Contact{}, nil

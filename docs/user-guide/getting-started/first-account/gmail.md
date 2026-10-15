@@ -65,9 +65,15 @@ App passwords require 2-Step Verification, but enabling it does not guarantee th
 
 Mailven records the permissions returned by the provider separately from those requested. If a known grant lacks a required permission, only the affected feature is unavailable and its error explains the missing access. Mail authorization does not prove contacts access. Older accounts can have unknown permission evidence: their configured mail route remains available, while contacts may need explicit authorization. A new sign-in that omits permission evidence is also recorded as unknown. Mailven does not start reauthorization automatically.
 
+## Gmail API and your Google Cloud project
+
+Every Google OAuth account needs Gmail API enabled in the Google Cloud project that owns your OAuth client, even when mail stays on IMAP/SMTP. Mailven reads your Gmail "Send mail as" list through it to decide whether a sender address needs review; if the API is disabled, Mailven says "Gmail API is disabled in Google Cloud project …" with a link that enables it, and sender review stays required. Re-authorizing does not fix that. Calendar and contacts report the same message for Google Calendar API and Google People API. App-password accounts use no Google API.
+
+To see which APIs work, open **Settings → Accounts → Edit → Identity** and press **Check Google setup**. It makes read-only requests to Gmail, and to People and Calendar when the account has a grant for them, and reports each as working, disabled (with an **Enable API** button), missing permission (with **Re-authorize**), not set up, or an error. After enabling an API, wait a minute and check again; no restart is needed. Mailven also runs the check once after you first sign in, and shows a message only when something needs fixing. It never runs on a timer.
+
 ## Optional Gmail API route
 
-Personal Gmail and Google Workspace OAuth accounts can explicitly migrate to Gmail API sending and receiving. Enable Gmail API in your Google Cloud project and include `https://www.googleapis.com/auth/gmail.modify` in its consent configuration. Then open **Settings → Accounts → Edit → Server → Mail API route**, authorize the separate grant and review migration. Authorizing alone keeps IMAP/SMTP active. App-password accounts cannot use this flow.
+Personal Gmail and Google Workspace OAuth accounts can explicitly migrate to Gmail API sending and receiving. Include `https://www.googleapis.com/auth/gmail.modify` in its consent configuration. Then open **Settings → Accounts → Edit → Server → Mail API route**, authorize the separate grant and review migration. Authorizing alone keeps IMAP/SMTP active. App-password accounts cannot use this flow.
 
 Review the [route limits and recovery behavior](../../../PROVIDERS.md#switching-routes-and-current-limits) first: remote draft sync and permanent deletion are unavailable, delegated Gmail mailboxes are unsupported, and live Bcc privacy and migration checks remain outstanding. Returning to IMAP/SMTP does not restore the database snapshot.
 

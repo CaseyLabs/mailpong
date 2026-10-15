@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/caseylabs/mailven/internal/kit/googleerr"
 	"github.com/rs/zerolog"
 )
 
@@ -317,6 +318,9 @@ func (w *GoogleContactsWriter) doJSON(ctx context.Context, method, urlStr string
 // error. The headline case is 400 `failedPrecondition` (etag mismatch) →
 // *ErrGoogleEtagMismatch so the API layer maps it to *coreapi.ErrConflict.
 func classifyGoogleError(status int, data []byte, resourceName string) error {
+	if disabled := googleerr.ParseDisabled(status, data); disabled != nil {
+		return disabled
+	}
 	var body googleAPIErrorBody
 	_ = json.Unmarshal(data, &body)
 

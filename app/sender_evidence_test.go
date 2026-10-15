@@ -264,6 +264,15 @@ func TestSenderEvidenceRefreshDeniedAndPartialGrant(t *testing.T) {
 	if err := f.ops.refreshSendAs(t.Context(), acc.ID); err == nil || !strings.Contains(err.Error(), "Gmail denied access") {
 		t.Fatalf("lookup did not exercise denial: %v", err)
 	}
+	http.DefaultClient = &http.Client{Transport: senderRoundTripper(func(r *http.Request) (*http.Response, error) {
+		return &http.Response{StatusCode: 403, Body: io.NopCloser(strings.NewReader(`{"error":{"code":403,"details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","metadata":{"service":"gmail.googleapis.com","consumer":"projects/314"}}]}}`))}, nil
+	})}
+	err = f.ops.refreshSendAs(t.Context(), acc.ID)
+	if err == nil || !strings.Contains(err.Error(), "Gmail API is disabled in Google Cloud project 314") ||
+		!strings.Contains(err.Error(), "https://console.developers.google.com/apis/api/gmail.googleapis.com/overview?project=314") ||
+		strings.Contains(err.Error(), "re-authorized") {
+		t.Fatalf("disabled API message: %v", err)
+	}
 	e, err := f.ops.senderEvidence(acc.ID, acc.Email)
 	if err != nil || e.State != "unknown" || e.Action != "review" {
 		t.Fatalf("denied lookup: %+v, %v", e, err)

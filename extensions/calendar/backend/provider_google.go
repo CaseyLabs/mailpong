@@ -36,6 +36,7 @@ import (
 	"github.com/google/uuid"
 
 	coreapi "github.com/caseylabs/mailven/internal/core/api/v1"
+	"github.com/caseylabs/mailven/internal/kit/googleerr"
 )
 
 const (
@@ -261,8 +262,7 @@ func (p googleProvider) fetchEventsPage(ctx context.Context, client *http.Client
 	}
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return nil, fmt.Errorf("google events.list %d %s: %s",
-			resp.StatusCode, resp.Status, strings.TrimSpace(string(body)))
+		return nil, googleStatusError("google events.list", resp.StatusCode, resp.Status, body)
 	}
 
 	var out googleEventsListResponse
@@ -474,8 +474,17 @@ func (p googleProvider) PushEvent(ctx context.Context, src Source, cal Calendar,
 		return PushResult{}, ErrConflict
 	}
 	body2, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-	return PushResult{}, fmt.Errorf("google %s event %d %s: %s",
-		strings.ToLower(method), resp.StatusCode, resp.Status, strings.TrimSpace(string(body2)))
+	return PushResult{}, googleStatusError("google "+strings.ToLower(method)+" event", resp.StatusCode, resp.Status, body2)
+}
+
+// googleStatusError reports an unexpected Google Calendar response. A 403
+// SERVICE_DISABLED becomes a *googleerr.DisabledError naming the API and
+// project; anything else keeps the status line with a bounded body excerpt.
+func googleStatusError(op string, code int, status string, body []byte) error {
+	if disabled := googleerr.ParseDisabled(code, body); disabled != nil {
+		return fmt.Errorf("%s: %w", op, disabled)
+	}
+	return fmt.Errorf("%s %d %s: %s", op, code, status, googleerr.Snippet(body, 300))
 }
 
 // googleEventToAttendees converts the Google response's attendees +
@@ -539,8 +548,7 @@ func (p googleProvider) DeleteRemote(ctx context.Context, src Source, cal Calend
 		return ErrConflict
 	}
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-	return fmt.Errorf("google delete event %d %s: %s",
-		resp.StatusCode, resp.Status, strings.TrimSpace(string(body)))
+	return googleStatusError("google delete event", resp.StatusCode, resp.Status, body)
 }
 
 // --- Calendar list (for the add-calendar picker) ---------------------------
@@ -600,8 +608,7 @@ func (p googleProvider) pushThis(ctx context.Context, client *http.Client, cal C
 			return PushInstanceResult{}, ErrConflict
 		}
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return PushInstanceResult{}, fmt.Errorf("google delete instance %d %s: %s",
-			resp.StatusCode, resp.Status, strings.TrimSpace(string(body)))
+		return PushInstanceResult{}, googleStatusError("google delete instance", resp.StatusCode, resp.Status, body)
 	}
 
 	// Update: build PATCH payload from the override blob the API layer
@@ -638,8 +645,7 @@ func (p googleProvider) pushThis(ctx context.Context, client *http.Client, cal C
 		return PushInstanceResult{}, ErrConflict
 	}
 	bodyRaw, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-	return PushInstanceResult{}, fmt.Errorf("google patch instance %d %s: %s",
-		resp.StatusCode, resp.Status, strings.TrimSpace(string(bodyRaw)))
+	return PushInstanceResult{}, googleStatusError("google patch instance", resp.StatusCode, resp.Status, bodyRaw)
 }
 
 // pushThisAndFuture clamps the master's RRULE and (for update) POSTs a
@@ -670,8 +676,7 @@ func (p googleProvider) pushThisAndFuture(ctx context.Context, client *http.Clie
 		return PushInstanceResult{}, ErrConflict
 	default:
 		body, _ := io.ReadAll(io.LimitReader(mresp.Body, 4096))
-		return PushInstanceResult{}, fmt.Errorf("google patch master %d %s: %s",
-			mresp.StatusCode, mresp.Status, strings.TrimSpace(string(body)))
+		return PushInstanceResult{}, googleStatusError("google patch master", mresp.StatusCode, mresp.Status, body)
 	}
 	var mout googleEvent
 	if derr := json.NewDecoder(mresp.Body).Decode(&mout); derr != nil {
@@ -705,8 +710,7 @@ func (p googleProvider) pushThisAndFuture(ctx context.Context, client *http.Clie
 	defer nresp.Body.Close()
 	if nresp.StatusCode != http.StatusOK && nresp.StatusCode != http.StatusCreated {
 		body, _ := io.ReadAll(io.LimitReader(nresp.Body, 4096))
-		return PushInstanceResult{}, fmt.Errorf("google post new series %d %s: %s",
-			nresp.StatusCode, nresp.Status, strings.TrimSpace(string(body)))
+		return PushInstanceResult{}, googleStatusError("google post new series", nresp.StatusCode, nresp.Status, body)
 	}
 	var nout googleEvent
 	if derr := json.NewDecoder(nresp.Body).Decode(&nout); derr != nil {
@@ -742,8 +746,7 @@ func (p googleProvider) findInstanceID(ctx context.Context, client *http.Client,
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
-		return "", fmt.Errorf("google list instances %d %s: %s",
-			resp.StatusCode, resp.Status, strings.TrimSpace(string(body)))
+		return "", googleStatusError("google list instances", resp.StatusCode, resp.Status, body)
 	}
 
 	var page googleEventsListResponse
@@ -798,8 +801,7 @@ func (p googleProvider) ListGoogleCalendars(ctx context.Context, src Source) ([]
 		if resp.StatusCode != http.StatusOK {
 			body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
 			_ = resp.Body.Close()
-			return nil, fmt.Errorf("google calendarList %d %s: %s",
-				resp.StatusCode, resp.Status, strings.TrimSpace(string(body)))
+			return nil, googleStatusError("google calendarList", resp.StatusCode, resp.Status, body)
 		}
 
 		var page googleCalendarListResponse

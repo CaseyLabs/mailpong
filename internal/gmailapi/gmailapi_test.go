@@ -6,11 +6,13 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/caseylabs/mailven/internal/account"
 	"github.com/caseylabs/mailven/internal/database"
+	"github.com/caseylabs/mailven/internal/kit/googleerr"
 )
 
 func serve(t *testing.T, status int, body string) {
@@ -73,6 +75,20 @@ func TestListSendAsErrors(t *testing.T) {
 				t.Errorf("scope error = %v, want %v (%v)", !tt.scope, tt.scope, err)
 			}
 		})
+	}
+}
+
+func TestListSendAsServiceDisabled(t *testing.T) {
+	serve(t, 403, `{"error":{"code":403,"message":"Gmail API has not been used in project 77 before or it is disabled. Visit https://evil.example","status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo","reason":"SERVICE_DISABLED","metadata":{"service":"gmail.googleapis.com","consumer":"projects/77","activationUrl":"https://evil.example"}}]}}`)
+	_, err := ListSendAs(context.Background(), "tok")
+	var disabled *googleerr.DisabledError
+	if !errors.As(err, &disabled) || errors.Is(err, ErrInsufficientScope) {
+		t.Fatalf("err = %v, want DisabledError and not ErrInsufficientScope", err)
+	}
+	if disabled.Service != "gmail.googleapis.com" || disabled.Project != "77" ||
+		disabled.EnableURL() != "https://console.developers.google.com/apis/api/gmail.googleapis.com/overview?project=77" ||
+		strings.Contains(err.Error(), "evil.example") {
+		t.Errorf("err = %v", err)
 	}
 }
 
