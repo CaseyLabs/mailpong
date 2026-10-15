@@ -11,38 +11,43 @@ Mailven ships with no Google OAuth credentials, so Gmail OAuth, the Calendar ext
 - The redirect used by the sign-in flow is a local `http://localhost` address, which a Desktop app client allows automatically.
 :::
 
+Mailven also has a **Setup checklist** with the same steps: in **Settings → Accounts → OAuth Credentials**, or on the Google sign-in form, press **Setup checklist**. It opens each console page in your browser and offers a copy button for the scope list.
+
+:::note If a link opens the wrong page
+Google moves its console pages from time to time. Each checklist step also names the menu path to follow from the console home page.
+:::
+
 ## 1. Create a Google Cloud Project
 
-1. Go to the [Google Cloud Console](https://console.cloud.google.com) and sign in with your Google account
-2. Click the **project picker** at the top of the page (next to the Google Cloud logo)
-3. Click **New Project**
-4. Enter a project name (e.g. "Mailven") — the organization/location can be left as-is for personal accounts
-5. Click **Create**
-6. Once created, make sure the new project is selected in the project picker
+1. Go to the [Google Cloud Console](https://console.cloud.google.com/projectcreate) and sign in with your Google account
+2. Enter a project name (e.g. "Mailven") — the organization/location can be left as-is for personal accounts
+3. Click **Create**
+4. Once created, make sure the new project is selected in the project picker at the top of the page
 
 ## 2. Enable the APIs
 
 Mailven starts Gmail accounts on IMAP/SMTP and offers an explicit switch to the Gmail API. Enable **Gmail API** for every Google OAuth account, even on IMAP/SMTP: sender review reads your Gmail "Send mail as" list through it, and without it sending from an address stays in review. Enable the other APIs for the features you intend to use in this project:
 
-1. In the console, go to **APIs & Services → Library**
-2. Search for and **Enable** each of the following:
-   - **Gmail API** (required for sender review; also used by the optional Gmail API route)
-   - **Google Calendar API**
-   - **Google People API** (used for contacts)
+Use [this link](https://console.cloud.google.com/flows/enableapi?apiid=gmail.googleapis.com,people.googleapis.com,calendar-json.googleapis.com) to enable all three in one step, or go to **APIs & Services → Library** and enable each of the following:
 
-## 3. Configure the OAuth Consent Screen
+- **Gmail API** (required for sender review; also used by the optional Gmail API route)
+- **Google Calendar API**
+- **Google People API** (used for contacts)
 
-1. Go to **APIs & Services → OAuth consent screen** (Google may also call this **Google Auth Platform**)
-2. If prompted, click **Get started** and fill in:
-   - **App name**: e.g. "Mailven"
-   - **User support email**: your email address
-   - **Audience**: **External**
-   - **Contact information**: your email address
-3. Agree to the policy and click **Create**
+## 3. Set Up Branding
+
+1. Go to **Google Auth Platform → Branding** ([link](https://console.cloud.google.com/auth/branding)). If prompted, click **Get started**
+2. Fill in **App name** (e.g. "Mailven"), **User support email** and, under contact information, your email address
+3. Agree to the policy and save
+
+## 4. Choose the Audience
+
+1. Go to **Google Auth Platform → Audience** ([link](https://console.cloud.google.com/auth/audience)) and select **External**
+2. Decide between Testing and production, using the note below
 
 ### Publish the App
 
-Under **Audience**, click **Publish app** to move the app from **Testing** to **In production**.
+To publish, click **Publish app** to move the app from **Testing** to **In production**.
 
 :::note Why publish?
 For external projects requesting Gmail access, Google expires refresh tokens issued in **Testing** after seven days. Moving to **In production** avoids that Testing-specific expiry; it does not complete OAuth verification. See [Google's token lifecycle](https://developers.google.com/identity/protocols/oauth2#expiration).
@@ -52,9 +57,9 @@ If the project has not completed the applicable Google verification, you may see
 
 You can also add your own Google accounts as test users under **Audience → Test users**.
 
-## 4. Add the Scopes
+## 5. Add the Scopes
 
-1. Go to **APIs & Services → OAuth consent screen → Data Access** (or **Google Auth Platform → Data Access**)
+1. Go to **Google Auth Platform → Data Access** ([link](https://console.cloud.google.com/auth/scopes)). The checklist's **Copy scopes** button copies this list
 2. Click **Add or remove scopes**
 3. Add the following scopes:
 
@@ -71,15 +76,15 @@ You can also add your own Google accounts as test users under **Audience → Tes
 
 4. Click **Update**, then **Save**
 
-## 5. Create the OAuth Client ID and Secret
+## 6. Create the OAuth Client ID and Secret
 
-1. Go to **APIs & Services → Credentials** (or **Google Auth Platform → Clients**)
-2. Click **Create Credentials → OAuth client ID** (or **Create client**)
+1. Go to **Google Auth Platform → Clients** ([link](https://console.cloud.google.com/auth/clients))
+2. Click **Create client**
 3. For **Application type**, select **Desktop app**
 4. Enter a name (e.g. "Mailven Desktop") and click **Create**
-5. Copy the **Client ID** and **Client Secret** shown — you'll paste both into Mailven next. Google shows the secret only now, so also click **Download JSON** to keep a copy; you can import that file instead of pasting (see step 6)
+5. Click **Download JSON** now. Google shows the client secret only when the client is created, and you can import that file in the next step instead of pasting
 
-## 6. Configure Mailven — Mail
+## 7. Import the Client into Mailven
 
 1. In Mailven, open **Settings → Accounts** (tab)
 2. Scroll to the bottom where **OAuth Credentials** is located and expand it
@@ -90,7 +95,11 @@ You can also add your own Google accounts as test users under **Audience → Tes
 
 If you already added your Gmail account, re-authorize it so it starts using your credentials: **Settings → Accounts → Edit** on the account → **Re-authorize**. Otherwise just [add your account with OAuth](/docs/getting-started/first-account/gmail) as usual.
 
-## 7. Configure the Calendar Extension
+## 8. Sign In and Check the Setup
+
+Sign in with your Google account, then open **Settings → Accounts → Edit** on it → **Identity** and press **Check Google setup**. It reports which of the Gmail, People and Calendar APIs work and offers **Enable API** or **Re-authorize** for any that do not.
+
+## 9. Configure the Calendar Extension
 
 Extensions are disabled by default, so enable it first:
 
@@ -100,7 +109,7 @@ Extensions are disabled by default, so enable it first:
 4. Under **Google**, select **Custom** from the dropdown menu
 5. Copy and paste the same **Client ID** and **Client Secret** there too, and save
 
-## 8. Configure the Contacts Extension
+## 10. Configure the Contacts Extension
 
 Repeat the same steps for the Contacts extension:
 

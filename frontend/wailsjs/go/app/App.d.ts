@@ -12,6 +12,7 @@ import {submission} from '../models';
 import {contact} from '../models';
 import {context} from '../models';
 import {smtp} from '../models';
+import {oauth2} from '../models';
 import {imap} from '../models';
 import {settings} from '../models';
 import {pgp} from '../models';
@@ -343,6 +344,8 @@ export function GetFTSIndexStatusAll():Promise<Record<string, message.FTSIndexSt
 export function GetFolderTree(arg1:string):Promise<Array<folder.FolderTree>>;
 
 export function GetFolders(arg1:string):Promise<Array<folder.Folder>>;
+
+export function GetGoogleSetupGuide():Promise<oauth2.GoogleSetupGuide>;
 
 export function GetIMAPConnectionForUndo(arg1:context.Context,arg2:string):Promise<imap.Client>;
 

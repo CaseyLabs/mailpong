@@ -3000,6 +3000,61 @@ export namespace message {
 
 }
 
+export namespace oauth2 {
+
+	export class GoogleSetupStep {
+	    id: string;
+	    url: string;
+	    fallbackUrl: string;
+	    menuPath: string;
+
+	    static createFrom(source: any = {}) {
+	        return new GoogleSetupStep(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.url = source["url"];
+	        this.fallbackUrl = source["fallbackUrl"];
+	        this.menuPath = source["menuPath"];
+	    }
+	}
+	export class GoogleSetupGuide {
+	    steps: GoogleSetupStep[];
+	    scopes: string[];
+
+	    static createFrom(source: any = {}) {
+	        return new GoogleSetupGuide(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.steps = this.convertValues(source["steps"], GoogleSetupStep);
+	        this.scopes = source["scopes"];
+	    }
+
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
 export namespace pgp {
 	
 	export class Key {

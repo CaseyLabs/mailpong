@@ -21,6 +21,7 @@
     type EmailProvider,
     type OAuthProvider,
   } from '$lib/config/providers'
+  import GoogleSetupGuide from './GoogleSetupGuide.svelte'
   import { oauthStore } from '$lib/stores/oauth.svelte'
   import { toasts } from '$lib/stores/toast'
   // @ts-ignore - wailsjs path
@@ -971,6 +972,9 @@
 
               {#if authMethod === 'oauth2'}
                 {@render oauthFlowStatus(getOAuthProviderType(selectedProvider!) === 'microsoft' && !microsoftAccountType)}
+                {#if getOAuthProviderType(selectedProvider!) === 'google'}
+                  <GoogleSetupGuide />
+                {/if}
               {:else}
                 <!-- Password field for app password -->
                 <div class="space-y-2">

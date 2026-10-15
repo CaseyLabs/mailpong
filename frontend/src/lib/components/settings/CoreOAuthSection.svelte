@@ -15,6 +15,7 @@
   import Icon from '@iconify/svelte'
   import OAuthCredsSlotEditor from '$lib/components/kit/OAuthCredsSlotEditor.svelte'
   import GoogleClientImport from './GoogleClientImport.svelte'
+  import GoogleSetupGuide from './GoogleSetupGuide.svelte'
 
   let isExpanded = $state(false)
   // Bumped after an import so the slot editors reload their saved state.
@@ -44,6 +45,7 @@
         Use your own credentials if your organization requires it, or to bypass
         Mailven's quota / verification status.
       </p>
+      <GoogleSetupGuide />
       <GoogleClientImport onImported={() => { importedCount++ }} />
       {#key importedCount}
         <OAuthCredsSlotEditor

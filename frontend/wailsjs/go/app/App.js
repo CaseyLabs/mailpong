@@ -646,6 +646,10 @@ export function GetFolders(arg1) {
   return window['go']['app']['App']['GetFolders'](arg1);
 }
 
+export function GetGoogleSetupGuide() {
+  return window['go']['app']['App']['GetGoogleSetupGuide']();
+}
+
 export function GetIMAPConnectionForUndo(arg1, arg2) {
   return window['go']['app']['App']['GetIMAPConnectionForUndo'](arg1, arg2);
 }

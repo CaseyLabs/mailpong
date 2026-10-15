@@ -1407,5 +1407,56 @@
     "undoAck": "I understand that changes since the restore are discarded.",
     "undoAction": "Undo restore and close Mailven",
     "dismiss": "Dismiss"
+  },
+  "googleGuide": {
+    "help": "No Google client yet? Follow a checklist to create your own in Google Cloud. It takes a few minutes and no command line.",
+    "button": "Setup checklist",
+    "markDone": "Mark done: {step}",
+    "scopeList": "Scopes to add",
+    "copyScopes": "Copy scopes",
+    "scopesCopied": "Scopes copied",
+    "copyFailed": "Could not copy to the clipboard",
+    "notRight": "Page not right? Use {path} in",
+    "openConsole": "the console",
+    "step": {
+      "project": {
+        "title": "Create a project",
+        "body": "Create a new Google Cloud project, or pick an existing one. Keep it selected for the next steps.",
+        "open": "Create project"
+      },
+      "apis": {
+        "title": "Enable the APIs",
+        "body": "Enable the Gmail, People and Calendar APIs together. Gmail API is needed for every Google account, even on IMAP.",
+        "open": "Enable APIs"
+      },
+      "branding": {
+        "title": "Set up branding",
+        "body": "Enter an app name such as Mailven and your email address as the support and contact address.",
+        "open": "Open Branding"
+      },
+      "audience": {
+        "title": "Choose the audience",
+        "body": "Pick External. In Testing status, sign-ins expire after 7 days. In production status, an unverified app shows Google's warning screen; personal use by a few users you know is exempt from verification.",
+        "open": "Open Audience"
+      },
+      "scopes": {
+        "title": "Add the data access scopes",
+        "body": "Open Data Access, choose Add or remove scopes, and add these scopes.",
+        "open": "Open Data Access"
+      },
+      "clients": {
+        "title": "Create a Desktop app client",
+        "body": "Create a client of type Desktop app and download its JSON now. Google shows the client secret only once.",
+        "open": "Open Clients"
+      },
+      "import": {
+        "title": "Import the JSON",
+        "body": "Open Settings → Accounts → OAuth Credentials and choose Import JSON…, or paste the Client ID and Secret."
+      },
+      "signin": {
+        "title": "Sign in and check",
+        "body": "Sign in with your Google account, then open the account's Identity settings and press Check Google setup."
+      }
+    }
   }
 }
