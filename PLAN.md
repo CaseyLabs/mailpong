@@ -1,6 +1,6 @@
 # Project roadmap
 
-Authoritative portfolio of remaining work. [Issue register](ISSUES.md) owns findings; [project-management rules](docs/PROJECT_MANAGEMENT.md) define IDs, statuses, authorization and execution plans. **No active milestone.** Microsoft 365 and personal Outlook.com development is deferred by owner decision on 2026-10-14; the DavMail experiment is preserved for future work. Other proposed or deferred work remains unauthorized.
+Authoritative portfolio of remaining work. [Issue register](ISSUES.md) owns findings; [project-management rules](docs/PROJECT_MANAGEMENT.md) define IDs, statuses, authorization and execution plans. **No active milestone.** All Microsoft work is deferred indefinitely until the owner explicitly reopens it. All future Wails work, including assessment, is deferred until Wails v3 officially releases as a stable version; release availability alone does not authorize execution. Owner decision: 2026-10-14. The DavMail experiment is preserved for future work. Other proposed or deferred work remains unauthorized.
 
 ## Portfolio
 
@@ -14,19 +14,19 @@ Priorities are recommendations assigned in this reorganization: P1 privacy/data 
 | [CHAT — Chat composer sender review](#chat) | proposed | P3 | [1](ISSUES.md#chat) | CH1 unassigned (cosmetic) |
 | [MAINT — Maintenance and documentation](#maint) | proposed | P2 | [6](ISSUES.md#maint) | MAINT-3 external; D2 deferred/upstream blocked |
 | [AI — AI development workflows](#ai) | deferred | P3 | [1](ISSUES.md#ai) | G4 deferred; no eligible work |
-| [WAILS — Desktop framework migration assessment](#wails) | proposed | P3 | [0](ISSUES.md#wails) | W3-M0 assessment only |
+| [WAILS — Desktop framework migration assessment](#wails) | deferred | P3 | [0](ISSUES.md#wails) | W3-M0–M7 deferred until official stable Wails v3 release and owner selection |
 
-**Recommended next selection:** none automatic; CHAT-1 is done; no independent P2 candidate is recommended automatically. External privacy gate SEND-2 is high priority but cannot run live without separately specified authorization. No automatic selection or status transition occurs here.
+**Remaining nondeferred scope:** SEND-2 has non-Microsoft privacy/size-limit investigation and separately gated live verification; MAINT-3 needs authoritative owner disposition or a selected legal review. Product follow-ups CH1 and UI1–UI3 remain open in ISSUES.md, without implementation milestones; UI2 is the P2 keyboard-accessibility finding. Completed milestones are not new implementation work. No automatic selection or status transition occurs here.
 
 ## Scope and preserved decisions
 
 Provider F1–F5 is complete for its local scope; completion does not establish live provider compatibility. Retain full Gmail API and delegated Microsoft Graph direction, future shared-mailbox support and explicit opt-in migration. Shared API activation remains unsupported. Existing accounts retain configured routes until explicitly migrated; there is no automatic route switch or fallback. Snapshot rollback currently changes route only and does not restore data or undo remote actions.
 
-No live provider access, test emails, credentials changes, mailbox migration, provider registrations, tenant/DNS changes, dependency upgrades or personal CLI configuration changes are authorized by this roadmap. Live checks need accounts, From identities, controlled recipients and cases specified separately; see [live limits](docs/MAIL_APIS.md#live-verification-limits) and [P2 parity scenarios](docs/validation/provider-transport-recommendations.md). Wails research additionally prohibits application/dependency/packaging changes, real data, releases and unapproved prototypes or installs under its existing brief. G4 and D2 remain deferred. All further Microsoft 365 and regular/personal Outlook.com work—including native OAuth, IMAP/SMTP, Graph, shared mailboxes, DavMail, live validation and migration—is deferred until explicitly reopened. This also applies to Microsoft-specific work inside mixed-provider milestones; unrelated provider work retains its existing status and gates.
+No live provider access, test emails, credentials changes, mailbox migration, provider registrations, tenant/DNS changes, dependency upgrades or personal CLI configuration changes are authorized by this roadmap. Live checks need accounts, From identities, controlled recipients and cases specified separately; see [live limits](docs/MAIL_APIS.md#live-verification-limits) and [P2 parity scenarios](docs/validation/provider-transport-recommendations.md). Wails research additionally prohibits application/dependency/packaging changes, real data, releases and unapproved prototypes or installs under its existing brief. G4 and D2 remain deferred. All further Microsoft 365 and regular/personal Outlook.com work—including native OAuth, IMAP/SMTP, Graph, shared mailboxes, DavMail, live validation and migration—is deferred indefinitely until explicitly reopened by the owner. This also applies to Microsoft-specific work inside mixed-provider milestones; unrelated provider work retains its existing status and gates.
 
 ## Progress
 
-No active milestone. On 2026-10-14 the owner requested merging the `experiment/davmail-microsoft365` evidence into main and deferring all further Microsoft 365 and regular/personal Outlook.com development. SEND-3, SEND-4 and the remaining API-6/MA4 work are deferred, as are Microsoft-specific portions of SEND-2/MA1. Resumption requires explicit owner selection; prior experiment authorization does not authorize continued live work while deferred. The [experiment checkpoint](docs/plans/davmail-microsoft365-test.md) preserves results, private artifact locations and possible future investigation steps. D7/D8 remain failed; no compatibility acceptance is implied by landing.
+No active milestone. On 2026-10-14 the owner additionally deferred all future Wails work, including W3-M0–W3-M7 assessment, until the official stable Wails v3 release, and confirmed indefinite deferral of all Microsoft work until explicit owner reopening. Wails work still requires selection after the release gate is met. On 2026-10-14 the owner requested merging the `experiment/davmail-microsoft365` evidence into main and deferring all further Microsoft 365 and regular/personal Outlook.com development. SEND-3, SEND-4 and the remaining API-6/MA4 work are deferred, as are Microsoft-specific portions of SEND-2/MA1. Resumption requires explicit owner selection; prior experiment authorization does not authorize continued live work while deferred. The [experiment checkpoint](docs/plans/davmail-microsoft365-test.md) preserves results, private artifact locations and possible future investigation steps. D7/D8 remain failed; no compatibility acceptance is implied by landing.
 
 API-3 is done and F5b-1 resolved: offline snapshot restore with consent, backup and undo ([evidence](docs/validation/api-3.md), [checkpoint](docs/plans/api-3.md)); native and real-account restore remain unrun. API-6 local implementation is done ([evidence](docs/validation/api-6.md), [checkpoint](docs/plans/api-6.md)); shared activation stays closed pending live checks. MAINT-5 is done: all four compact workflow helpers, logged check evidence and guarded landing are implemented and verified ([evidence](docs/validation/maint-5.md), [checkpoint](docs/plans/maint-5.md)). API-5 is done and F5b-3 resolved: rollback reports only a sync request, with scheduler-ordering and UI coverage ([evidence](docs/validation/api-5.md), [checkpoint](docs/plans/api-5.md)). API-1 design is done ([evidence](docs/validation/api-1.md), [checkpoint](docs/plans/api-1.md)); MA5 was resolved by API-6 (verified by fixture) and MA4 stays open for live evidence. No next milestone is activated.
 
@@ -317,8 +317,8 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 ## WAILS — Desktop framework migration assessment
 
 - **Objective / outcome:** Assess Wails v3 and GTK4/WebKitGTK 6.0 feasibility and produce a decision-ready design, without migration implementation.
-- **Status / proposed priority:** proposed / P3.
-- **Dependencies / blockers:** no cross-project implementation prerequisite established; milestone gates below apply.
+- **Status / proposed priority:** deferred / P3.
+- **Dependencies / blockers:** owner decision 2026-10-14 defers all future Wails work, including assessment, until Wails v3 officially releases as a stable version (not a prerelease). Verify the official release before proposing resumption; explicit owner selection and milestone prerequisites still apply.
 - **Issues:** [owning register section](ISSUES.md#wails); each linked milestone lists its relevant issues.
 - **Technical references:** [existing assessment brief](docs/PLAN-migration.md) (original M0–M7 scope and constraints; now W3-M0–W3-M7).
 
@@ -326,7 +326,7 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 
 ### W3-M0 — Repository preflight and safe v2 baseline
 
-- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** none.
+- **Status / proposed priority:** deferred / P3. **Dependencies / gates:** official stable Wails v3 release and explicit owner selection.
 - **Scope / deliverable:** Baseline and synthetic-data strategy with checkout, tools, test commands and unrun checks.
 - **Acceptance:** Meet the corresponding original M0 criteria in the assessment brief; do not implement or run a prototype.
 - **Validation:** Corresponding M0 validation in docs/PLAN-migration.md; record source/date and unrun checks.
@@ -336,7 +336,7 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 
 ### W3-M1 — Wails v3 and GTK4/WebKitGTK readiness
 
-- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** [W3-M0](#w3-m0).
+- **Status / proposed priority:** deferred / P3. **Dependencies / gates:** official stable Wails v3 release and explicit owner selection; [W3-M0](#w3-m0).
 - **Scope / deliverable:** Official version/API maturity assessment, dated evidence and explicit unknowns.
 - **Acceptance:** Meet the corresponding original M1 criteria in the assessment brief; do not implement or run a prototype.
 - **Validation:** Corresponding M1 validation in docs/PLAN-migration.md; record source/date and unrun checks.
@@ -346,7 +346,7 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 
 ### W3-M2 — Mailven v2 dependency inventory
 
-- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** [W3-M0](#w3-m0).
+- **Status / proposed priority:** deferred / P3. **Dependencies / gates:** official stable Wails v3 release and explicit owner selection; [W3-M0](#w3-m0).
 - **Scope / deliverable:** File/symbol/API mapping covering lifecycle, bindings, extensions, platform helpers and both windows.
 - **Acceptance:** Meet the corresponding original M2 criteria in the assessment brief; do not implement or run a prototype.
 - **Validation:** Corresponding M2 validation in docs/PLAN-migration.md; record source/date and unrun checks.
@@ -356,7 +356,7 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 
 ### W3-M3 — Backend, frontend and windowing design
 
-- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** [W3-M1](#w3-m1), [W3-M2](#w3-m2).
+- **Status / proposed priority:** deferred / P3. **Dependencies / gates:** official stable Wails v3 release and explicit owner selection; [W3-M1](#w3-m1), [W3-M2](#w3-m2).
 - **Scope / deliverable:** Compare compatibility-first and native multiwindow options; preserve mail/security invariants.
 - **Acceptance:** Meet the corresponding original M3 criteria in the assessment brief; do not implement or run a prototype.
 - **Validation:** Corresponding M3 validation in docs/PLAN-migration.md; record source/date and unrun checks.
@@ -366,7 +366,7 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 
 ### W3-M4 — Platform and packaging feasibility
 
-- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** [W3-M1](#w3-m1), [W3-M2](#w3-m2), [W3-M3](#w3-m3).
+- **Status / proposed priority:** deferred / P3. **Dependencies / gates:** official stable Wails v3 release and explicit owner selection; [W3-M1](#w3-m1), [W3-M2](#w3-m2), [W3-M3](#w3-m3).
 - **Scope / deliverable:** Linux/GTK/Flatpak, macOS and Windows risks and explicit platform validation limits.
 - **Acceptance:** Meet the corresponding original M4 criteria in the assessment brief; do not implement or run a prototype.
 - **Validation:** Corresponding M4 validation in docs/PLAN-migration.md; record source/date and unrun checks.
@@ -376,7 +376,7 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 
 ### W3-M5 — Regression, performance and security test design
 
-- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** [W3-M2](#w3-m2), [W3-M3](#w3-m3), [W3-M4](#w3-m4).
+- **Status / proposed priority:** deferred / P3. **Dependencies / gates:** official stable Wails v3 release and explicit owner selection; [W3-M2](#w3-m2), [W3-M3](#w3-m3), [W3-M4](#w3-m4).
 - **Scope / deliverable:** Behavior-to-fixture matrix with pass/fail evidence and owner/hardware requirements.
 - **Acceptance:** Meet the corresponding original M5 criteria in the assessment brief; do not implement or run a prototype.
 - **Validation:** Corresponding M5 validation in docs/PLAN-migration.md; record source/date and unrun checks.
@@ -386,7 +386,7 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 
 ### W3-M6 — Staged migration blueprint
 
-- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** [W3-M3](#w3-m3), [W3-M4](#w3-m4), [W3-M5](#w3-m5).
+- **Status / proposed priority:** deferred / P3. **Dependencies / gates:** official stable Wails v3 release and explicit owner selection; [W3-M3](#w3-m3), [W3-M4](#w3-m4), [W3-M5](#w3-m5).
 - **Scope / deliverable:** Bounded future implementation steps, pinned target, rollback and separately approvable spikes.
 - **Acceptance:** Meet the corresponding original M6 criteria in the assessment brief; do not implement or run a prototype.
 - **Validation:** Corresponding M6 validation in docs/PLAN-migration.md; record source/date and unrun checks.
@@ -396,7 +396,7 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 
 ### W3-M7 — Independent review and owner decision gate
 
-- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** [W3-M6](#w3-m6).
+- **Status / proposed priority:** deferred / P3. **Dependencies / gates:** official stable Wails v3 release and explicit owner selection; [W3-M6](#w3-m6).
 - **Scope / deliverable:** Evidence-backed proposed GO/DEFER/NO-GO, unresolved questions and separate implementation authorization.
 - **Acceptance:** Meet the corresponding original M7 criteria in the assessment brief; do not implement or run a prototype.
 - **Validation:** Corresponding M7 validation in docs/PLAN-migration.md; record source/date and unrun checks.
@@ -409,6 +409,6 @@ Completed work is not a selectable backlog. Stable historical identifiers remain
 - Provider P1 audit and P2 architecture: [deliverability review](docs/validation/provider-deliverability-review.md), [transport recommendations](docs/validation/provider-transport-recommendations.md). F1–F5 local implementation: [implementation validation](docs/validation/provider-implementation.md); live limits remain explicit.
 - G1–G3 shared-guidance implementation and partial runtime checks: [verification record](docs/validation/shared-skills-g3.md). Do not infer full G3/G4 runtime/context completion from parsing/discovery. AI5 bidirectional handoff completed under the 2026-10-14 request: [handoff record](docs/validation/shared-handoff-ai5.md); remaining G4 belongs to AI.
 - Earlier rebrand/UI execution records remain in Git history (`git log -- PLAN.md`; original legal flags: `git show 33c1851:PLAN.md`). Upstream history and architecture: [Aerion history](docs/history/AERION_CHANGELOG.md), [upstream CASA record](docs/history/AERION_CASA_TIER2.md), [extension rules](docs/EXT_RULES.md) and [extension reference](docs/EXTENSIONS.md).
-- Wails assessment remains unstarted; existing M0–M7 proposal details are retained in [the brief](docs/PLAN-migration.md), mapped to W3-M0–W3-M7 here to avoid old M-number collisions. Intended `plans/wails-v3/` output paths were never created; selection should reconcile them with the new execution-plan convention.
+- Wails assessment remains unstarted and deferred until the official stable Wails v3 release and subsequent owner selection; existing M0–M7 proposal details are retained in [the brief](docs/PLAN-migration.md), mapped to W3-M0–W3-M7 here to avoid old M-number collisions. Intended `plans/wails-v3/` output paths were never created; selection should reconcile them with the new execution-plan convention.
 
 - Documentation/workflow reorganization evidence: [mapping and validation](docs/validation/project-management.md). This was documentation-only work and did not select any product milestone.

@@ -1,6 +1,6 @@
 # PLAN: Assess and design Mailven's Wails v2 -> v3 migration
 
-**Status:** Proposed. Analysis and design only; **migration implementation is not authorized**.
+**Status:** Deferred by owner decision on 2026-10-14 until Wails v3 officially releases as a stable version (not a prerelease); explicit owner selection is still required afterward. Analysis and design only; **migration implementation is not authorized**.
 **Repository:** `https://github.com/CaseyLabs/mailven`
 **Roadmap:** [WAILS](../PLAN.md#wails); original M0–M7 below map to W3-M0–W3-M7 there. Status/selection belongs to the root roadmap.
 **Original intended path:** `plans/wails-v3/PLAN.md` (never created). This file retains the assessment scope; on explicit selection, use a linked `docs/plans/<milestone-id>.md` checkpoint and reconcile deliverable paths before writing them.

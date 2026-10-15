@@ -4,7 +4,7 @@ Authoritative unresolved findings and follow-ups, grouped by primary project. [R
 
 The 2026-10-08 audit used “unverified” for reported findings not confirmed against source. This reorganization preserves recorded evidence without independently verifying product defects. The P1 provider audit confirmed findings statically; F1–F3b fixed PD1/PD9, PD3–PD8 and U3 within their local scope, while PD2 remains a live gate. See [provider review](docs/validation/provider-deliverability-review.md), [implementation evidence](docs/validation/provider-implementation.md) and [P2 architecture](docs/validation/provider-transport-recommendations.md). Resolved findings are not reopened.
 
-Microsoft 365 and regular/personal Outlook.com work is deferred by owner decision on 2026-10-14. PD2, DAV1–DAV3 and remaining MA4 work are retained unresolved for future development; Microsoft-specific MA1 work is also deferred. Explicit reopening is required before further investigation, implementation or live checks. Existing severity and rollout gates remain in force.
+All Microsoft work, including Microsoft 365 and regular/personal Outlook.com, is deferred indefinitely by owner decision on 2026-10-14, until the owner explicitly chooses otherwise. PD2, DAV1–DAV3 and remaining MA4 work are retained unresolved for future development; Microsoft-specific MA1 work is also deferred. Explicit reopening is required before further investigation, implementation or live checks. Existing severity and rollout gates remain in force.
 
 ## Index
 
@@ -368,7 +368,7 @@ Project: [AI](PLAN.md#ai).
 
 Project: [WAILS](PLAN.md#wails).
 
-No verified issue recorded. Proposed research questions and risks remain in [the assessment brief](docs/PLAN-migration.md); do not turn them into confirmed defects.
+All future Wails work is deferred by owner decision on 2026-10-14 until the official stable Wails v3 release; owner selection is still required afterward. No verified issue recorded. Proposed research questions and risks remain in [the assessment brief](docs/PLAN-migration.md); do not turn them into confirmed defects.
 
 ## Recurring problems
 
