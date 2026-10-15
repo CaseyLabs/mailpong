@@ -80,6 +80,7 @@
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <aside
   bind:this={containerRef}
+  inert={narrow && !overlayVisible}
   role="navigation"
   aria-label={label ?? title ?? $_('kit.sidebar')}
   tabindex={focusable ? 0 : undefined}

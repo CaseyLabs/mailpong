@@ -12,7 +12,7 @@ All Microsoft work, including Microsoft 365 and regular/personal Outlook.com, is
 - [API — Provider API activation and migration](#api): [MA4](#ma4) (resolved: [F5b-1](#f5b-1), [F5b-3](#f5b-3))
 - [SYNC — Mail synchronization and action reliability](#sync): none (resolved: [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [CHAT — Chat composer sender review](#chat): [CH1](#ch1) (resolved: [R1](#r1))
-- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI3](#ui3) (resolved: [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
+- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI3](#ui3), [UI4](#ui4) (resolved: [UI2](#ui2), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
 - [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
 
@@ -329,11 +329,11 @@ Project: [MAINT](PLAN.md#maint).
 
 ### UI2 — Closed narrow sidebar stays in the Tab order
 
-- **Owner / milestone:** [MAINT](PLAN.md#maint) / found by [MAINT-4](PLAN.md#maint-4); fix not selected.
-- **Severity / proposed priority / status:** medium / P2 / open.
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-6](PLAN.md#maint-6); found by [MAINT-4](PLAN.md#maint-4).
+- **Severity / proposed priority / status:** medium / P2 / resolved.
 - **Problem / evidence:** 2026-10-14, `make test-ui` UI audit keyboard pass. Below 768 px the closed `aside.responsive-sidebar-overlay` (App.svelte, `SidebarFrame.svelte`, `app.css` `.responsive-sidebar-overlay`) is only translated off-screen, so about 16 of its controls (folders, account menus) still receive Tab focus while invisible.
-- **Impact / limits:** keyboard and screen-reader users land on invisible controls in the narrow layout. The hidden medium-layout viewer overlay may behave the same; not yet audited separately.
-- **Reproduction:** delete the UI2 entry in `tests/ui/ui-audit-allow.cjs`, then `node tests/ui/run.mjs ui-quality` (700 px configurations report `focus-invisible`).
+- **Impact / limits:** keyboard and screen-reader users land on invisible controls in the narrow layout. The separate hidden-viewer finding is tracked as [UI4](#ui4).
+- **Resolution / evidence:** [MAINT-6 evidence](docs/validation/maint-6.md): Mail and kit sidebar containers are inert only while closed in narrow mode. Regression tests cover closed/open/closed/resize for Mail and Contacts. The UI2 allowlist entry is removed; the full UI suite passes 58/58. Native WebKitGTK verification remains unrun.
 - **Dependencies / closure:** closed overlays leave the Tab order (for example `inert`) without changing the open behavior; the UI2 allowlist entry is deleted and the audit passes.
 
 <a id="ui3"></a>
@@ -346,6 +346,16 @@ Project: [MAINT](PLAN.md#maint).
 - **Impact / limits:** redundant, slightly inconsistent menu; no data risk. Not checked in the open chat's header menu.
 - **Reproduction:** right-click any chat row in the chat list.
 - **Dependencies / closure:** the chat row menu shows one Archive with the chat behavior; `inbox-triage.test.cjs` `menu()` no longer needs `.first()` for Archive.
+
+<a id="ui4"></a>
+
+### UI4 — Closed responsive viewer retains focusable controls
+
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / found during [MAINT-6](PLAN.md#maint-6); fix not selected.
+- **Severity / proposed priority / status:** medium / P2 / open.
+- **Problem / evidence (2026-10-14):** Static review confirms Mail's `App.svelte` viewer and kit `DetailPane.svelte` remain mounted in closed responsive overlays. `app.css` `.responsive-viewer-overlay` only translates them off-screen; neither container disables focus on its descendant controls, including the Back button. This affects medium and narrow layouts. Runtime viewer-specific audit and native WebKitGTK verification remain unrun.
+- **Impact / reproduction:** Return from a viewer to the list in a responsive layout; hidden viewer controls can still receive keyboard focus. The existing Mail UI audit does not establish coverage of every such control.
+- **Dependencies / closure:** Separately select viewer scope; closed viewers must reject focus while opening, closing, selection and focus-mode behavior remain correct, with regression coverage for Mail and the shared detail pane.
 
 <a id="ai"></a>
 

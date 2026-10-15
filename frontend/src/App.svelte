@@ -1509,6 +1509,7 @@
     <div style:display={getActiveExtension() === 'mail' ? 'contents' : 'none'}>
     <!-- Sidebar (Folder List) -->
     <aside
+      inert={getLayoutMode() === 'narrow' && getResponsiveView() !== 'sidebar'}
       class="{getLayoutMode() === 'narrow' ? `responsive-sidebar-overlay w-72 border-r border-divider bg-background ${getResponsiveView() === 'sidebar' ? 'responsive-sidebar-visible' : ''}` : 'shrink-0 border-r border-divider bg-surface-sidebar'} {mailSidebarHidden ? 'hidden' : ''}"
       style="{getLayoutMode() !== 'narrow' ? `width: ${sidebarWidth}px` : ''}"
       role="presentation"
