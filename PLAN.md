@@ -13,10 +13,11 @@ Priorities are recommendations assigned in this reorganization: P1 privacy/data 
 | [SYNC — Mail synchronization and action reliability](#sync) | proposed | P1 | [0](ISSUES.md#sync) | none; SYNC-1–4 done |
 | [CHAT — Chat composer sender review](#chat) | proposed | P3 | [1](ISSUES.md#chat) | CH1 unassigned (cosmetic) |
 | [MAINT — Maintenance and documentation](#maint) | proposed | P2 | [4](ISSUES.md#maint) | D2 deferred/upstream blocked; UI1/UI3/UI4 remain open |
+| [UIX — UI refresh](#uix) | proposed | P3 | [1](ISSUES.md#ui1) | none selected; UIX-1 (Nord retune, fixes UI1) first |
 | [AI — AI development workflows](#ai) | deferred | P3 | [1](ISSUES.md#ai) | G4 deferred; no eligible work |
 | [WAILS — Desktop framework migration assessment](#wails) | deferred | P3 | [0](ISSUES.md#wails) | W3-M0–M7 deferred until official stable Wails v3 release and owner selection |
 
-**Remaining nondeferred scope:** SEND-2 has non-Microsoft privacy/size-limit investigation and separately gated live verification; MAINT-3 is complete following owner disposition. Product follow-ups CH1, UI1, UI3 and UI4 remain open in ISSUES.md, without implementation milestones; UI2 is the P2 keyboard-accessibility finding. Completed milestones are not new implementation work. No automatic selection or status transition occurs here.
+**Remaining nondeferred scope:** SEND-2 has non-Microsoft privacy/size-limit investigation and separately gated live verification; MAINT-3 is complete following owner disposition. Product follow-ups CH1, UI3 and UI4 remain open in ISSUES.md, without implementation milestones; UI1 is planned under proposed UIX-1; UI2 is the P2 keyboard-accessibility finding. Completed milestones are not new implementation work. No automatic selection or status transition occurs here.
 
 ## Scope and preserved decisions
 
@@ -302,6 +303,78 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 - **Acceptance:** Both peer ranges support 7; only a separately selected upgrade can be implemented and verified.
 - **Validation:** CONTRIBUTING dependency commands; lint/check/build after an authorized upgrade. Last 2026-10-12 evidence remains in ISSUES.
 - **Issues:** [D2](ISSUES.md#d2). **Progress:** not started.
+
+<a id="uix"></a>
+
+## UIX — UI refresh
+
+- **Objective / outcome:** Refine the Mail view toward a calmer, lower-noise look inspired by bb: quieter Nord surfaces, a minimal header, list status glyphs, conversation compaction, a carded composer and an optional flat transcript.
+- **Status / proposed priority:** proposed / P3. No milestone selected.
+- **Dependencies / blockers:** UIX-1 first (tokens); UIX-2–5 independent; UIX-6 last.
+- **Issues:** [UI1](ISSUES.md#ui1).
+- **Technical references:** [design plan](docs/plans/ui-refresh.md), [UI_TOKENS](docs/UI_TOKENS.md), [UI tests](tests/ui/README.md).
+
+Each milestone's scope, acceptance and validation are in the [design plan's milestone table](docs/plans/ui-refresh.md#milestones).
+
+<a id="uix-1"></a>
+
+### UIX-1 — Nord retune and type tokens
+
+- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** selection.
+- **Scope / deliverable:** Lower-chroma Nord surfaces, light primary/selected contrast, base type/radius tokens; UI_TOKENS updated.
+- **Acceptance:** UI1 audit allowlist entry removed; contrast check and full UI suite pass.
+- **Validation:** `make lint`, full `make test-ui`, both themes with Accounts expanded/collapsed.
+- **Issues:** [UI1](ISSUES.md#ui1). **Progress:** not started.
+
+<a id="uix-2"></a>
+
+### UIX-2 — Header simplification
+
+- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** selection; UIX-1.
+- **Scope / deliverable:** Conversation header with title, `⋯` menu and one Archive primary action.
+- **Acceptance:** Every header action stays reachable by mouse, menu and keyboard.
+- **Validation:** Header/triage regression tests, frontend lint/check, full UI suite.
+- **Issues:** none. **Progress:** not started.
+
+<a id="uix-3"></a>
+
+### UIX-3 — List and sidebar polish
+
+- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** selection; UIX-1.
+- **Scope / deliverable:** Labeled sidebar actions, quieter section labels, row status glyphs; `ChatList.svelte` extraction first.
+- **Acceptance:** Glyph priority regression test; components under 500 lines; audit passes in both Accounts states.
+- **Validation:** New glyph test, frontend lint/check, full UI suite.
+- **Issues:** none. **Progress:** not started.
+
+<a id="uix-4"></a>
+
+### UIX-4 — Composer card and chips
+
+- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** selection; UIX-1.
+- **Scope / deliverable:** Carded chat composer with in-card From picker, chip row and attachment summary card.
+- **Acceptance:** `chat-compose` suite passes; send key and sender review unchanged.
+- **Validation:** `node tests/ui/run.mjs chat-compose`, full UI suite.
+- **Issues:** none ([CH1](ISSUES.md#ch1) adjacent, out of scope). **Progress:** not started.
+
+<a id="uix-5"></a>
+
+### UIX-5 — Conversation compaction
+
+- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** selection; UIX-1.
+- **Scope / deliverable:** Expandable one-line rows for earlier read and low-priority messages.
+- **Acceptance:** Latest/unread never collapse; keyboard expand/collapse; scroll position holds.
+- **Validation:** New compaction tests on fakes, full UI suite.
+- **Issues:** none. **Progress:** not started.
+
+<a id="uix-6"></a>
+
+### UIX-6 — Optional flat transcript mode
+
+- **Status / proposed priority:** proposed / P3. **Dependencies / gates:** selection; UIX-1–5.
+- **Scope / deliverable:** `chat_display_style` setting (bubbles default, flat) and a flat message variant.
+- **Acceptance:** Both modes pass the audit; Go settings test; user guide updated.
+- **Validation:** `go test ./internal/settings`, bindings regenerated per CONTRIBUTING, frontend checks, full UI suite in both modes.
+- **Issues:** none. **Progress:** not started.
 
 <a id="ai"></a>
 

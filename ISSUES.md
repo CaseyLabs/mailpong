@@ -316,7 +316,7 @@ Project: [MAINT](PLAN.md#maint).
 
 ### UI1 — Light-theme primary text contrast
 
-- **Owner / milestone:** [MAINT](PLAN.md#maint) / found by [MAINT-4](PLAN.md#maint-4); fix not selected.
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / found by [MAINT-4](PLAN.md#maint-4); fix planned in proposed [UIX-1](PLAN.md#uix-1), not selected.
 - **Severity / proposed priority / status:** low / P3 / open.
 - **Problem / evidence:** 2026-10-14, `make test-ui` UI audit (runtime contrast, backend-free fake data). In the light theme the header "Compose" label measures 3.57:1 (rgb(239,241,246) on rgb(93,129,172)) at 900 and 700 px, and the selected sidebar "Inbox" label measures 2.99:1 (rgb(93,129,172) on rgb(215,222,234)); WCAG AA normal text needs 4.5:1. Dark theme passes. `tools/contrast-check.mjs` checks text tiers on pane surfaces only, so it does not cover primary-on-primary/accent pairs.
 - **Impact / limits:** reduced legibility for low-vision users in the light theme. Measured in Chromium against the dev build only; not checked on WebKitGTK.
