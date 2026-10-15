@@ -107,7 +107,7 @@ When all of a feature's milestones are done or an audit pass is complete, land t
 
 ## Workflow helpers
 
-These standard-library helpers reduce repeated shell recipes and returned context. They preserve the existing lifecycle and authorization rules; none selects a milestone, performs review, authorizes live work or marks acceptance complete. Required guidance already read in a session may be reused while unchanged; new sessions load it again.
+These standard-library helpers reduce repeated shell recipes and returned context. They preserve the existing lifecycle and authorization rules; only the [unattended runner](#unattended-milestone-runs) selects milestones, and none performs review, authorizes live work or marks acceptance complete. Required guidance already read in a session may be reused while unchanged; new sessions load it again.
 
 From the checkout root:
 
@@ -139,6 +139,27 @@ tools/project-land.sh feature-branch --evidence /absolute/path/evidence.json \
 Landing requires the feature checkout to be clean, checks/logs to match its source and scopes, and main to have a configured upstream. Evidence must start at the landing merge base or an earlier ancestor and cover every changed feature path; a later feature commit cannot serve as its baseline. Use `project-check.py --base main --run` for the whole branch, including when main has diverged; its recorded baseline is the common ancestor. Older evidence recorded directly against diverged main must be regenerated. It retains `recovery/project-land-...-feature` and `...-main` local branches before changes, rebases when needed and reruns the recorded checks, aborts on conflicts, respects configured identity/hooks, pushes main without force, and deletes the feature only after a successful push and equal-tree comparison. A main branch already checked out in another worktree requires landing from a checkout where it is available. Failure retains the feature/recovery branches and reports the Git state; fix the stated problem without bypassing safeguards. Recovery branches are intentionally not removed automatically.
 
 Validate changes to helpers with `python3 -m unittest discover -s tools/tests -p 'test_*.py'` and `python3 .agents/skills/project-next-milestone/tests/paths.py`. These tests use disposable repositories/remotes and fake commands, never production accounts or project pushes.
+
+### Unattended milestone runs
+
+`tools/project-run.py` works through roadmap milestones without a user. Each milestone gets one fresh headless Claude Code (`claude -p`, default) or Codex (`--agent codex`) session running `project-next-milestone`, including its finish step and one local commit. From a clean feature-branch checkout:
+
+```bash
+python3 tools/project-run.py --list                  # Ranked eligible milestones; runs nothing
+python3 tools/project-run.py                         # Best eligible milestone, then the next, ...
+python3 tools/project-run.py --milestones GOAUTH-4 --max-milestones 1
+python3 tools/project-run.py --agent codex --verify-command 'make lint && make test'
+```
+
+**Selection.** Without `--milestones`, the runner rereads `PLAN.md` before each milestone and picks the best eligible one: `active` first (resuming interrupted work), then `proposed`. Within each group, lower `P` priority wins, then plan order. A milestone is eligible only when its project isn't `blocked`, `deferred` or `done` and every milestone ID under its **Dependencies / gates** (links, bare IDs and ranges such as `UIX-1–5`) is `done`. Any milestone ID there counts as a dependency, which errs toward waiting. Deferred, blocked and done milestones are never selected, and issues without a milestone aren't candidates. `--milestones` runs the listed IDs in order and accepts only `active` or `proposed` ones.
+
+**Authorization.** Starting the runner authorizes each selected milestone's local scope, one session at a time; the session records that authorization in its checkpoint. It never reopens deferred work and never permits live provider access, test emails, credential changes, mailbox migration, dependency upgrades, pushing or landing. Sessions leave those steps unrun and recorded. Review the commits and land the branch yourself.
+
+**Outcomes.** Each session returns `success` (milestone marked done and committed), `handoff` (checkpoint committed at a sub-step boundary; the runner continues the milestone in a fresh session, up to `--max-handoffs`) or `blocked` (blocker recorded; the runner skips to the next candidate). After each session the runner requires a clean tree, a new commit for success or handoff, and a `done` plan status for success. With `--verify-command` it then runs that command after each completed milestone. Exit codes: 0 when nothing eligible remains or `--max-milestones` is reached; 2 when a milestone was blocked, left uncommitted changes, exceeded its handoffs or failed verification; 1 on a session error or an inconsistent result; 130 on Ctrl+C. Rerun to resume.
+
+**Usage limits.** On a usage limit the runner waits for the reported reset (or `--retry-minutes`) and resumes the same session, giving up after `--max-wait-hours` of continuous waiting. If the session can't be resumed, the milestone starts fresh.
+
+**Sessions.** Defaults are `--permission-mode bypassPermissions` (Claude) or `--sandbox danger-full-access` (Codex, because `workspace-write` blocks the commit), so sessions run checks without prompts. `--chrome` (Claude in Chrome, on by default) needs Chrome open with the extension connected. `--playwright` (on by default) adds a pinned headless Playwright MCP server and needs `npx` and Google Chrome. `--model` and `--effort` apply to every session. Session logs and Playwright output go to a new private directory under `~/.cache/mailven-project-runs/` (or `$XDG_CACHE_HOME`). One runner may hold a checkout at a time.
 
 ## Development Setup
 

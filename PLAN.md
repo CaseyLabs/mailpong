@@ -398,6 +398,16 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 - **Issues:** [UI2](ISSUES.md#ui2); separate viewer follow-up [UI4](ISSUES.md#ui4) remains unselected.
 - **Checkpoint:** branch `fix/ui2-sidebar-focus`, pre-commit base `2c25557`; implementation and verification complete. `node tests/ui/run.mjs sidebar-focus`: 2 pass. `python3 tools/project-check.py --base main --run`: whitespace, docs, frontend lint/check/build and 58 UI tests pass (0 failed/skipped). [Evidence and limitations](docs/validation/maint-6.md). No next milestone selected; future work requires selection. Existing Gmail investigation is preserved on `docs/send-2-gmail-verification`.
 
+<a id="maint-7"></a>
+
+### MAINT-7 — Unattended milestone runner
+
+- **Status / proposed priority:** done / P3. **Authorization:** owner requested on 2026-10-15 migrating the external plan runner into `tools/` with automatic milestone selection.
+- **Scope:** `tools/project-run.py`: one fresh Claude Code or Codex session per milestone, ranked selection from this roadmap, per-milestone local authorization, handoff continuation, blocked-milestone skipping and usage-limit resumption. No push, landing or gate changes.
+- **Acceptance:** Selection never picks deferred, blocked or done milestones, milestones in closed projects, or milestones with unfinished dependencies; success requires a commit, a clean tree and a `done` status; handoff and blocked outcomes behave as documented; [CONTRIBUTING](CONTRIBUTING.md#unattended-milestone-runs) and the [lifecycle rules](docs/PROJECT_MANAGEMENT.md#status-priority-and-eligibility) describe the authorization.
+- **Validation:** `tools/tests/test_project_run.py` (fixture plans and a fake agent CLI in disposable repositories); helper test suite; doc links; brand check. A real agent session is unrun.
+- **Checkpoint:** branch `feat/project-run`, base `main`; complete.
+
 <a id="d2"></a>
 
 ### D2 — TypeScript 7 compatibility
