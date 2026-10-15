@@ -10,7 +10,7 @@ New accounts use IMAP for mail access and SMTP for sending. Existing accounts re
 
 | Account | IMAP/SMTP authentication in Mailven | Optional mail API route | Setup and requirements |
 | --- | --- | --- | --- |
-| Personal Gmail | Google OAuth, or an eligible app password | Gmail API for OAuth accounts | [Gmail setup](user-guide/getting-started/first-account/gmail.md); bring your own desktop OAuth client |
+| Personal Gmail | Google OAuth, or an eligible app password | Gmail API for OAuth accounts | [Gmail setup](user-guide/getting-started/first-account/gmail.md); use a configured desktop OAuth client or bring your own |
 | Google Workspace, including custom domains | Google OAuth, or an app password if the organization permits it | Gmail API for the authorized user's own mailbox | Same Google setup; organization policy can restrict client access and consent; Gmail delegated-mailbox API access is unsupported |
 | Personal Outlook.com, Hotmail or Live | Microsoft OAuth | Not supported by Mailven's API route | [Outlook setup](user-guide/getting-started/first-account/outlook.md); select Personal and enable IMAP in Outlook.com |
 | Microsoft 365 work or school | Microsoft OAuth | Delegated Microsoft Graph for the user's own mailbox | Select Work or school; app consent, IMAP and SMTP AUTH are separate organization controls |
@@ -23,7 +23,7 @@ Do not infer Microsoft account type from the email domain. Personal Outlook.com 
 
 ## Credentials, permissions and policy
 
-Mailven bundles no Google or Microsoft OAuth credentials. Create a desktop client/application registration and configure it under **Settings → Accounts → OAuth Credentials**. Use [Google's setup guide for Mailven](user-guide/getting-started/first-account/google-oauth-credentials.md) or the [Microsoft setup instructions](user-guide/getting-started/first-account/outlook.md#before-you-start-bring-your-own-credentials). The registration must allow the account audience and desktop redirect flow being used.
+OAuth requires a configured Google or Microsoft client. Builds can supply client credentials at build time; if your build has no suitable client, create a desktop client/application registration and configure it under **Settings → Accounts → OAuth Credentials**. Use [Google's setup guide for Mailven](user-guide/getting-started/first-account/google-oauth-credentials.md) or the [Microsoft setup instructions](user-guide/getting-started/first-account/outlook.md#before-you-start-bring-your-own-credentials). The registration must allow the account audience and desktop redirect flow being used.
 
 | Route | Mail authorization requested by Mailven | What it does not establish |
 | --- | --- | --- |

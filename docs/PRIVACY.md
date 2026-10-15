@@ -1,24 +1,22 @@
 # Privacy Policy
 
-**Last Updated:** October 11, 2026
-
-<!-- Draft for legal review (ISSUES.md tracks L2/L3; PLAN.md milestone MAINT-3); remove this comment once signed off. -->
+**Last Updated:** October 14, 2026
 
 ## Introduction
 
 Mailven ("we," "our," or "the Application") is an open-source desktop email client derived from [Aerion](https://github.com/hkdb/aerion). It is an independent project, not an official Aerion release. This Privacy Policy explains how Mailven handles your information. Because Mailven is a desktop application that runs entirely on your computer, our approach to privacy is fundamentally different from cloud-based services.
 
-**Key Point:** Mailven does not operate any servers that collect, store, or process your data. All your information stays on your device.
+**Key Point:** Mailven does not operate any servers that collect, store, or process your data. Mailven stores application data locally and communicates with providers and other services as described below.
 
 ## Information We Do Not Collect
 
 Unlike many applications, Mailven:
 
-- **Does not collect** any personal information on external servers
+- **Does not collect** personal information on project-operated servers through the application
 - **Does not transmit** your emails, contacts, or credentials to us
-- **Does not use** analytics, telemetry, or tracking of any kind
+- **Does not include** project-operated analytics, telemetry, or tracking. Remote email content can still contact third parties when you allow it, as described below
 - **Does not display** advertisements
-- **Does not sell or share** any user data (we don't have access to it)
+- **Does not sell** user data or send it to the Mailven project; configured services receive data needed for the features you use
 
 ## Information Stored Locally on Your Device
 
@@ -33,71 +31,77 @@ Mailven stores the following information locally on your computer:
 ### Account Credentials
 - Email account configurations (server addresses, ports)
 - Authentication tokens (OAuth tokens for Gmail, Outlook)
-- App-specific passwords (stored in your system's secure keyring)
+- Passwords and tokens (stored in the system keyring when available, with encrypted local database storage as a fallback)
 
 ### Contacts
 - Contact information synchronized from CardDAV, Google, or Microsoft accounts
-- Used solely for email address autocomplete
+- Used for address autocomplete, contact management, and optional contact photos in the message list
+
+### Calendar Data
+- Events and calendar information synchronized from configured calendar sources when the Calendar extension is enabled
+- Local event changes awaiting synchronization
 
 ### Application Settings
 - Your preferences and settings
 - Window size and position
 - Theme preferences
 
-**All of this data is stored in your local application data directory and never leaves your device except when communicating directly with your email providers.**
+Mail, contacts, calendars, and settings are stored locally; credentials use the system keyring or encrypted database fallback. Sending mail and synchronizing contacts or calendars communicate relevant data with the configured services. Sent messages are delivered to their recipients through your mail provider.
 
 ## Google API Services
 
-Mailven can use Google APIs for Gmail integration. Mailven ships no Google OAuth client: to use Gmail with OAuth you create your own Google Cloud OAuth app and enter its credentials in Settings, so you (not the Mailven project) are the operator of that app and are responsible for its consent screen and Google's terms. The project does not see your credentials, tokens or data. When you use your own Google OAuth app, Mailven handles information received from Google APIs in line with the [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy), including the Limited Use requirements.
+Mailven can use Google APIs for mail, contacts and calendars. OAuth uses a client configured in your build or supplied by you in Settings. If your build has no suitable client, create your own Google Cloud OAuth app and enter its credentials. When you provide your own app, you are responsible for that registration, its consent screen and compliance with Google's terms. A configured client does not give the Mailven project access to your local credentials, tokens or mailbox. Mailven's handling of Google data is subject to the [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy), including the Limited Use requirements.
 
-### Google API Scopes Used
+### Google API Access
 
-- **IMAP/SMTP Access** - To read, send, and manage your emails via standard IMAP/SMTP protocols (OAuth2 authenticated)
-- **Google People API** - To access your contacts for email autocomplete
+Permissions depend on the feature you authorize:
+
+- **IMAP/SMTP** - Gmail access for reading, sending, and managing mail, plus identity and read-only contact permissions in the default profile
+- **Gmail API route** - A separate Gmail grant for reading, sending, and managing mail
+- **Google People API** - Read-only contact access for synchronization, autocomplete, and contact display
+- **Google Calendar** - Calendar access for viewing, creating, and editing events when separately configured
+
+See [provider permissions](PROVIDERS.md#credentials-permissions-and-policy) for mail authorization profiles and the [Calendar guide](user-guide/features/extensions/calendar.md) for the optional extension. The consent screen identifies the permissions requested for your selected feature.
 
 ### Limited Use Disclosure
 
 Mailven's use and transfer of information received from Google APIs to any other app will adhere to the [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy), including the Limited Use requirements.
 
 Specifically:
-- Mailven only uses Google data to provide email functionality to you
-- Mailven does not transfer Google data to third parties
+- Mailven uses Google data to provide the mail, contact, and calendar features you authorize
+- Mailven communicates with Google to provide these features. When you send or forward mail, the selected message content and attachments are sent to the recipients you choose through your mail provider
 - Mailven does not use Google data for advertising
 - Mailven does not use Google data to train AI/ML models
-- The project has no access to Google data: it stays on your device
+- The Mailven project does not receive your Google data through the application
 
 ## Microsoft API Services
 
-Mailven can use Microsoft APIs for Outlook/Microsoft 365 integration. As with Google, Mailven ships no Microsoft OAuth client: you register your own app in Microsoft Entra and enter its credentials in Settings. You are responsible for that app registration and Microsoft's terms.
+Mailven can use Microsoft APIs for Outlook/Microsoft 365 integration. OAuth uses a client configured in your build or supplied by you in Settings. If your build has no suitable client, register your own app in Microsoft Entra and enter its credentials. You are responsible for any app registration you supply and for complying with Microsoft's terms.
 
-### Microsoft API Scopes Used
+### Microsoft API Access
 
-- **Mail.ReadWrite** - To read, send, and manage your emails
-- **Contacts.Read** - To access your contacts for email autocomplete
-- **User.Read** - To access your basic profile information
-- **offline_access** - To maintain your session
-
-All Microsoft data is stored locally and used solely for email functionality.
+Permissions depend on the selected mail route and separately configured contact or calendar features. Protocol OAuth and Microsoft Graph use separate mail grants; see [provider permissions and current compatibility limits](PROVIDERS.md). Requested permissions do not guarantee that an account or route is supported. Microsoft data is cached locally and exchanged with configured services to provide the features you authorize.
 
 ## Data Security
 
 Your data security depends on:
 
 1. **Your device security** - Mailven stores data locally, so your device's security measures (disk encryption, password protection, etc.) protect your email data
-2. **Secure connections** - All connections to email servers use TLS/SSL encryption
-3. **System keyring** - Sensitive credentials are stored in your operating system's secure credential storage
-4. **No cloud exposure** - Your data is never transmitted to our servers because we don't operate any
+2. **Connection security** - Mailven supports TLS and STARTTLS, but also allows unencrypted email connections. Protection depends on the server and connection settings you choose
+3. **Credential storage** - Mailven uses your operating system's secure keyring when available and falls back to encrypted local database storage when it is unavailable
+4. **No project-operated data servers** - Your data is never transmitted to our servers because we don't operate any
 
 ## Third-Party Services
 
-Mailven only connects to services you explicitly configure:
+Mailven communicates with services needed for the features you configure or enable, including:
 
 - Your email provider (via IMAP/SMTP)
 - Google APIs (if you use Gmail)
 - Microsoft APIs (if you use Outlook/Microsoft 365)
 - CardDAV servers (if you configure contact sync)
+- CalDAV and provider calendar APIs (if you configure calendar sync)
 
-We do not integrate with any advertising networks, analytics services, or other third-party data collectors.
+Remote images in mail are blocked by default. If you load them or trust a sender, the image hosts may receive requests that reveal your IP address and when content is loaded. Optional online certificate revocation checks contact certificate-status services and may reveal when you view or download signed mail. See [remote image controls](user-guide/features/email-management.md#remote-images) and [security settings](user-guide/features/settings.md). These third-party requests are separate from project-operated telemetry; Mailven does not include advertising or analytics integrations.
 
 ## Data Retention and Deletion
 
@@ -109,7 +113,7 @@ Since all data is stored locally on your device:
 
 ## Children's Privacy
 
-Mailven is not directed at children under 13. We do not knowingly collect information from children. Since Mailven stores all data locally and does not transmit data to external servers, parental supervision of the device itself is the appropriate safeguard.
+Mailven is not directed at children under 13. We do not knowingly collect information from children. Mailven communicates with configured providers and other services as described above; parental supervision should cover both the device and connected accounts.
 
 ## Changes to This Privacy Policy
 

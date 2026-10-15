@@ -12,7 +12,7 @@ All Microsoft work, including Microsoft 365 and regular/personal Outlook.com, is
 - [API — Provider API activation and migration](#api): [MA4](#ma4) (resolved: [F5b-1](#f5b-1), [F5b-3](#f5b-3))
 - [SYNC — Mail synchronization and action reliability](#sync): none (resolved: [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [CHAT — Chat composer sender review](#chat): [CH1](#ch1) (resolved: [R1](#r1))
-- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI3](#ui3), [UI4](#ui4) (resolved: [UI2](#ui2), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
+- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [UI1](#ui1), [UI3](#ui3), [UI4](#ui4) (resolved: [L2](#l2), [L3](#l3), [UI2](#ui2), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
 - [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
 
@@ -301,18 +301,16 @@ Project: [MAINT](PLAN.md#maint).
 ### L2 — Legal review flag
 
 - **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-3](PLAN.md#maint-3).
-- **Severity / proposed priority / status:** unspecified (legal review flag, not a legal conclusion) / P2 / blocked.
-- **Problem / evidence:** Terms wording: indemnity, limitation of liability and governing law. Current [draft](docs/TERMS.md) still carries a legal-review comment naming L2/L3. Original flags and review process are traceable with `git show 33c1851:PLAN.md` (Legal review flags). Current sign-off is not established by that comment or this task; do not assume the historical concern remains a verified defect.
-- **Dependencies / closure:** owner supplies authoritative sign-off or selects review; record the decision and align draft markers only after verified approval. No legal text changes are authorized by backlog entry.
+- **Severity / proposed priority / status:** unspecified (legal review flag, not a legal conclusion) / P2 / resolved.
+- **Resolution / evidence:** Owner approved the proposed revisions on 2026-10-14 and requested explicit owner liability protection. Terms preserve Apache rights, narrow indemnification to violations, and expressly protect owners and maintainers, with a mandatory-law exception. No absolute immunity or external legal sign-off is claimed; no governing-law clause was selected. See [owner disposition, retained concerns and limits](docs/validation/maint-3.md).
 
 <a id="l3"></a>
 
 ### L3 — Legal review flag
 
 - **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-3](PLAN.md#maint-3).
-- **Severity / proposed priority / status:** unspecified (legal review flag, not a legal conclusion) / P2 / blocked.
-- **Problem / evidence:** Privacy wording under bring-your-own OAuth, Google API policy statements and historical dictionary distribution. Current [draft](docs/PRIVACY.md) still carries a legal-review comment naming L2/L3. Original flags and review process are traceable with `git show 33c1851:PLAN.md` (Legal review flags). Current sign-off is not established by that comment or this task; do not assume the historical concern remains a verified defect.
-- **Dependencies / closure:** owner supplies authoritative sign-off or selects review; record the decision and align draft markers only after verified approval. No legal text changes are authorized by backlog entry.
+- **Severity / proposed priority / status:** unspecified (legal review flag, not a legal conclusion) / P2 / resolved.
+- **Resolution / evidence:** Owner approved factual privacy corrections on 2026-10-14: provider/recipient communication, plaintext configuration, encrypted database fallback, contact photos, calendar features and optional external requests are disclosed. Both review markers removed under owner disposition. Historical dictionary concerns and Google-policy verification limits are retained in [evidence](docs/validation/maint-3.md); no external legal review or compliance certification is claimed.
 
 <a id="ui1"></a>
 

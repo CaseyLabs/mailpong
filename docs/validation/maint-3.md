@@ -1,0 +1,28 @@
+# MAINT-3 — Owner disposition and legal-document review
+
+Date: 2026-10-14. Scope: [MAINT-3](../../PLAN.md#maint-3), [L2](../../ISSUES.md#l2) and [L3](../../ISSUES.md#l3). Pre-milestone base: `9d1542d11295908b7610a1913a51f16f8340d16e`.
+
+## Owner disposition
+
+After the approval-evidence search found no recorded sign-off, the owner requested concrete review prompts and replied “Approved” to the proposed factual privacy corrections, Apache-license clarification, and narrower indemnification. The owner then requested that the project owner have no liability whatsoever. The Terms now explicitly protect all project owners and maintainers, including individually and for claims about accompanying documentation and privacy statements, and exclude direct and indirect damages and claims under contract, negligence and other theories with a mandatory-law exception. Ordinary use alone no longer triggers indemnification.
+
+An absolute guarantee of no liability cannot be supplied by this documentation task. Mandatory law, enforceability and claims by persons who are not bound by the Terms remain outside what these clauses can establish. The mandatory-law exception is deliberate; no jurisdiction or enforceability conclusion is inferred from the owner's location. The owner was informed of this limitation and clarified that the intended approach is generic open-source disclaimers, warranties and end-user responsibility, without a BC-specific governing-law provision. The Terms expressly describe free open-source software, responsible use, independent backups and the risk of lost or corrupted data. This is recorded owner disposition, not external legal advice or counsel sign-off. Both draft-review markers have been removed under that disposition.
+
+## Historical concerns and resulting wording
+
+- **L2:** Apache 2.0 rights expressly prevail over conflicting supplemental terms; the entire-agreement language no longer supersedes software licenses. Indemnification is limited to violations of terms, rights or laws. Warranty and liability protections explicitly name owners and maintainers. At the owner’s further request, the qualification lead-ins are removed; the mandatory-law exception remains explicit. The current Terms contain no governing-law clause; none was invented or selected. Historical concerns are disposed of by owner approval, without a claim that every clause is enforceable everywhere.
+- **L3:** Privacy wording now distinguishes local storage from provider communication, delivery to recipients, contact/calendar synchronization and optional external requests. It describes unencrypted mail configuration, encrypted database credential fallback, contact photos and optional calendar use. Google disclosures include separate API/mail/contact/calendar features and user-directed sending. Microsoft scope duplication is replaced by the existing provider reference; OAuth wording distinguishes configured build-time clients from user-supplied registrations rather than promising that no build can contain a client; no Microsoft development or live validation was reopened.
+- **Dictionary distribution:** Current builds bundle English US/UK/Canada dictionaries via `frontend/scripts/copy-dictionaries.mjs`; `THIRD_PARTY_NOTICES.md` records those packages and their license texts. No new dictionary redistribution or license change is made. Historical licensing concerns are retained here as owner-reviewed context; this task does not certify all third-party licensing.
+
+## Source review and external references
+
+Factual corrections were checked against `internal/imap/client.go` (`SecurityNone`), `internal/credentials/store.go` (keyring/encrypted database fallback), `app/contact.go` (`GetContactPhotos`), `extensions/contacts/backend/api.go` (CardDAV vCard writes), `internal/oauth2/providers.go` and `internal/oauth2/mail_api.go` (feature-specific grants), and the existing remote-image, calendar and security guides. No implementation changes are made.
+
+Official sources reviewed in this session:
+
+- [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0), especially grants and warranty/liability provisions.
+- [Google API Services User Data Policy](https://developers.google.com/terms/api-services-user-data-policy), especially accurate, comprehensive disclosures of access, use, storage and sharing. No Google verification or compliance certification is claimed.
+
+## Validation and limits
+
+Documentation link and whitespace checks are run with `python3 tools/project-check.py --base main --run` (baseline `9d1542d11295908b7610a1913a51f16f8340d16e`). Direct review covers wording, source consistency and scope. Independent review identified an inaccurate blanket claim that no OAuth client can be shipped; the Terms, Privacy and canonical provider guide now describe build-time and user-supplied clients (`internal/oauth2/core_provider.go`, `Makefile`). The reviewer’s initial verdict was FAIL pending that correction; the corrected statements are included in final independent review. No code simplification is applicable to this documentation-only change. Final independent acceptance review: PASS for recorded owner disposition, retained historical concerns, corrected OAuth wording and owner-requested disclaimer edits; no added stubs. Whitespace and documentation-link checks: PASS (six changed Markdown files, zero link errors). No confirmed review findings remain unfixed. No application code changed; Go/frontend/UI/live-provider checks are outside this documentation-only scope. Absolute immunity and jurisdiction-specific legal enforceability remain unverified and are not acceptance claims.

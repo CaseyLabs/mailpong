@@ -1,8 +1,6 @@
 # Terms of Use
 
-**Last Updated:** October 11, 2026
-
-<!-- Draft for legal review (ISSUES.md tracks L2/L3; PLAN.md milestone MAINT-3); remove this comment once signed off. -->
+**Last Updated:** October 14, 2026
 
 ## Acceptance of Terms
 
@@ -12,11 +10,12 @@ By downloading, installing, or using Mailven ("the Application"), you agree to b
 
 Mailven is an open-source desktop email client derived from [Aerion](https://github.com/hkdb/aerion). It is an independent project, not an official Aerion release, and is not affiliated with or endorsed by Aerion or its authors. Mailven allows you to:
 
-- Connect to email accounts via IMAP/SMTP
+- Connect to email accounts via IMAP/SMTP or supported provider API routes
 - Send and receive emails
 - Manage email folders and organization
 - Sync contacts from CardDAV, Google, and Microsoft services
-- Use OAuth authentication for Gmail and Outlook with credentials you create yourself (Mailven ships none)
+- Manage calendars through the optional Calendar extension
+- Use OAuth authentication for Gmail and Outlook with a configured OAuth client; provide your own credentials in Settings when your build has no suitable client
 
 Mailven is a local application that runs on your computer. We do not provide any cloud services, email hosting, or server infrastructure.
 
@@ -30,6 +29,8 @@ Mailven is licensed under the Apache License 2.0. It is derived from Aerion (Apa
 - Use the software commercially
 
 Subject to the conditions of the Apache License 2.0, including preservation of copyright notices and disclaimers. The full license text is available in the LICENSE file included with the Application and at [https://github.com/CaseyLabs/mailven](https://github.com/CaseyLabs/mailven).
+
+These Terms supplement the Apache License 2.0; they do not restrict the rights that license grants to use, modify, or distribute the software. If these Terms conflict with that license regarding those rights, the Apache License 2.0 controls.
 
 ## User Responsibilities
 
@@ -53,9 +54,9 @@ You agree not to use Mailven to:
 
 ## Disclaimer of Warranties
 
-**THE APPLICATION IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED.**
+**THE APPLICATION AND ACCOMPANYING DOCUMENTATION ARE PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED.**
 
-To the fullest extent permitted by law, we disclaim all warranties, including but not limited to:
+All project owners, maintainers, developers, contributors, and sponsors disclaim all warranties, including but not limited to:
 
 - Implied warranties of merchantability
 - Fitness for a particular purpose
@@ -65,11 +66,13 @@ To the fullest extent permitted by law, we disclaim all warranties, including bu
 
 **Mailven is alpha software currently in active development. Features may change, and bugs may exist. Use at your own risk.**
 
+Mailven is provided as free, open-source software. You are solely responsible for deciding whether it meets your needs, using it responsibly, protecting your accounts and devices, and maintaining independent backups of important data. You assume the risks of using the Application, including loss, corruption, or unintended deletion of emails, attachments, contacts, calendars, settings, or other data.
+
 ## Limitation of Liability
 
-**TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL THE DEVELOPERS, CONTRIBUTORS, OR SPONSORS OF MAILVEN BE LIABLE FOR:**
+**IN NO EVENT SHALL ANY PROJECT OWNER, MAINTAINER, DEVELOPER, CONTRIBUTOR, OR SPONSOR OF MAILVEN BE LIABLE FOR:**
 
-- Any indirect, incidental, special, consequential, or punitive damages
+- Any direct, indirect, incidental, special, consequential, exemplary, or punitive damages
 - Loss of profits, data, use, goodwill, or other intangible losses
 - Any damages arising from:
   - Your use or inability to use the Application
@@ -78,13 +81,14 @@ To the fullest extent permitted by law, we disclaim all warranties, including bu
   - Any third-party conduct or content
   - Any bugs, viruses, or other harmful code
 
-**This limitation applies regardless of the theory of liability (contract, tort, or otherwise) and even if we have been advised of the possibility of such damages.**
+**This exclusion applies to claims arising out of or relating to the Application, its accompanying documentation (including privacy statements), its use or inability to use it, or these Terms, regardless of the theory of liability (including contract, tort, negligence, strict liability, or otherwise), even if a protected person has been advised of the possibility of such damages.**
+
+These exclusions protect every project owner and each maintainer, developer, contributor, and sponsor individually, as well as any entity acting in those roles. Nothing in these Terms excludes or limits liability, or waives rights or remedies, to the extent that applicable law does not permit that exclusion, limitation, or waiver.
 
 ## Indemnification
 
-You agree to indemnify, defend, and hold harmless the developers, contributors, and sponsors of Mailven from any claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys' fees) arising from:
+To the extent permitted by applicable law, you agree to indemnify, defend, and hold harmless all project owners, maintainers, developers, contributors, and sponsors of Mailven from any claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys' fees) arising from:
 
-- Your use of the Application
 - Your violation of these Terms
 - Your violation of any rights of another party
 - Your violation of any applicable laws
@@ -94,9 +98,9 @@ You agree to indemnify, defend, and hold harmless the developers, contributors, 
 Mailven integrates with third-party services including:
 
 - Email providers (via IMAP/SMTP)
-- Google APIs (using OAuth credentials you create)
-- Microsoft APIs (using OAuth credentials you create)
-- CardDAV servers
+- Google APIs (using the configured OAuth client)
+- Microsoft APIs (using the configured OAuth client)
+- CardDAV and CalDAV servers
 
 Your use of these services is subject to their respective terms of service and privacy policies. We are not responsible for the availability, accuracy, or practices of these third-party services.
 
@@ -120,7 +124,7 @@ If any provision of these Terms is found to be unenforceable, the remaining prov
 
 ## Entire Agreement
 
-These Terms constitute the entire agreement between you and the developers of Mailven regarding the use of the Application, superseding any prior agreements.
+These Terms describe the additional terms for using Mailven. They do not replace or supersede the Apache License 2.0 or the licenses of bundled third-party components. See LICENSE, NOTICE, and THIRD_PARTY_NOTICES.md included with the Application.
 
 ## Contact Us
 
