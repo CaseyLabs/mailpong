@@ -149,7 +149,10 @@ python3 tools/project-run.py --list                  # Ranked eligible milestone
 python3 tools/project-run.py                         # Best eligible milestone, then the next, ...
 python3 tools/project-run.py --milestones GOAUTH-4 --max-milestones 1
 python3 tools/project-run.py --agent codex --verify-command 'make lint && make test'
+make milestone ARGS='--list'                        # Same runner; options go in ARGS
 ```
+
+`make milestone` unsets every variable defined in `.env`/`.env.local` (which the Makefile otherwise exports) and make's own variables, so sessions never inherit OAuth credentials; their own `make` runs read those files again.
 
 **Selection.** Without `--milestones`, the runner rereads `PLAN.md` before each milestone and picks the best eligible one: `active` first (resuming interrupted work), then `proposed`. Within each group, lower `P` priority wins, then plan order. A milestone is eligible only when its project isn't `blocked`, `deferred` or `done` and every milestone ID under its **Dependencies / gates** (links, bare IDs and ranges such as `UIX-1–5`) is `done`. Any milestone ID there counts as a dependency, which errs toward waiting. Deferred, blocked and done milestones are never selected, and issues without a milestone aren't candidates. `--milestones` runs the listed IDs in order and accepts only `active` or `proposed` ones.
 

@@ -10,7 +10,7 @@
 
 .PHONY: all build build-linux dev dev-race credentials generate clean test test-ui lint lint-brand lint-contrast help \
         install uninstall install-linux uninstall-linux \
-        install-darwin uninstall-darwin build-windows-installer flatpak flatpak-install flatpak-dev
+        install-darwin uninstall-darwin build-windows-installer flatpak flatpak-install flatpak-dev milestone
 
 # Load environment variables from .env files.
 # .env.local overrides .env. All OAuth credentials live in the root .env —
@@ -165,6 +165,16 @@ fmt:
 	@echo "Formatting Go code..."
 	go fmt ./...
 
+## Project Workflow
+
+# Names defined in .env/.env.local; `milestone` unsets them so unattended agent
+# sessions never inherit OAuth credentials (their own make runs reread the files).
+DOTENV_VARS := $(shell sed -n 's/^[[:space:]]*\(export[[:space:]]\{1,\}\)\{0,1\}\([A-Za-z_][A-Za-z0-9_]*\)[[:space:]]*=.*/\2/p' .env .env.local 2>/dev/null | sort -u)
+
+# Run eligible PLAN.md milestones unattended (tools/project-run.py; pass options with ARGS='...')
+milestone:
+	env $(addprefix -u ,$(DOTENV_VARS) MAKEFLAGS MFLAGS GNUMAKEFLAGS MAKELEVEL MAKEFILE_LIST) python3 tools/project-run.py $(ARGS)
+
 ## Maintenance
 
 # Clean build artifacts
@@ -315,6 +325,9 @@ help:
 	@echo "  make lint-go       - Run Go linter only (requires golangci-lint)"
 	@echo "  make lint-frontend - Run frontend linter only (ESLint)"
 	@echo "  make fmt           - Format Go code"
+	@echo ""
+	@echo "Project Workflow:"
+	@echo "  make milestone     - Run eligible PLAN.md milestones unattended (ARGS='--list' to preview)"
 	@echo ""
 	@echo "Maintenance:"
 	@echo "  make clean        - Clean build artifacts"

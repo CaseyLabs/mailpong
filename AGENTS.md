@@ -29,7 +29,7 @@
 
 Toolchain: Go 1.26, Node.js 24 (matches CI), Wails v2 CLI. Linux needs GTK 3 and WebKitGTK 4.1 development libraries.
 
-- Workflow helpers: `python3 tools/project-context.py <milestone-id>` for scoped context, `python3 tools/project-check.py --base <base>` to plan checks (`--run` executes with logs/evidence), `python3 tools/check-doc-links.py --changed` for local/site links, `tools/project-land.sh <branch>` for guarded landing preview, and `python3 tools/project-run.py` for unattended milestone runs. Details and execution boundaries: [CONTRIBUTING.md](CONTRIBUTING.md#workflow-helpers).
+- Workflow helpers: `python3 tools/project-context.py <milestone-id>` for scoped context, `python3 tools/project-check.py --base <base>` to plan checks (`--run` executes with logs/evidence), `python3 tools/check-doc-links.py --changed` for local/site links, `tools/project-land.sh <branch>` for guarded landing preview, and `make milestone` (`tools/project-run.py`; options via `ARGS='...'`) for unattended milestone runs. Details and execution boundaries: [CONTRIBUTING.md](CONTRIBUTING.md#workflow-helpers).
 - `cd frontend && npm ci`: install locked frontend dependencies.
 - `cd frontend && npm run build`: build frontend assets. Run before Go checks that include the root package if `frontend/dist/` is missing; rebuild when validating changed assets.
 - `make dev`: launch the desktop app with hot reload. It blocks; for agent-driven UI checks use `.agents/skills/run-mailven/dev.sh` instead.

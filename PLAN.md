@@ -403,7 +403,7 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 ### MAINT-7 — Unattended milestone runner
 
 - **Status / proposed priority:** done / P3. **Authorization:** owner requested on 2026-10-15 migrating the external plan runner into `tools/` with automatic milestone selection.
-- **Scope:** `tools/project-run.py`: one fresh Claude Code or Codex session per milestone, ranked selection from this roadmap, per-milestone local authorization, handoff continuation, blocked-milestone skipping and usage-limit resumption. No push, landing or gate changes.
+- **Scope:** `tools/project-run.py`: one fresh Claude Code or Codex session per milestone, ranked selection from this roadmap, per-milestone local authorization, handoff continuation, blocked-milestone skipping and usage-limit resumption; `make milestone` runs it without `.env` credentials in the session environment. No push, landing or gate changes.
 - **Acceptance:** Selection never picks deferred, blocked or done milestones, milestones in closed projects, or milestones with unfinished dependencies; success requires a commit, a clean tree and a `done` status; handoff and blocked outcomes behave as documented; [CONTRIBUTING](CONTRIBUTING.md#unattended-milestone-runs) and the [lifecycle rules](docs/PROJECT_MANAGEMENT.md#status-priority-and-eligibility) describe the authorization.
 - **Validation:** `tools/tests/test_project_run.py` (fixture plans and a fake agent CLI in disposable repositories); helper test suite; doc links; brand check. A real agent session is unrun.
 - **Checkpoint:** branch `feat/project-run`, base `main`; complete.
