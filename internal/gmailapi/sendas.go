@@ -56,7 +56,7 @@ func ListSendAs(ctx context.Context, token string) ([]SendAs, error) {
 	}
 	switch {
 	case resp.StatusCode == http.StatusForbidden && !isRateLimit(body):
-		return nil, ErrInsufficientScope
+		return nil, fmt.Errorf("%w: HTTP 403: %s", ErrInsufficientScope, strings.TrimSpace(string(body[:min(len(body), 200)])))
 	case resp.StatusCode != http.StatusOK:
 		return nil, fmt.Errorf("list send-as: HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body[:min(len(body), 200)])))
 	}

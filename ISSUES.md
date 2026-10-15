@@ -10,7 +10,8 @@ All Microsoft work, including Microsoft 365 and regular/personal Outlook.com, is
 
 - [SEND — Sending, privacy and compatibility](#send): [MA1](#ma1), [PD10](#pd10), [PD2](#pd2), [DAV1](#dav1), [DAV2](#dav2), [DAV3](#dav3) (resolved: [CD2](#cd2))
 - [API — Provider API activation and migration](#api): [MA4](#ma4), [MA7](#ma7), [MA8](#ma8) (resolved: [F5b-1](#f5b-1), [F5b-3](#f5b-3))
-- [SYNC — Mail synchronization and action reliability](#sync): (resolved: [SY7](#sy7), [SY8](#sy8), [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
+- [SYNC — Mail synchronization and action reliability](#sync): [SY9](#sy9) (resolved: [SY7](#sy7), [SY8](#sy8), [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
+- [GOAUTH — Google OAuth client setup](#goauth): [GO1](#go1), [GO2](#go2)
 - [CHAT — Chat composer sender review](#chat): [CH1](#ch1) (resolved: [R1](#r1))
 - [MAINT — Maintenance and documentation](#maint): [D2](#d2), [DOC6](#doc6), [UI3](#ui3), [UI4](#ui4), [UI5](#ui5) (resolved: [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
@@ -224,6 +225,15 @@ Project: [SYNC](PLAN.md#sync).
 - **Fix:** the message is kept as a header-only row from `format=metadata`, logged and counted (`GmailResult.Oversize`); pinned by `TestGmailAPIOversizeMessageKeepsReconcileMoving`. The 40 MiB cap is unchanged, so mail Gmail accepts up to 50 MB can still be header-only.
 - **Resolution:** verified live 2026-10-15: the reconcile completed with the large message stored as one header-only row. [Evidence](docs/validation/send-2.md).
 
+<a id="sy9"></a>
+
+### SY9 — Removing an account hangs on a busy IMAP connection
+
+- **Owner / milestone:** [SYNC](PLAN.md#sync) / unassigned; found during [SEND-2](PLAN.md#send-2).
+- **Severity / proposed priority / status:** medium / P2 / open.
+- **Evidence:** 2026-10-15, `RemoveAccount` on the dev Gmail account never returned (over 3 minutes; the account row stayed). A goroutine dump showed `RemoveAccount` → `stopAccountIdle` → `imapPool.CloseAccount` → `imap.(*Client).ForceClose` blocked in go-imap `Client.Logout` → `beginCommand` waiting on the connection's command mutex while another command on that connection waited on a read. A second `RemoveAccount` call then blocked on `stopAccountIdle`'s mutex. `ForceClose` sends LOGOUT before closing the socket, so it waits for the in-flight command instead of forcing anything.
+- **Resolution criteria:** `ForceClose` closes the connection without waiting on an in-flight command (for example, close first or bound the LOGOUT), and account removal completes while a command is in flight; covered by a test.
+
 <a id="r3"></a>
 
 ### R3 — API move re-key failure
@@ -247,6 +257,40 @@ Project: [SYNC](PLAN.md#sync).
   `apiMoveLocal` emits `messages:moved`/counts, so rows already moved locally stay
   shown in the source list until the next refresh. (The queued moves are now
   kicked.)
+
+<a id="goauth"></a>
+
+## GOAUTH — Google OAuth client setup
+
+Project: [GOAUTH](PLAN.md#goauth).
+
+<a id="go1"></a>
+
+### GO1 — A disabled Google API is reported as an authorization problem
+
+- **Owner / milestone:** [GOAUTH](PLAN.md#goauth) / [GOAUTH-1](PLAN.md#goauth-1), [GOAUTH-2](PLAN.md#goauth-2); found during [SEND-2](PLAN.md#send-2).
+- **Severity / proposed priority / status:** medium / P2 / open.
+- **Evidence:**
+  - 2026-10-15: with the Gmail API disabled in the OAuth client's project, the Gmail send-as refresh returned 403 `SERVICE_DISABLED` ("Gmail API has not been used in project … or it is disabled"), and sender review stayed required.
+  - Mailven told the user to re-authorize or enable the Gmail API, and re-authorizing could not fix it.
+  - The response body is now kept in the error (`internal/gmailapi/sendas.go`), but nothing classifies it, and the People and Calendar clients are unchecked.
+- **Resolution criteria:**
+  - `SERVICE_DISABLED` is recognized for Gmail, People and Calendar.
+  - The message names the API and project and offers an Enable link that Mailven builds itself.
+  - Other 403s keep their handling.
+  - All of this is covered by tests.
+
+<a id="go2"></a>
+
+### GO2 — Docs say the Gmail API is needed only for the API route
+
+- **Owner / milestone:** [GOAUTH](PLAN.md#goauth) / [GOAUTH-1](PLAN.md#goauth-1).
+- **Severity / proposed priority / status:** low / P2 / open.
+- **Evidence:**
+  - 2026-10-15: [PROVIDERS.md](docs/PROVIDERS.md) and the [Gmail setup](docs/user-guide/getting-started/first-account/gmail.md) "Optional Gmail API route" section imply that IMAP/SMTP accounts do not need the Gmail API.
+  - Sender review reads the Gmail send-as list for every Google OAuth account, so without the API it stays in review.
+  - The [custom-credentials guide](docs/user-guide/getting-started/first-account/google-oauth-credentials.md) already says to enable the API.
+- **Resolution criteria:** The three documents agree that Google OAuth accounts need the Gmail API enabled, and say why.
 
 <a id="chat"></a>
 

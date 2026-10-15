@@ -10,7 +10,8 @@ Priorities are recommendations assigned in this reorganization: P1 privacy/data 
 | --- | --- | --- | --- | --- |
 | [SEND — Sending, privacy and compatibility](#send) | proposed | P1 | [5](ISSUES.md#send) | SEND-3/4 deferred; SEND-2 retains its live gate, with Microsoft work deferred |
 | [API — Provider API activation and migration](#api) | proposed | P2 | [3](ISSUES.md#api) | API-3 done (snapshot restore); Microsoft shared rollout deferred and live-gated |
-| [SYNC — Mail synchronization and action reliability](#sync) | proposed | P1 | [0](ISSUES.md#sync) | none; SYNC-1–4 done |
+| [SYNC — Mail synchronization and action reliability](#sync) | proposed | P1 | [1](ISSUES.md#sync) | SY9 unassigned; SYNC-1–4 done |
+| [GOAUTH — Google OAuth client setup](#goauth) | proposed | P2 | [2](ISSUES.md#goauth) | GOAUTH-1 eligible (local fixtures); GOAUTH-4 link check live-gated; GOAUTH-5 deferred pending owner decision |
 | [CHAT — Chat composer sender review](#chat) | proposed | P3 | [1](ISSUES.md#chat) | CH1 unassigned (cosmetic) |
 | [MAINT — Maintenance and documentation](#maint) | proposed | P2 | [3](ISSUES.md#maint) | D2 deferred/upstream blocked; UI3/UI4 remain open |
 | [UIX — UI refresh](#uix) | proposed | P3 | 0 | UIX-1 (UI1 resolved) to UIX-6 done |
@@ -27,7 +28,7 @@ No live provider access, test emails, credentials changes, mailbox migration, pr
 
 ## Progress
 
-No active milestone. SEND-2 static review and authorized Gmail Bcc cases 1–4 are recorded (2026-10-15): neither provider documents Bcc-header stripping or an API size limit; the alias cases cannot show a separate recipient's copy and size case 5 is unauthorized, so SEND-2 and MA1 stay blocked. SY7/SY8 (Gmail quota backoff, sync-period window, oversize messages) were fixed and verified live on the way ([evidence](docs/validation/send-2.md)). UIX-6 is done: Settings → Chat → Message style switches the thread between bubbles (default) and a flat transcript with no bubbles or avatars, a name line on every message and an accent rule on mine ([evidence](docs/validation/uix-6.md), [checkpoint](#uix-6)); the UIX project is complete. UIX-5 is done: runs of three or more older read messages fold into one "N earlier messages" row (latest five, unread, drafts and subject headings never fold); rows are `aria-expanded` buttons and hold the scroll position; the low-priority-sender "Notice from X" variant is deferred because messages carry no sender-priority data ([evidence](docs/validation/uix-5.md), [checkpoint](#uix-5)); UIX-6 remains unselected. UIX-4 is done: the chat composer is a rounded card with the sender, Attach and Send inside and the Reply-to/recipients/Topic chip row below; the From is a read-only label and the attachment summary card is deferred ([evidence](docs/validation/uix-4.md), [checkpoint](#uix-4)); UIX-5–6 remain unselected. UIX-3 is done: labeled New message and Search rows lead the expanded Accounts sidebar, section labels are quieter, and each chat row shows one status glyph (sending, snoozed, unread); the needs-reply glyph is deferred because `ChatItem` has no latest-sender data ([evidence](docs/validation/uix-3.md), [checkpoint](#uix-3)); UIX-4–6 remain unselected. UIX-2 is done: the chat header is title, `⋯`, bordered Archive and Delete, with Snooze and Pin in the menu ([evidence](docs/validation/uix-2.md), [checkpoint](#uix-2)); UIX-3–6 remain unselected. UIX-1 is done and UI1 resolved: Nord surfaces retuned to near-neutral greys, light primary darkened to 4.5:1, `--radius` restored, audit allowlist empty ([evidence](docs/validation/uix-1.md), [checkpoint](#uix-1)); UIX-3–6 remain unselected. MAINT-3 is done following owner approval and factual privacy/Terms revisions; L2/L3 are resolved by recorded owner disposition, with legal enforceability limits retained ([evidence](docs/validation/maint-3.md), [checkpoint](#maint-3)). MAINT-6 is done and UI2 resolved: closed narrow Mail and shared extension sidebars reject focus, with open/close/resize regressions and the full UI audit passing ([evidence](docs/validation/maint-6.md), [checkpoint](#maint-6)). UI4 records the separately scoped hidden-viewer follow-up. On 2026-10-14 the owner additionally deferred all future Wails work, including W3-M0–W3-M7 assessment, until the official stable Wails v3 release, and confirmed indefinite deferral of all Microsoft work until explicit owner reopening. Wails work still requires selection after the release gate is met. On 2026-10-14 the owner requested merging the `experiment/davmail-microsoft365` evidence into main and deferring all further Microsoft 365 and regular/personal Outlook.com development. SEND-3, SEND-4 and the remaining API-6/MA4 work are deferred, as are Microsoft-specific portions of SEND-2/MA1. Resumption requires explicit owner selection; prior experiment authorization does not authorize continued live work while deferred. The [experiment checkpoint](docs/plans/davmail-microsoft365-test.md) preserves results, private artifact locations and possible future investigation steps. D7/D8 remain failed; no compatibility acceptance is implied by landing.
+No active milestone. GOAUTH was proposed on 2026-10-15 (bring-your-own Google client: diagnosis, health check, JSON import, guided setup); none of it is selected. SEND-2 static review and authorized Gmail Bcc cases 1–4 are recorded (2026-10-15): neither provider documents Bcc-header stripping or an API size limit; the alias cases cannot show a separate recipient's copy and size case 5 is unauthorized, so SEND-2 and MA1 stay blocked. SY7/SY8 (Gmail quota backoff, sync-period window, oversize messages) were fixed and verified live on the way ([evidence](docs/validation/send-2.md)). UIX-6 is done: Settings → Chat → Message style switches the thread between bubbles (default) and a flat transcript with no bubbles or avatars, a name line on every message and an accent rule on mine ([evidence](docs/validation/uix-6.md), [checkpoint](#uix-6)); the UIX project is complete. UIX-5 is done: runs of three or more older read messages fold into one "N earlier messages" row (latest five, unread, drafts and subject headings never fold); rows are `aria-expanded` buttons and hold the scroll position; the low-priority-sender "Notice from X" variant is deferred because messages carry no sender-priority data ([evidence](docs/validation/uix-5.md), [checkpoint](#uix-5)); UIX-6 remains unselected. UIX-4 is done: the chat composer is a rounded card with the sender, Attach and Send inside and the Reply-to/recipients/Topic chip row below; the From is a read-only label and the attachment summary card is deferred ([evidence](docs/validation/uix-4.md), [checkpoint](#uix-4)); UIX-5–6 remain unselected. UIX-3 is done: labeled New message and Search rows lead the expanded Accounts sidebar, section labels are quieter, and each chat row shows one status glyph (sending, snoozed, unread); the needs-reply glyph is deferred because `ChatItem` has no latest-sender data ([evidence](docs/validation/uix-3.md), [checkpoint](#uix-3)); UIX-4–6 remain unselected. UIX-2 is done: the chat header is title, `⋯`, bordered Archive and Delete, with Snooze and Pin in the menu ([evidence](docs/validation/uix-2.md), [checkpoint](#uix-2)); UIX-3–6 remain unselected. UIX-1 is done and UI1 resolved: Nord surfaces retuned to near-neutral greys, light primary darkened to 4.5:1, `--radius` restored, audit allowlist empty ([evidence](docs/validation/uix-1.md), [checkpoint](#uix-1)); UIX-3–6 remain unselected. MAINT-3 is done following owner approval and factual privacy/Terms revisions; L2/L3 are resolved by recorded owner disposition, with legal enforceability limits retained ([evidence](docs/validation/maint-3.md), [checkpoint](#maint-3)). MAINT-6 is done and UI2 resolved: closed narrow Mail and shared extension sidebars reject focus, with open/close/resize regressions and the full UI audit passing ([evidence](docs/validation/maint-6.md), [checkpoint](#maint-6)). UI4 records the separately scoped hidden-viewer follow-up. On 2026-10-14 the owner additionally deferred all future Wails work, including W3-M0–W3-M7 assessment, until the official stable Wails v3 release, and confirmed indefinite deferral of all Microsoft work until explicit owner reopening. Wails work still requires selection after the release gate is met. On 2026-10-14 the owner requested merging the `experiment/davmail-microsoft365` evidence into main and deferring all further Microsoft 365 and regular/personal Outlook.com development. SEND-3, SEND-4 and the remaining API-6/MA4 work are deferred, as are Microsoft-specific portions of SEND-2/MA1. Resumption requires explicit owner selection; prior experiment authorization does not authorize continued live work while deferred. The [experiment checkpoint](docs/plans/davmail-microsoft365-test.md) preserves results, private artifact locations and possible future investigation steps. D7/D8 remain failed; no compatibility acceptance is implied by landing.
 
 API-3 is done and F5b-1 resolved: offline snapshot restore with consent, backup and undo ([evidence](docs/validation/api-3.md), [checkpoint](docs/plans/api-3.md)); native and real-account restore remain unrun. API-6 local implementation is done ([evidence](docs/validation/api-6.md), [checkpoint](docs/plans/api-6.md)); shared activation stays closed pending live checks. MAINT-5 is done: all four compact workflow helpers, logged check evidence and guarded landing are implemented and verified ([evidence](docs/validation/maint-5.md), [checkpoint](docs/plans/maint-5.md)). API-5 is done and F5b-3 resolved: rollback reports only a sync request, with scheduler-ordering and UI coverage ([evidence](docs/validation/api-5.md), [checkpoint](docs/plans/api-5.md)). API-1 design is done ([evidence](docs/validation/api-1.md), [checkpoint](docs/plans/api-1.md)); MA5 was resolved by API-6 (verified by fixture) and MA4 stays open for live evidence. No next milestone is activated.
 
@@ -202,6 +203,109 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 - **Acceptance:** Reproducible synthetic measurements and correctness fixtures justify changes; enumeration/copy correctness and retry bounds remain intact.
 - **Validation:** Focused synthetic large-folder/journal tests; no live mailbox benchmarking.
 - **Issues:** [R2](ISSUES.md#r2), [SY3](ISSUES.md#sy3), [SY4](ISSUES.md#sy4), [SY5](ISSUES.md#sy5). **Progress:** R2 scoped to the new attempt; SY3/SY4 drop the per-ID map for a sorted-slice diff (1M IDs: 56.6 MB to ~0.7 MB extra); SY5 pinned as policy by request-count and bounded-5xx fixtures. No live check. [Evidence](docs/validation/sync-4.md).
+
+<a id="goauth"></a>
+
+## GOAUTH — Google OAuth client setup
+
+- **Objective / outcome:** Help users create and verify their own Google OAuth Desktop client with as little manual console work as Google allows, and say exactly what is wrong when a client is misconfigured.
+- **Status / proposed priority:** proposed / P2.
+- **Dependencies / blockers:** none between projects. Order: GOAUTH-1 → GOAUTH-2 → GOAUTH-3 → GOAUTH-4. GOAUTH-5 is deferred until the owner decides.
+- **Issues:** [owning register section](ISSUES.md#goauth); each milestone links its issues.
+- **Technical references:** [custom Google credentials guide](docs/user-guide/getting-started/first-account/google-oauth-credentials.md), [Gmail setup](docs/user-guide/getting-started/first-account/gmail.md), [providers](docs/PROVIDERS.md), `frontend/src/lib/components/kit/OAuthCredsSlotEditor.svelte` (read [EXT_RULES](docs/EXT_RULES.md) before changing it), `internal/gmailapi/sendas.go`.
+- **Decisions (2026-10-15, recommendation; not yet confirmed by the owner):**
+  - Mailven keeps bundling no Google client; users bring their own.
+  - The setup is guided by links and does not need gcloud. Google offers no API that creates a standard Desktop OAuth client or consent screen: the IAP OAuth Admin API shut down on 2026-03-19, and `gcloud iam oauth-clients` covers Workforce Identity Federation only. The console flow `console.cloud.google.com/flows/enableapi?apiid=…` enables several APIs in one step.
+  - Rejected: a Mailven "bootstrap" client using the `cloud-platform` scope. It would automate only project creation and API enabling, which links already do. It would ask for broad access and need its own Google verification.
+  - Facts the user-facing text must state:
+    - In Testing status, sign-ins expire after 7 days.
+    - In production status, an unverified app shows Google's warning screen. Personal use by a few users known to the owner is exempt from verification.
+    - A client secret is shown only when the client is created.
+
+<a id="goauth-1"></a>
+
+### GOAUTH-1 — Disabled Google API diagnosis
+
+- **Status / proposed priority:** proposed / P2. **Dependencies / gates:** none. Local fixtures only.
+- **Scope / deliverable:**
+  - Parse Google `403 SERVICE_DISABLED` responses into a typed error carrying the service and consumer project. The error data is `google.rpc.ErrorInfo`, with `reason`, `metadata.service` and `metadata.consumer`.
+  - Cover the Gmail, People and Calendar clients.
+  - Show "*Gmail API is disabled in Google Cloud project N*" with an Enable link that Mailven builds from the service and project. The link must not be copied from the response body.
+  - Keep the response body redacted and bounded in logs.
+  - Correct the docs that say the Gmail API is needed only for the API route. Sender review uses the Gmail send-as list for every Google OAuth account.
+- **Acceptance:** The disabled-API fixtures for all three services produce the specific message and link. Other 403s (missing scope, rate limit) keep their current handling. PROVIDERS.md, gmail.md and the custom-credentials guide agree.
+- **Validation:** table-driven Go tests in `internal/gmailapi` and the People and Calendar clients; `go test ./app -run 'SendAs|Sender'`; `make lint`; `python3 tools/check-doc-links.py --changed`.
+- **Issues:** [GO1](ISSUES.md#go1), [GO2](ISSUES.md#go2).
+
+<a id="goauth-2"></a>
+
+### GOAUTH-2 — Google client health check
+
+- **Status / proposed priority:** proposed / P2. **Dependencies / gates:** GOAUTH-1. Live checks need an owner-authorized account and client.
+- **Scope / deliverable:**
+  - Add a "Check Google setup" action for each Google OAuth account. It also runs once after the first sign-in.
+  - The action makes read-only probes:
+    - Gmail `users.getProfile` and the send-as list.
+    - People `people/me`, when contacts use the slot.
+    - The Calendar list, when the calendar extension uses the slot.
+  - Report per API: OK, disabled (with the GOAUTH-1 Enable link), missing scope (offer re-authorize) or other error.
+  - Add no background polling.
+- **Acceptance:** Each result state renders from fakes and stays keyboard accessible. The probes make no writes. A disabled API can be fixed with Enable, then Check again, without restarting the app.
+- **Validation:** Go tests with HTTP fakes; `npm run lint` and `npm run check`; a UI regression suite in `tests/ui` covering Mail with the Accounts column expanded and collapsed; `make test-ui`. Optionally, an owner-run live check against a client with one API disabled.
+- **Issues:** [GO1](ISSUES.md#go1).
+
+<a id="goauth-3"></a>
+
+### GOAUTH-3 — Import a client_secret JSON file
+
+- **Status / proposed priority:** proposed / P2. **Dependencies / gates:** none technically. Ordered after GOAUTH-2.
+- **Scope / deliverable:**
+  - Add "Import JSON…" to the Google custom-credentials editor. It uses a native file dialog and parses Google's downloaded file.
+  - Accept the top-level `installed` key (Desktop app) with `client_id` and `client_secret`.
+  - Reject `web` and other client types with an explanation that a Desktop app client is needed.
+  - Offer to apply the client to the Mail, Contacts and Calendar slots in one step.
+  - Never log or echo the secret. Store it through the existing `SetOAuthCreds` path.
+- **Acceptance:** Valid Desktop JSON fills and saves the selected slots. Malformed, web-type, oversized or non-UTF-8 files show a specific error and change nothing. No secret appears in logs or the UI after saving.
+- **Validation:** Go parser table tests, including tests that the secret is redacted; a UI regression test for import and its errors; `npm run lint` and `npm run check`; `make test-ui`; an [EXT_RULES](docs/EXT_RULES.md) review of the kit change.
+- **Issues:** none.
+
+<a id="goauth-4"></a>
+
+### GOAUTH-4 — Guided Google Cloud setup
+
+- **Status / proposed priority:** proposed / P2. **Dependencies / gates:** GOAUTH-2 and GOAUTH-3. Checking the console deep links live needs the owner's Google account in a browser and must change no console state without approval.
+- **Scope / deliverable:**
+  - Add an in-app checklist, started from the Google account form and the custom-credentials editor. It opens console links in the system browser:
+    1. Create a project.
+    2. Enable the Gmail, People and Calendar APIs in one step with `flows/enableapi?apiid=gmail.googleapis.com,people.googleapis.com,calendar-json.googleapis.com`.
+    3. Google Auth Platform Branding.
+    4. Audience: External, with the Testing and production trade-off explained.
+    5. Data Access, with a copyable scope list generated from `internal/oauth2` so it cannot drift.
+    6. Clients: create a Desktop app client and download its JSON now.
+    7. Import the JSON (GOAUTH-3).
+    8. Sign in, then run the health check (GOAUTH-2).
+  - Rewrite the custom-credentials guide to follow the same steps.
+- **Acceptance:**
+  - Every deep link is confirmed against the live console, recorded with its date in `docs/validation/goauth-4.md`. A fallback is needed for any link that cannot be confirmed.
+  - The scope list matches the scopes Mailven requests, enforced by a test.
+  - The checklist is keyboard accessible, and the guide matches it.
+- **Validation:** a Go test for the scope list; UI regression tests; `make test-ui`; a doc link check; an owner-authorized browser check of the links.
+- **Issues:** none.
+
+<a id="goauth-5"></a>
+
+### GOAUTH-5 — Verified Mailven Google client assessment
+
+- **Status / proposed priority:** deferred / P3. **Dependencies / gates:** an owner decision to reconsider bundling Google credentials. That would reverse the current no-bundled-client decision.
+- **Scope / deliverable:** Assess a Mailven-owned, Google-verified client that users could choose instead of their own:
+  - Restricted-scope verification for `mail.google.com` and `gmail.modify`, with yearly re-verification.
+  - Whether a security assessment (CASA) applies to a local desktop client.
+  - Cost, brand and domain requirements, and support load.
+  - Reuse of the upstream [CASA Tier 2 self-assessment](docs/history/AERION_CASA_TIER2.md).
+  - Assessment only: no registration or submission to Google.
+- **Acceptance:** A recommendation document with sources and an owner decision recorded here.
+- **Validation:** document review only.
+- **Issues:** none.
 
 <a id="chat"></a>
 

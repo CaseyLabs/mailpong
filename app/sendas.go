@@ -133,7 +133,7 @@ func (ops *composeOps) refreshSendAs(ctx context.Context, accountID string) (ref
 	list, err := gmailapi.ListSendAs(fetchCtx, tokens.AccessToken)
 	if err != nil {
 		if errors.Is(err, gmailapi.ErrInsufficientScope) {
-			log.Warn().Str("account_id", accountID).Msg("Gmail send-as list denied; the token lacks the Gmail scope")
+			log.Warn().Err(err).Str("account_id", accountID).Msg("Gmail send-as list denied")
 			return errors.New("Gmail denied access to the send-as list; the account may need to be re-authorized, or the Gmail API enabled for the OAuth client")
 		}
 		log.Warn().Err(err).Str("account_id", accountID).Msg("Failed to fetch Gmail send-as list")
