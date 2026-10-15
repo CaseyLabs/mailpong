@@ -160,6 +160,8 @@ export interface PaneNavTarget {
   activate?: () => void
   /** Move keyboard focus to this pane's search input (Ctrl+S). */
   focusSearch?: () => void
+  /** Move keyboard focus into this pane (when an overlay covering it closes). */
+  focus?: () => void
 }
 
 const paneNavTargets: Partial<Record<FocusablePane, PaneNavTarget>> = {}

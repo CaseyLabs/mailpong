@@ -7,7 +7,7 @@
   import { type Snippet } from 'svelte'
   import Icon from '@iconify/svelte'
   import { _ } from 'svelte-i18n'
-  import { isPaneFlashing, type FocusablePane } from '$lib/stores/keyboard.svelte'
+  import { isPaneFlashing, getPaneNav, type FocusablePane } from '$lib/stores/keyboard.svelte'
   // Self-managed responsive (mobile + tablet) behavior — read the layout
   // store directly so consumers (extension panes) never forward responsive
   // props. At medium (≤1024px) and narrow (≤767px) the detail pane renders
@@ -46,9 +46,18 @@
   const flashing = $derived(isPaneFlashing(focusSlot))
   const overlay = $derived(isResponsive())
   const visible = $derived(getResponsiveView() === 'viewer')
+  // A closed overlay is inert so its controls cannot take keyboard focus.
+  const closed = $derived(overlay && !visible)
+  let sectionRef = $state<HTMLElement | null>(null)
+
+  // Hand focus to the list as the pane closes, so the list's keys work
+  // straight away instead of focus falling from Back to <body>.
+  $effect.pre(() => {
+    if (closed && sectionRef?.contains(document.activeElement)) getPaneNav('messageList')?.focus?.()
+  })
 </script>
 
-<section class="pane-detail flex flex-col bg-surface-content {flashing ? 'pane-focus-flash' : ''} {overlay ? 'responsive-viewer-overlay' : ''} {overlay && visible ? 'responsive-viewer-visible' : ''}">
+<section bind:this={sectionRef} inert={closed} class="pane-detail flex flex-col bg-surface-content {flashing ? 'pane-focus-flash' : ''} {overlay ? 'responsive-viewer-overlay' : ''} {overlay && visible ? 'responsive-viewer-visible' : ''}">
   <!--
     Header rendering rules — matched 1-for-1 with mail's ChatView
     pattern (`showBackButton` in App.svelte):

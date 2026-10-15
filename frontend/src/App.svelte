@@ -104,6 +104,20 @@
 
   const viewerIsOverlay = $derived(isResponsive() || focusMode !== 'off')
   const viewerIsVisible = $derived(getResponsiveView() === 'viewer' || focusMode !== 'off')
+  // A closed viewer overlay is inert so its controls cannot take keyboard focus.
+  const viewerIsClosed = $derived(viewerIsOverlay && !viewerIsVisible)
+  let viewerContainerRef: HTMLElement | null = null
+
+  // Hand the focused pane and DOM focus to the list as the viewer closes:
+  // otherwise ChatView keeps handling Tab for its now-inert messages (Tab
+  // stops moving), and focus on Back would fall to <body>.
+  $effect.pre(() => {
+    if (!viewerIsClosed) return
+    untrack(() => {
+      if (getFocusedPane() === 'viewer') setFocusedPane('messageList')
+      if (viewerContainerRef?.contains(document.activeElement)) messageListContainerRef?.focus()
+    })
+  })
 
   function toggleThreadFocus() {
     if (focusMode === 'thread') {
@@ -1601,6 +1615,8 @@
 
     <!-- Conversation Viewer -->
     <main
+      bind:this={viewerContainerRef}
+      inert={viewerIsClosed}
       class="{viewerIsOverlay ? `responsive-viewer-overlay bg-surface-content ${viewerIsVisible ? 'responsive-viewer-visible' : ''}` : 'pane-detail bg-surface-content'}"
       role="presentation"
       data-pane="viewer"

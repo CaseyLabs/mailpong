@@ -13,7 +13,7 @@ All Microsoft work, including Microsoft 365 and regular/personal Outlook.com, is
 - [SYNC — Mail synchronization and action reliability](#sync): [SY9](#sy9) (resolved: [SY7](#sy7), [SY8](#sy8), [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [GOAUTH — Google OAuth client setup](#goauth): no unresolved issue recorded (resolved: [GO1](#go1), [GO2](#go2))
 - [CHAT — Chat composer sender review](#chat): [CH1](#ch1) (resolved: [R1](#r1))
-- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [DOC6](#doc6), [UI3](#ui3), [UI4](#ui4), [UI5](#ui5), [UI6](#ui6), [TF1](#tf1) (resolved: [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
+- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [DOC6](#doc6), [UI3](#ui3), [UI5](#ui5), [UI6](#ui6), [TF1](#tf1) (resolved: [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI4](#ui4), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
 - [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
 
@@ -439,11 +439,12 @@ Project: [MAINT](PLAN.md#maint).
 
 ### UI4 — Closed responsive viewer retains focusable controls
 
-- **Owner / milestone:** [MAINT](PLAN.md#maint) / found during [MAINT-6](PLAN.md#maint-6); fix not selected.
-- **Severity / proposed priority / status:** medium / P2 / open.
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-8](PLAN.md#maint-8); found during [MAINT-6](PLAN.md#maint-6).
+- **Severity / proposed priority / status:** medium / P2 / resolved.
 - **Problem / evidence (2026-10-14):** Static review confirms Mail's `App.svelte` viewer and kit `DetailPane.svelte` remain mounted in closed responsive overlays. `app.css` `.responsive-viewer-overlay` only translates them off-screen; neither container disables focus on its descendant controls, including the Back button. This affects medium and narrow layouts. Runtime viewer-specific audit and native WebKitGTK verification remain unrun.
 - **Impact / reproduction:** Return from a viewer to the list in a responsive layout; hidden viewer controls can still receive keyboard focus. The existing Mail UI audit does not establish coverage of every such control.
-- **Dependencies / closure:** Separately select viewer scope; closed viewers must reject focus while opening, closing, selection and focus-mode behavior remain correct, with regression coverage for Mail and the shared detail pane.
+- **Resolution / evidence:** [MAINT-8 evidence](docs/validation/maint-8.md): Mail's viewer and kit `DetailPane` are inert only while a closed responsive overlay, and closing hands the focused pane and focus to the list. `viewer-focus.test.cjs` covers Mail and Contacts at 700 and 900 px; the full UI suite passes 99/99. Native WebKitGTK verification remains unrun.
+- **Dependencies / closure:** closed viewers must reject focus while opening, closing, selection and focus-mode behavior remain correct, with regression coverage for Mail and the shared detail pane.
 
 <a id="ui5"></a>
 

@@ -26,6 +26,7 @@ npm install --prefix ~/.cache/mailven-upnote-ui --no-save playwright@1.63.0
 | --- | --- |
 | `ui-quality.test.cjs` | Audit matrix: light/dark × 1400/900/700 px × Accounts expanded/collapsed × previews on/off |
 | `sidebar-focus.test.cjs` | Mail and shared extension sidebars reject focus while closed at narrow widths; opening, closing and resizing preserve interaction |
+| `viewer-focus.test.cjs` | Mail and shared detail-pane viewers reject focus while closed at medium and narrow widths; opening, Back, thread focus mode and resizing preserve interaction |
 | `logic.test.cjs` | Pure chat logic (`chatFormat.ts`, `chatSnooze.ts`): reply recipients and default mode, reply identity, bubble grouping, subject headings, list groups, snooze presets |
 | `chat-presentation.test.cjs` | Incoming/outgoing bubbles and sender runs, quoted text and signature, sender chats with several subjects, combine/split with Undo |
 | `inbox-triage.test.cjs` | Pin, snooze, archive, read/unread, the automatic Low priority group, sender priority overrides, Undo |

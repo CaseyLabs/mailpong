@@ -281,6 +281,7 @@
       if (selectedId) (onActivate ?? onSelect)(selectedId)
     },
     focusSearch: onFocusSearch,
+    focus: () => containerRef?.focus(),
   }))
 
   const flashing = $derived(isPaneFlashing(focusSlot))
