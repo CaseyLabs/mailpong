@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -47,6 +48,8 @@ type fakeGmail struct {
 	label1  string // display name of Label_1; "Receipts" when empty
 	rawGets []string
 	events  []string // profile/list/history ordering
+	// listQueries records each messages.list q parameter.
+	listQueries []string
 }
 
 // setHook swaps the hook under the lock: a cancelled fan-out request can still
@@ -83,9 +86,17 @@ func (f *fakeGmail) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			{"id": "Label_1", "name": cmp.Or(f.label1, "Receipts"), "type": "user"}}})
 	case p == "/messages":
 		f.events = append(f.events, "list")
+		f.listQueries = append(f.listQueries, r.URL.Query().Get("q"))
+		var after int64 = -1 // "after:<epoch seconds>" filters on internalDate
+		if q, ok := strings.CutPrefix(r.URL.Query().Get("q"), "after:"); ok {
+			after, _ = strconv.ParseInt(q, 10, 64)
+		}
 		var ids []map[string]string
 		keys := make([]string, 0, len(f.msgs))
-		for id := range f.msgs {
+		for id, m := range f.msgs {
+			if ms, _ := strconv.ParseInt(m.internalMS, 10, 64); after >= 0 && ms/1000 <= after {
+				continue
+			}
 			keys = append(keys, id)
 		}
 		sort.Strings(keys)
@@ -111,9 +122,20 @@ func (f *fakeGmail) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if m.internalMS != "" {
 			resp["internalDate"] = m.internalMS
 		}
-		if r.URL.Query().Get("format") == "raw" {
+		switch r.URL.Query().Get("format") {
+		case "raw":
 			f.rawGets = append(f.rawGets, id)
 			resp["raw"] = base64.RawURLEncoding.EncodeToString([]byte(m.raw))
+		case "metadata":
+			var hs []map[string]string
+			head, _, _ := strings.Cut(m.raw, "\r\n\r\n")
+			for line := range strings.SplitSeq(head, "\r\n") {
+				name, value, _ := strings.Cut(line, ": ")
+				if slices.Contains(r.URL.Query()["metadataHeaders"], name) {
+					hs = append(hs, map[string]string{"name": name, "value": value})
+				}
+			}
+			resp["payload"] = map[string]any{"headers": hs}
 		}
 		out(resp)
 	}
@@ -539,6 +561,29 @@ func TestGmailAPIRateLimitBackoff(t *testing.T) {
 			t.Fatalf("sleeps = %v", r.sleeps)
 		}
 	})
+	t.Run("per-minute quota without Retry-After outlasts the window", func(t *testing.T) {
+		r := newGmailRig(t)
+		r.add("a", []string{"INBOX"}, plainMail("a", "A", "b"), "1")
+		hits := 0
+		r.fake.setHook(func(req *http.Request) (int, string, map[string]string) {
+			if req.URL.Path == "/messages/a" && req.URL.Query().Get("format") == "raw" {
+				if hits++; hits <= apiRetryLimit {
+					return 403, `{"error":{"errors":[{"reason":"rateLimitExceeded"}]}}`, nil
+				}
+			}
+			return 0, "", nil
+		})
+		if _, err := r.run(); err != nil {
+			t.Fatal(err)
+		}
+		var total time.Duration
+		for _, d := range r.sleeps {
+			total += d
+		}
+		if fmt.Sprint(r.sleeps) != "[15s 30s 1m0s]" || total <= time.Minute {
+			t.Fatalf("sleeps = %v; the retries must span a one-minute quota window", r.sleeps)
+		}
+	})
 	t.Run("bounded: gives up with a hint and keeps credentials", func(t *testing.T) {
 		r := newGmailRig(t)
 		r.add("a", []string{"INBOX"}, plainMail("a", "A", "b"), "1")
@@ -686,5 +731,96 @@ func TestGmailAPIServerErrorBounded(t *testing.T) {
 	}
 	if len(r.fails) != 0 {
 		t.Fatalf("a 5xx must not raise an authorization failure: %v", r.fails)
+	}
+}
+
+// TestGmailAPISyncWindow pins the sync window: a full reconcile lists only
+// messages after the account's sync period, like the IMAP window, and removes
+// local messages that fall outside it. Zero keeps the whole mailbox.
+func TestGmailAPISyncWindow(t *testing.T) {
+	now := time.Date(2026, 10, 15, 12, 0, 0, 0, time.UTC)
+	ms := func(t time.Time) string { return strconv.FormatInt(t.UnixMilli(), 10) }
+	setup := func(t *testing.T) *gmailRig {
+		r := newGmailRig(t)
+		r.add("new", []string{"INBOX"}, plainMail("new", "New", "b"), "1")
+		r.add("old", []string{"INBOX"}, plainMail("old", "Old", "b"), "1")
+		r.fake.msgs["new"].internalMS = ms(now.AddDate(0, 0, -2))
+		r.fake.msgs["old"].internalMS = ms(now.AddDate(0, 0, -90))
+		r.g.Now = func() time.Time { return now }
+		return r
+	}
+	t.Run("zero mirrors the whole mailbox", func(t *testing.T) {
+		r := setup(t)
+		if _, err := r.run(); err != nil {
+			t.Fatal(err)
+		}
+		if got := len(r.folderRows("INBOX")); got != 2 || r.fake.listQueries[0] != "" {
+			t.Fatalf("rows = %d, q = %q", got, r.fake.listQueries)
+		}
+	})
+	t.Run("window lists only recent messages", func(t *testing.T) {
+		r := setup(t)
+		r.g.SyncPeriodDays = 30
+		if _, err := r.run(); err != nil {
+			t.Fatal(err)
+		}
+		want := "after:" + strconv.FormatInt(now.AddDate(0, 0, -30).Unix(), 10)
+		rows := r.folderRows("INBOX")
+		if len(rows) != 1 || rows[0].Subject != "New" || r.fake.listQueries[0] != want {
+			t.Fatalf("rows = %d, q = %q (want %q)", len(rows), r.fake.listQueries, want)
+		}
+		if slices.Contains(r.fake.rawGets, "old") {
+			t.Fatalf("raw GETs %v fetched a message outside the window", r.fake.rawGets)
+		}
+	})
+	t.Run("windowed reconcile removes local messages outside it", func(t *testing.T) {
+		r := setup(t)
+		if _, err := r.run(); err != nil {
+			t.Fatal(err)
+		}
+		r.g.SyncPeriodDays = 30
+		r.fake.expired = true // history 404 forces a full reconcile
+		res, err := r.run()
+		if err != nil {
+			t.Fatal(err)
+		}
+		rows := r.folderRows("INBOX")
+		if !res.Reconciled || res.Removed != 1 || len(rows) != 1 || rows[0].Subject != "New" {
+			t.Fatalf("res = %+v, rows = %d", res, len(rows))
+		}
+	})
+}
+
+// TestGmailAPIOversizeMessageKeepsReconcileMoving pins the size cap: a raw
+// message past it is kept as a header-only row from its metadata, the
+// reconcile completes, and an unchanged second run does not refetch it.
+func TestGmailAPIOversizeMessageKeepsReconcileMoving(t *testing.T) {
+	r := newGmailRig(t)
+	r.g.Reader.MaxRawBytes = 2048
+	r.add("small", []string{"INBOX"}, plainMail("small", "Small", "body"), "1")
+	r.add("big", []string{"INBOX", "UNREAD"}, plainMail("big", "Big", strings.Repeat("x", 4096)), "1")
+	r.fake.msgs["big"].internalMS = strconv.FormatInt(time.Date(2025, 5, 6, 7, 8, 9, 0, time.UTC).UnixMilli(), 10)
+	res, err := r.run()
+	if err != nil || res.Added != 2 || res.Oversize != 1 {
+		t.Fatalf("Run = %+v, %v", res, err)
+	}
+	if c, _ := r.store.LoadAPICursor("acct-1", gmailScope); c.Cursor == "" || c.Invalid {
+		t.Fatalf("cursor did not advance: %+v", c)
+	}
+	var big *message.MessageHeader
+	for _, h := range r.folderRows("INBOX") {
+		if h.Subject == "Big" {
+			big = h
+		}
+	}
+	if big == nil || big.FromEmail != "s@example.com" || big.IsRead {
+		t.Fatalf("header-only row = %+v", big)
+	}
+	m, err := r.store.Get(big.ID)
+	if err != nil || m.BodyFetched || m.MessageID != "big@example.com" || !m.ReceivedAt.Equal(time.Date(2025, 5, 6, 7, 8, 9, 0, time.UTC)) {
+		t.Fatalf("oversize row = %+v, %v", m, err)
+	}
+	if res, err = r.run(); err != nil || res.Oversize != 0 || res.Added+res.Updated != 0 {
+		t.Fatalf("idle run = %+v, %v", res, err)
 	}
 }

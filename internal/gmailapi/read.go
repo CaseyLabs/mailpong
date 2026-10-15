@@ -39,7 +39,13 @@ var (
 	ErrHistoryExpired = errors.New("gmail: history ID expired")
 	// ErrMessageGone means the message no longer exists (404 on messages.get).
 	ErrMessageGone = errors.New("gmail: message not found")
+	// ErrMessageTooLarge means the raw message exceeds the download cap; the
+	// message exists, so callers keep it as a header-only row instead of failing.
+	ErrMessageTooLarge = errors.New("gmail: message exceeds the download size limit")
 )
+
+// errTooLarge marks a response past its byte cap.
+var errTooLarge = errors.New("response too large")
 
 // ReadError is a failed read request, classified for the sync driver.
 type ReadError = apiread.Error
@@ -49,6 +55,8 @@ type Reader struct {
 	Tokens submission.TokenSource
 	HTTP   *http.Client // nil uses submission.NewHTTPClient
 	Base   string       // "" uses the Gmail API
+	// MaxRawBytes caps one format=raw response; 0 uses the JSON cap (40 MiB).
+	MaxRawBytes int64
 }
 
 // Label is one entry of labels.list.
@@ -68,6 +76,9 @@ type Message struct {
 	// InternalDate is Gmail's receive time (zero when absent), used when the
 	// message has no usable Date header.
 	InternalDate time.Time
+	// Headers holds the format=metadata headers, keyed canonically
+	// ("Subject", "From", "Message-Id"); nil for other formats.
+	Headers map[string]string
 }
 
 // HistoryRecord is one change; only the fields the sync uses are decoded.
@@ -119,14 +130,18 @@ func (r *Reader) base() string {
 
 // get performs one GET with the 401-once refresh policy and classifies failures.
 func (r *Reader) get(ctx context.Context, path string, q url.Values) ([]byte, error) {
+	return r.getCapped(ctx, path, q, maxJSONBytes)
+}
+
+func (r *Reader) getCapped(ctx context.Context, path string, q url.Values, maxBytes int64) ([]byte, error) {
 	target := r.base() + path
 	if len(q) > 0 {
 		target += "?" + q.Encode()
 	}
 	c := apiread.Client{Tokens: r.Tokens, HTTP: r.HTTP, Label: "gmail read", Detail: path,
 		Header:               http.Header{"Accept": {"application/json"}},
-		ForbiddenRateLimited: isRateLimit}
-	return c.Get(ctx, target, maxJSONBytes)
+		ForbiddenRateLimited: isRateLimit, TooLarge: errTooLarge}
+	return c.Get(ctx, target, maxBytes)
 }
 
 // Profile returns users.getProfile's current historyId, the starting point to
@@ -161,9 +176,13 @@ func (r *Reader) Labels(ctx context.Context) ([]Label, error) {
 }
 
 // ListIDs returns one page of message IDs, spam and trash included so every
-// folder mirrors the mailbox.
-func (r *Reader) ListIDs(ctx context.Context, pageToken string) (ids []string, next string, err error) {
+// folder mirrors the mailbox. A non-zero after limits the list to messages
+// received after it (Gmail search, second precision).
+func (r *Reader) ListIDs(ctx context.Context, pageToken string, after time.Time) (ids []string, next string, err error) {
 	q := url.Values{"maxResults": {strconv.Itoa(ListPageSize)}, "includeSpamTrash": {"true"}}
+	if !after.IsZero() {
+		q.Set("q", "after:"+strconv.FormatInt(after.Unix(), 10))
+	}
 	if pageToken != "" {
 		q.Set("pageToken", pageToken)
 	}
@@ -197,12 +216,31 @@ func (r *Reader) GetMinimal(ctx context.Context, id string) (*Message, error) {
 	return r.getMessage(ctx, id, "minimal")
 }
 
+// GetMetadata fetches labels, the history version and the Subject, From and
+// Message-ID headers without the body, for a header-only row.
+func (r *Reader) GetMetadata(ctx context.Context, id string) (*Message, error) {
+	return r.getMessage(ctx, id, "metadata")
+}
+
 func (r *Reader) getMessage(ctx context.Context, id, format string) (*Message, error) {
-	body, err := r.get(ctx, "/messages/"+url.PathEscape(id), url.Values{"format": {format}})
+	q := url.Values{"format": {format}}
+	limit := int64(maxJSONBytes)
+	switch format {
+	case "raw":
+		if r.MaxRawBytes > 0 {
+			limit = r.MaxRawBytes
+		}
+	case "metadata":
+		q["metadataHeaders"] = []string{"Subject", "From", "Message-ID"}
+	}
+	body, err := r.getCapped(ctx, "/messages/"+url.PathEscape(id), q, limit)
 	if err != nil {
 		var re *ReadError
-		if errors.As(err, &re) && re.Status == http.StatusNotFound {
+		switch {
+		case errors.As(err, &re) && re.Status == http.StatusNotFound:
 			return nil, ErrMessageGone
+		case errors.Is(err, errTooLarge):
+			return nil, ErrMessageTooLarge
 		}
 		return nil, err
 	}
@@ -213,11 +251,23 @@ func (r *Reader) getMessage(ctx context.Context, id, format string) (*Message, e
 		HistoryID string   `json:"historyId"`
 		Raw       string   `json:"raw"`
 		Internal  string   `json:"internalDate"` // milliseconds since the epoch
+		Payload   struct {
+			Headers []struct {
+				Name  string `json:"name"`
+				Value string `json:"value"`
+			} `json:"headers"`
+		} `json:"payload"`
 	}
 	if err := json.Unmarshal(body, &out); err != nil {
 		return nil, fmt.Errorf("decode message %s: %w", id, err)
 	}
 	m := &Message{ID: out.ID, ThreadID: out.ThreadID, LabelIDs: out.LabelIDs, HistoryID: out.HistoryID}
+	for _, h := range out.Payload.Headers {
+		if m.Headers == nil {
+			m.Headers = map[string]string{}
+		}
+		m.Headers[http.CanonicalHeaderKey(h.Name)] = h.Value
+	}
 	if ms, perr := strconv.ParseInt(out.Internal, 10, 64); perr == nil && ms > 0 {
 		m.InternalDate = time.UnixMilli(ms).UTC()
 	}

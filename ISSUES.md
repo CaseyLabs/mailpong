@@ -9,8 +9,8 @@ All Microsoft work, including Microsoft 365 and regular/personal Outlook.com, is
 ## Index
 
 - [SEND — Sending, privacy and compatibility](#send): [MA1](#ma1), [PD2](#pd2), [DAV1](#dav1), [DAV2](#dav2), [DAV3](#dav3) (resolved: [CD2](#cd2))
-- [API — Provider API activation and migration](#api): [MA4](#ma4) (resolved: [F5b-1](#f5b-1), [F5b-3](#f5b-3))
-- [SYNC — Mail synchronization and action reliability](#sync): none (resolved: [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
+- [API — Provider API activation and migration](#api): [MA4](#ma4), [MA7](#ma7), [MA8](#ma8) (resolved: [F5b-1](#f5b-1), [F5b-3](#f5b-3))
+- [SYNC — Mail synchronization and action reliability](#sync): (resolved: [SY7](#sy7), [SY8](#sy8), [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [CHAT — Chat composer sender review](#chat): [CH1](#ch1) (resolved: [R1](#r1))
 - [MAINT — Maintenance and documentation](#maint): [D2](#d2), [UI3](#ui3), [UI4](#ui4), [UI5](#ui5) (resolved: [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
@@ -32,7 +32,7 @@ Project: [SEND](PLAN.md#send).
 - **Resolution criteria:** Authorized controlled Bcc evidence establishes privacy, and the local ceiling is documented or justified; retain failed or unrun rollout gates.
 - **Evidence / impact / reproduction:** original recorded finding below; product behavior was not rechecked in this task. Use its named symbol and fixtures when selecting work.
 
-- **MA1 medium** `internal/gmailapi/send.go`, `internal/graphapi/send.go`: API clients add a `Bcc:` header for hidden envelope recipients because both providers read recipients from headers. Provider stripping of that header from delivered copies is undocumented and unverified; a Bcc recipient could be exposed. F4e implemented route activation, but the required separately authorized live Bcc check remains an unsatisfied rollout gate; activation does not establish privacy. Message size limit (25 MiB) is also a local, undocumented ceiling.
+- **MA1 medium** `internal/gmailapi/send.go`, `internal/graphapi/send.go`: API clients add a `Bcc:` header for hidden envelope recipients because both providers read recipients from headers. Provider stripping of that header from delivered copies is undocumented and unverified; a Bcc recipient could be exposed. F4e implemented route activation, but the required separately authorized live Bcc check remains an unsatisfied rollout gate; activation does not establish privacy. Message size limit (25 MiB) is also a local, undocumented ceiling. 2026-10-15 static review ([evidence](docs/validation/send-2.md)): Gmail documents only that recipients are read from To/Cc/Bcc headers; no provider document covers stripping or an API size limit; live cases are specified and unrun. 2026-10-15 live cases 1–4 (Gmail, plus-aliases of the sender): case 3 passed (no `Bcc:` header when the hidden address is also in Cc); cases 1–2 are inconclusive because only the Sent copy exists, which keeps `Bcc:` as expected. Separate-recipient evidence and size case 5 remain unrun.
 
 <a id="pd2"></a>
 
@@ -103,6 +103,24 @@ Project: [API](PLAN.md#api).
 - **Evidence / impact / reproduction:** original recorded finding below; blockers rechecked read-only on 2026-10-14; [design](docs/SHARED_MAILBOX_API_DESIGN.md) documents identity/grant/activation requirements. API-6 implemented identity storage, parent-owned grants and consent locally ([evidence](docs/validation/api-6.md)); activation and migration stay closed by `sharedMailboxLiveVerified=false` until live checks are recorded.
 
 - **MA4 low** `app/api_route.go` `ActivateMailAPIRoute`: shared (delegated) mailbox routes cannot be activated because the Graph shared-mailbox address is not stored and `apiRemote` rejects shared routes. Found in F4e-3; needs shared-mailbox identity storage before a later milestone. F5a left it open: storing the address is not cheap (route schema, Graph delegate flow, read/write clients); shared routes stay unmigratable with that reason.
+
+<a id="ma7"></a>
+
+### MA7 — Interrupted activation leaves the route active
+
+- **Owner / milestone:** [API](PLAN.md#api) / found during [SEND-2](PLAN.md#send-2).
+- **Severity / proposed priority / status:** medium / P2 / open.
+- **Evidence:** 2026-10-15, quitting the dev app during `ActivateMailAPIRoute`'s blocking reconcile left the route `active` with the folder rows swapped and the reconcile partly done; the revert only runs on a returned error. The next start resumed the reconcile in the background. [Activation](docs/MAIL_APIS.md) promises the account stays on IMAP on failure.
+- **Resolution criteria:** startup either completes or reverts an activation that was interrupted, and the documented guarantee matches; covered by a test.
+
+<a id="ma8"></a>
+
+### MA8 — Account settings cannot be saved on an API route
+
+- **Owner / milestone:** [API](PLAN.md#api) / found during [SEND-2](PLAN.md#send-2).
+- **Severity / proposed priority / status:** medium / P2 / open.
+- **Evidence:** 2026-10-15, saving Edit Account (sync period change) on an active Gmail API route failed with "starred folder not found: [Gmail]/Starred": `UpdateAccount` (`app/account.go`) checks the special-folder paths against visible folders, and activation hid the IMAP rows.
+- **Resolution criteria:** settings save on API-routed accounts without losing the stored IMAP folder paths; covered by a test.
 
 <a id="f5b-1"></a>
 
@@ -175,6 +193,26 @@ Project: [SYNC](PLAN.md#sync).
 - **Owner / milestone:** [SYNC](PLAN.md#sync) / [SYNC-3](PLAN.md#sync-3).
 - **Severity / proposed priority / status:** low / P2 / resolved.
 - **Resolution / evidence:** SYNC-3 verified 2026-10-14. `parseAPIRaw` uses the provider receive time (Gmail `internalDate`, Graph `receivedDateTime`) for `Date` and `ReceivedAt` when the header is missing. Fixtures pass. [Validation and limits](docs/validation/sync-3.md).
+
+<a id="sy7"></a>
+
+### SY7 — Gmail activation exceeds the quota and ignores the sync period
+
+- **Owner / milestone:** [SYNC](PLAN.md#sync) / found during [SEND-2](PLAN.md#send-2).
+- **Severity / proposed priority / status:** medium / P1 / resolved.
+- **Evidence:** 2026-10-15, activating the Gmail API route for a personal mailbox of about 42,700 messages in the dev install failed twice with HTTP 403 "Quota exceeded … 'Units per minute per user'", and the account stayed on IMAP. Gmail sends these errors without Retry-After, so `apiBackoff` fell back to 1s, 2s and 4s waits and gave up after about 7 seconds, inside the one-minute window. With longer waits the reconcile progressed at about 100 messages a minute, because it listed the whole mailbox and ignored the account's sync period (180 days), unlike IMAP; it would also outlast the 30-minute API sync timeout.
+- **Fix:** default waits are now 15s, 30s and 60s (`apiMinBackoff`), which outlast the window; a full Gmail reconcile lists only messages inside the sync period (`after:`) and removes local ones outside it. Pinned by `TestGmailAPIRateLimitBackoff` and `TestGmailAPISyncWindow`. The Graph reconcile is still unwindowed (Microsoft work deferred).
+- **Resolution:** verified live 2026-10-15: with a 30-day period the same account's reconcile completed (1,649 messages, none older than 31 days) with no quota failure. It finished in the resumed background sync rather than one activation call (see [MA7](#ma7)). [Evidence](docs/validation/send-2.md).
+
+<a id="sy8"></a>
+
+### SY8 — Oversized Gmail message blocks reconcile
+
+- **Owner / milestone:** [SYNC](PLAN.md#sync) / found during [SEND-2](PLAN.md#send-2).
+- **Severity / proposed priority / status:** medium / P1 / resolved.
+- **Evidence:** 2026-10-15, after the [SY7](#sy7) fix the dev Gmail reconcile stopped on every run at one message: "response exceeds 41943040 bytes". Unlike Graph ([SY2](#sy2)), the Gmail driver had no oversize path, so one large message blocked activation indefinitely.
+- **Fix:** the message is kept as a header-only row from `format=metadata`, logged and counted (`GmailResult.Oversize`); pinned by `TestGmailAPIOversizeMessageKeepsReconcileMoving`. The 40 MiB cap is unchanged, so mail Gmail accepts up to 50 MB can still be header-only.
+- **Resolution:** verified live 2026-10-15: the reconcile completed with the large message stored as one header-only row. [Evidence](docs/validation/send-2.md).
 
 <a id="r3"></a>
 

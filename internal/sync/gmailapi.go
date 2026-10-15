@@ -3,7 +3,9 @@ package sync
 import (
 	"context"
 	"errors"
+	"net/mail"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/caseylabs/mailven/internal/credentials"
@@ -31,6 +33,12 @@ type GmailSync struct {
 	AccountID   string
 	Tokens      func() (*credentials.OAuthTokens, error)
 	Concurrency int
+	// SyncPeriodDays limits a full reconcile to messages received in the last
+	// that many days, like the IMAP sync window; 0 mirrors the whole mailbox.
+	// Local messages outside the window are removed by that reconcile.
+	SyncPeriodDays int
+	// Now is the clock for the sync window; nil uses time.Now.
+	Now func() time.Time
 	// Sleep waits between rate-limit retries; nil sleeps for real.
 	Sleep func(ctx context.Context, d time.Duration) error
 	// OnFailure receives authorization failures (the F4b reauthorization
@@ -46,6 +54,7 @@ type GmailResult struct {
 	Added      int
 	Updated    int
 	Removed    int
+	Oversize   int // messages kept as header-only rows because they exceed the download cap
 }
 
 // Run syncs once: incrementally from the stored history cursor, or with a
@@ -113,7 +122,8 @@ func (g *GmailSync) labels(ctx context.Context) ([]message.GmailLabel, error) {
 	return out, nil
 }
 
-// reconcile diffs the remote ID list against the local refs. The history ID is
+// reconcile diffs the remote ID list (within the sync window) against the local
+// refs, so local messages outside the window are removed. The history ID is
 // captured before listing, so anything that changes meanwhile is replayed by
 // the first incremental run. Until the last page commits the old data stays
 // and the cursor stays invalid; a failure never wipes anything.
@@ -124,13 +134,21 @@ func (g *GmailSync) reconcile(ctx context.Context, cur message.APICursor, labels
 		return err
 	}
 	start := sv.(string)
+	var after time.Time
+	if g.SyncPeriodDays > 0 {
+		now := time.Now
+		if g.Now != nil {
+			now = g.Now
+		}
+		after = now().AddDate(0, 0, -g.SyncPeriodDays)
+	}
 	var remote []string
 	for token := ""; ; {
 		var ids []string
 		var next string
 		if _, err = g.withBackoff(ctx, func() (any, error) {
 			var e error
-			ids, next, e = g.Reader.ListIDs(ctx, token)
+			ids, next, e = g.Reader.ListIDs(ctx, token, after)
 			return nil, e
 		}); err != nil {
 			return err
@@ -235,14 +253,15 @@ func (g *GmailSync) commitBatch(ctx context.Context, ids []string, labels []mess
 		up       *message.APIUpsert
 		gone     bool
 		existing bool
+		oversize bool
 	}
 	workers := g.Concurrency
 	if workers < 1 {
 		workers = gmailDefaultWorkers
 	}
 	outs, err := apiFanOut(ctx, workers, ids, func(ctx context.Context, id string) (outcome, error) {
-		up, isGone, existing, e := g.process(ctx, id, labels)
-		return outcome{up, isGone, existing}, e
+		up, isGone, existing, oversize, e := g.process(ctx, id, labels)
+		return outcome{up, isGone, existing, oversize}, e
 	})
 	if err != nil {
 		return nil, err
@@ -255,6 +274,9 @@ func (g *GmailSync) commitBatch(ctx context.Context, ids []string, labels []mess
 			gone = append(gone, ids[i])
 		case o.up != nil:
 			page.Upserts = append(page.Upserts, *o.up)
+			if o.oversize {
+				res.Oversize++
+			}
 			if o.existing {
 				res.Updated++
 			} else {
@@ -268,19 +290,19 @@ func (g *GmailSync) commitBatch(ctx context.Context, ids []string, labels []mess
 // process builds the upsert for one remote message: nothing when it is
 // unchanged, a flags-only refresh for a label change that adds no folder, and
 // otherwise a full ingest from the raw message.
-func (g *GmailSync) process(ctx context.Context, id string, labels []message.GmailLabel) (up *message.APIUpsert, gone, existing bool, err error) {
+func (g *GmailSync) process(ctx context.Context, id string, labels []message.GmailLabel) (up *message.APIUpsert, gone, existing, oversize bool, err error) {
 	store := g.Engine.messageStore
 	ref, rows, err := store.GetAPIRef(g.AccountID, gmailAPIProviderName, id)
 	if err != nil {
-		return nil, false, false, err
+		return nil, false, false, false, err
 	}
 	if ref != nil {
 		v, err := g.withBackoff(ctx, func() (any, error) { return g.Reader.GetMinimal(ctx, id) })
 		if errors.Is(err, gmailapi.ErrMessageGone) {
-			return nil, true, true, nil
+			return nil, true, true, false, nil
 		}
 		if err != nil {
-			return nil, false, true, err
+			return nil, false, true, false, err
 		}
 		min := v.(*gmailapi.Message)
 		mapping := message.MapGmailLabels(min.LabelIDs, labels)
@@ -290,7 +312,7 @@ func (g *GmailSync) process(ctx context.Context, id string, labels []message.Gma
 		for _, f := range mapping.Folders {
 			folderID, err := g.ensureFolder(f)
 			if err != nil {
-				return nil, false, true, err
+				return nil, false, true, false, err
 			}
 			if _, ok := rows[folderID]; !ok {
 				flagsOnly = false
@@ -302,21 +324,32 @@ func (g *GmailSync) process(ctx context.Context, id string, labels []message.Gma
 		// An unchanged version skips the write only while the rows still
 		// match the mapped folders; a label rename maps to a new folder.
 		if flagsOnly && min.HistoryID == ref.Version && len(upsert.Rows) == len(rows) {
-			return nil, false, true, nil
+			return nil, false, true, false, nil
 		}
 		if flagsOnly {
-			return &upsert, false, true, nil
+			return &upsert, false, true, false, nil
 		}
 	}
 	v, err := g.withBackoff(ctx, func() (any, error) { return g.Reader.GetRaw(ctx, id) })
+	if errors.Is(err, gmailapi.ErrMessageTooLarge) {
+		// Keep the message as a header-only row so the reconcile completes and
+		// the mail stays visible; opening it reports the size limit.
+		g.Engine.log.Warn().Str("account", g.AccountID).Str("remoteID", id).Msg("Gmail message exceeds the download size limit; kept as a header-only row")
+		v, err = g.withBackoff(ctx, func() (any, error) { return g.Reader.GetMetadata(ctx, id) })
+		oversize = err == nil
+	}
 	if errors.Is(err, gmailapi.ErrMessageGone) {
-		return nil, ref != nil, ref != nil, nil // an unknown message has nothing to remove
+		return nil, ref != nil, ref != nil, false, nil // an unknown message has nothing to remove
 	}
 	if err != nil {
-		return nil, false, ref != nil, err
+		return nil, false, ref != nil, false, err
+	}
+	if oversize {
+		upsert, err := g.ingestHeaderOnly(v.(*gmailapi.Message), labels)
+		return upsert, false, ref != nil, true, err
 	}
 	upsert, err := g.ingest(v.(*gmailapi.Message), labels)
-	return upsert, false, ref != nil, err
+	return upsert, false, ref != nil, false, err
 }
 
 func gmailRef(m *gmailapi.Message, mapping message.APIMapping) message.APIRef {
@@ -344,6 +377,37 @@ func (g *GmailSync) ingest(raw *gmailapi.Message, labels []message.GmailLabel) (
 }
 
 // ensureFolder returns the local folder for a mapped label, creating it once.
+// ingestHeaderOnly builds the rows for a message past the download cap from
+// its metadata. The body stays unfetched, and the snippet says why.
+func (g *GmailSync) ingestHeaderOnly(meta *gmailapi.Message, labels []message.GmailLabel) (*message.APIUpsert, error) {
+	mapping := message.MapGmailLabels(meta.LabelIDs, labels)
+	m := message.Message{AccountID: g.AccountID, Subject: meta.Headers["Subject"],
+		MessageID: strings.Trim(meta.Headers["Message-Id"], "<> "), Snippet: "This message is too large to download."}
+	if m.MessageID == "" {
+		m.MessageID = meta.ID + "@gmail.invalid"
+	}
+	if from, err := mail.ParseAddress(meta.Headers["From"]); err == nil {
+		m.FromName, m.FromEmail = from.Name, from.Address
+	}
+	applyInternalDate(&m, meta.InternalDate)
+	if m.Date.IsZero() {
+		m.Date = time.Now().UTC()
+	}
+	m.ThreadID = g.Engine.computeThreadID(g.AccountID, &m)
+	m.IsRead, m.IsStarred, m.IsDraft = mapping.IsRead, mapping.IsStarred, mapping.IsDraft
+	up := &message.APIUpsert{Ref: gmailRef(meta, mapping)}
+	for _, f := range mapping.Folders {
+		folderID, err := g.ensureFolder(f)
+		if err != nil {
+			return nil, err
+		}
+		row := m
+		row.FolderID = folderID
+		up.Rows = append(up.Rows, message.APIRow{Message: row})
+	}
+	return up, nil
+}
+
 func (g *GmailSync) ensureFolder(f message.APIFolder) (string, error) {
 	return g.folderCache.ensure(f)
 }

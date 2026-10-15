@@ -15,6 +15,7 @@ import (
 // Rate-limit policy shared by the API receive drivers.
 const (
 	apiRetryLimit   = 3                // rate-limit retries per request before pausing sync
+	apiMinBackoff   = 15 * time.Second // first wait when the server names none; doubles per retry
 	apiMaxBackoff   = 60 * time.Second // ceiling for one Retry-After wait
 	apiParseTimeout = 30 * time.Second
 )
@@ -76,7 +77,9 @@ func apiBackoff[T any](ctx context.Context, sleep func(context.Context, time.Dur
 			return v, err
 		}
 		if wait <= 0 {
-			wait = time.Second << attempt
+			// Gmail's per-minute quota errors carry no Retry-After, so the
+			// default waits (15s, 30s, 60s) must outlast a one-minute window.
+			wait = apiMinBackoff << attempt
 		}
 		wait = min(wait, apiMaxBackoff)
 		if sleep == nil {

@@ -138,8 +138,13 @@ func (a *App) runAPISync(ctx context.Context, route *account.MailAPIRoute, wait 
 	var err error
 	switch route.Route {
 	case account.MailRouteGmailAPI:
+		acc, aerr := a.accountStore.Get(id)
+		if aerr != nil {
+			return aerr
+		}
 		_, err = (&sync.GmailSync{Engine: a.syncEngine, Reader: &gmailapi.Reader{Tokens: tokens, HTTP: a.apiRoutes.http, Base: a.apiRoutes.gmailBase}, AccountID: id,
-			Tokens: func() (*credentials.OAuthTokens, error) { return ops.validToken(id) }, OnFailure: onFailure}).Run(ctx)
+			Tokens: func() (*credentials.OAuthTokens, error) { return ops.validToken(id) }, OnFailure: onFailure,
+			SyncPeriodDays: acc.SyncPeriodDays}).Run(ctx)
 	case account.MailRouteGraphAPI:
 		_, err = (&sync.GraphSync{Engine: a.syncEngine, Reader: &graphapi.Reader{Tokens: tokens, HTTP: a.apiRoutes.http, Base: a.apiRoutes.graphBase, Shared: sharedTarget(route)}, AccountID: id,
 			Tokens: func() (*credentials.OAuthTokens, error) { return ops.validToken(id) }, OnFailure: onFailure}).Run(ctx)
