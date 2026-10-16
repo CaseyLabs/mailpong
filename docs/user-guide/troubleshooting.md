@@ -180,6 +180,10 @@ Ensure you have a notification daemon running. On GNOME, notifications work auto
 
 Also, if you don't have desktop portal installed on your system or launch Mailven from the terminal, you may want to launch Mailven with the `-dbus-notify` flag so that it sends notifications directly to dbus.
 
+### File picker can't see my files (Flatpak)
+
+In the Flatpak, Mailven opens and saves files through your desktop's file chooser portal, which can reach your home folder even though the sandbox has no direct access to it. If you get a plain GTK dialog that shows no home files instead, `xdg-desktop-portal` and a backend for your desktop (for example `xdg-desktop-portal-gnome`, `-kde` or `-gtk`) aren't running. Install and start them, then restart Mailven.
+
 ## macOS-Specific Issues
 
 ### "App is damaged" or "can't be opened" error

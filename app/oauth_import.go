@@ -28,7 +28,7 @@ type OAuthClientImportResult struct {
 //
 // Wails-bound.
 func (a *App) PickGoogleClientFile() (string, error) {
-	path, err := wailsRuntime.OpenFileDialog(a.ctx, wailsRuntime.OpenDialogOptions{
+	path, err := openFileDialog(a.ctx, wailsRuntime.OpenDialogOptions{
 		Title: "Select Google client JSON",
 		Filters: []wailsRuntime.FileFilter{
 			{DisplayName: "JSON files (*.json)", Pattern: "*.json"},

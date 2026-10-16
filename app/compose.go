@@ -659,7 +659,7 @@ func readFileAsAttachment(filePath string) (*ComposerAttachment, error) {
 func pickAttachmentFiles(ctx context.Context) ([]ComposerAttachment, error) {
 	log := logging.WithComponent("compose")
 
-	files, err := wailsRuntime.OpenMultipleFilesDialog(ctx, wailsRuntime.OpenDialogOptions{
+	files, err := openMultipleFilesDialog(ctx, wailsRuntime.OpenDialogOptions{
 		Title: "Select Attachments",
 	})
 	if err != nil {

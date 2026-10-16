@@ -14,6 +14,17 @@ func PortalSaveFiles(title string, filenames []string, directory string) ([]stri
 	return nil, fmt.Errorf("portal file chooser not supported on this platform")
 }
 
+// FileFilter is one file-type filter for PortalOpenFiles.
+type FileFilter struct {
+	DisplayName string
+	Pattern     string
+}
+
+// PortalOpenFiles is not supported on non-Linux platforms.
+func PortalOpenFiles(title string, filters []FileFilter, multiple bool) ([]string, error) {
+	return nil, fmt.Errorf("portal file chooser not supported on this platform")
+}
+
 // PortalOpenDirectory is not supported on non-Linux platforms.
 func PortalOpenDirectory(filePath string) error {
 	return fmt.Errorf("portal not supported on this platform")

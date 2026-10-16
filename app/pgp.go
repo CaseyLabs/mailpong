@@ -12,7 +12,7 @@ import (
 
 // PickPGPKeyFile opens a file picker for PGP key files (.asc, .gpg, .key, .pub)
 func (a *App) PickPGPKeyFile() (string, error) {
-	path, err := wailsRuntime.OpenFileDialog(a.ctx, wailsRuntime.OpenDialogOptions{
+	path, err := openFileDialog(a.ctx, wailsRuntime.OpenDialogOptions{
 		Title: "Select PGP Key File",
 		Filters: []wailsRuntime.FileFilter{
 			{
@@ -202,7 +202,7 @@ func (a *App) CheckRecipientPGPKeys(emails []string) (map[string]bool, error) {
 
 // PickRecipientPGPKeyFile opens a file picker for PGP public key files
 func (a *App) PickRecipientPGPKeyFile() (string, error) {
-	path, err := wailsRuntime.OpenFileDialog(a.ctx, wailsRuntime.OpenDialogOptions{
+	path, err := openFileDialog(a.ctx, wailsRuntime.OpenDialogOptions{
 		Title: "Select Recipient PGP Public Key",
 		Filters: []wailsRuntime.FileFilter{
 			{

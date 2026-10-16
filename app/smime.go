@@ -12,7 +12,7 @@ import (
 
 // PickSMIMECertificateFile opens a file picker for .p12/.pfx files and returns the path
 func (a *App) PickSMIMECertificateFile() (string, error) {
-	path, err := wailsRuntime.OpenFileDialog(a.ctx, wailsRuntime.OpenDialogOptions{
+	path, err := openFileDialog(a.ctx, wailsRuntime.OpenDialogOptions{
 		Title: "Select S/MIME Certificate",
 		Filters: []wailsRuntime.FileFilter{
 			{
@@ -235,7 +235,7 @@ func (a *App) CheckRecipientCerts(emails []string) (map[string]bool, error) {
 
 // PickRecipientCertFile opens a file picker for certificate files (.pem, .cer, .crt, .der)
 func (a *App) PickRecipientCertFile() (string, error) {
-	path, err := wailsRuntime.OpenFileDialog(a.ctx, wailsRuntime.OpenDialogOptions{
+	path, err := openFileDialog(a.ctx, wailsRuntime.OpenDialogOptions{
 		Title: "Select Recipient Certificate",
 		Filters: []wailsRuntime.FileFilter{
 			{
