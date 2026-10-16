@@ -64,7 +64,10 @@ Before MAIL FROM, RCPT TO or DATA, Mailven validates the final serialized MIME
 and envelope, after signing and encryption. Invalid required headers, threading,
 addresses, injected header controls and overlong physical lines stop submission.
 The original draft remains editable; content is never truncated to pass a check.
-Bcc recipients stay in the envelope and are omitted from outgoing headers.
+Bcc recipients stay in the envelope and are omitted from outgoing headers. This is the SMTP path;
+the [API path](MAIL_APIS.md#api-submission) adds hidden recipients to a Bcc
+header for provider recipient selection, and Gmail delivered-copy privacy
+remains unverified.
 IDN domains are converted to ASCII in the journal's Message-ID, before
 serialization/signing, and in the SMTP envelope. International local parts
 (or raw international headers) require the server to advertise SMTPUTF8.

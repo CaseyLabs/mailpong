@@ -54,6 +54,7 @@ Current API routes support sending, receiving and queued flag/folder actions, wi
 - Drafts are saved locally; remote API draft synchronization is unavailable.
 - Permanent delete, empty trash/spam, copy, cross-account moves and undoing API moves are unavailable.
 - There is no automatic SMTP/IMAP fallback after migration and no automatic resend of an uncertain submission.
+- Gmail API's 25 MiB guard measures original MIME before added Bcc bytes; base64url/JSON makes the request larger. It is a local policy, separate from attachment and media-upload allowances. See the [Gmail investigation and controlled cases](validation/send-2-gmail.md).
 - Bcc privacy, provider message-size limits and real-account migration/rollback remain unverified live. Local fixtures and UI checks do not establish provider compatibility. See [open findings](../ISSUES.md#ma1).
 
 The [DavMail Microsoft 365 experiment](validation/davmail-microsoft365.md) verified self-mail through a local Graph gateway using the Outlook desktop OAuth client ID. It required a refresh-audience workaround, obtained a broad Office grant, and failed full folder-move convergence. It remains experimental and does not establish a supported replacement for the routes above.
