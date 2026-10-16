@@ -196,6 +196,7 @@
     "expandFailed": "Couldn't open the full composer",
     "sending": "Sending...",
     "sendingIn": "Sending in {seconds}s",
+    "checkingSender": "Checking sender...",
     "undo": "Undo",
     "sent": "Accepted by server; delivery not confirmed",
     "sendFailed": "Submission needs attention",

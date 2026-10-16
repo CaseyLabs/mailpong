@@ -22,7 +22,8 @@ export interface PendingSend {
   key: string
   text: string
   attachmentNames: string[]
-  status: 'queued' | 'sent' | 'failed'
+  // reviewing: the sender check (and any review dialog) runs; nothing is queued yet.
+  status: 'reviewing' | 'queued' | 'sent' | 'failed'
   error: string
   // While queued: when the send goes out. Once sent: when it went.
   sentAt: number
@@ -230,7 +231,7 @@ export class ChatComposer {
       key: snap.key,
       text: snap.text.trim(),
       attachmentNames: snap.attachments.map((a) => a.filename),
-      status: 'queued',
+      status: 'reviewing',
       error: '',
       sentAt: Date.now(),
       sendId: '',
@@ -320,7 +321,7 @@ export class ChatComposer {
     }
     const p = this.pending.find((x) => x.id === id)
     if (!p) return
-    update({ status: 'queued', error: '', sentAt: Date.now() + UNDO_SEND_MS, sendId: '' })
+    update({ status: 'reviewing', error: '', sendId: '' })
     let error: string
     let warnings = ''
     try {
@@ -335,6 +336,7 @@ export class ChatComposer {
         p.reply.senderReviewToken = evidence.reviewToken
       }
       const sendId: string = await QueueChatReply(p.reply)
+      update({ status: 'queued', sentAt: Date.now() + UNDO_SEND_MS })
       // Queueing may create the recovery draft. Keep its ID for Undo/Edit,
       // even before the send:finished event arrives.
       try {

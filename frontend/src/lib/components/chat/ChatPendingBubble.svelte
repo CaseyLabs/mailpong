@@ -42,7 +42,7 @@
       <div class="px-1 text-xs font-medium text-fg-primary">{name}</div>
     {/if}
     <div
-      class="text-[1rem] leading-[1.45] whitespace-pre-wrap wrap-anywhere text-foreground {flat ? 'w-full pl-4 pr-1 py-0.5 border-l-2 border-primary/50' : 'px-3.5 py-2 rounded-2xl rounded-br-md bg-bubble-own'} {pending.status === 'queued' ? 'opacity-70' : ''} {pending.status === 'failed' ? 'ring-2 ring-destructive' : ''}"
+      class="text-[1rem] leading-[1.45] whitespace-pre-wrap wrap-anywhere text-foreground {flat ? 'w-full pl-4 pr-1 py-0.5 border-l-2 border-primary/50' : 'px-3.5 py-2 rounded-2xl rounded-br-md bg-bubble-own'} {pending.status === 'queued' || pending.status === 'reviewing' ? 'opacity-70' : ''} {pending.status === 'failed' ? 'ring-2 ring-destructive' : ''}"
     >
       {pending.text}
       {#each pending.attachmentNames as name (name)}
@@ -53,6 +53,8 @@
       {#if pending.status === 'queued' && secondsLeft > 0 && pending.sendId}
         <Icon icon="mdi:timer-sand" class="w-3.5 h-3.5" />{$_('chat.sendingIn', { values: { seconds: secondsLeft } })}
         <button class="text-primary hover:underline" onclick={onUndo}>{$_('chat.undo')}</button>
+      {:else if pending.status === 'reviewing'}
+        <Icon icon="mdi:account-clock-outline" class="w-3.5 h-3.5" />{$_('chat.checkingSender')}
       {:else if pending.status === 'queued'}
         <Icon icon="mdi:loading" class="w-3.5 h-3.5 animate-spin" />{$_('chat.sending')}
       {:else if pending.status === 'sent'}

@@ -12,7 +12,7 @@ All Microsoft work, including Microsoft 365 and regular/personal Outlook.com, is
 - [API — Provider API activation and migration](#api): [MA4](#ma4) (resolved: [MA7](#ma7), [MA8](#ma8), [F5b-1](#f5b-1), [F5b-3](#f5b-3))
 - [SYNC — Mail synchronization and action reliability](#sync): [SY10](#sy10) (resolved: [SY9](#sy9), [SY7](#sy7), [SY8](#sy8), [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [GOAUTH — Google OAuth client setup](#goauth): no unresolved issue recorded (resolved: [GO1](#go1), [GO2](#go2))
-- [CHAT — Chat composer sender review](#chat): [CH1](#ch1) (resolved: [R1](#r1))
+- [CHAT — Chat composer sender review](#chat): no unresolved issue recorded (resolved: [CH1](#ch1), [R1](#r1))
 - [MAINT — Maintenance and documentation](#maint): [D2](#d2) (resolved: [TF3](#tf3), [UI6](#ui6), [UI5](#ui5), [DOC6](#doc6), [UI3](#ui3), [TF1](#tf1), [TF2](#tf2), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI4](#ui4), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
 - [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
@@ -303,11 +303,12 @@ Project: [CHAT](PLAN.md#chat).
 
 ### CH1 — Pending bubble reads "Sending…" during chat sender review
 
-- **Owner / milestone:** [CHAT](PLAN.md#chat) / found during [CHAT-1](PLAN.md#chat-1); no milestone assigned.
-- **Severity / proposed priority / status:** low / P3 / open.
+- **Owner / milestone:** [CHAT](PLAN.md#chat) / found during [CHAT-1](PLAN.md#chat-1); fixed as an independent fix, no milestone.
+- **Severity / proposed priority / status:** low / P3 / resolved.
 - **Location:** `frontend/src/lib/components/chat/chatComposerState.svelte.ts` `#deliver`: the bubble is set to `queued` before `GetChatSenderEvidence` and the review dialog run.
 - **Failure:** while the **Use this From and send** dialog is open, the reply bubble already shows "Sending…" although nothing is queued (seen in the CHAT-1 UI screenshots). Cancel or confirm resolves it correctly.
 - **Closure criteria:** the bubble shows a review/waiting state (or none) until `QueueChatReply` returns, covered by a `chat-compose` UI assertion.
+- **Resolution / evidence:** fixed 2026-10-16. A pending reply starts as `reviewing` ("Checking sender...") and becomes `queued` only once `QueueChatReply` returns; a reviewing reply shows no undo countdown and no chat-row sending glyph. The `chat-compose` sender-review confirm test asserts the bubble reads "Checking sender..." and no "Sending" while the dialog is open (fails without the fix); `make test-ui` 108 pass. Native WebKitGTK unrun.
 
 <a id="r1"></a>
 
