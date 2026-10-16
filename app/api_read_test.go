@@ -134,14 +134,3 @@ func TestAPIAttachmentRawPathIgnoresSurrogateUID(t *testing.T) {
 		t.Fatalf("API raw read: %v", err)
 	}
 }
-
-func TestAPIServerSearchAndFetchRefuseAPIRoutedAccount(t *testing.T) {
-	r := newRouteRig(t)
-	m := activeAPIMessage(t, r)
-	if _, err := r.app.IMAPSearchFolder(r.acc.ID, m.FolderID, "x", 10); err == nil || !strings.Contains(err.Error(), "mail API") {
-		t.Fatalf("IMAPSearchFolder err = %v", err)
-	}
-	if _, err := r.app.FetchServerMessage(r.acc.ID, m.FolderID, int(m.UID)); err == nil || !strings.Contains(err.Error(), "mail API") {
-		t.Fatalf("FetchServerMessage err = %v", err)
-	}
-}

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -868,6 +869,42 @@ func (s *Store) GetAllUIDs(folderID string) ([]uint32, error) {
 	return uids, nil
 }
 
+// PinByUIDs marks IMAP messages as kept across the sync window: a server
+// search or "Load older" pulled them in from before it. Unknown UIDs are
+// ignored.
+func (s *Store) PinByUIDs(folderID string, uids []uint32) error {
+	for chunk := range slices.Chunk(uids, 500) {
+		args := []any{folderID}
+		for _, uid := range chunk {
+			args = append(args, uid)
+		}
+		if _, err := s.db.Exec("UPDATE messages SET pinned = 1 WHERE folder_id = ? AND uid IN ("+
+			strings.TrimSuffix(strings.Repeat("?,", len(chunk)), ",")+")", args...); err != nil {
+			return fmt.Errorf("failed to pin messages: %w", err)
+		}
+	}
+	return nil
+}
+
+// GetPinnedUIDs returns the UIDs of a folder's pinned messages, which a
+// windowed reconcile does not list.
+func (s *Store) GetPinnedUIDs(folderID string) ([]uint32, error) {
+	rows, err := s.db.Query("SELECT uid FROM messages WHERE folder_id = ? AND uid > 0 AND pinned = 1", folderID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query pinned UIDs: %w", err)
+	}
+	defer rows.Close()
+	var uids []uint32
+	for rows.Next() {
+		var uid uint32
+		if err := rows.Scan(&uid); err != nil {
+			return nil, fmt.Errorf("failed to scan UID: %w", err)
+		}
+		uids = append(uids, uid)
+	}
+	return uids, rows.Err()
+}
+
 // GetHighestUID returns the highest UID in a folder
 func (s *Store) GetHighestUID(folderID string) (uint32, error) {
 	var uid sql.NullInt64
@@ -1075,7 +1112,7 @@ func (s *Store) DeleteOlderThan(accountID string, before time.Time) (int, error)
 	// Times are stored as text in UTC, so compare against a UTC cutoff.
 	before = before.UTC()
 	result, err := s.db.Exec(
-		"DELETE FROM messages WHERE account_id = ? AND date < ? AND received_at < ?",
+		"DELETE FROM messages WHERE account_id = ? AND pinned = 0 AND date < ? AND received_at < ?",
 		accountID, before, before,
 	)
 	if err != nil {

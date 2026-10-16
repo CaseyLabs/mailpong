@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 	"time"
@@ -201,11 +202,40 @@ func (e *Engine) SyncMessages(ctx context.Context, accountID, folderID string, s
 		}
 	}
 
-	// Find deleted UIDs (local but not on server within sync period)
+	// Find deleted UIDs (local but not on server within sync period). Pinned
+	// messages lie outside the window, so the search cannot list them: they are
+	// checked by UID instead.
+	pinnedUIDs, err := e.messageStore.GetPinnedUIDs(folderID)
+	if err != nil {
+		return fmt.Errorf("failed to get pinned UIDs: %w", err)
+	}
+	pinnedSet := make(map[uint32]bool, len(pinnedUIDs))
+	for _, uid := range pinnedUIDs {
+		pinnedSet[uid] = true
+	}
 	var deletedUIDs []uint32
 	for uid := range localUIDSet {
-		if !remoteUIDSet[uid] {
+		if !remoteUIDSet[uid] && !pinnedSet[uid] {
 			deletedUIDs = append(deletedUIDs, uid)
+		}
+	}
+	// A failed check keeps every pinned message: only a clean answer deletes.
+	var pinnedPresent []uint32
+	if len(pinnedUIDs) > 0 {
+		present, perr := e.existingUIDs(ctx, conn.Client().RawClient(), pinnedUIDs)
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		if perr != nil {
+			e.log.Warn().Err(perr).Str("folder", f.Path).Msg("Failed to check pinned messages; keeping them")
+		}
+		if perr == nil {
+			for _, uid := range pinnedUIDs {
+				if !slices.Contains(present, uid) {
+					deletedUIDs = append(deletedUIDs, uid)
+				}
+			}
+			pinnedPresent = present
 		}
 	}
 
@@ -259,6 +289,7 @@ func (e *Engine) SyncMessages(ctx context.Context, accountID, folderID string, s
 			existingUIDs = append(existingUIDs, uid)
 		}
 	}
+	existingUIDs = append(existingUIDs, pinnedPresent...)
 
 	// flagSyncOK gates whether the persisted HighestModSeq is allowed to
 	// advance below. Stays true on success; flipped to false if the only
@@ -681,6 +712,49 @@ func (e *Engine) fetchUIDsSince(ctx context.Context, client *imapclient.Client, 
 // connection problem. Date-filtered syncs legitimately see empty windows.
 func skipEmptyRemoteReconcile(remoteCount, localCount, syncPeriodDays int, selectedMessages uint32) bool {
 	return remoteCount == 0 && localCount > 0 && syncPeriodDays == 0 && selectedMessages > 0
+}
+
+// existingUIDs returns which of the given UIDs the mailbox still holds (not
+// flagged \Deleted), asking in batches so the command stays short.
+func (e *Engine) existingUIDs(ctx context.Context, client *imapclient.Client, uids []uint32) ([]uint32, error) {
+	var present []uint32
+	for chunk := range slices.Chunk(uids, 500) {
+		set := imap.UIDSet{}
+		for _, uid := range chunk {
+			set.AddNum(imap.UID(uid))
+		}
+		data, err := waitSearch(ctx, client.UIDSearch(&imap.SearchCriteria{
+			UID:     []imap.UIDSet{set},
+			NotFlag: []imap.Flag{imap.FlagDeleted},
+		}, nil))
+		if err != nil {
+			return nil, fmt.Errorf("UID search failed: %w", err)
+		}
+		for _, uid := range data.AllUIDs() {
+			present = append(present, uint32(uid))
+		}
+	}
+	return present, nil
+}
+
+// waitSearch waits for a search, giving up when ctx ends (Wait blocks
+// indefinitely).
+func waitSearch(ctx context.Context, cmd *imapclient.SearchCommand) (*imap.SearchData, error) {
+	type result struct {
+		data *imap.SearchData
+		err  error
+	}
+	ch := make(chan result, 1)
+	go func() {
+		data, err := cmd.Wait()
+		ch <- result{data, err}
+	}()
+	select {
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	case r := <-ch:
+		return r.data, r.err
+	}
 }
 
 // fetchAllUIDs fetches all UIDs from the currently selected mailbox.

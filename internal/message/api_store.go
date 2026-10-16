@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -430,6 +432,48 @@ func (s *Store) ListUnpinnedAPIRemoteIDs(accountID, provider string) ([]string, 
 		ids = append(ids, id)
 	}
 	return ids, rows.Err()
+}
+
+// ListPinnedAPIRemoteIDs returns the pinned refs: messages a server search or
+// "Load older" pulled in, which a windowed reconcile does not list.
+func (s *Store) ListPinnedAPIRemoteIDs(accountID, provider string) ([]string, error) {
+	rows, err := s.db.Query(`SELECT remote_id FROM api_message_refs WHERE account_id=? AND provider=? AND pinned=1 ORDER BY remote_id`,
+		accountID, provider)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list pinned api remote IDs: %w", err)
+	}
+	defer rows.Close()
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
+// OldestAPIReceived returns the earliest receive time (Unix seconds) among the
+// stored rows of the given remote IDs; ok is false when none is stored.
+func (s *Store) OldestAPIReceived(accountID, provider string, remoteIDs []string) (oldest int64, ok bool, err error) {
+	for chunk := range slices.Chunk(remoteIDs, 200) {
+		args := []any{accountID, provider}
+		for _, id := range chunk {
+			args = append(args, id)
+		}
+		var n sql.NullInt64
+		if err = s.db.QueryRow(`SELECT MIN(CAST(strftime('%s', REPLACE(SUBSTR(m.received_at, 1, 19), 'T', ' ')) AS INTEGER))
+			FROM api_message_rows l JOIN messages m ON m.id=l.message_id
+			WHERE l.account_id=? AND l.provider=? AND l.remote_id IN (`+strings.TrimSuffix(strings.Repeat("?,", len(chunk)), ",")+`)`,
+			args...).Scan(&n); err != nil {
+			return 0, false, fmt.Errorf("failed to read oldest api message: %w", err)
+		}
+		if n.Valid && (!ok || n.Int64 < oldest) {
+			oldest, ok = n.Int64, true
+		}
+	}
+	return oldest, ok, nil
 }
 
 // PinAPIRefs marks refs as kept across a windowed reconcile. Unknown IDs are

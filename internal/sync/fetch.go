@@ -2,7 +2,6 @@ package sync
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -1039,58 +1038,6 @@ func (e *Engine) FetchRawMessage(ctx context.Context, accountID, folderID string
 	}
 
 	return rawBytes, nil
-}
-
-// buildMessageFromStreamedData constructs a Message from streamed IMAP data.
-// Used by FetchServerMessage for server search results.
-func (e *Engine) buildMessageFromStreamedData(accountID, folderID string, uid imap.UID, envelope *imap.Envelope, flags []imap.Flag, rfc822Size int64, rawBytes []byte) *message.Message {
-	m := &message.Message{
-		AccountID:  accountID,
-		FolderID:   folderID,
-		UID:        uint32(uid),
-		ReceivedAt: time.Now().UTC(),
-		Size:       int(rfc822Size),
-	}
-
-	// Parse envelope using shared helper
-	applyEnvelopeToMessage(m, envelope)
-
-	// Extract References and Disposition-Notification-To from raw message
-	var references []string
-	if len(rawBytes) > 0 {
-		references = e.extractReferences(rawBytes)
-		m.ReadReceiptTo = e.extractDispositionNotificationTo(rawBytes)
-	}
-
-	// Store references as JSON array
-	if len(references) > 0 {
-		refsJSON, _ := json.Marshal(references)
-		m.References = string(refsJSON)
-	}
-
-	// Parse flags using shared helper
-	applyFlagsToMessage(m, flags)
-
-	// Parse message body
-	if len(rawBytes) > 0 {
-		bodyText, bodyHTML, hasAttachments := e.parseMessageBody(rawBytes)
-		m.BodyText = bodyText
-		m.HasAttachments = hasAttachments
-
-		// Sanitize HTML
-		if bodyHTML != "" {
-			m.BodyHTML = e.sanitizer.Sanitize(bodyHTML)
-		}
-
-		// Generate snippet
-		if bodyText != "" {
-			m.Snippet = generateSnippet(bodyText, 200)
-		} else if bodyHTML != "" {
-			m.Snippet = generateSnippet(stripHTMLTags(bodyHTML), 200)
-		}
-	}
-
-	return m
 }
 
 // bodyUpdateIDs returns the message IDs of a batch of body updates.

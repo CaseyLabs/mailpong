@@ -1,6 +1,6 @@
 <script lang="ts">
-  // ChatServerSearch — "search the whole Gmail mailbox" under a chat search.
-  // The sync window keeps only recent mail locally; this asks Gmail for
+  // ChatServerSearch — "search the whole mailbox" under a chat search.
+  // The sync window keeps only recent mail locally; this asks the server for
   // matches anywhere and stores them, so the normal search then lists them.
   import Icon from '@iconify/svelte'
   import { _ } from '$lib/i18n'

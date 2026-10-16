@@ -91,6 +91,10 @@ func (f *fakeGmail) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if q, ok := strings.CutPrefix(r.URL.Query().Get("q"), "after:"); ok {
 			after, _ = strconv.ParseInt(q, 10, 64)
 		}
+		var before int64 = -1 // "before:<epoch seconds>": strictly older, newest first, capped by maxResults
+		if q, ok := strings.CutPrefix(r.URL.Query().Get("q"), "before:"); ok {
+			before, _ = strconv.ParseInt(q, 10, 64)
+		}
 		subject, isSubject := strings.CutPrefix(r.URL.Query().Get("q"), "subject:") // text search: raw contains it
 		var ids []map[string]string
 		keys := make([]string, 0, len(f.msgs))
@@ -101,9 +105,22 @@ func (f *fakeGmail) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			if ms, _ := strconv.ParseInt(m.internalMS, 10, 64); after >= 0 && ms/1000 <= after {
 				continue
 			}
+			if ms, _ := strconv.ParseInt(m.internalMS, 10, 64); before >= 0 && ms/1000 >= before {
+				continue
+			}
 			keys = append(keys, id)
 		}
 		sort.Strings(keys)
+		if before >= 0 {
+			sort.SliceStable(keys, func(i, j int) bool {
+				a, _ := strconv.ParseInt(f.msgs[keys[i]].internalMS, 10, 64)
+				b, _ := strconv.ParseInt(f.msgs[keys[j]].internalMS, 10, 64)
+				return a > b
+			})
+			if n, _ := strconv.Atoi(r.URL.Query().Get("maxResults")); n > 0 && len(keys) > n {
+				keys = keys[:n]
+			}
+		}
 		for _, id := range keys {
 			ids = append(ids, map[string]string{"id": id})
 		}
@@ -851,9 +868,13 @@ func TestGmailAPIServerSearchPinsOutsideWindow(t *testing.T) {
 		t.Fatalf("rows after windowed sync = %d, want 1", got)
 	}
 
+	cursor := r.cursor()
 	found, added, err := r.g.SearchServer(context.Background(), "subject:Invoice", 50)
 	if err != nil || found != 1 || added != 1 {
 		t.Fatalf("SearchServer = %d, %d, %v; want 1, 1, nil", found, added, err)
+	}
+	if got := r.cursor(); got != cursor {
+		t.Fatalf("history cursor changed by a search: %+v -> %+v", cursor, got)
 	}
 	if got := len(r.folderRows("INBOX")); got != 2 {
 		t.Fatalf("rows after search = %d, want 2", got)
@@ -875,6 +896,17 @@ func TestGmailAPIServerSearchPinsOutsideWindow(t *testing.T) {
 	if !res.Reconciled || res.Removed != 0 || !subjects["Invoice 2019"] || !subjects["Recent"] || len(subjects) != 2 {
 		t.Fatalf("after reconcile: res = %+v, subjects = %v", res, subjects)
 	}
+
+	// A pinned message deleted on the server is noticed by the next reconcile.
+	delete(r.fake.msgs, "old")
+	r.fake.expired = true
+	if res, err = r.run(); err != nil {
+		t.Fatal(err)
+	}
+	rows := r.folderRows("INBOX")
+	if !res.Reconciled || res.Removed != 1 || len(rows) != 1 || rows[0].Subject != "Recent" {
+		t.Fatalf("after pinned deletion: res = %+v, rows = %d", res, len(rows))
+	}
 }
 
 func TestGmailAPIServerSearchRequiresReadCapability(t *testing.T) {
@@ -884,5 +916,58 @@ func TestGmailAPIServerSearchRequiresReadCapability(t *testing.T) {
 	}
 	if _, _, err := r.g.SearchServer(context.Background(), "subject:x", 10); err == nil {
 		t.Fatal("expected a capability error")
+	}
+}
+
+// TestGmailAPILoadOlderPagesBackFromTheWindow pages older mail in: each call
+// stores the next batch before everything loaded, pins it across a reconcile,
+// reports the end, and leaves the history cursor alone.
+func TestGmailAPILoadOlderPagesBackFromTheWindow(t *testing.T) {
+	now := time.Date(2026, 10, 15, 12, 0, 0, 0, time.UTC)
+	ms := func(t time.Time) string { return strconv.FormatInt(t.UnixMilli(), 10) }
+	r := newGmailRig(t)
+	r.add("new", []string{"INBOX"}, plainMail("new", "Recent", "b"), "1")
+	r.fake.msgs["new"].internalMS = ms(now.AddDate(0, 0, -2))
+	for i, days := range []int{60, 90, 120, 150, 180} {
+		id := "old" + strconv.Itoa(i)
+		r.add(id, []string{"INBOX"}, plainMail(id, "Old "+id, "b"), "1")
+		r.fake.msgs[id].internalMS = ms(now.AddDate(0, 0, -days))
+	}
+	r.g.Now = func() time.Time { return now }
+	r.g.SyncPeriodDays = 30
+	if _, err := r.run(); err != nil {
+		t.Fatal(err)
+	}
+	cursor := r.cursor()
+
+	steps := []struct {
+		found, added int
+		done         bool
+		rows         int
+	}{{2, 2, false, 3}, {2, 2, false, 5}, {1, 1, true, 6}, {0, 0, true, 6}}
+	for i, want := range steps {
+		found, added, done, err := r.g.LoadOlder(context.Background(), 2)
+		if err != nil || found != want.found || added != want.added || done != want.done {
+			t.Fatalf("step %d: LoadOlder = %d, %d, %v, %v; want %+v", i, found, added, done, err, want)
+		}
+		if got := len(r.folderRows("INBOX")); got != want.rows {
+			t.Fatalf("step %d: rows = %d, want %d", i, got, want.rows)
+		}
+	}
+	if got := r.cursor(); got != cursor {
+		t.Fatalf("history cursor changed: %+v -> %+v", cursor, got)
+	}
+
+	r.fake.expired = true
+	delete(r.fake.msgs, "old2")
+	res, err := r.run()
+	if err != nil || !res.Reconciled || res.Removed != 1 || len(r.folderRows("INBOX")) != 5 {
+		t.Fatalf("reconcile = %+v, %v, rows = %d; want one removal and 5 rows", res, err, len(r.folderRows("INBOX")))
+	}
+
+	// With no sync window the whole mailbox is already local.
+	r.g.SyncPeriodDays = 0
+	if found, _, done, err := r.g.LoadOlder(context.Background(), 2); err != nil || found != 0 || !done {
+		t.Fatalf("unwindowed LoadOlder = %d, %v, %v", found, done, err)
 	}
 }

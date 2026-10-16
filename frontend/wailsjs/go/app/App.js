@@ -426,10 +426,6 @@ export function FetchMessageBody(arg1) {
   return window['go']['app']['App']['FetchMessageBody'](arg1);
 }
 
-export function FetchServerMessage(arg1, arg2, arg3) {
-  return window['go']['app']['App']['FetchServerMessage'](arg1, arg2, arg3);
-}
-
 export function FindLocalMessageIDs(arg1, arg2, arg3) {
   return window['go']['app']['App']['FindLocalMessageIDs'](arg1, arg2, arg3);
 }
@@ -926,10 +922,6 @@ export function HasSMIMECertificate(arg1) {
   return window['go']['app']['App']['HasSMIMECertificate'](arg1);
 }
 
-export function IMAPSearchFolder(arg1, arg2, arg3, arg4) {
-  return window['go']['app']['App']['IMAPSearchFolder'](arg1, arg2, arg3, arg4);
-}
-
 export function IgnoreReadReceipt(arg1, arg2) {
   return window['go']['app']['App']['IgnoreReadReceipt'](arg1, arg2);
 }
@@ -1040,6 +1032,14 @@ export function ListSMIMECertificates(arg1) {
 
 export function ListSenderCerts() {
   return window['go']['app']['App']['ListSenderCerts']();
+}
+
+export function LoadOlderGmail(arg1) {
+  return window['go']['app']['App']['LoadOlderGmail'](arg1);
+}
+
+export function LoadOlderIMAP(arg1) {
+  return window['go']['app']['App']['LoadOlderIMAP'](arg1);
 }
 
 export function LogFrontend(arg1, arg2) {
@@ -1308,6 +1308,10 @@ export function SearchConversations(arg1, arg2, arg3, arg4, arg5, arg6) {
 
 export function SearchGmailServer(arg1, arg2, arg3) {
   return window['go']['app']['App']['SearchGmailServer'](arg1, arg2, arg3);
+}
+
+export function SearchIMAPServer(arg1, arg2, arg3) {
+  return window['go']['app']['App']['SearchIMAPServer'](arg1, arg2, arg3);
 }
 
 export function SearchUnifiedInbox(arg1, arg2, arg3, arg4) {

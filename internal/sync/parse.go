@@ -426,7 +426,7 @@ func (e *Engine) parseSinglePartBody(entity *gomessage.Entity, result *ParsedBod
 }
 
 // parseMessageBody parses a raw email message and extracts text/plain and text/html parts.
-// This is the legacy parsing path used by buildMessageFromStreamedData (via FetchServerMessage).
+// This is the legacy parsing path.
 // It does not handle S/MIME or PGP detection - see parseMessageBodyInternal for the modern path.
 func (e *Engine) parseMessageBody(raw []byte) (bodyText, bodyHTML string, hasAttachments bool) {
 	reader := bytes.NewReader(raw)

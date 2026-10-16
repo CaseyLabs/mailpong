@@ -19,7 +19,6 @@ import {pgp} from '../models';
 import {smime} from '../models';
 import {snapshotrestore} from '../models';
 import {appstate} from '../models';
-import {sync} from '../models';
 import {draft} from '../models';
 import {apimigrate} from '../models';
 
@@ -234,8 +233,6 @@ export function EmptyTrash(arg1:string,arg2:string):Promise<void>;
 export function ExportSetupDiagnostic(arg1:string):Promise<boolean>;
 
 export function FetchMessageBody(arg1:string):Promise<message.Message>;
-
-export function FetchServerMessage(arg1:string,arg2:string,arg3:number):Promise<message.Message>;
 
 export function FindLocalMessageIDs(arg1:string,arg2:string,arg3:Array<string>):Promise<Array<string>>;
 
@@ -485,8 +482,6 @@ export function HasPGPKey(arg1:string):Promise<boolean>;
 
 export function HasSMIMECertificate(arg1:string):Promise<boolean>;
 
-export function IMAPSearchFolder(arg1:string,arg2:string,arg3:string,arg4:number):Promise<sync.IMAPSearchResponse>;
-
 export function IgnoreReadReceipt(arg1:string,arg2:string):Promise<void>;
 
 export function ImportGoogleClientFile(arg1:string,arg2:Array<string>):Promise<app.OAuthClientImportResult>;
@@ -542,6 +537,10 @@ export function ListPGPSenderKeys():Promise<Array<pgp.SenderKey>>;
 export function ListSMIMECertificates(arg1:string):Promise<Array<smime.Certificate>>;
 
 export function ListSenderCerts():Promise<Array<smime.SenderCert>>;
+
+export function LoadOlderGmail(arg1:string):Promise<app.OlderMailResult>;
+
+export function LoadOlderIMAP(arg1:string):Promise<app.OlderMailResult>;
 
 export function LogFrontend(arg1:string,arg2:string):Promise<void>;
 
@@ -676,6 +675,8 @@ export function SearchContacts(arg1:string,arg2:number):Promise<Array<contact.Co
 export function SearchConversations(arg1:string,arg2:string,arg3:string,arg4:number,arg5:number,arg6:string):Promise<Array<message.ConversationSearchResult>>;
 
 export function SearchGmailServer(arg1:string,arg2:string,arg3:number):Promise<app.GmailServerSearchResult>;
+
+export function SearchIMAPServer(arg1:string,arg2:string,arg3:number):Promise<app.IMAPServerSearchResult>;
 
 export function SearchUnifiedInbox(arg1:string,arg2:number,arg3:number,arg4:string):Promise<Array<message.ConversationSearchResult>>;
 

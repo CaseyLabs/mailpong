@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net/mail"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -136,11 +137,7 @@ func (g *GmailSync) reconcile(ctx context.Context, cur message.APICursor, labels
 	start := sv.(string)
 	var after time.Time
 	if g.SyncPeriodDays > 0 {
-		now := time.Now
-		if g.Now != nil {
-			now = g.Now
-		}
-		after = now().AddDate(0, 0, -g.SyncPeriodDays)
+		after = g.now().AddDate(0, 0, -g.SyncPeriodDays)
 	}
 	var remote []string
 	for token := ""; ; {
@@ -158,13 +155,26 @@ func (g *GmailSync) reconcile(ctx context.Context, cur message.APICursor, labels
 			break
 		}
 	}
-	// Pinned refs (pulled in by a server search) stay even outside the window.
+	// Pinned refs (pulled in by a server search or Load older) stay even outside the window.
 	local, err := store.ListUnpinnedAPIRemoteIDs(g.AccountID, gmailAPIProviderName)
+	if err != nil {
+		return err
+	}
+	pinned, err := store.ListPinnedAPIRemoteIDs(g.AccountID, gmailAPIProviderName)
 	if err != nil {
 		return err
 	}
 	removals := localOnly(local, remote)
 	for chunk := range slices.Chunk(remote, gmailBatchSize) {
+		gone, err := g.commitBatch(ctx, chunk, labels, cur, "", "", res)
+		if err != nil {
+			return err
+		}
+		removals = append(removals, gone...)
+	}
+	// The window listing never names pinned refs outside it, so fetch each to
+	// notice a server-side deletion (a message that is still there is refreshed).
+	for chunk := range slices.Chunk(localOnly(pinned, remote), gmailBatchSize) {
 		gone, err := g.commitBatch(ctx, chunk, labels, cur, "", "", res)
 		if err != nil {
 			return err
@@ -430,55 +440,129 @@ func (g *GmailSync) withBackoff(ctx context.Context, do func() (any, error)) (an
 // number of matches the server reported and how many were newly stored. Like
 // Run, callers must serialize it with Run for the account.
 func (g *GmailSync) SearchServer(ctx context.Context, query string, limit int) (found, added int, err error) {
-	defer func() {
-		var re *gmailapi.ReadError
-		if err != nil && errors.As(err, &re) && re.Failure != oauth2.MailAPIFailureNone && g.OnFailure != nil {
-			g.OnFailure(re.Failure, err)
-		}
-	}()
-	tokens, err := g.Tokens()
-	if err != nil {
-		return 0, 0, &gmailapi.ReadError{Failure: oauth2.ClassifyMailAPIError(err), Err: err}
+	defer g.reportFailure(&err)
+	if err = g.prepare(); err != nil {
+		return 0, 0, err
 	}
-	if err = tokens.RequireMailAPICapability("read", false); err != nil {
-		return 0, 0, &gmailapi.ReadError{Failure: oauth2.MailAPIFailurePartialConsent, Err: err}
-	}
-	if g.folderCache == nil {
-		g.folderCache = &apiFolders{engine: g.Engine, accountID: g.AccountID}
-	}
-	store := g.Engine.messageStore
 	v, err := g.withBackoff(ctx, func() (any, error) { return g.Reader.SearchIDs(ctx, query, limit) })
 	if err != nil {
 		return 0, 0, err
 	}
 	ids := v.([]string)
+	added, err = g.storePinned(ctx, ids)
+	return len(ids), added, err
+}
+
+// gmailOlderScope holds the Load older position apart from the history cursor.
+const (
+	gmailOlderScope = "older"
+	gmailOlderKind  = "gmail-before"
+)
+
+// LoadOlder stores the next page (up to limit) of mail received before
+// everything loaded so far, starting at the sync window's edge, and pins it
+// like a search result. done reports that the mailbox has nothing older. Like
+// Run, callers must serialize it with Run for the account.
+func (g *GmailSync) LoadOlder(ctx context.Context, limit int) (found, added int, done bool, err error) {
+	defer g.reportFailure(&err)
+	if g.SyncPeriodDays <= 0 {
+		return 0, 0, true, nil // the whole mailbox is already synced
+	}
+	if err = g.prepare(); err != nil {
+		return 0, 0, false, err
+	}
+	store := g.Engine.messageStore
+	pos, err := store.LoadAPICursor(g.AccountID, gmailOlderScope)
+	if err != nil {
+		return 0, 0, false, err
+	}
+	before := g.now().AddDate(0, 0, -g.SyncPeriodDays).Unix()
+	if at, perr := strconv.ParseInt(pos.Cursor, 10, 64); perr == nil && pos.Kind == gmailOlderKind && at < before {
+		before = at
+	}
+	if limit <= 0 || limit > gmailapi.ListPageSize {
+		limit = gmailapi.ListPageSize
+	}
+	v, err := g.withBackoff(ctx, func() (any, error) {
+		return g.Reader.SearchIDs(ctx, "before:"+strconv.FormatInt(before, 10), limit)
+	})
+	if err != nil {
+		return 0, 0, false, err
+	}
+	ids := v.([]string)
+	if added, err = g.storePinned(ctx, ids); err != nil {
+		return len(ids), added, false, err
+	}
+	if oldest, ok, oerr := store.OldestAPIReceived(g.AccountID, gmailAPIProviderName, ids); oerr != nil {
+		return len(ids), added, false, oerr
+	} else if ok && oldest < before {
+		err = store.CommitAPIPage(message.APIPage{AccountID: g.AccountID, Provider: gmailAPIProviderName, Scope: gmailOlderScope,
+			Generation: pos.Generation, Cursor: strconv.FormatInt(oldest, 10), CursorKind: gmailOlderKind})
+	}
+	return len(ids), added, len(ids) < limit, err
+}
+
+func (g *GmailSync) now() time.Time {
+	if g.Now != nil {
+		return g.Now()
+	}
+	return time.Now()
+}
+
+// reportFailure hands a classified read failure to OnFailure.
+func (g *GmailSync) reportFailure(err *error) {
+	var re *gmailapi.ReadError
+	if *err != nil && errors.As(*err, &re) && re.Failure != oauth2.MailAPIFailureNone && g.OnFailure != nil {
+		g.OnFailure(re.Failure, *err)
+	}
+}
+
+// prepare checks the token capability and readies the folder cache.
+func (g *GmailSync) prepare() error {
+	tokens, err := g.Tokens()
+	if err != nil {
+		return &gmailapi.ReadError{Failure: oauth2.ClassifyMailAPIError(err), Err: err}
+	}
+	if err = tokens.RequireMailAPICapability("read", false); err != nil {
+		return &gmailapi.ReadError{Failure: oauth2.MailAPIFailurePartialConsent, Err: err}
+	}
+	if g.folderCache == nil {
+		g.folderCache = &apiFolders{engine: g.Engine, accountID: g.AccountID}
+	}
+	return nil
+}
+
+// storePinned stores the messages among ids that are not yet local and pins
+// them, returning how many were new. The history cursor is left as it was.
+func (g *GmailSync) storePinned(ctx context.Context, ids []string) (added int, err error) {
+	store := g.Engine.messageStore
 	var missing []string
 	for _, id := range ids {
 		ref, _, rerr := store.GetAPIRef(g.AccountID, gmailAPIProviderName, id)
 		if rerr != nil {
-			return len(ids), 0, rerr
+			return 0, rerr
 		}
 		if ref == nil {
 			missing = append(missing, id)
 		}
 	}
 	if len(missing) == 0 {
-		return len(ids), 0, nil
+		return 0, nil
 	}
 	cur, err := store.LoadAPICursor(g.AccountID, gmailScope)
 	if err != nil {
-		return len(ids), 0, err
+		return 0, err
 	}
 	labels, err := g.labels(ctx)
 	if err != nil {
-		return len(ids), 0, err
+		return 0, err
 	}
 	var res GmailResult
 	var stored []string
 	for chunk := range slices.Chunk(missing, gmailBatchSize) {
-		gone, cerr := g.commitBatch(ctx, chunk, labels, cur, "", "", &res)
+		gone, cerr := g.commitBatch(ctx, chunk, labels, cur, cur.Cursor, cur.Kind, &res)
 		if cerr != nil {
-			return len(ids), res.Added, cerr
+			return res.Added, cerr
 		}
 		for _, id := range chunk {
 			if !slices.Contains(gone, id) {
@@ -486,5 +570,5 @@ func (g *GmailSync) SearchServer(ctx context.Context, query string, limit int) (
 			}
 		}
 	}
-	return len(ids), res.Added, store.PinAPIRefs(g.AccountID, gmailAPIProviderName, stored)
+	return res.Added, store.PinAPIRefs(g.AccountID, gmailAPIProviderName, stored)
 }

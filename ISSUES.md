@@ -236,12 +236,12 @@ Project: [SYNC](PLAN.md#sync).
 
 <a id="sy10"></a>
 
-### SY10 — Older mail is reachable by search only on the Gmail API route
+### SY10 — Older Graph mail is not reachable beyond the sync window
 
-- **Owner / milestone:** [SYNC](PLAN.md#sync) / [SYNC-5](PLAN.md#sync-5) (Graph: [SYNC-6](PLAN.md#sync-6)); found while assessing partial sync (2026-10-15).
+- **Owner / milestone:** [SYNC](PLAN.md#sync) / [SYNC-6](PLAN.md#sync-6); found while assessing partial sync (2026-10-15). Gmail API accounts were covered by [SYNC-5](PLAN.md#sync-5) and IMAP by [SYNC-7](PLAN.md#sync-7).
 - **Severity / proposed priority / status:** low / P3 / open.
-- **Evidence:** the chat search reads only the local store, which holds the sync window. "Search all of Gmail" now stores older matches for accounts on the Gmail API route ([MAIL_APIS](docs/MAIL_APIS.md)). IMAP accounts have a backend-only `IMAPSearchFolder` / `FetchServerMessage` that no UI calls, and Graph has no server search. Nothing loads older mail by scrolling past the window. A pinned Gmail message deleted on the server is not noticed by a reconcile after history expiry.
-- **Resolution criteria:** IMAP and Graph accounts offer the same search beyond the window (or the IMAP binding is removed), and a reconcile checks pinned refs for server-side deletion.
+- **Evidence:** the chat search reads only the local store, which holds the sync window. Accounts on the Gmail API route ([SYNC-5](PLAN.md#sync-5)) and IMAP accounts ([SYNC-7](PLAN.md#sync-7)) have "Search the whole mailbox" and "Load older mail", which store and pin older mail ([MAIL_APIS](docs/MAIL_APIS.md)). Graph has no server search and its sync deletes what falls outside the window, so Graph accounts have nothing to offer yet (deferred with the Microsoft work).
+- **Resolution criteria:** Graph accounts offer the same search and Load older beyond the window.
 
 <a id="r3"></a>
 

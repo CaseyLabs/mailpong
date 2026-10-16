@@ -1644,6 +1644,13 @@ var migrations = []Migration{
 		// remove it as outside the window.
 		SQL: `ALTER TABLE api_message_refs ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0;`,
 	},
+	{
+		Version: 64,
+		// IMAP messages pulled in by a server search or "Load older" (older
+		// than the sync window). A pinned message survives the window's
+		// deletions; the reconcile checks it by UID instead.
+		SQL: `ALTER TABLE messages ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // ThreadKeyExpr is the normalized thread key of a messages row: row is ""
