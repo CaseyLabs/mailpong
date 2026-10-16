@@ -36,7 +36,7 @@
   }: Props = $props()
 
   // Settings state
-  let readReceiptResponsePolicy = $state<string>('ask')
+  let readReceiptResponsePolicy = $state<string>('never')
   let markAsReadDelaySeconds = $state<number>(1) // Display in seconds, store in ms
   let messageListDensity = $state<string>('standard')
   let themeMode = $state<string>(DEFAULT_THEME)
@@ -50,10 +50,10 @@
   let composerFormat = $state<string>('rich')
   let spellcheckEnabled = $state<boolean>(true)
   let spellcheckLanguages = $state<string[]>([])
-  let nativeTitleBar = $state<boolean>(false)
+  let nativeTitleBar = $state<boolean>(true)
   let alwaysLoadImages = $state<boolean>(false)
-  let darkMailContent = $state<boolean>(false)
-  let darkComposerBody = $state<boolean>(false)
+  let darkMailContent = $state<boolean>(true)
+  let darkComposerBody = $state<boolean>(true)
   let accentBarUnread = $state<boolean>(false)
   let accentUnreadStyle = $state<string>('dot')
   let showMessageListCircles = $state<boolean>(true)
@@ -61,7 +61,7 @@
   let alwaysShowMessageCheckbox = $state<boolean>(false)
   let showMessagePreview = $state<boolean>(false)
   let showViewerCircles = $state<boolean>(true)
-  let chatSendKey = $state<string>('enter')
+  let chatSendKey = $state<string>('ctrl-enter')
   let chatReadingWidth = $state<string>('standard')
   let chatDisplayStyle = $state<string>('bubbles')
   let chatIncludeQuote = $state<boolean>(true)
@@ -69,7 +69,7 @@
   let chatNotifyPriorityOnly = $state<boolean>(true)
   let chatShowLowGroup = $state<boolean>(true)
   let chatCombineSenders = $state<boolean>(true)
-  let originalNativeTitleBar = false
+  let originalNativeTitleBar = true
   // Snapshot of the saved theme at dialog open time. Used to revert live preview
   // if the dialog closes without Save (Cancel / ESC / click-outside).
   let originalThemeMode = ''
@@ -173,10 +173,10 @@
       // Empty stored list = "use defaults" — show the same set the engine uses.
       const supportedDicts = filterSupportedDicts(scLangs ?? [])
       spellcheckLanguages = supportedDicts.length ? supportedDicts : defaultSpellcheckLanguages()
-      nativeTitleBar = nativeTB ?? false
+      nativeTitleBar = nativeTB ?? true
       alwaysLoadImages = alwaysImages ?? false
-      darkMailContent = darkMail ?? false
-      darkComposerBody = darkComposer ?? false
+      darkMailContent = darkMail ?? true
+      darkComposerBody = darkComposer ?? true
       accentBarUnread = accentBar ?? false
       accentUnreadStyle = accentStyle || 'dot'
       showMessageListCircles = listCircles ?? true
@@ -184,7 +184,7 @@
       alwaysShowMessageCheckbox = alwaysCheckbox ?? false
       showMessagePreview = messagePreview ?? false
       showViewerCircles = viewerCircles ?? true
-      chatSendKey = sendKey || 'enter'
+      chatSendKey = sendKey || 'ctrl-enter'
       chatReadingWidth = readingWidth || 'standard'
       chatDisplayStyle = displayStyle || 'bubbles'
       chatIncludeQuote = includeQuote ?? true

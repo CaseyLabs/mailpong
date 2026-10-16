@@ -30,7 +30,7 @@ let runBackground = $state<boolean>(false)
 let startHidden = $state<boolean>(false)
 let autostart = $state<boolean>(false)
 let spellcheckEnabled = $state<boolean>(true)
-let chatSendKey = $state<ChatSendKey>('enter')
+let chatSendKey = $state<ChatSendKey>('ctrl-enter')
 let chatReadingWidth = $state<ChatReadingWidth>('standard')
 let chatDisplayStyle = $state<ChatDisplayStyle>('bubbles')
 let chatAutoAdvance = $state<ChatAutoAdvance>('next')
@@ -41,10 +41,10 @@ let language = $state<string>('')
 let composerMode = $state<ComposerMode>('inline')
 let mailtoMode = $state<ComposerMode>('inline')
 let composerFormat = $state<ComposerFormat>('rich')
-let nativeTitleBar = $state<boolean>(false)
+let nativeTitleBar = $state<boolean>(true)
 let alwaysLoadImages = $state<boolean>(false)
-let darkMailContent = $state<boolean>(false)
-let darkComposerBody = $state<boolean>(false)
+let darkMailContent = $state<boolean>(true)
+let darkComposerBody = $state<boolean>(true)
 let accentBarUnread = $state<boolean>(false)
 let accentUnreadStyle = $state<string>('dot')
 let showMessageListCircles = $state<boolean>(true)
@@ -351,10 +351,10 @@ export async function loadSettings(): Promise<ThemeMode> {
     composerMode = (compMode as ComposerMode) || 'inline'
     mailtoMode = (mailMode as ComposerMode) || 'inline'
     composerFormat = (compFormat as ComposerFormat) || 'rich'
-    nativeTitleBar = nativeTB ?? false
+    nativeTitleBar = nativeTB ?? true
     alwaysLoadImages = alwaysImages ?? false
-    darkMailContent = darkMail ?? false
-    darkComposerBody = darkComposer ?? false
+    darkMailContent = darkMail ?? true
+    darkComposerBody = darkComposer ?? true
     accentBarUnread = accentBar ?? false
     accentUnreadStyle = accentStyle || 'dot'
     showMessageListCircles = listCircles ?? true
@@ -365,7 +365,7 @@ export async function loadSettings(): Promise<ThemeMode> {
     spellcheckEnabled = scEnabled ?? true
     spellcheckLanguages = filterSupportedDicts(scLangs ?? [])
     spellcheckCustomWords = scWords ?? []
-    chatSendKey = sendKey === 'ctrl-enter' ? 'ctrl-enter' : 'enter'
+    chatSendKey = sendKey === 'enter' ? 'enter' : 'ctrl-enter'
     chatAutoAdvance = autoAdvance === 'previous' ? 'previous' : 'next'
     chatShowLowGroup = showLowGroup ?? true
     setChatDisplayStyle(displayStyle === 'flat' ? 'flat' : 'bubbles')

@@ -32,7 +32,7 @@ describe('chat compose', () => {
     await line.getByRole('button', { name: /^Priya Shah/ }).waitFor()
     assert.equal(await line.getByText('2 recipients').count(), 0, 'a plain reply names its one recipient instead of a count')
     await box(page).fill('Count me in.')
-    await box(page).press('Enter')
+    await box(page).press('Control+Enter')
     await page.waitForFunction(() => window.__calls.some((c) => c.name === 'QueueChatReply'))
     const [[reply]] = await argsOf(page, 'QueueChatReply')
     assert.deepEqual([reply.messageId, reply.replyAll, reply.text], ['trip-5', false, 'Count me in.'],
@@ -71,9 +71,20 @@ describe('chat compose', () => {
     assert.deepEqual([saved.accountId, saved.threadKey, saved.replyAll], ['acc1', 't-trip', false], 'the draft keeps the reply mode')
   }))
 
+  it('by default Enter adds a line and Ctrl+Enter sends', ui.run({ beforeMount: withComposer() }, async (page) => {
+    await box(page).fill('First line')
+    await box(page).press('Enter')
+    await box(page).pressSequentially('Second line')
+    assert.equal(await box(page).inputValue(), 'First line\nSecond line', 'Enter inserts a newline')
+    assert.equal((await argsOf(page, 'QueueChatReply')).length, 0, 'Enter alone sends nothing')
+    await box(page).press('Control+Enter')
+    await page.waitForFunction(() => window.__calls.some((c) => c.name === 'QueueChatReply'))
+    const [[reply]] = await argsOf(page, 'QueueChatReply')
+    assert.equal(reply.text, 'First line\nSecond line')
+  }))
   it('undo send puts the reply back, then a resend goes out', ui.run({ beforeMount: withComposer() }, async (page) => {
     await box(page).fill('Undo test reply')
-    await box(page).press('Enter')
+    await box(page).press('Control+Enter')
     const pending = page.getByRole('status').filter({ hasText: 'Undo test reply' })
     await pending.getByText(/Sending in \d+s/).waitFor()
     assert.equal(await box(page).inputValue(), '', 'sending clears the box')
@@ -83,7 +94,7 @@ describe('chat compose', () => {
     assert.match(await log(page), /undo send-1 true/)
     assert.doesNotMatch(await log(page), /fire send-1/, 'an undone send never goes out')
     await page.evaluate(() => { window.__sendDelay = 200 })
-    await box(page).press('Enter')
+    await box(page).press('Control+Enter')
     await pending.getByText('Accepted by server; delivery not confirmed').waitFor()
     assert.match(await log(page), /fire send-2/, 'the resend goes out after the delay')
   }))
@@ -92,7 +103,7 @@ describe('chat compose', () => {
     const tripRow = page.locator('[data-chat-row]', { hasText: 'Weekend trip' })
     assert.equal(await tripRow.locator('[data-row-status]').count(), 0, 'a read, unsnoozed chat shows no glyph')
     await box(page).fill('Glyph test reply')
-    await box(page).press('Enter')
+    await box(page).press('Control+Enter')
     await tripRow.locator('[data-row-status="sending"]').waitFor()
     assert.match(await tripRow.getAttribute('aria-label'), /Sending/, 'the row name announces the send')
     await page.getByRole('status').filter({ hasText: 'Glyph test reply' }).getByRole('button', { name: 'Undo' }).click()
@@ -119,7 +130,7 @@ describe('chat compose', () => {
     beforeMount: withComposer(`window.go.app.App.QueueChatReply = async () => { throw new Error('sender needs review: send from the full composer') }`),
   }, async (page) => {
     await box(page).fill('Refused reply')
-    await box(page).press('Enter')
+    await box(page).press('Control+Enter')
     const pending = page.getByRole('status').filter({ hasText: 'Refused reply' })
     await pending.getByText('Submission needs attention').waitFor()
     assert.match(await pending.innerText(), /sender needs review/, 'the refusal reason is shown')
@@ -131,7 +142,7 @@ describe('chat compose', () => {
   const review = `window.__senderEvidence = { email: 'alex@example.com', state: 'unknown', observedState: '', source: 'Gmail send-as settings', route: 'smtp.gmail.com:587', observedAt: '', action: 'review', guidance: 'Sender rights are unverified.', reviewToken: 'tok-1', sendAs: 'unknown', sendOnBehalf: 'unknown', sharedRead: 'unknown' }`
   const sendReviewed = async (page, text) => {
     await box(page).fill(text)
-    await box(page).press('Enter')
+    await box(page).press('Control+Enter')
     return page.getByRole('alertdialog').or(page.getByRole('dialog')).filter({ hasText: 'Sender rights are unverified.' })
   }
 
@@ -171,7 +182,7 @@ describe('chat compose', () => {
     beforeMount: withComposer(`window.__senderEvidence = { email: 'alex@example.com', state: 'pending', observedState: 'pending', source: 'Gmail send-as settings', route: 'smtp.gmail.com:587', observedAt: '', action: 'block', guidance: 'Address is not verified.', reviewToken: '', sendAs: 'unknown', sendOnBehalf: 'unknown', sharedRead: 'unknown' }`),
   }, async (page) => {
     await box(page).fill('Blocked reply')
-    await box(page).press('Enter')
+    await box(page).press('Control+Enter')
     await page.getByRole('status').filter({ hasText: 'Blocked reply' }).getByText(/Address is not verified/).waitFor()
     assert.equal((await argsOf(page, 'QueueChatReply')).length, 0)
   }))

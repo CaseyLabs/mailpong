@@ -65,8 +65,8 @@
     try {
       const [stb, ntb, dcb] = await Promise.all([GetShowTitleBar(), GetNativeTitleBar(), GetDarkComposerBody()])
       setShowTitleBar(stb ?? true)
-      setNativeTitleBar(ntb ?? false)
-      setDarkComposerBody(dcb ?? false)
+      setNativeTitleBar(ntb ?? true)
+      setDarkComposerBody(dcb ?? true)
     } catch (err) {
       console.error('Failed to load title bar settings:', err)
     }

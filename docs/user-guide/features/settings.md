@@ -13,8 +13,8 @@ Access settings by clicking the **gear icon** at the bottom of the far-left rail
 
 ### Title Bar
 
-- **Mailven** (Default) - Built-in title bar matching Mailven's themes
-- **Native** (Requires Restart) - Use the OS native title bar and window decorations
+- **Mailven** - Built-in title bar matching Mailven's themes
+- **System** (Default, Requires Restart) - Use the operating system's title bar and window decorations
 - **Disable** - Some users that are running tiling window managers or simply prefer a more minimalistic look and feel, the title bar can be completely disabled.
 
 ### Language
@@ -31,17 +31,17 @@ Choose your visual theme:
 
 ### Dark mail content
 
-Apply a dark filter to email message content when Mailven is in dark mode.
+Apply a dark filter to email message content when Mailven is in dark mode. On by default.
 
 There are two schools of preferences for dark mode. One is to have dark UI but light e-mail content and the other is to have everything in dark mode. This setting provides a way for the user to choose which school they belong to.
 
-When this toggle is turned on, each message will render in dark mode and have a ☀️ icon on the right side of the header which you can click on to temporarily render the email in light mode in case the dark mode filter breaks the e-mail rendering.
+When this toggle is on, each message will render in dark mode and have a ☀️ icon on the right side of the header which you can click on to temporarily render the email in light mode in case the dark mode filter breaks the e-mail rendering.
 
 ### Dark composer body
 
 Use a dark background for the composer message body when Mailven is in dark mode.
 
-By default, the e-mail content inside the conversation viewer will always have a white background. However, if you prefer having a dark background when using a dark theme, you can turn this setting on.
+This setting is on by default, so the composer body follows the dark theme. Turn it off if you prefer a white composer background in dark mode.
 
 ### Always show checkbox next to message
 
@@ -151,7 +151,7 @@ Options:
 
 Configure how Mailven handles read receipt requests:
 
-- **Never send** - Ignore all read receipt requests
+- **Never send** (Default) - Ignore all read receipt requests
 - **Ask** - Prompt when a sender requests a read receipt
 - **Always send** - Automatically send read receipts
 
@@ -191,7 +191,7 @@ Options for the chat-style mail list, thread view, and reply box.
 
 ### Send Key
 
-**Enter** (default) sends from the reply box, with Shift+Enter for a new line. **Ctrl+Enter** sends instead, and Enter adds a new line.
+**Ctrl+Enter** (default) sends from the reply box, and Enter adds a new line. **Enter** sends instead, with Shift+Enter for a new line.
 
 ### Message Style
 

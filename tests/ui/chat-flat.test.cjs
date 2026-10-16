@@ -41,7 +41,7 @@ describe('chat flat transcript', () => {
   it('a pending reply is flat too', ui.run({ beforeMount: `${flatStyle}\n${composerFakes}\nwindow.__installComposerFakes(window)` }, async (page) => {
     const box = page.getByPlaceholder('Type a reply...')
     await box.fill('Flat pending reply')
-    await box.press('Enter')
+    await box.press('Control+Enter')
     const pending = page.getByRole('status').filter({ hasText: 'Flat pending reply' })
     await pending.getByText(/Sending in \d+s/).waitFor()
     const r = await pending.evaluate((el) => ({ bubble: !!el.querySelector('.bg-bubble-own'), avatar: !!el.querySelector('[aria-hidden="true"].w-8'), rule: !!el.querySelector('.border-l-2') }))

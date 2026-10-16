@@ -59,6 +59,53 @@ func TestSetGetReadReceiptPolicy(t *testing.T) {
 	}
 }
 
+func TestReadReceiptPolicyDefaultsToNever(t *testing.T) {
+	store := NewStore(openTestDB(t))
+	got, err := store.GetReadReceiptResponsePolicy()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != PolicyNever {
+		t.Errorf("got %q, want %q", got, PolicyNever)
+	}
+}
+
+func TestReadNativeTitleBar(t *testing.T) {
+	tests := []struct {
+		name  string
+		value string // "" leaves the setting unset
+		want  bool
+	}{
+		{name: "unset", want: true},
+		{name: "true", value: "true", want: true},
+		{name: "false", value: "false", want: false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			path := filepath.Join(t.TempDir(), "test.db")
+			db, err := database.Open(path)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := db.Migrate(); err != nil {
+				t.Fatal(err)
+			}
+			if tt.value != "" {
+				if err := NewStore(db).SetNativeTitleBar(tt.value == "true"); err != nil {
+					t.Fatal(err)
+				}
+			}
+			db.Close()
+			if got := ReadNativeTitleBar(path); got != tt.want {
+				t.Errorf("got %v, want %v", got, tt.want)
+			}
+		})
+	}
+	if !ReadNativeTitleBar(filepath.Join(t.TempDir(), "missing.db")) {
+		t.Error("missing database: want default true")
+	}
+}
+
 func TestSetGetMarkAsReadDelay(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -359,6 +406,48 @@ func TestSetGetBoolSettings(t *testing.T) {
 			defVal: false,
 		},
 		{
+			name:   "NativeTitleBar_true",
+			set:    (*Store).SetNativeTitleBar,
+			get:    (*Store).GetNativeTitleBar,
+			value:  true,
+			defVal: true,
+		},
+		{
+			name:   "NativeTitleBar_false",
+			set:    (*Store).SetNativeTitleBar,
+			get:    (*Store).GetNativeTitleBar,
+			value:  false,
+			defVal: true,
+		},
+		{
+			name:   "DarkMailContent_true",
+			set:    (*Store).SetDarkMailContent,
+			get:    (*Store).GetDarkMailContent,
+			value:  true,
+			defVal: true,
+		},
+		{
+			name:   "DarkMailContent_false",
+			set:    (*Store).SetDarkMailContent,
+			get:    (*Store).GetDarkMailContent,
+			value:  false,
+			defVal: true,
+		},
+		{
+			name:   "DarkComposerBody_true",
+			set:    (*Store).SetDarkComposerBody,
+			get:    (*Store).GetDarkComposerBody,
+			value:  true,
+			defVal: true,
+		},
+		{
+			name:   "DarkComposerBody_false",
+			set:    (*Store).SetDarkComposerBody,
+			get:    (*Store).GetDarkComposerBody,
+			value:  false,
+			defVal: true,
+		},
+		{
 			name:   "ShowMessagePreview_true",
 			set:    (*Store).SetShowMessagePreview,
 			get:    (*Store).GetShowMessagePreview,
@@ -517,6 +606,30 @@ func TestGenericSetGet(t *testing.T) {
 	}
 	if got != "" {
 		t.Errorf("got %q, want empty string", got)
+	}
+}
+
+func TestSetGetChatSendKey(t *testing.T) {
+	store := NewStore(openTestDB(t))
+
+	got, err := store.GetChatSendKey()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got != ChatSendKeyCtrlEnter {
+		t.Errorf("default: got %q, want %q", got, ChatSendKeyCtrlEnter)
+	}
+
+	for _, key := range []string{ChatSendKeyEnter, ChatSendKeyCtrlEnter} {
+		if err := store.SetChatSendKey(key); err != nil {
+			t.Fatalf("set %q: %v", key, err)
+		}
+		if got, _ := store.GetChatSendKey(); got != key {
+			t.Errorf("got %q, want %q", got, key)
+		}
+	}
+	if err := store.SetChatSendKey("shift-enter"); err == nil {
+		t.Error("expected error for invalid key")
 	}
 }
 

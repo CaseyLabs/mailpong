@@ -246,7 +246,7 @@ var migrations = []Migration{
 			);
 			
 			-- Default read receipt response policy: 'never', 'ask', 'always'
-			INSERT INTO settings (key, value) VALUES ('read_receipt_response_policy', 'ask');
+			INSERT INTO settings (key, value) VALUES ('read_receipt_response_policy', 'never');
 			
 			-- Per-account read receipt request policy
 			-- Controls whether to request read receipts when sending emails

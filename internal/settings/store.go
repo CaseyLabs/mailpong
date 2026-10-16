@@ -292,10 +292,10 @@ func (s *Store) SetDefaultAddress(kind, accountID, value string) error {
 func (s *Store) GetReadReceiptResponsePolicy() (string, error) {
 	value, err := s.Get(KeyReadReceiptResponsePolicy)
 	if err != nil {
-		return PolicyAsk, err
+		return PolicyNever, err
 	}
 	if value == "" {
-		return PolicyAsk, nil // Default
+		return PolicyNever, nil // Default
 	}
 	return value, nil
 }
@@ -673,12 +673,12 @@ func (s *Store) GetSpellcheckEnabled() (bool, error) {
 	return value != "false", nil
 }
 
-// GetChatSendKey returns the chat composer's send key: "enter" (default) or
+// GetChatSendKey returns the chat composer's send key: "ctrl-enter" (default) or
 // "ctrl-enter".
 func (s *Store) GetChatSendKey() (string, error) {
 	value, err := s.Get(KeyChatSendKey)
-	if err != nil || value != ChatSendKeyCtrlEnter {
-		return ChatSendKeyEnter, err
+	if err != nil || value != ChatSendKeyEnter {
+		return ChatSendKeyCtrlEnter, err
 	}
 	return value, nil
 }
@@ -926,13 +926,14 @@ func (s *Store) SetComposerFormat(format string) error {
 	return s.Set(KeyComposerFormat, format)
 }
 
-// GetNativeTitleBar returns whether the native OS title bar should be used
+// GetNativeTitleBar returns whether the native OS title bar should be used.
+// On by default.
 func (s *Store) GetNativeTitleBar() (bool, error) {
 	value, err := s.Get(KeyNativeTitleBar)
 	if err != nil {
-		return false, err
+		return true, err
 	}
-	return value == "true", nil
+	return value != "false", nil
 }
 
 // SetNativeTitleBar sets whether the native OS title bar should be used
@@ -963,13 +964,13 @@ func (s *Store) SetAlwaysLoadImages(enabled bool) error {
 }
 
 // GetDarkMailContent returns whether email content should be visually darkened
-// while Mailven is in dark mode. Off by default.
+// while Mailven is in dark mode. On by default.
 func (s *Store) GetDarkMailContent() (bool, error) {
 	value, err := s.Get(KeyDarkMailContent)
 	if err != nil {
-		return false, err
+		return true, err
 	}
-	return value == "true", nil
+	return value != "false", nil
 }
 
 // SetDarkMailContent persists the dark-mail-content toggle.
@@ -982,13 +983,13 @@ func (s *Store) SetDarkMailContent(enabled bool) error {
 }
 
 // GetDarkComposerBody returns whether the composer message body should use a
-// dark background while Mailven is in dark mode. Off by default (white body).
+// dark background while Mailven is in dark mode. On by default.
 func (s *Store) GetDarkComposerBody() (bool, error) {
 	value, err := s.Get(KeyDarkComposerBody)
 	if err != nil {
-		return false, err
+		return true, err
 	}
-	return value == "true", nil
+	return value != "false", nil
 }
 
 // SetDarkComposerBody persists the dark-composer-body toggle.
@@ -1002,20 +1003,20 @@ func (s *Store) SetDarkComposerBody(enabled bool) error {
 
 // ReadNativeTitleBar opens the database directly to read the native_titlebar setting.
 // Used in main.go before wails.Run() when the full DB isn't initialized yet.
-// Returns false on any error (first run, missing DB, etc.).
+// Returns the default (true) on any error (first run, missing DB, etc.).
 func ReadNativeTitleBar(dbPath string) bool {
 	db, err := sql.Open("sqlite", dbPath)
 	if err != nil {
-		return false
+		return true
 	}
 	defer db.Close()
 
 	var value string
 	err = db.QueryRow("SELECT value FROM settings WHERE key = ?", KeyNativeTitleBar).Scan(&value)
 	if err != nil {
-		return false
+		return true
 	}
-	return value == "true"
+	return value != "false"
 }
 
 // GetChatAutoAdvance returns which chat opens after a chat leaves the list:
