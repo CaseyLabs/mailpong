@@ -4,6 +4,7 @@
   import Icon from '@iconify/svelte'
   import { _ } from '$lib/i18n'
   import { chatList, type ChatFilter } from '$lib/stores/chat.svelte'
+  import ChatServerSearch from './ChatServerSearch.svelte'
 
   interface Props {
     // True when loading failed and there is nothing to show.
@@ -52,6 +53,7 @@
   {:else}
     <Icon icon="mdi:chat-outline" class="w-10 h-10" />
     <p>{emptyText}</p>
+    <ChatServerSearch />
     {#if chatList.filter === 'snoozed' && !chatList.isSearch}<p class="text-sm text-center px-6">{$_('chat.noSnoozedHint')}</p>{/if}
   {/if}
 </div>

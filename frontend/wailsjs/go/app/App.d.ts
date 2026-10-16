@@ -675,6 +675,8 @@ export function SearchContacts(arg1:string,arg2:number):Promise<Array<contact.Co
 
 export function SearchConversations(arg1:string,arg2:string,arg3:string,arg4:number,arg5:number,arg6:string):Promise<Array<message.ConversationSearchResult>>;
 
+export function SearchGmailServer(arg1:string,arg2:string,arg3:number):Promise<app.GmailServerSearchResult>;
+
 export function SearchUnifiedInbox(arg1:string,arg2:number,arg3:number,arg4:string):Promise<Array<message.ConversationSearchResult>>;
 
 export function SendMessage(arg1:string,arg2:smtp.ComposeMessage):Promise<void>;

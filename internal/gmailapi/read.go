@@ -205,6 +205,33 @@ func (r *Reader) ListIDs(ctx context.Context, pageToken string, after time.Time)
 	return ids, out.NextPageToken, nil
 }
 
+// SearchIDs returns up to limit message IDs matching a Gmail search query
+// (the same syntax as the Gmail search box), spam and trash included, newest
+// first.
+func (r *Reader) SearchIDs(ctx context.Context, query string, limit int) ([]string, error) {
+	if limit <= 0 || limit > ListPageSize {
+		limit = ListPageSize
+	}
+	q := url.Values{"maxResults": {strconv.Itoa(limit)}, "includeSpamTrash": {"true"}, "q": {query}}
+	body, err := r.get(ctx, "/messages", q)
+	if err != nil {
+		return nil, err
+	}
+	var out struct {
+		Messages []struct {
+			ID string `json:"id"`
+		} `json:"messages"`
+	}
+	if err := json.Unmarshal(body, &out); err != nil {
+		return nil, fmt.Errorf("decode message search: %w", err)
+	}
+	ids := make([]string, 0, len(out.Messages))
+	for _, m := range out.Messages {
+		ids = append(ids, m.ID)
+	}
+	return ids, nil
+}
+
 // GetRaw fetches the message with format=raw: the base64url body decodes to
 // the byte-identical RFC 5322 message.
 func (r *Reader) GetRaw(ctx context.Context, id string) (*Message, error) {

@@ -2,8 +2,11 @@ package app
 
 import (
 	"context"
+	"errors"
+	"strings"
 	"time"
 
+	"github.com/caseylabs/mailven/internal/account"
 	"github.com/caseylabs/mailven/internal/message"
 	"github.com/caseylabs/mailven/internal/sync"
 )
@@ -83,4 +86,49 @@ func (a *App) FetchServerMessage(accountID, folderID string, uid int) (*message.
 	ctx, cancel := context.WithTimeout(a.ctx, 30*time.Second)
 	defer cancel()
 	return a.syncEngine.FetchServerMessage(ctx, accountID, folderID, uint32(uid))
+}
+
+// GmailServerSearchResult reports a server-side Gmail search.
+type GmailServerSearchResult struct {
+	Found int `json:"found"` // matches the server reported (capped by limit)
+	Added int `json:"added"` // matches newly stored locally
+}
+
+// SearchGmailServer searches the whole Gmail mailbox, beyond the sync window,
+// and stores the matches not yet local so the normal search lists them. It
+// serializes with the account's sync.
+func (a *App) SearchGmailServer(accountID, query string, limit int) (*GmailServerSearchResult, error) {
+	route := a.apiRouted(accountID)
+	if route == nil || route.Route != account.MailRouteGmailAPI {
+		return nil, apiUnsupported("Server-side search for this account")
+	}
+	if strings.TrimSpace(query) == "" {
+		return nil, errors.New("enter a search first")
+	}
+	if a.apiPaused(accountID) {
+		return nil, errAPIPaused
+	}
+	acc, err := a.accountStore.Get(accountID)
+	if err != nil {
+		return nil, err
+	}
+	mu := a.apiRoutes.lock(accountID)
+	mu.Lock()
+	defer mu.Unlock()
+	if a.apiRouted(accountID) == nil {
+		return nil, errAPIPaused
+	}
+	ctx, cancel := context.WithTimeout(a.ctx, 5*time.Minute)
+	defer cancel()
+	ops := a.mailAPIOps()
+	tokens := &apiTokenSource{ops: ops, accountID: accountID}
+	found, added, err := a.newGmailSync(accountID, ops, tokens, a.apiFailureHandler(accountID, route, ops), acc.SyncPeriodDays).
+		SearchServer(ctx, query, limit)
+	if err != nil {
+		return nil, err
+	}
+	if added > 0 {
+		a.updateAPICounts(accountID)
+	}
+	return &GmailServerSearchResult{Found: found, Added: added}, nil
 }

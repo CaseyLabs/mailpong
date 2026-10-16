@@ -124,7 +124,29 @@ func (a *App) runAPISync(ctx context.Context, route *account.MailAPIRoute, wait 
 
 	ops := a.mailAPIOps()
 	tokens := &apiTokenSource{ops: ops, accountID: id}
-	onFailure := func(kind oauth2.MailAPIFailure, err error) {
+	onFailure := a.apiFailureHandler(id, route, ops)
+	var err error
+	switch route.Route {
+	case account.MailRouteGmailAPI:
+		acc, aerr := a.accountStore.Get(id)
+		if aerr != nil {
+			return aerr
+		}
+		_, err = a.newGmailSync(id, ops, tokens, onFailure, acc.SyncPeriodDays).Run(ctx)
+	case account.MailRouteGraphAPI:
+		_, err = (&sync.GraphSync{Engine: a.syncEngine, Reader: &graphapi.Reader{Tokens: tokens, HTTP: a.apiRoutes.http, Base: a.apiRoutes.graphBase, Shared: sharedTarget(route)}, AccountID: id,
+			Tokens: func() (*credentials.OAuthTokens, error) { return ops.validToken(id) }, OnFailure: onFailure}).Run(ctx)
+	default:
+		err = fmt.Errorf("route %q is not an API route", route.Route)
+	}
+	a.updateAPICounts(id)
+	return err
+}
+
+// apiFailureHandler pauses the account's API route and raises the
+// reauthorization event when the provider rejects the stored grant.
+func (a *App) apiFailureHandler(id string, route *account.MailAPIRoute, ops *mailAPIOps) func(oauth2.MailAPIFailure, error) {
+	return func(kind oauth2.MailAPIFailure, err error) {
 		if kind != oauth2.MailAPIFailureReauthorize && kind != oauth2.MailAPIFailurePartialConsent {
 			return
 		}
@@ -135,24 +157,13 @@ func (a *App) runAPISync(ctx context.Context, route *account.MailAPIRoute, wait 
 				"accountId": id, "route": route.Route, "failure": string(kind), "error": err.Error()})
 		}
 	}
-	var err error
-	switch route.Route {
-	case account.MailRouteGmailAPI:
-		acc, aerr := a.accountStore.Get(id)
-		if aerr != nil {
-			return aerr
-		}
-		_, err = (&sync.GmailSync{Engine: a.syncEngine, Reader: &gmailapi.Reader{Tokens: tokens, HTTP: a.apiRoutes.http, Base: a.apiRoutes.gmailBase}, AccountID: id,
-			Tokens: func() (*credentials.OAuthTokens, error) { return ops.validToken(id) }, OnFailure: onFailure,
-			SyncPeriodDays: acc.SyncPeriodDays}).Run(ctx)
-	case account.MailRouteGraphAPI:
-		_, err = (&sync.GraphSync{Engine: a.syncEngine, Reader: &graphapi.Reader{Tokens: tokens, HTTP: a.apiRoutes.http, Base: a.apiRoutes.graphBase, Shared: sharedTarget(route)}, AccountID: id,
-			Tokens: func() (*credentials.OAuthTokens, error) { return ops.validToken(id) }, OnFailure: onFailure}).Run(ctx)
-	default:
-		err = fmt.Errorf("route %q is not an API route", route.Route)
-	}
-	a.updateAPICounts(id)
-	return err
+}
+
+// newGmailSync builds the Gmail driver for an account on its active route.
+func (a *App) newGmailSync(id string, ops *mailAPIOps, tokens *apiTokenSource, onFailure func(oauth2.MailAPIFailure, error), syncPeriodDays int) *sync.GmailSync {
+	return &sync.GmailSync{Engine: a.syncEngine, Reader: &gmailapi.Reader{Tokens: tokens, HTTP: a.apiRoutes.http, Base: a.apiRoutes.gmailBase}, AccountID: id,
+		Tokens: func() (*credentials.OAuthTokens, error) { return ops.validToken(id) }, OnFailure: onFailure,
+		SyncPeriodDays: syncPeriodDays}
 }
 
 // updateAPICounts refreshes the visible folders' counts and last-sync time,

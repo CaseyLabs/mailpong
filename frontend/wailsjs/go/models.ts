@@ -644,6 +644,20 @@ export namespace app {
 	        this.enabled = source["enabled"];
 	    }
 	}
+	export class GmailServerSearchResult {
+	    found: number;
+	    added: number;
+
+	    static createFrom(source: any = {}) {
+	        return new GmailServerSearchResult(source);
+	    }
+
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.found = source["found"];
+	        this.added = source["added"];
+	    }
+	}
 	export class GoogleSetupCheck {
 	    accountId: string;
 	    // Go type: time

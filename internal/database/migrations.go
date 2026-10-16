@@ -1637,6 +1637,13 @@ var migrations = []Migration{
 			ALTER TABLE account_mail_api_routes ADD COLUMN mailbox_address TEXT NOT NULL DEFAULT '';
 			ALTER TABLE account_mail_api_routes ADD COLUMN grant_account_id TEXT NOT NULL DEFAULT '';`,
 	},
+	{
+		Version: 63,
+		// Messages pulled in by a server search (older than the sync window).
+		// A pinned ref survives a windowed reconcile, which would otherwise
+		// remove it as outside the window.
+		SQL: `ALTER TABLE api_message_refs ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // ThreadKeyExpr is the normalized thread key of a messages row: row is ""

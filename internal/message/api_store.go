@@ -411,6 +411,39 @@ func (s *Store) ListAPIRemoteIDs(accountID, provider string) ([]string, error) {
 	return ids, rows.Err()
 }
 
+// ListUnpinnedAPIRemoteIDs is ListAPIRemoteIDs without pinned refs: messages a
+// server search pulled in from outside the sync window, which a windowed
+// reconcile must keep.
+func (s *Store) ListUnpinnedAPIRemoteIDs(accountID, provider string) ([]string, error) {
+	rows, err := s.db.Query(`SELECT remote_id FROM api_message_refs WHERE account_id=? AND provider=? AND pinned=0 ORDER BY remote_id`,
+		accountID, provider)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list unpinned api remote IDs: %w", err)
+	}
+	defer rows.Close()
+	var ids []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		ids = append(ids, id)
+	}
+	return ids, rows.Err()
+}
+
+// PinAPIRefs marks refs as kept across a windowed reconcile. Unknown IDs are
+// ignored.
+func (s *Store) PinAPIRefs(accountID, provider string, remoteIDs []string) error {
+	for _, id := range remoteIDs {
+		if _, err := s.db.Exec(`UPDATE api_message_refs SET pinned=1 WHERE account_id=? AND provider=? AND remote_id=?`,
+			accountID, provider, id); err != nil {
+			return fmt.Errorf("failed to pin api ref: %w", err)
+		}
+	}
+	return nil
+}
+
 func nonNil(s []string) []string {
 	if s == nil {
 		return []string{}

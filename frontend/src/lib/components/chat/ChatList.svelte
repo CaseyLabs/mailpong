@@ -15,6 +15,7 @@
   import ChatListHeader from './ChatListHeader.svelte'
   import ChatLowGroupHeader from './ChatLowGroupHeader.svelte'
   import ChatListEmpty from './ChatListEmpty.svelte'
+  import ChatServerSearch from './ChatServerSearch.svelte'
   import SyncStatusDialog from '../list/SyncStatusDialog.svelte'
   import { ConfirmDialog } from '$lib/components/ui/confirm-dialog'
   import { chatList, type ChatItem } from '$lib/stores/chat.svelte'
@@ -475,6 +476,7 @@
     {#if chatList.loading && chatList.items.length > 0}
       <div class="flex justify-center py-3 text-xs text-muted-foreground">{$_('common.loading')}</div>
     {/if}
+    {#if chatList.items.length > 0 && !chatList.hasMore}<ChatServerSearch />{/if}
   </div>
 </div>
 

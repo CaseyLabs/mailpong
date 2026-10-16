@@ -10,7 +10,7 @@ All Microsoft work, including Microsoft 365 and regular/personal Outlook.com, is
 
 - [SEND — Sending, privacy and compatibility](#send): [MA1](#ma1), [PD10](#pd10), [PD2](#pd2), [DAV1](#dav1), [DAV2](#dav2), [DAV3](#dav3) (resolved: [CD2](#cd2))
 - [API — Provider API activation and migration](#api): [MA4](#ma4), [MA7](#ma7), [MA8](#ma8) (resolved: [F5b-1](#f5b-1), [F5b-3](#f5b-3))
-- [SYNC — Mail synchronization and action reliability](#sync): [SY9](#sy9) (resolved: [SY7](#sy7), [SY8](#sy8), [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
+- [SYNC — Mail synchronization and action reliability](#sync): [SY9](#sy9), [SY10](#sy10) (resolved: [SY7](#sy7), [SY8](#sy8), [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [GOAUTH — Google OAuth client setup](#goauth): no unresolved issue recorded (resolved: [GO1](#go1), [GO2](#go2))
 - [CHAT — Chat composer sender review](#chat): [CH1](#ch1) (resolved: [R1](#r1))
 - [MAINT — Maintenance and documentation](#maint): [D2](#d2), [DOC6](#doc6), [UI3](#ui3), [UI5](#ui5), [UI6](#ui6), [TF1](#tf1) (resolved: [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI4](#ui4), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
@@ -233,6 +233,15 @@ Project: [SYNC](PLAN.md#sync).
 - **Severity / proposed priority / status:** medium / P2 / open.
 - **Evidence:** 2026-10-15, `RemoveAccount` on the dev Gmail account never returned (over 3 minutes; the account row stayed). A goroutine dump showed `RemoveAccount` → `stopAccountIdle` → `imapPool.CloseAccount` → `imap.(*Client).ForceClose` blocked in go-imap `Client.Logout` → `beginCommand` waiting on the connection's command mutex while another command on that connection waited on a read. A second `RemoveAccount` call then blocked on `stopAccountIdle`'s mutex. `ForceClose` sends LOGOUT before closing the socket, so it waits for the in-flight command instead of forcing anything.
 - **Resolution criteria:** `ForceClose` closes the connection without waiting on an in-flight command (for example, close first or bound the LOGOUT), and account removal completes while a command is in flight; covered by a test.
+
+<a id="sy10"></a>
+
+### SY10 — Older mail is reachable by search only on the Gmail API route
+
+- **Owner / milestone:** [SYNC](PLAN.md#sync) / unassigned; found while assessing partial sync (2026-10-15).
+- **Severity / proposed priority / status:** low / P3 / open.
+- **Evidence:** the chat search reads only the local store, which holds the sync window. "Search all of Gmail" now stores older matches for accounts on the Gmail API route ([MAIL_APIS](docs/MAIL_APIS.md)). IMAP accounts have a backend-only `IMAPSearchFolder` / `FetchServerMessage` that no UI calls, and Graph has no server search. Nothing loads older mail by scrolling past the window. A pinned Gmail message deleted on the server is not noticed by a reconcile after history expiry.
+- **Resolution criteria:** IMAP and Graph accounts offer the same search beyond the window (or the IMAP binding is removed), and a reconcile checks pinned refs for server-side deletion.
 
 <a id="r3"></a>
 

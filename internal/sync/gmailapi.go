@@ -158,7 +158,8 @@ func (g *GmailSync) reconcile(ctx context.Context, cur message.APICursor, labels
 			break
 		}
 	}
-	local, err := store.ListAPIRemoteIDs(g.AccountID, gmailAPIProviderName)
+	// Pinned refs (pulled in by a server search) stay even outside the window.
+	local, err := store.ListUnpinnedAPIRemoteIDs(g.AccountID, gmailAPIProviderName)
 	if err != nil {
 		return err
 	}
@@ -421,4 +422,69 @@ func (g *GmailSync) withBackoff(ctx context.Context, do func() (any, error)) (an
 		}
 		return false, 0
 	}, do)
+}
+
+// SearchServer runs a Gmail search over the whole mailbox and stores the
+// matches that are not yet local, so they appear in the normal chat search.
+// Stored matches are pinned: a windowed reconcile keeps them. It returns the
+// number of matches the server reported and how many were newly stored. Like
+// Run, callers must serialize it with Run for the account.
+func (g *GmailSync) SearchServer(ctx context.Context, query string, limit int) (found, added int, err error) {
+	defer func() {
+		var re *gmailapi.ReadError
+		if err != nil && errors.As(err, &re) && re.Failure != oauth2.MailAPIFailureNone && g.OnFailure != nil {
+			g.OnFailure(re.Failure, err)
+		}
+	}()
+	tokens, err := g.Tokens()
+	if err != nil {
+		return 0, 0, &gmailapi.ReadError{Failure: oauth2.ClassifyMailAPIError(err), Err: err}
+	}
+	if err = tokens.RequireMailAPICapability("read", false); err != nil {
+		return 0, 0, &gmailapi.ReadError{Failure: oauth2.MailAPIFailurePartialConsent, Err: err}
+	}
+	if g.folderCache == nil {
+		g.folderCache = &apiFolders{engine: g.Engine, accountID: g.AccountID}
+	}
+	store := g.Engine.messageStore
+	v, err := g.withBackoff(ctx, func() (any, error) { return g.Reader.SearchIDs(ctx, query, limit) })
+	if err != nil {
+		return 0, 0, err
+	}
+	ids := v.([]string)
+	var missing []string
+	for _, id := range ids {
+		ref, _, rerr := store.GetAPIRef(g.AccountID, gmailAPIProviderName, id)
+		if rerr != nil {
+			return len(ids), 0, rerr
+		}
+		if ref == nil {
+			missing = append(missing, id)
+		}
+	}
+	if len(missing) == 0 {
+		return len(ids), 0, nil
+	}
+	cur, err := store.LoadAPICursor(g.AccountID, gmailScope)
+	if err != nil {
+		return len(ids), 0, err
+	}
+	labels, err := g.labels(ctx)
+	if err != nil {
+		return len(ids), 0, err
+	}
+	var res GmailResult
+	var stored []string
+	for chunk := range slices.Chunk(missing, gmailBatchSize) {
+		gone, cerr := g.commitBatch(ctx, chunk, labels, cur, "", "", &res)
+		if cerr != nil {
+			return len(ids), res.Added, cerr
+		}
+		for _, id := range chunk {
+			if !slices.Contains(gone, id) {
+				stored = append(stored, id)
+			}
+		}
+	}
+	return len(ids), res.Added, store.PinAPIRefs(g.AccountID, gmailAPIProviderName, stored)
 }

@@ -91,9 +91,13 @@ func (f *fakeGmail) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if q, ok := strings.CutPrefix(r.URL.Query().Get("q"), "after:"); ok {
 			after, _ = strconv.ParseInt(q, 10, 64)
 		}
+		subject, isSubject := strings.CutPrefix(r.URL.Query().Get("q"), "subject:") // text search: raw contains it
 		var ids []map[string]string
 		keys := make([]string, 0, len(f.msgs))
 		for id, m := range f.msgs {
+			if isSubject && !strings.Contains(m.raw, subject) {
+				continue
+			}
 			if ms, _ := strconv.ParseInt(m.internalMS, 10, 64); after >= 0 && ms/1000 <= after {
 				continue
 			}
@@ -822,5 +826,63 @@ func TestGmailAPIOversizeMessageKeepsReconcileMoving(t *testing.T) {
 	}
 	if res, err = r.run(); err != nil || res.Oversize != 0 || res.Added+res.Updated != 0 {
 		t.Fatalf("idle run = %+v, %v", res, err)
+	}
+}
+
+// TestGmailAPIServerSearchPinsOutsideWindow pins server search: matches
+// outside the sync window are stored, listed by the normal folder query, and
+// survive a windowed reconcile that removes unpinned out-of-window mail.
+func TestGmailAPIServerSearchPinsOutsideWindow(t *testing.T) {
+	now := time.Date(2026, 10, 15, 12, 0, 0, 0, time.UTC)
+	ms := func(t time.Time) string { return strconv.FormatInt(t.UnixMilli(), 10) }
+	r := newGmailRig(t)
+	r.add("new", []string{"INBOX"}, plainMail("new", "Recent", "b"), "1")
+	r.add("old", []string{"INBOX"}, plainMail("old", "Invoice 2019", "b"), "1")
+	r.add("older", []string{"INBOX"}, plainMail("older", "Unrelated 2018", "b"), "1")
+	r.fake.msgs["new"].internalMS = ms(now.AddDate(0, 0, -2))
+	r.fake.msgs["old"].internalMS = ms(now.AddDate(0, 0, -900))
+	r.fake.msgs["older"].internalMS = ms(now.AddDate(0, 0, -1200))
+	r.g.Now = func() time.Time { return now }
+	r.g.SyncPeriodDays = 30
+	if _, err := r.run(); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(r.folderRows("INBOX")); got != 1 {
+		t.Fatalf("rows after windowed sync = %d, want 1", got)
+	}
+
+	found, added, err := r.g.SearchServer(context.Background(), "subject:Invoice", 50)
+	if err != nil || found != 1 || added != 1 {
+		t.Fatalf("SearchServer = %d, %d, %v; want 1, 1, nil", found, added, err)
+	}
+	if got := len(r.folderRows("INBOX")); got != 2 {
+		t.Fatalf("rows after search = %d, want 2", got)
+	}
+	// A repeat finds the match but stores nothing.
+	if found, added, err = r.g.SearchServer(context.Background(), "subject:Invoice", 50); err != nil || found != 1 || added != 0 {
+		t.Fatalf("repeat SearchServer = %d, %d, %v; want 1, 0, nil", found, added, err)
+	}
+
+	r.fake.expired = true // history 404 forces a windowed full reconcile
+	res, err := r.run()
+	if err != nil {
+		t.Fatal(err)
+	}
+	subjects := map[string]bool{}
+	for _, row := range r.folderRows("INBOX") {
+		subjects[row.Subject] = true
+	}
+	if !res.Reconciled || res.Removed != 0 || !subjects["Invoice 2019"] || !subjects["Recent"] || len(subjects) != 2 {
+		t.Fatalf("after reconcile: res = %+v, subjects = %v", res, subjects)
+	}
+}
+
+func TestGmailAPIServerSearchRequiresReadCapability(t *testing.T) {
+	r := newGmailRig(t)
+	r.g.Tokens = func() (*credentials.OAuthTokens, error) {
+		return &credentials.OAuthTokens{Scopes: []string{"openid"}}, nil
+	}
+	if _, _, err := r.g.SearchServer(context.Background(), "subject:x", 10); err == nil {
+		t.Fatal("expected a capability error")
 	}
 }

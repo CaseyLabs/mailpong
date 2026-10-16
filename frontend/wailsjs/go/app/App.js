@@ -1306,6 +1306,10 @@ export function SearchConversations(arg1, arg2, arg3, arg4, arg5, arg6) {
   return window['go']['app']['App']['SearchConversations'](arg1, arg2, arg3, arg4, arg5, arg6);
 }
 
+export function SearchGmailServer(arg1, arg2, arg3) {
+  return window['go']['app']['App']['SearchGmailServer'](arg1, arg2, arg3);
+}
+
 export function SearchUnifiedInbox(arg1, arg2, arg3, arg4) {
   return window['go']['app']['App']['SearchUnifiedInbox'](arg1, arg2, arg3, arg4);
 }
