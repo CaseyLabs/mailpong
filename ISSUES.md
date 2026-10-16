@@ -13,7 +13,7 @@ All Microsoft work, including Microsoft 365 and regular/personal Outlook.com, is
 - [SYNC — Mail synchronization and action reliability](#sync): [SY10](#sy10) (resolved: [SY9](#sy9), [SY7](#sy7), [SY8](#sy8), [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [GOAUTH — Google OAuth client setup](#goauth): no unresolved issue recorded (resolved: [GO1](#go1), [GO2](#go2))
 - [CHAT — Chat composer sender review](#chat): [CH1](#ch1) (resolved: [R1](#r1))
-- [MAINT — Maintenance and documentation](#maint): [D2](#d2) (resolved: [UI6](#ui6), [UI5](#ui5), [DOC6](#doc6), [UI3](#ui3), [TF1](#tf1), [TF2](#tf2), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI4](#ui4), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
+- [MAINT — Maintenance and documentation](#maint): [D2](#d2) (resolved: [TF3](#tf3), [UI6](#ui6), [UI5](#ui5), [DOC6](#doc6), [UI3](#ui3), [TF1](#tf1), [TF2](#tf2), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI4](#ui4), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
 - [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
 
@@ -374,6 +374,17 @@ Project: [MAINT](PLAN.md#maint).
   `>=4.8.4 <6.1.0` and `svelte-check` 4.7.6 requires `^5.0.0 || ^6.0.0`.
   Both tools are already current here; retain TypeScript ~6.0.3 until both accept 7.
   Recheck using the commands in `CONTRIBUTING.md`.
+
+<a id="tf3"></a>
+
+### TF3 — Go tests leave credentials in the developer's OS keyring
+
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / independent fix; found while resetting a live install on 2026-10-16.
+- **Severity / proposed priority / status:** medium / P2 / resolved (2026-10-16).
+- **Resolution:** `internal/credentials/testmode.go` calls `gokeyring.MockInit()` from `init` when `testing.Testing()` is true, so every test binary that links the credential store uses go-keyring's in-memory mock (`internal/credentials` is the only production importer of go-keyring). Removing the keyring's D-Bus latency exposed two races, fixed in the same change: `apimigrate.Store.Correlate` now runs in a `BEGIN IMMEDIATE` transaction on a dedicated connection (a deferred transaction failed at once with `SQLITE_BUSY`/`SQLITE_BUSY_SNAPSHOT` when the API action drain committed first, failing the migration back to IMAP; 5 of 40 runs of `TestMigrationRollbackRestoresIMAPAndReportsQueuedActions`), and the `queueAPIFlagAction` test helper waits for a running drain to finish so the drain cannot claim the queued action before the test inspects it. Evidence: the full `go test ./... -count=1` passes twice and leaves the `mailven` keyring service at 0 entries; `go test ./app -run '^TestMigration|^TestMailAPIRoute|^TestRecover' -count=40` passes; `-race` on `internal/credentials`, `internal/apimigrate` and 21 runs of the `app` migration and route tests pass. One earlier `-race` run failed `TestMailAPIRouteActivationPreconditions` once without a captured message; it did not reproduce.
+- **Problem / evidence (2026-10-16):** `credentials.NewStore` (`internal/credentials/store.go`) uses the real OS keyring whenever `testKeyring()` can write to it, and no package has a `TestMain` that calls `gokeyring.MockInit()`. Only four test files mock it (`app/oauth_import_test.go`, `app/submission_flow_test.go`, `internal/credentials/keyring_fallback_test.go`, `internal/extensions/auth/broker_test.go`). Starting from an empty `mailven` keyring service, one passing `go test ./... -count=1` left 166 entries (`<uuid>:google-mail:*`, `<uuid>:google-mail-api:*`, `carddav:<uuid>`): 163 from `app` (most from `TestMailAPIRoute*`, `TestMigration*`, `TestShared*` and `TestLinked*` fixtures such as `app/mail_api_test.go:53`) and 3 from `extensions/contacts/backend` (`api_test.go:38`). The developer keyring had accumulated 8,592 such entries; `secret-tool clear service mailven` timed out removing them.
+- **Impact / reproduction:** Test runs write fake tokens into the same `mailven` keyring service a native install uses, and never remove them; the keyring grows with every run and slows down. Tests also take a different credential path on machines with a keyring (keyring) than in CI or headless shells (encrypted database fallback), so results are not hermetic. Reproduce: `secret-tool search --all service mailven | grep -c '^label'`, run `go test ./app -run '^TestMailAPIRouteActivationPreconditions$' -count=1` (19 entries), count again.
+- **Dependencies / closure:** Go tests never reach the real keyring, for example a `TestMain` calling `gokeyring.MockInit()` in every package that builds a credential store, or a test seam in `credentials.NewStore`. Closure check: the full Go suite leaves the `mailven` keyring service count unchanged.
 
 <a id="sy1"></a>
 

@@ -13,7 +13,7 @@ Priorities are recommendations assigned in this reorganization: P1 privacy/data 
 | [SYNC — Mail synchronization and action reliability](#sync) | proposed | P1 | [1](ISSUES.md#sync) | SYNC-1–4 done; SY9 resolved by API-7; SYNC-5 done (Gmail Load older, SY10 partly); SYNC-7 done (older IMAP mail, SY10 partly); SYNC-6 deferred (Graph window) |
 | [GOAUTH — Google OAuth client setup](#goauth) | proposed | P2 | [0](ISSUES.md#goauth) | GOAUTH-1–4 done (GO1, GO2 resolved); GOAUTH-5 done (assessment; owner kept bring-your-own) |
 | [CHAT — Chat composer sender review](#chat) | proposed | P3 | [1](ISSUES.md#chat) | CH1 unassigned (cosmetic) |
-| [MAINT — Maintenance and documentation](#maint) | proposed | P2 | [1](ISSUES.md#maint) | MAINT-8 done (UI4 resolved); D2 deferred/upstream blocked; MAINT-9 done (TF1 resolved); MAINT-10 done (UI3 resolved); MAINT-11 done (DOC6 resolved); MAINT-12 done (UI5 resolved); MAINT-13 done (UI6 resolved); TF2 resolved |
+| [MAINT — Maintenance and documentation](#maint) | proposed | P2 | [1](ISSUES.md#maint) | MAINT-8 done (UI4 resolved); D2 deferred/upstream blocked; MAINT-9 done (TF1 resolved); MAINT-10 done (UI3 resolved); MAINT-11 done (DOC6 resolved); MAINT-12 done (UI5 resolved); MAINT-13 done (UI6 resolved); TF2 resolved; TF3 resolved |
 | [UIX — UI refresh](#uix) | proposed | P3 | 0 | UIX-1 (UI1 resolved) to UIX-6 done |
 | [AI — AI development workflows](#ai) | deferred | P3 | [1](ISSUES.md#ai) | G4 deferred; no eligible work |
 | [WAILS — Desktop framework migration assessment](#wails) | deferred | P3 | [0](ISSUES.md#wails) | W3-M0–M7 deferred until official stable Wails v3 release and owner selection |

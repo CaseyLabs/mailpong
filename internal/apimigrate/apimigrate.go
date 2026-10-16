@@ -5,6 +5,7 @@
 package apimigrate
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"errors"
@@ -246,11 +247,24 @@ func (s *Store) Correlate(accountID string) (CorrelateResult, error) {
 	if err := s.db.QueryRow(`SELECT COUNT(*)>0 FROM pragma_table_info('attachments') WHERE name='content'`).Scan(&hasContent); err != nil {
 		return res, fmt.Errorf("failed to inspect attachments: %w", err)
 	}
-	tx, err := s.db.Begin()
+	// BEGIN IMMEDIATE takes the write lock up front: a deferred transaction
+	// fails at once with SQLITE_BUSY(_SNAPSHOT) in WAL mode when another
+	// connection (such as the API action drain) commits before its first write.
+	ctx := context.Background()
+	conn, err := s.db.Conn(ctx)
 	if err != nil {
 		return res, fmt.Errorf("failed to begin correlation: %w", err)
 	}
-	defer func() { _ = tx.Rollback() }()
+	defer conn.Close()
+	if _, err := conn.ExecContext(ctx, "BEGIN IMMEDIATE"); err != nil {
+		return res, fmt.Errorf("failed to begin correlation: %w", err)
+	}
+	committed := false
+	defer func() {
+		if !committed {
+			_, _ = conn.ExecContext(ctx, "ROLLBACK")
+		}
+	}()
 	// First pass: pick each API row's single IMAP match, if any, and count how
 	// many API rows claim each IMAP row.
 	type pair struct{ api, imap string }
@@ -289,14 +303,15 @@ func (s *Store) Correlate(accountID string) (CorrelateResult, error) {
 			res.Ambiguous++
 			continue
 		}
-		if err := carryState(tx, m.imap, m.api, hasContent); err != nil {
+		if err := carryState(ctx, conn, m.imap, m.api, hasContent); err != nil {
 			return res, err
 		}
 		res.Correlated++
 	}
-	if err := tx.Commit(); err != nil {
+	if _, err := conn.ExecContext(ctx, "COMMIT"); err != nil {
 		return res, fmt.Errorf("failed to commit correlation: %w", err)
 	}
+	committed = true
 	return res, nil
 }
 
@@ -309,9 +324,9 @@ func key(messageID string, date time.Time) string {
 // carryState copies what only the local database knows from an IMAP row onto
 // its API counterpart. Provider-owned fields (read/starred/draft/labels,
 // envelope) stay as the API sync set them.
-func carryState(tx *sql.Tx, from, to string, hasContent bool) error {
+func carryState(ctx context.Context, conn *sql.Conn, from, to string, hasContent bool) error {
 	// Cached body and its crypto parts, only where the API row has none.
-	if _, err := tx.Exec(`UPDATE messages SET
+	if _, err := conn.ExecContext(ctx, `UPDATE messages SET
 			body_text=(SELECT s.body_text FROM messages s WHERE s.id=?1),
 			body_html=(SELECT s.body_html FROM messages s WHERE s.id=?1),
 			body_fetched=1,
@@ -324,7 +339,7 @@ func carryState(tx *sql.Tx, from, to string, hasContent bool) error {
 		return fmt.Errorf("failed to carry cached body: %w", err)
 	}
 	// Verification results and per-message local marks.
-	if _, err := tx.Exec(`UPDATE messages SET
+	if _, err := conn.ExecContext(ctx, `UPDATE messages SET
 			smime_status=COALESCE(NULLIF(smime_status,''),(SELECT s.smime_status FROM messages s WHERE s.id=?1)),
 			smime_signer_email=COALESCE(NULLIF(smime_signer_email,''),(SELECT s.smime_signer_email FROM messages s WHERE s.id=?1)),
 			smime_signer_subject=COALESCE(NULLIF(smime_signer_subject,''),(SELECT s.smime_signer_subject FROM messages s WHERE s.id=?1)),
@@ -345,7 +360,7 @@ func carryState(tx *sql.Tx, from, to string, hasContent bool) error {
 	if hasContent {
 		cols, sel = ", content", ", content"
 	}
-	if _, err := tx.Exec(`INSERT INTO attachments (id, message_id, filename, content_type, size, content_id, is_inline, embedded, local_path`+cols+`)
+	if _, err := conn.ExecContext(ctx, `INSERT INTO attachments (id, message_id, filename, content_type, size, content_id, is_inline, embedded, local_path`+cols+`)
 		SELECT lower(hex(randomblob(16))), ?2, filename, content_type, size, content_id, is_inline, embedded, local_path`+sel+`
 		FROM attachments WHERE message_id=?1
 		AND NOT EXISTS (SELECT 1 FROM attachments WHERE message_id=?2)`, from, to); err != nil {

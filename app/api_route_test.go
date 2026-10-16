@@ -237,6 +237,7 @@ func TestMailAPIRouteActivationPreconditions(t *testing.T) {
 func queueAPIFlagAction(t *testing.T, r *routeRig, status string) *message.APIAction {
 	t.Helper()
 	a := r.app
+	waitAPIActionsIdle(t, a, r.acc.ID)
 	inbox := &folder.Folder{AccountID: r.acc.ID, Name: "api-inbox", Path: "api-inbox", Type: folder.Type("")}
 	if err := a.folderStore.Create(inbox); err != nil {
 		t.Fatal(err)
@@ -269,6 +270,26 @@ func queueAPIFlagAction(t *testing.T, r *routeRig, status string) *message.APIAc
 		}
 	}
 	return acts[0]
+}
+
+// waitAPIActionsIdle waits until no background drain runs for the account
+// (activation and migration kick one), so it cannot claim an action the test
+// queues next before the test inspects it.
+func waitAPIActionsIdle(t *testing.T, a *App, accountID string) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		a.apiActions.mu.Lock()
+		busy := a.apiActions.busy[accountID]
+		a.apiActions.mu.Unlock()
+		if !busy {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatal("api action drain still running")
+		}
+		time.Sleep(time.Millisecond)
+	}
 }
 
 func TestMailAPIRouteDeactivationMidQueueKeepsActions(t *testing.T) {
