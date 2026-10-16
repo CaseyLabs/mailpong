@@ -9,11 +9,11 @@ All Microsoft work, including Microsoft 365 and regular/personal Outlook.com, is
 ## Index
 
 - [SEND — Sending, privacy and compatibility](#send): [MA1](#ma1), [PD10](#pd10), [PD2](#pd2), [DAV1](#dav1), [DAV2](#dav2), [DAV3](#dav3) (resolved: [CD2](#cd2))
-- [API — Provider API activation and migration](#api): [MA4](#ma4), [MA7](#ma7), [MA8](#ma8) (resolved: [F5b-1](#f5b-1), [F5b-3](#f5b-3))
-- [SYNC — Mail synchronization and action reliability](#sync): [SY9](#sy9), [SY10](#sy10) (resolved: [SY7](#sy7), [SY8](#sy8), [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
+- [API — Provider API activation and migration](#api): [MA4](#ma4) (resolved: [MA7](#ma7), [MA8](#ma8), [F5b-1](#f5b-1), [F5b-3](#f5b-3))
+- [SYNC — Mail synchronization and action reliability](#sync): [SY10](#sy10) (resolved: [SY9](#sy9), [SY7](#sy7), [SY8](#sy8), [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [GOAUTH — Google OAuth client setup](#goauth): no unresolved issue recorded (resolved: [GO1](#go1), [GO2](#go2))
 - [CHAT — Chat composer sender review](#chat): [CH1](#ch1) (resolved: [R1](#r1))
-- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [DOC6](#doc6), [UI3](#ui3), [UI5](#ui5), [UI6](#ui6), [TF1](#tf1) (resolved: [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI4](#ui4), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
+- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [DOC6](#doc6), [UI3](#ui3), [UI5](#ui5), [UI6](#ui6), [TF1](#tf1), [TF2](#tf2) (resolved: [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI4](#ui4), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
 - [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
 
@@ -119,19 +119,21 @@ Project: [API](PLAN.md#api).
 
 ### MA7 — Interrupted activation leaves the route active
 
-- **Owner / milestone:** [API](PLAN.md#api) / found during [SEND-2](PLAN.md#send-2).
-- **Severity / proposed priority / status:** medium / P2 / open.
+- **Owner / milestone:** [API](PLAN.md#api) / [API-7](PLAN.md#api-7); found during [SEND-2](PLAN.md#send-2).
+- **Severity / proposed priority / status:** medium / P2 / resolved.
 - **Evidence:** 2026-10-15, quitting the dev app during `ActivateMailAPIRoute`'s blocking reconcile left the route `active` with the folder rows swapped and the reconcile partly done; the revert only runs on a returned error. The next start resumed the reconcile in the background. [Activation](docs/MAIL_APIS.md) promises the account stays on IMAP on failure.
 - **Resolution criteria:** startup either completes or reverts an activation that was interrupted, and the documented guarantee matches; covered by a test.
+- **Resolution:** fixed in [API-7](PLAN.md#api-7) on 2026-10-15: startup returns an interrupted activation to IMAP (`activating` mark, migration 65, `recoverInterruptedAPIActivations`); [MAIL_APIS](docs/MAIL_APIS.md) documents it. Pinned by `TestRecoverInterruptedAPIActivationReturnsToIMAP` and `TestAPIActivationOutcomeClearsMark`; live quit-during-activation check unrun. [Evidence](docs/validation/api-7.md).
 
 <a id="ma8"></a>
 
 ### MA8 — Account settings cannot be saved on an API route
 
-- **Owner / milestone:** [API](PLAN.md#api) / found during [SEND-2](PLAN.md#send-2).
-- **Severity / proposed priority / status:** medium / P2 / open.
+- **Owner / milestone:** [API](PLAN.md#api) / [API-7](PLAN.md#api-7); found during [SEND-2](PLAN.md#send-2).
+- **Severity / proposed priority / status:** medium / P2 / resolved.
 - **Evidence:** 2026-10-15, saving Edit Account (sync period change) on an active Gmail API route failed with "starred folder not found: [Gmail]/Starred": `UpdateAccount` (`app/account.go`) checks the special-folder paths against visible folders, and activation hid the IMAP rows.
 - **Resolution criteria:** settings save on API-routed accounts without losing the stored IMAP folder paths; covered by a test.
+- **Resolution:** fixed in [API-7](PLAN.md#api-7) on 2026-10-15: mappings are checked against the hidden IMAP rows (`folder.Store.ListHidden`, `App.mappingFolders`). Pinned by `TestUpdateAccountOnActiveAPIRouteKeepsIMAPMappings`, which fails without the fix; live Edit Account check unrun. [Evidence](docs/validation/api-7.md).
 
 <a id="f5b-1"></a>
 
@@ -229,10 +231,11 @@ Project: [SYNC](PLAN.md#sync).
 
 ### SY9 — Removing an account hangs on a busy IMAP connection
 
-- **Owner / milestone:** [SYNC](PLAN.md#sync) / unassigned; found during [SEND-2](PLAN.md#send-2).
-- **Severity / proposed priority / status:** medium / P2 / open.
+- **Owner / milestone:** [SYNC](PLAN.md#sync) / [API-7](PLAN.md#api-7) (API project); found during [SEND-2](PLAN.md#send-2).
+- **Severity / proposed priority / status:** medium / P2 / resolved.
 - **Evidence:** 2026-10-15, `RemoveAccount` on the dev Gmail account never returned (over 3 minutes; the account row stayed). A goroutine dump showed `RemoveAccount` → `stopAccountIdle` → `imapPool.CloseAccount` → `imap.(*Client).ForceClose` blocked in go-imap `Client.Logout` → `beginCommand` waiting on the connection's command mutex while another command on that connection waited on a read. A second `RemoveAccount` call then blocked on `stopAccountIdle`'s mutex. `ForceClose` sends LOGOUT before closing the socket, so it waits for the in-flight command instead of forcing anything.
 - **Resolution criteria:** `ForceClose` closes the connection without waiting on an in-flight command (for example, close first or bound the LOGOUT), and account removal completes while a command is in flight; covered by a test.
+- **Resolution:** fixed in [API-7](PLAN.md#api-7) on 2026-10-15: `ForceClose` gives LOGOUT at most 500 ms, then closes the socket, which fails the stuck command. Pinned by `TestForceCloseDoesNotWaitForStuckCommand`, which hangs without the fix; live removal during a sync unrun. [Evidence](docs/validation/api-7.md).
 
 <a id="sy10"></a>
 
@@ -490,6 +493,15 @@ Project: [AI](PLAN.md#ai).
 - **Problem / evidence (2026-10-15):** `go test ./extensions/calendar/backend` fails intermittently with `TempDir RemoveAll cleanup: unlinkat .../extensions/calendar: directory not empty`. Reproduced on `main` (1 failure in 30 runs with `-count=30`) and seen once in `make test`; the same package passed 30 of 30 runs on `feat/goauth-disabled-api`. A syncer goroutine probably still writes under the test directory when cleanup runs; not diagnosed.
 - **Impact / reproduction:** `make test` and `project-check.py --run` can fail spuriously, which tempts reruns without a fix. Reproduce with `go test ./extensions/calendar/backend -count=30`.
 - **Dependencies / closure:** Stop or wait for the syncer in the test before cleanup; the package passes at `-count=100`.
+
+<a id="tf2"></a>
+
+### TF2 — Activation-failure tests wait out the real API backoff
+
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / found during [API-7](PLAN.md#api-7); fix not selected.
+- **Severity / proposed priority / status:** low / P3 / open.
+- **Problem / evidence (2026-10-15):** `TestMailAPIRouteActivationAndDeactivationSwapRows` and `TestMailAPIRouteActivationFailureStaysOnIMAP` (`app/api_route_test.go`) each take about 106 s: their fake Gmail answers 500 and the reconcile sleeps through `apiBackoff`'s real waits (`internal/sync/apicommon.go`), lengthened by the SY7 fix. Together they add about 3.5 minutes to `make test` and to every Go landing check.
+- **Dependencies / closure:** the route tests inject a no-op sleep (or the fake answers a non-retried error) and each runs in a few seconds, with the same assertions.
 
 <a id="ai6"></a>
 

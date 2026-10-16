@@ -352,14 +352,27 @@ func (c *Client) ForceClose() error {
 
 	c.log.Debug().Msg("Force-closing IMAP connection")
 
-	// Send LOGOUT without waiting for the BYE response.
-	// On live connections the server receives it and frees the slot.
-	// On dead connections the write may fail silently — either way
-	// we close the socket below.
-	c.client.Logout()
+	// Send LOGOUT without waiting for the BYE response, so a live server
+	// frees the slot. Sending it takes the connection's command lock, which
+	// a command still waiting on the server holds, so give it only a short
+	// grace and then close the socket regardless; closing fails the stuck
+	// command and releases the lock.
+	sent := make(chan struct{})
+	go func() {
+		defer close(sent)
+		c.client.Logout()
+	}()
+	select {
+	case <-sent:
+	case <-time.After(forceCloseLogoutGrace):
+		c.log.Debug().Msg("LOGOUT blocked by an in-flight command; closing the socket")
+	}
 
 	return c.client.Close()
 }
+
+// forceCloseLogoutGrace bounds how long ForceClose waits to send LOGOUT.
+var forceCloseLogoutGrace = 500 * time.Millisecond
 
 // Caps returns the server capabilities
 func (c *Client) Caps() imap.CapSet {

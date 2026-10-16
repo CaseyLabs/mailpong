@@ -204,15 +204,17 @@ func (a *App) UpdateAccount(id string, config account.AccountConfig) (*account.A
 		"starred": config.StarredFolderPath,
 	}
 
+	folders, err := a.mappingFolders(id)
+	if err != nil {
+		return nil, fmt.Errorf("error checking folder mappings: %w", err)
+	}
+	known := make(map[string]bool, len(folders))
+	for _, f := range folders {
+		known[f.Path] = true
+	}
 	for folderType, path := range folderPaths {
-		if path != "" {
-			f, err := a.folderStore.GetByPath(id, path)
-			if err != nil {
-				return nil, fmt.Errorf("error checking %s folder: %w", folderType, err)
-			}
-			if f == nil {
-				return nil, fmt.Errorf("%s folder not found: %s", folderType, path)
-			}
+		if path != "" && !known[path] {
+			return nil, fmt.Errorf("%s folder not found: %s", folderType, path)
 		}
 	}
 

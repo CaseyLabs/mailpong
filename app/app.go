@@ -824,6 +824,9 @@ func (a *App) Startup(ctx context.Context) {
 	a.draftSyncDone = make(map[string]chan struct{})
 	a.idleSentNext = make(map[string]time.Time)
 
+	// Return interrupted API activations to IMAP before anything syncs.
+	a.recoverInterruptedAPIActivations()
+
 	// Initialize and start background email sync (polling + IDLE)
 	a.initBackgroundSync(ctx)
 

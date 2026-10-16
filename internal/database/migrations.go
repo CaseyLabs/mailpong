@@ -1651,6 +1651,12 @@ var migrations = []Migration{
 		// deletions; the reconcile checks it by UID instead.
 		SQL: `ALTER TABLE messages ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0;`,
 	},
+	{
+		Version: 65,
+		// Set while an API route activation runs (MA7). One still set at
+		// startup was interrupted, and the account returns to IMAP.
+		SQL: `ALTER TABLE account_mail_api_routes ADD COLUMN activating INTEGER NOT NULL DEFAULT 0;`,
+	},
 }
 
 // ThreadKeyExpr is the normalized thread key of a messages row: row is ""

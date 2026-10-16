@@ -3,6 +3,7 @@ package folder
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/caseylabs/mailven/internal/database"
@@ -27,16 +28,40 @@ func NewStore(db *database.DB) *Store {
 
 // List returns all folders for an account
 func (s *Store) List(accountID string) ([]*Folder, error) {
+	return s.list(`account_id = ? AND folder_type NOT LIKE 'hidden:%'`, accountID)
+}
+
+// ListHidden returns the account's folders hidden as the `rows` set (RowsIMAP
+// or RowsAPI) with their original type and path, as a swap back would restore
+// them. An IMAP account on an active API route keeps its folder mappings in
+// these rows.
+func (s *Store) ListHidden(accountID, rows string) ([]*Folder, error) {
+	typePrefix := hiddenPrefix + rows + ":"
+	pathPrefix := pathMarker + rows + pathMarker
+	folders, err := s.list(`account_id = ? AND substr(folder_type, 1, ?) = ? AND substr(path, 1, ?) = ?`,
+		accountID, len(typePrefix), typePrefix, len(pathPrefix), pathPrefix)
+	if err != nil {
+		return nil, err
+	}
+	for _, f := range folders {
+		f.Type = Type(strings.TrimPrefix(string(f.Type), typePrefix))
+		f.Path = strings.TrimPrefix(f.Path, pathPrefix)
+	}
+	return folders, nil
+}
+
+// list returns the folders matching where, ordered by name.
+func (s *Store) list(where string, args ...any) ([]*Folder, error) {
 	query := `
 		SELECT id, account_id, name, path, folder_type, parent_id,
 		       uid_validity, uid_next, highest_mod_seq,
 		       total_count, unread_count, last_sync, subscribed
 		FROM folders
-		WHERE account_id = ? AND folder_type NOT LIKE 'hidden:%'
+		WHERE ` + where + `
 		ORDER BY name
 	`
 
-	rows, err := s.db.Query(query, accountID)
+	rows, err := s.db.Query(query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query folders: %w", err)
 	}

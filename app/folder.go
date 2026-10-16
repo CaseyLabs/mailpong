@@ -62,13 +62,14 @@ func (a *App) SyncFolders(accountID string) error {
 func (a *App) GetAccountFoldersForMapping(accountID string) ([]*folder.Folder, error) {
 	log := logging.WithComponent("app")
 
-	folders, err := a.folderStore.List(accountID)
+	folders, err := a.mappingFolders(accountID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list folders: %w", err)
 	}
 
-	// If no folders, trigger sync first
-	if len(folders) == 0 {
+	// If no folders, trigger sync first. An API-routed account syncs its API
+	// rows, which mappings never use.
+	if len(folders) == 0 && a.apiRouted(accountID) == nil {
 		log.Info().Str("accountID", accountID).Msg("No folders found, triggering sync")
 		if err := a.SyncFolders(accountID); err != nil {
 			return nil, fmt.Errorf("failed to sync folders: %w", err)
@@ -84,10 +85,25 @@ func (a *App) GetAccountFoldersForMapping(accountID string) ([]*folder.Folder, e
 	return folders, nil
 }
 
+// mappingFolders returns the IMAP folders that special-folder mappings name.
+// While an API route is active they are hidden, and the visible rows are the
+// API's own.
+func (a *App) mappingFolders(accountID string) ([]*folder.Folder, error) {
+	if a.apiRouted(accountID) != nil {
+		hidden, err := a.folderStore.ListHidden(accountID, folder.RowsIMAP)
+		// Until an activation swaps the rows, the IMAP rows are still the
+		// visible ones.
+		if err != nil || len(hidden) > 0 {
+			return hidden, err
+		}
+	}
+	return a.folderStore.List(accountID)
+}
+
 // GetAutoDetectedFolders returns the auto-detected special folders for an account.
 // Returns map of folder type -> folder path (e.g., {"sent": "Sent Mail", "trash": "Deleted Items"}).
 func (a *App) GetAutoDetectedFolders(accountID string) (map[string]string, error) {
-	folders, err := a.folderStore.List(accountID)
+	folders, err := a.mappingFolders(accountID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list folders: %w", err)
 	}

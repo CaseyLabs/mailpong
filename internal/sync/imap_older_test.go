@@ -43,7 +43,9 @@ func newIMAPRig(t *testing.T) *imapRig {
 	}
 	mem.AddUser(user)
 	srv := imapserver.New(&imapserver.Options{
-		NewSession:   func(*imapserver.Conn) (imapserver.Session, *imapserver.GreetingData, error) { return mem.NewSession(), nil, nil },
+		NewSession: func(*imapserver.Conn) (imapserver.Session, *imapserver.GreetingData, error) {
+			return mem.NewSession(), nil, nil
+		},
 		InsecureAuth: true,
 	})
 	ln, err := net.Listen("tcp", "127.0.0.1:0")

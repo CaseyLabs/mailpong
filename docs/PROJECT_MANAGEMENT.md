@@ -60,9 +60,11 @@ Use project-finish-milestone for checks, independent acceptance review, correctn
 
 Move lasting behavior/decisions to technical docs and verification evidence to validation records. Collapse completed roadmap details to a short ID/status/evidence link while referenced; remove superseded detail and resolved register entries once no live reference needs them. Preserve an anchor or update all live links before removal; IDs remain traceable in Git. Do not archive entire routine plans merely for chronology. Commit/push/landing follows repository policy subject to explicit user/runtime limits; a no-commit request always wins. Completing one milestone never authorizes the next; an unattended run selects each one afresh.
 
+After completing a milestone, record the next recommended milestone in roadmap Progress as one line, `**Next recommended:** [ID](#id) — reason`, replacing any earlier one. Choose it by the eligibility and ordering rules above; if no milestone is eligible, name the best issue to turn into one, or what would unblock work. A recommendation is not authorization: the next session still needs selection, but a bare continuation request offers it first.
+
 ### No active milestone / handoff
 
-State “No active milestone” in roadmap Progress; identify candidates and blockers without changing their statuses. A handoff names the project/milestone IDs, roadmap section, execution checkpoint, checkout/branch/revision/dirty state, next authorized action, results/limits, and commit/push status. If no work is authorized, its next action is selection or blocker resolution, never an invitation to activate deferred work.
+State “No active milestone” in roadmap Progress, keep the **Next recommended** line current, and identify candidates and blockers without changing their statuses. A handoff names the project/milestone IDs, roadmap section, execution checkpoint, checkout/branch/revision/dirty state, next authorized action, results/limits, and commit/push status. If no work is authorized, its next action is selection or blocker resolution, never an invitation to activate deferred work.
 
 ## Basis and conventions
 

@@ -126,12 +126,39 @@ func (s *Store) ClearMailAPIRoute(accountID string) error {
 	return nil
 }
 
+// SetMailAPIActivating marks or clears an activation in progress. A mark left
+// at startup belongs to an activation the app quit during.
+func (s *Store) SetMailAPIActivating(accountID string, on bool) error {
+	if _, err := s.db.Exec(`UPDATE account_mail_api_routes SET activating=? WHERE account_id=?`, boolToInt(on), accountID); err != nil {
+		return fmt.Errorf("failed to mark mail API activation: %w", err)
+	}
+	return nil
+}
+
+// ListActivatingMailAPIRoutes returns the accounts whose activation mark is set.
+func (s *Store) ListActivatingMailAPIRoutes() ([]string, error) {
+	ids, err := s.routeAccountIDs(`activating=1`)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list mail API activations: %w", err)
+	}
+	return ids, nil
+}
+
 // ListMailAPIRoutesGrantedBy returns the child routes that reference the
 // account's API grant, staged or active.
 func (s *Store) ListMailAPIRoutesGrantedBy(ownerID string) ([]string, error) {
-	rows, err := s.db.Query(`SELECT account_id FROM account_mail_api_routes WHERE grant_account_id=? ORDER BY account_id`, ownerID)
+	ids, err := s.routeAccountIDs(`grant_account_id=?`, ownerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list dependent mail API routes: %w", err)
+	}
+	return ids, nil
+}
+
+// routeAccountIDs returns the account IDs of the routes matching where.
+func (s *Store) routeAccountIDs(where string, args ...any) ([]string, error) {
+	rows, err := s.db.Query(`SELECT account_id FROM account_mail_api_routes WHERE `+where+` ORDER BY account_id`, args...)
+	if err != nil {
+		return nil, err
 	}
 	defer rows.Close()
 	var ids []string

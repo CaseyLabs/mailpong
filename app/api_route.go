@@ -14,6 +14,7 @@ import (
 	"github.com/caseylabs/mailven/internal/folder"
 	"github.com/caseylabs/mailven/internal/gmailapi"
 	"github.com/caseylabs/mailven/internal/graphapi"
+	"github.com/caseylabs/mailven/internal/logging"
 	"github.com/caseylabs/mailven/internal/message"
 	"github.com/caseylabs/mailven/internal/oauth2"
 	"github.com/caseylabs/mailven/internal/sync"
@@ -221,7 +222,8 @@ func (a *App) imapSyncBusy(accountID string) bool {
 // grant must pass the read/write/send gates and no IMAP sync or in-flight queue
 // action may exist. IMAP data, credentials, drafts and queued mail are kept;
 // the IMAP folder rows are hidden, not deleted. One API reconcile runs first
-// and, if it fails, the account stays on IMAP.
+// and, if it fails or the app quits during it, the account stays on IMAP
+// (see recoverInterruptedAPIActivations).
 func (a *App) ActivateMailAPIRoute(accountID string) error {
 	a.apiRoutes.transition.Lock()
 	defer a.apiRoutes.transition.Unlock()
@@ -267,22 +269,42 @@ func (a *App) activateAPIRoute(accountID string) error {
 		next.State = state
 		return a.accountStore.SetMailAPIRoute(next)
 	}
+	// The mark outlives a quit mid-activation, so the next start can return
+	// the account to IMAP. It is cleared once the outcome is settled.
+	if err := a.accountStore.SetMailAPIActivating(accountID, true); err != nil {
+		return err
+	}
+	// A mark left set only costs a needless return to IMAP at the next start,
+	// so a failure to clear it is logged rather than failing the activation.
+	settled := func() {
+		if err := a.accountStore.SetMailAPIActivating(accountID, false); err != nil {
+			log := logging.WithComponent("app")
+			log.Error().Err(err).Str("account_id", accountID).
+				Msg("Failed to clear the API activation mark; the next start returns the account to IMAP")
+		}
+	}
 	// Going active first stops new IMAP syncs from starting; then check that
 	// none is already running.
 	if err := setState(account.MailRouteStateActive); err != nil {
+		settled()
 		return err
 	}
 	rs.setPaused(accountID, false)
 	if a.imapSyncBusy(accountID) {
 		_ = setState(account.MailRouteStateStaged)
+		settled()
 		return errors.New("an IMAP sync is in progress; try again when it finishes")
 	}
 	revert := func() {
 		_ = setState(account.MailRouteStateStaged)
-		_ = a.stopAccountIdle(accountID, func() error {
+		// If the IMAP rows can't be restored, keep the mark so the next
+		// start retries the return to IMAP.
+		if err := a.stopAccountIdle(accountID, func() error {
 			_, err := a.folderStore.SwapHidden(accountID, folder.RowsAPI, folder.RowsIMAP)
 			return err
-		})
+		}); err == nil {
+			settled()
+		}
 		a.startAccountIdle(accountID)
 		a.refreshAPIAccount(accountID)
 	}
@@ -299,9 +321,54 @@ func (a *App) activateAPIRoute(accountID string) error {
 		revert()
 		return fmt.Errorf("API reconcile failed; account stays on IMAP: %w", err)
 	}
+	settled()
 	a.refreshAPIAccount(accountID)
 	a.kickAPIActions(accountID)
 	return nil
+}
+
+// recoverInterruptedAPIActivations returns to IMAP every account whose API
+// activation never settled because the app quit during it. It runs at startup
+// before IDLE and the sync scheduler, so nothing resumes the half-done
+// reconcile. Each step is safe to repeat if this is interrupted too: the IMAP
+// rows are restored only while they are still hidden.
+func (a *App) recoverInterruptedAPIActivations() {
+	log := logging.WithComponent("app")
+	ids, err := a.accountStore.ListActivatingMailAPIRoutes()
+	if err != nil {
+		log.Error().Err(err).Msg("Failed to check for interrupted API activations")
+		return
+	}
+	for _, id := range ids {
+		if err := a.revertInterruptedAPIActivation(id); err != nil {
+			log.Error().Err(err).Str("account_id", id).Msg("Failed to return an interrupted API activation to IMAP")
+			continue
+		}
+		log.Warn().Str("account_id", id).Msg("API activation was interrupted; the account stays on IMAP")
+	}
+}
+
+func (a *App) revertInterruptedAPIActivation(accountID string) error {
+	hidden, err := a.folderStore.ListHidden(accountID, folder.RowsIMAP)
+	if err != nil {
+		return err
+	}
+	if len(hidden) > 0 {
+		if _, err := a.folderStore.SwapHidden(accountID, folder.RowsAPI, folder.RowsIMAP); err != nil {
+			return err
+		}
+	}
+	route, err := a.accountStore.GetMailAPIRoute(accountID)
+	if err != nil {
+		return err
+	}
+	if route != nil && route.State != account.MailRouteStateStaged {
+		route.State = account.MailRouteStateStaged
+		if err := a.accountStore.SetMailAPIRoute(*route); err != nil {
+			return err
+		}
+	}
+	return a.accountStore.SetMailAPIActivating(accountID, false)
 }
 
 // DeactivateMailAPIRoute returns an active API route to IMAP. The API rows and
