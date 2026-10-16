@@ -10,7 +10,7 @@ Priorities are recommendations assigned in this reorganization: P1 privacy/data 
 | --- | --- | --- | --- | --- |
 | [SEND — Sending, privacy and compatibility](#send) | proposed | P1 | [5](ISSUES.md#send) | SEND-3/4 deferred; SEND-2 retains its live gate, with Microsoft work deferred |
 | [API — Provider API activation and migration](#api) | proposed | P2 | [3](ISSUES.md#api) | API-3 done (snapshot restore); Microsoft shared rollout deferred and live-gated |
-| [SYNC — Mail synchronization and action reliability](#sync) | proposed | P1 | [1](ISSUES.md#sync) | SY9 unassigned; SYNC-1–4 done |
+| [SYNC — Mail synchronization and action reliability](#sync) | proposed | P1 | [2](ISSUES.md#sync) | SY9 unassigned; SYNC-1–4 done; SYNC-5 proposed (older mail beyond the window, SY10); SYNC-6 deferred (Graph window) |
 | [GOAUTH — Google OAuth client setup](#goauth) | proposed | P2 | [0](ISSUES.md#goauth) | GOAUTH-1–4 done (GO1, GO2 resolved); GOAUTH-5 done (assessment; owner kept bring-your-own) |
 | [CHAT — Chat composer sender review](#chat) | proposed | P3 | [1](ISSUES.md#chat) | CH1 unassigned (cosmetic) |
 | [MAINT — Maintenance and documentation](#maint) | proposed | P2 | [6](ISSUES.md#maint) | MAINT-8 done (UI4 resolved); D2 deferred/upstream blocked; DOC6, UI3, UI5, UI6, TF1 open without milestones |
@@ -203,6 +203,25 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 - **Acceptance:** Reproducible synthetic measurements and correctness fixtures justify changes; enumeration/copy correctness and retry bounds remain intact.
 - **Validation:** Focused synthetic large-folder/journal tests; no live mailbox benchmarking.
 - **Issues:** [R2](ISSUES.md#r2), [SY3](ISSUES.md#sy3), [SY4](ISSUES.md#sy4), [SY5](ISSUES.md#sy5). **Progress:** R2 scoped to the new attempt; SY3/SY4 drop the per-ID map for a sorted-slice diff (1M IDs: 56.6 MB to ~0.7 MB extra); SY5 pinned as policy by request-count and bounded-5xx fixtures. No live check. [Evidence](docs/validation/sync-4.md).
+
+<a id="sync-5"></a>
+
+### SYNC-5 — Older mail beyond the sync window
+
+- **Status / proposed priority:** proposed / P2. **Dependencies / gates:** none; needs owner selection before work starts. The Gmail API server search ships (pinned refs, [MAIL_APIS](docs/MAIL_APIS.md)); its live check is unrun and gated on the owner moving an account to the Gmail API route.
+- **Scope / deliverable:** (1) Confirm whether the chat search can reach the existing IMAP `IMAPSearchFolder` / `FetchServerMessage` bindings and expose "Search the server" for IMAP accounts, or remove the unused bindings. (2) Add a "Load older" action at the end of a list that ingests and pins mail from before the window on the Gmail API route, then IMAP. (3) Make a reconcile check pinned refs for server-side deletion. Graph is out of scope.
+- **Acceptance:** Older mail is reachable offline-first by search and by load-older without widening the period; a reconcile still removes unpinned out-of-window mail and notices deleted pinned mail; the Accounts column checks pass expanded and collapsed.
+- **Validation:** Fake-server Go fixtures and `make test-ui` regressions; the live Gmail check is separately authorized and unrun.
+- **Issues:** [SY10](ISSUES.md#sy10).
+
+<a id="sync-6"></a>
+
+### SYNC-6 — Microsoft Graph reconcile window
+
+- **Status / proposed priority:** deferred / P3. **Dependencies / gates:** only if Microsoft accounts matter to the owner; no live Microsoft access is authorized.
+- **Scope / deliverable:** Apply the account sync period to the Graph reconcile, as Gmail and IMAP already do, and offer server search beyond it.
+- **Acceptance:** Graph reconcile stays within the window and server search is bounded and tested with fixtures.
+- **Issues:** [SY10](ISSUES.md#sy10).
 
 <a id="goauth"></a>
 
