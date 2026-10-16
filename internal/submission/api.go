@@ -117,14 +117,36 @@ func normalize(addr string) string {
 	return strings.ToLower(addr)
 }
 
+// bccFoldWidth keeps each physical line of the added Bcc header well under the
+// 998-byte RFC 5322 ceiling.
+const bccFoldWidth = 900
+
 // WithBcc prepends a Bcc header naming only the hidden recipients. Visible
 // recipients are not repeated, and nothing is added when there are none, so the
-// message stays byte-identical in the common case.
+// message stays byte-identical in the common case. A long list is folded at
+// address boundaries (RFC 5322 §2.2.3) so no physical line grows past the
+// limit and no recipient is dropped; the added header is outside any signature.
 func WithBcc(raw []byte, hidden []string) []byte {
 	if len(hidden) == 0 {
 		return raw
 	}
-	return append([]byte("Bcc: "+strings.Join(hidden, ", ")+"\r\n"), raw...)
+	var b strings.Builder
+	line := len("Bcc:")
+	b.WriteString("Bcc:")
+	for i, addr := range hidden {
+		sep := " "
+		if i > 0 {
+			sep = ", "
+			if line+len(sep)+len(addr) > bccFoldWidth {
+				b.WriteString(",\r\n")
+				sep, line = " ", 0
+			}
+		}
+		b.WriteString(sep + addr)
+		line += len(sep) + len(addr)
+	}
+	b.WriteString("\r\n")
+	return append([]byte(b.String()), raw...)
 }
 
 // Post sends one request built by build and maps the HTTP outcome honestly:

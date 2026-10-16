@@ -32,7 +32,12 @@ func Preflight(route *account.MailAPIRoute, tokens *credentials.OAuthTokens, cac
 	if cache.LookupFailed || cache.StatusFor(req.From) != StatusVerified {
 		return fmt.Errorf("%s is not a verified Gmail send-as address", req.From)
 	}
-	return submission.CheckSize(req.Raw, MaxRawBytes, "Gmail")
+	if err := submission.CheckSize(req.Raw, MaxRawBytes, "Gmail"); err != nil {
+		return err
+	}
+	// The same exact-final-MIME check SMTP applies, so a message Gmail would
+	// reject for its headers fails locally with no HTTP submission.
+	return smtp.ValidateMessage(req.Raw, true)
 }
 
 // Sender submits with users.messages.send.

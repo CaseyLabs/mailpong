@@ -371,7 +371,7 @@ func TestSharedSendUsesMailboxAndOwnerGrant(t *testing.T) {
 			t.Fatal(err)
 		}
 		req := submission.Request{From: from, Recipients: []string{"to@example.test"},
-			Raw: []byte("From: " + from + "\r\nTo: to@example.test\r\nSubject: s\r\n\r\nbody\r\n")}
+			Raw: []byte("Date: Mon, 02 Jan 2006 15:04:05 +0000\r\nMessage-ID: <id@example.test>\r\nFrom: " + from + "\r\nTo: to@example.test\r\nSubject: s\r\n\r\nbody\r\n")}
 		_, err = fx.ops.submitViaAPI(context.Background(), store, gmailapi.NewStore(fx.db.DB), redirectClient(srv), a, child, req)
 		return err
 	}

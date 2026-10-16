@@ -83,6 +83,7 @@ func newRouteRig(t *testing.T) *routeRig {
 	a.syncEngine = sync.NewEngine(nil, a.accountStore, a.folderStore, a.messageStore, message.NewAttachmentStore(fx.db))
 	a.apiRoutes.provider = fx.ops.baseProvider
 	a.apiRoutes.gmailBase = srv.URL
+	a.apiRoutes.sleep = func(context.Context, time.Duration) error { return nil }
 	f := &folder.Folder{AccountID: fx.acc.ID, Name: "INBOX", Path: "INBOX", Type: folder.TypeInbox}
 	if err := a.folderStore.Create(f); err != nil {
 		t.Fatal(err)

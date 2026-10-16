@@ -110,6 +110,8 @@ Extensions DO NOT import from other extensions' Go packages. They go through `co
 
 ---
 
+<a id="manifest--lifecycle"></a>
+
 ## Manifest + lifecycle
 
 Every first-party extension carries a `manifest.json` at its repo root and exposes a single Go object implementing `coreapi.Extension`. The host reads the manifest to build the Settings UI listing and calls `Register()` at startup to wire the extension's UI surfaces.
@@ -525,6 +527,8 @@ make per-user decisions. First wired examples:
   `freebusy_aggregator.go::QueryAggregatedFreeBusy`) — routes self
   emails to a local DB scan (no remote query) and non-self emails to
   Google `freeBusy.query` or Microsoft `getSchedule` via fan-out.
+
+<a id="stability-promise"></a>
 
 ### Stability
 
@@ -1334,7 +1338,7 @@ Mailven's testing style is integration-flavored: a real SQLite at `t.TempDir()` 
 
 Extension-specific UI lives under `extensions/<name>/frontend/`, NOT under `frontend/src/lib/components/`. Only host-owned UI (rail, settings dialog wiring) stays in `frontend/src/`. Keep new files under ~300 LOC.
 
-Rail switching is bound to `Ctrl+Tab` / `Ctrl+Shift+Tab` in [`App.svelte`](../frontend/src/App.svelte). The cycle order matches the rendered rail (Mail first, then enabled extensions in `Order` ASC). See [`docs/KEYBOARD_SHORTCUTS.md`](KEYBOARD_SHORTCUTS.md) for the full shortcut reference.
+Rail switching is bound to `Ctrl+Tab` / `Ctrl+Shift+Tab` in [`globalShortcuts.ts`](../frontend/src/lib/keyboard/globalShortcuts.ts). The cycle order matches the rendered rail (Mail first, then enabled extensions in `Order` ASC). See [`docs/KEYBOARD_SHORTCUTS.md`](KEYBOARD_SHORTCUTS.md) for the full shortcut reference.
 
 ### Generated Wails bindings
 
@@ -1461,6 +1465,8 @@ The "slot" is a conditional in [`App.svelte`](../frontend/src/App.svelte):
 
 When adding a new extension, extend this `if`/`else if` block. Don't refactor it into a dynamic Svelte `<svelte:component>` mount — the component identifier in `RailTabRequest` is descriptive only; the host owns the static dispatch table.
 
+<a id="vite--tsconfig-aliases"></a>
+
 ### Vite + tsconfig aliases
 
 Two aliases are configured in [`frontend/vite.config.ts`](../frontend/vite.config.ts) and [`frontend/tsconfig.json`](../frontend/tsconfig.json):
@@ -1512,13 +1518,13 @@ This pattern is anchored in [the lightweight-by-default motto](../README.md) —
 
 ### Keyboard bridge
 
-Shortcut KEY definitions live in [`frontend/src/lib/keyboard/shortcuts.ts`](../frontend/src/lib/keyboard/shortcuts.ts) — a **single source of truth** for "what key combo matches what action." Both mail's handler (`App.svelte`) and kit components import the same predicates (`KEY.LIST_NEXT`, `KEY.LIST_PREV`, `KEY.LIST_OPEN`, etc.) and reference them via `if (KEY.LIST_NEXT(e)) { ... }`.
+Shortcut KEY definitions live in [`frontend/src/lib/keyboard/shortcuts.ts`](../frontend/src/lib/keyboard/shortcuts.ts) — a **single source of truth** for "what key combo matches what action." Both mail's handler (`globalShortcuts.ts` and `mailKeys.ts`) and kit components import the same predicates (`KEY.LIST_NEXT`, `KEY.LIST_PREV`, `KEY.LIST_OPEN`, etc.) and reference them via `if (KEY.LIST_NEXT(e)) { ... }`.
 
 The **implementations differ per layer** — mail dispatches via concrete component refs; kit components handle their own events locally via `tabindex=0` + DOM `keydown` listener + `e.stopPropagation()`. The bridge is the file of predicates, not shared dispatch logic.
 
 **Rebinding a key**: change the predicate in `shortcuts.ts`. Both mail and any kit consumer pick up the new binding automatically.
 
-**Active-extension guard**: when an extension is the active rail pane, mail-domain shortcuts (Ctrl+R reply, Ctrl+K archive, Ctrl+J spam, Ctrl+L load-images, Ctrl+U mark-read, Ctrl+A, Ctrl+S, Ctrl+F) no-op via an `isMailActive()` check in `App.svelte`. Global shortcuts (Ctrl+Q quit, Ctrl+N compose, Ctrl+Tab rail-switch) fire regardless. Kit's keydown handlers run first when DOM-focused, so they see the events before the global handler does.
+**Active-extension guard**: when an extension is the active rail pane, mail-domain shortcuts (Ctrl+R reply, Ctrl+K archive, Ctrl+J spam, Ctrl+L load-images, Ctrl+U mark-read, Ctrl+A, Ctrl+S, Ctrl+F) no-op via an `isMailActive()` check in `globalShortcuts.ts`. Global shortcuts (Ctrl+Q quit, Ctrl+N compose, Ctrl+Tab rail-switch) fire regardless. Kit's keydown handlers run first when DOM-focused, so they see the events before the global handler does.
 
 ### Components
 
@@ -1856,7 +1862,7 @@ Drag handle placed directly after a fixed-width pane, the same one mail uses for
 
 Pass-through to the host's [`ui/confirm-dialog/ConfirmDialog.svelte`](../frontend/src/lib/components/ui/confirm-dialog/ConfirmDialog.svelte). Same component mail uses for its permanent-delete and empty-trash confirms — behavior is identical, including Enter/Space activation, Escape to cancel, and focus trap. Extensions consume the kit version so they don't reach into the host's `ui/` namespace; the host can swap its underlying primitive (bits-ui today, anything else later) without breaking extensions.
 
-The dialog registers with [`dialogGuard`](../frontend/src/lib/stores/dialogGuard.ts) while open, which makes mail's global key handler in `App.svelte` step out of the way. Without that guard, Enter/Space on dialog buttons get `preventDefault`'d by mail's button-pane disambiguation logic.
+The dialog registers with [`dialogGuard`](../frontend/src/lib/stores/dialogGuard.ts) while open, which makes mail's global key handler (`globalShortcuts.ts`) step out of the way. Without that guard, Enter/Space on dialog buttons get `preventDefault`'d by mail's button-pane disambiguation logic.
 
 **If your extension defines its own custom dialog** (one that doesn't go through the kit's `ConfirmDialog`), you MUST register `dialogGuard` yourself or Enter/Space activation on the dialog's buttons will be killed by mail's global key handler. Match the convention every mail dialog uses ([`SettingsDialog.svelte:87–92`](../frontend/src/lib/components/settings/SettingsDialog.svelte), [`AccountDialog.svelte:140–141`](../frontend/src/lib/components/settings/AccountDialog.svelte)):
 
@@ -1899,7 +1905,7 @@ The host primitive's `aria.selectColor` and `aria.selectPresetColor` i18n keys a
 
 ### Extension keyboard shortcuts
 
-Extensions register their own pane-local keyboard shortcuts through a small registry. Mail's global key handler in `App.svelte` calls `dispatchExtensionShortcut(e)` before its own mail-domain switch; when the active rail pane is NOT mail, the dispatcher walks the active extension's registered predicates and invokes the first match.
+Extensions register their own pane-local keyboard shortcuts through a small registry. Mail's global key handler (`globalShortcuts.ts`) calls `dispatchExtensionShortcut(e)` before its own mail-domain switch; when the active rail pane is NOT mail, the dispatcher walks the active extension's registered predicates and invokes the first match.
 
 **Where things live**:
 
@@ -1947,7 +1953,7 @@ The registration is scoped to the extension's id — the dispatcher only fires i
 - **Mail-side shortcuts stay**. Extension shortcuts only run when the active rail pane is the extension. Mail's own shortcuts (`Ctrl+R`, `Ctrl+K`, `j/k` via window handler when no kit pane is focused, etc.) continue to fire when the rail pane is mail.
 - **Use shared helpers** from `$lib/keyboard/shortcuts` (`noMods`, `ctrlOrMeta`, `altOnly`) to define predicates. Match mail's modifier-checking conventions exactly — that's the 1-for-1 rule applied to keyboard.
 
-**Why the registry instead of inline dispatch**: the registry shape is what lets the host's global key handler stay extension-agnostic. App.svelte doesn't need to know about every extension's shortcuts — it just defers to whichever extension is active. Adding a new extension means adding the extension's own shortcut file + registering at mount; no host changes.
+**Why the registry instead of inline dispatch**: the registry shape is what lets the host's global key handler stay extension-agnostic. The host shell doesn't need to know about every extension's shortcuts — it just defers to whichever extension is active. Adding a new extension means adding the extension's own shortcut file + registering at mount; no host changes.
 
 ### Pane focus slots
 
@@ -2005,6 +2011,8 @@ Each extension's package contains:
 | `MicrosoftClientID` | `microsoft-mail`, `microsoft-contacts`, `microsoft-calendar` | "Mailven - Microsoft" | One Azure AD app registration covers all three surfaces. Microsoft Graph doesn't gate scopes behind verification, so adding `Contacts.ReadWrite` / `Calendars.ReadWrite` to the existing mail registration is free. |
 
 The root `Makefile`'s `credentials` target writes the values from the root `.env` / `.env.local` into the gitignored `internal/oauth2/credentials_gen.go` (compiled only with the `mailven_creds` build tag), so they never appear on a command line or in Wails build output. Extension packages stay focused on domain logic — no `creds.go`, no `OAuthClients()`, no per-extension env file. If a slot's underlying variable is empty, the slot resolves to `(zero, false)` and the picker UI omits the corresponding option.
+
+<a id="manifest-oauth-routing--first_party_uses_core_for_scopes"></a>
 
 ### Manifest OAuth routing — `first_party_uses_core_for_scopes`
 
@@ -2069,6 +2077,8 @@ Extensions register their settings dialog via `core.UI().RegisterSettingsTab(...
 Two entry paths:
 1. **Explicit Edit button** in Settings → Extensions → row (when the extension is enabled)
 2. **Extension-driven auto-open** via `openExtensionSettings(extensionId)` — the extension's frontend code can open its own settings dialog when needed (e.g., on pane mount when the extension detects it's missing OAuth creds for write capability)
+
+<a id="incremental-consent-flow"></a>
 
 ### Write-access grant flow (account-picker model)
 

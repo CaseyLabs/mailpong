@@ -8,12 +8,12 @@ All Microsoft work, including Microsoft 365 and regular/personal Outlook.com, is
 
 ## Index
 
-- [SEND — Sending, privacy and compatibility](#send): [MA1](#ma1), [PD10](#pd10), [PD2](#pd2), [DAV1](#dav1), [DAV2](#dav2), [DAV3](#dav3) (resolved: [CD2](#cd2))
+- [SEND — Sending, privacy and compatibility](#send): [MA1](#ma1), [PD2](#pd2), [DAV1](#dav1), [DAV2](#dav2), [DAV3](#dav3) (resolved: [PD10](#pd10), [CD2](#cd2))
 - [API — Provider API activation and migration](#api): [MA4](#ma4) (resolved: [MA7](#ma7), [MA8](#ma8), [F5b-1](#f5b-1), [F5b-3](#f5b-3))
 - [SYNC — Mail synchronization and action reliability](#sync): [SY10](#sy10) (resolved: [SY9](#sy9), [SY7](#sy7), [SY8](#sy8), [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [GOAUTH — Google OAuth client setup](#goauth): no unresolved issue recorded (resolved: [GO1](#go1), [GO2](#go2))
 - [CHAT — Chat composer sender review](#chat): [CH1](#ch1) (resolved: [R1](#r1))
-- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [DOC6](#doc6), [UI3](#ui3), [UI5](#ui5), [UI6](#ui6), [TF1](#tf1), [TF2](#tf2) (resolved: [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI4](#ui4), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
+- [MAINT — Maintenance and documentation](#maint): [D2](#d2), [UI6](#ui6) (resolved: [UI5](#ui5), [DOC6](#doc6), [UI3](#ui3), [TF1](#tf1), [TF2](#tf2), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI4](#ui4), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
 - [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
 
@@ -39,8 +39,9 @@ Project: [SEND](PLAN.md#send).
 
 ### PD10 — Gmail API skips exact-final-MIME validation
 
-- **Owner / milestone:** [SEND](PLAN.md#send); found during [SEND-2](PLAN.md#send-2). Fix not selected.
-- **Severity / proposed priority / status:** unspecified (static follow-up) / P2 / open.
+- **Owner / milestone:** [SEND](PLAN.md#send); found during [SEND-2](PLAN.md#send-2); fixed 2026-10-16 as an independent fix.
+- **Severity / proposed priority / status:** unspecified (static follow-up) / P2 / resolved (2026-10-16).
+- **Resolution:** `gmailapi.Preflight` now runs `smtp.ValidateMessage(raw, true)`, the check SMTP applies, after the size check, so a message with a bad header, overlong line, control byte or stray Bcc is rejected before any HTTP request (`TestPreflightRejectsInvalidFinalMIMEWithoutSubmission`). `submission.WithBcc` folds the added Bcc header at address boundaries (900-byte lines), so a long hidden list keeps every recipient and no physical line passes 998 bytes (`TestSendFoldsLongHiddenBccWithoutDroppingRecipients`). The Graph route is unchanged apart from the folded Bcc (Microsoft work stays deferred). Live behavior is unrun.
 - **Evidence (2026-10-14):** `app/compose.go` sends final signed/encrypted MIME down the active API branch; `app/mail_api_send.go` calls Gmail route/grant/send-as/size preflight and then `Sender.Send`. Neither invokes `smtp.ValidateMessage`, which is called by SMTP's `internal/smtp/preflight.go` path. `internal/submission/api.go` prepends the hidden-recipient Bcc list without folding/validating the resulting physical line. Composer `validateInput` checks addresses and header controls but is not the final MIME validator.
 - **Impact / limits:** a sufficiently long hidden-recipient list can construct an overlong Bcc line; other final MIME/header-policy failures may reach Gmail instead of being rejected locally. No live rejection, header exposure or exploit is established. Microsoft behavior was not investigated. No behavioral change was authorized by the local research selection.
 - **Reproduction / closure:** synthetic Gmail-only fixture with enough valid hidden recipients to exceed 998 bytes in the added Bcc line, plus final transformed-MIME edge cases. Separately select a design that validates final API MIME without breaking signatures/encryption or silently dropping recipients/content, add focused regressions and prove invalid messages cause no HTTP submission. Size measurement remains under MA1; this entry owns final-MIME/header validation parity.
@@ -352,7 +353,8 @@ Project: [MAINT](PLAN.md#maint).
 ### DOC6 — Provider and settings guides still deny snapshot restoration
 
 - **Owner / milestone:** [MAINT](PLAN.md#maint); found during [SEND-2](PLAN.md#send-2), documentation fix not selected.
-- **Severity / proposed priority / status:** unspecified / P3 / open.
+- **Severity / proposed priority / status:** unspecified / P3 / resolved (2026-10-16, [MAINT-11](PLAN.md#maint-11)).
+- **Resolution:** both guides now describe the offline whole-database restore (consent, backup, undo) and link `docs/MAIL_APIS.md#snapshot-restoration`; they state route rollback does not restore the snapshot or undo provider changes.
 - **Evidence (2026-10-14):** `docs/PROVIDERS.md` Switching routes says full snapshot restoration is not implemented, and `docs/user-guide/features/settings.md` Mail API route says restoring the full snapshot is unavailable. These conflict with the implemented [API-3](PLAN.md#api-3) workflow in `app/snapshot_restore.go` and the current snapshot section of `docs/MAIL_APIS.md`.
 - **Impact / closure:** users may miss the offline whole-database restore/undo option. Correct both guides to describe current restore scope and link its consent/backup/undo instructions, preserving that ordinary route rollback does not restore the snapshot or undo provider changes. Documentation links/source review must pass; do not reopen live restore testing or migration work.
 
@@ -440,12 +442,11 @@ Project: [MAINT](PLAN.md#maint).
 
 ### UI3 — Chat row menu lists Archive twice
 
-- **Owner / milestone:** [MAINT](PLAN.md#maint) / found by [MAINT-4](PLAN.md#maint-4); fix not selected.
-- **Severity / proposed priority / status:** low / P3 / open.
-- **Problem / evidence:** 2026-10-14, `tests/ui/inbox-triage.test.cjs` (backend-free fakes). A chat row's context menu renders the chat's own Archive (`ChatRow.svelte` `extraItems`) and then the shared message Archive (`MessageContextMenu.svelte` Move/Delete actions). Both archive the same message IDs, but with different toasts ("Conversation archived" vs "Archived") and list follow-up.
-- **Impact / limits:** redundant, slightly inconsistent menu; no data risk. Not checked in the open chat's header menu.
-- **Reproduction:** right-click any chat row in the chat list.
-- **Dependencies / closure:** the chat row menu shows one Archive with the chat behavior; `inbox-triage.test.cjs` `menu()` no longer needs `.first()` for Archive.
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / found by [MAINT-4](PLAN.md#maint-4); fixed by [MAINT-10](PLAN.md#maint-10).
+- **Severity / proposed priority / status:** low / P3 / resolved (2026-10-16).
+- **Resolution:** `MessageContextMenu` takes a `hideArchive` prop, and `ChatRow` sets it, so a chat row menu shows only the chat's own Archive ("Conversation archived" toast, list follow-up). The open chat's header menu and message menus keep the built-in Archive. `inbox-triage.test.cjs` `menu()` no longer uses `.first()`, so a second Archive item would make the click ambiguous and fail.
+- **Problem / evidence (2026-10-14):** a chat row's context menu rendered the chat's own Archive (`ChatRow.svelte` `extraItems`) and then the shared message Archive (`MessageContextMenu.svelte`), with different toasts and list follow-up.
+- **Impact / reproduction:** redundant, inconsistent menu; no data risk. Right-click any chat row.
 
 <a id="ui4"></a>
 
@@ -462,11 +463,10 @@ Project: [MAINT](PLAN.md#maint).
 
 ### UI5 — App.svelte exceeds the component size limit
 
-- **Owner / milestone:** [MAINT](PLAN.md#maint) / found by the 2026-10-15 review of the UIX commit; fix not selected.
-- **Severity / proposed priority / status:** low / P3 / open.
-- **Problem / evidence (2026-10-15):** `frontend/src/App.svelte` is about 1,700 lines against the 500-line component limit in AGENTS.md. It holds folder and conversation selection, composer state, global keyboard shortcuts, dialogs and layout. The review fix moved the sidebar actions' narrow-overlay close into `SidebarActions.svelte` and shared one list-search helper, so the file shrank slightly, but the limit is still exceeded.
-- **Impact / reproduction:** `wc -l frontend/src/App.svelte`. New shell features tend to land here, which makes review and testing harder.
-- **Dependencies / closure:** Separately select a split (for example keyboard shortcuts and composer state into modules); App.svelte under 500 lines with `make test-ui` passing.
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / found by the 2026-10-15 review of the UIX commit; fixed by [MAINT-12](PLAN.md#maint-12).
+- **Severity / proposed priority / status:** low / P3 / resolved (2026-10-16).
+- **Resolution:** `App.svelte` is 361 lines. Folder and conversation selection plus focus mode live in `lib/stores/mailSelection.svelte.ts`, composer state and openers in `lib/stores/appComposer.svelte.ts`, the window key handlers in `lib/keyboard/globalShortcuts.ts` and `mailKeys.ts`, bulk message actions in `lib/keyboard/bulkActions.ts`, startup and backend events in `lib/appStartup.ts`, and the shutdown cover and certificate and Flatpak dialogs in `AppOverlays.svelte`. No behavior change; the UI tests are unchanged and pass.
+- **Problem / evidence (2026-10-15):** `frontend/src/App.svelte` was about 1,700 lines against the 500-line component limit in AGENTS.md, holding selection, composer state, global keyboard shortcuts, dialogs and layout.
 
 <a id="ui6"></a>
 
@@ -488,8 +488,9 @@ Project: [AI](PLAN.md#ai).
 
 ### TF1 — TestSyncerSubscriptionsPerInstance flakes on TempDir cleanup
 
-- **Owner / milestone:** [MAINT](PLAN.md#maint) / found during GOAUTH landing checks; fix not selected.
-- **Severity / proposed priority / status:** low / P3 / open.
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / found during GOAUTH landing checks; fixed by [MAINT-9](PLAN.md#maint-9).
+- **Severity / proposed priority / status:** low / P3 / resolved (2026-10-16).
+- **Resolution:** `Syncer.Start` launched an untracked initial-sync goroutine that could still query the store while `t.TempDir` cleanup ran. The Syncer now tracks its background goroutines (`bg` WaitGroup, `wait()`), and the test waits after stopping. `go test ./extensions/calendar/backend -count=100` passes; assertions unchanged.
 - **Problem / evidence (2026-10-15):** `go test ./extensions/calendar/backend` fails intermittently with `TempDir RemoveAll cleanup: unlinkat .../extensions/calendar: directory not empty`. Reproduced on `main` (1 failure in 30 runs with `-count=30`) and seen once in `make test`; the same package passed 30 of 30 runs on `feat/goauth-disabled-api`. A syncer goroutine probably still writes under the test directory when cleanup runs; not diagnosed.
 - **Impact / reproduction:** `make test` and `project-check.py --run` can fail spuriously, which tempts reruns without a fix. Reproduce with `go test ./extensions/calendar/backend -count=30`.
 - **Dependencies / closure:** Stop or wait for the syncer in the test before cleanup; the package passes at `-count=100`.
@@ -498,8 +499,9 @@ Project: [AI](PLAN.md#ai).
 
 ### TF2 — Activation-failure tests wait out the real API backoff
 
-- **Owner / milestone:** [MAINT](PLAN.md#maint) / found during [API-7](PLAN.md#api-7); fix not selected.
-- **Severity / proposed priority / status:** low / P3 / open.
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / found during [API-7](PLAN.md#api-7); fixed 2026-10-16 as an independent fix.
+- **Severity / proposed priority / status:** low / P3 / resolved (2026-10-16).
+- **Resolution:** the route state has a `sleep` test seam (`apiRoutes.sleep`) passed to the Gmail and Graph drivers; the route test fixture sets it to a no-op. The two tests plus the rest of `TestMailAPIRoute*` now run in about 11 s with the same assertions.
 - **Problem / evidence (2026-10-15):** `TestMailAPIRouteActivationAndDeactivationSwapRows` and `TestMailAPIRouteActivationFailureStaysOnIMAP` (`app/api_route_test.go`) each take about 106 s: their fake Gmail answers 500 and the reconcile sleeps through `apiBackoff`'s real waits (`internal/sync/apicommon.go`), lengthened by the SY7 fix. Together they add about 3.5 minutes to `make test` and to every Go landing check.
 - **Dependencies / closure:** the route tests inject a no-op sleep (or the fake answers a non-retried error) and each runs in a few seconds, with the same assertions.
 

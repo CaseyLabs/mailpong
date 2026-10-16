@@ -43,6 +43,8 @@
     children?: Snippet
     // Items shown above the standard ones (chat triage actions).
     extraItems?: Snippet
+    // Omit the built-in Archive when extraItems supplies its own.
+    hideArchive?: boolean
     // Replace the built-in Spam and Read/Unread actions, so a caller with its
     // own undo and refresh handling behaves the same from the menu.
     onSpam?: () => void
@@ -61,6 +63,7 @@
     onOpenChange,
     children,
     extraItems,
+    hideArchive = false,
     onSpam,
     onToggleRead,
   }: Props = $props()
@@ -342,10 +345,12 @@
     {/if}
 
     <!-- Move/Delete actions -->
-    <ContextMenuItem onSelect={handleArchive}>
-      <Icon icon="mdi:archive-outline" class="mr-2 h-4 w-4" />
-      {$_('contextMenu.archive')}
-    </ContextMenuItem>
+    {#if !hideArchive}
+      <ContextMenuItem onSelect={handleArchive}>
+        <Icon icon="mdi:archive-outline" class="mr-2 h-4 w-4" />
+        {$_('contextMenu.archive')}
+      </ContextMenuItem>
+    {/if}
     <ContextMenuItem onSelect={handleDelete}>
       <Icon icon={isTrashFolder ? 'mdi:delete-forever' : 'mdi:delete-outline'} class="mr-2 h-4 w-4" />
       {$_(isTrashFolder ? 'contextMenu.deletePermanently' : 'contextMenu.delete')}

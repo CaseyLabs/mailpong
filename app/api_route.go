@@ -42,6 +42,8 @@ type apiRouteState struct {
 	triggerIMAPSync func(accountID string)
 	gmailBase       string
 	graphBase       string
+	// sleep replaces the real rate-limit waits of the API drivers (test seam).
+	sleep func(context.Context, time.Duration) error
 }
 
 func (s *apiRouteState) lock(accountID string) *gosync.Mutex {
@@ -136,7 +138,7 @@ func (a *App) runAPISync(ctx context.Context, route *account.MailAPIRoute, wait 
 		_, err = a.newGmailSync(id, ops, tokens, onFailure, acc.SyncPeriodDays).Run(ctx)
 	case account.MailRouteGraphAPI:
 		_, err = (&sync.GraphSync{Engine: a.syncEngine, Reader: &graphapi.Reader{Tokens: tokens, HTTP: a.apiRoutes.http, Base: a.apiRoutes.graphBase, Shared: sharedTarget(route)}, AccountID: id,
-			Tokens: func() (*credentials.OAuthTokens, error) { return ops.validToken(id) }, OnFailure: onFailure}).Run(ctx)
+			Tokens: func() (*credentials.OAuthTokens, error) { return ops.validToken(id) }, OnFailure: onFailure, Sleep: a.apiRoutes.sleep}).Run(ctx)
 	default:
 		err = fmt.Errorf("route %q is not an API route", route.Route)
 	}
@@ -164,7 +166,7 @@ func (a *App) apiFailureHandler(id string, route *account.MailAPIRoute, ops *mai
 func (a *App) newGmailSync(id string, ops *mailAPIOps, tokens *apiTokenSource, onFailure func(oauth2.MailAPIFailure, error), syncPeriodDays int) *sync.GmailSync {
 	return &sync.GmailSync{Engine: a.syncEngine, Reader: &gmailapi.Reader{Tokens: tokens, HTTP: a.apiRoutes.http, Base: a.apiRoutes.gmailBase}, AccountID: id,
 		Tokens: func() (*credentials.OAuthTokens, error) { return ops.validToken(id) }, OnFailure: onFailure,
-		SyncPeriodDays: syncPeriodDays}
+		SyncPeriodDays: syncPeriodDays, Sleep: a.apiRoutes.sleep}
 }
 
 // updateAPICounts refreshes the visible folders' counts and last-sync time,

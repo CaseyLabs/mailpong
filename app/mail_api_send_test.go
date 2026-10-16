@@ -51,7 +51,7 @@ func newAPISendFixture(t *testing.T, tokenURL string, expires time.Time) *apiSen
 	}
 	f.attempt = a
 	f.req = submission.Request{From: "user@example.test", Recipients: []string{"to@example.test"},
-		Raw: []byte("From: user@example.test\r\nTo: to@example.test\r\nSubject: s\r\n\r\nbody\r\n")}
+		Raw: []byte("Date: Mon, 02 Jan 2006 15:04:05 +0000\r\nMessage-ID: <id@example.test>\r\nFrom: user@example.test\r\nTo: to@example.test\r\nSubject: s\r\n\r\nbody\r\n")}
 	return f
 }
 

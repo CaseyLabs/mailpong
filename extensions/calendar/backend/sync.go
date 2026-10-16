@@ -46,6 +46,10 @@ type Syncer struct {
 
 	subscribe sync.Once
 	unsubs    []coreapi.Unsubscribe
+
+	// bg tracks every background goroutine the Syncer spawns, so a caller
+	// that must not touch the store after shutdown can wait for them.
+	bg sync.WaitGroup
 }
 
 // NewSyncer constructs a Syncer. Caller must call Start to begin the
@@ -90,7 +94,11 @@ func (s *Syncer) Start() context.CancelFunc {
 
 	// Fire an initial sync of all sources in the background so newly-
 	// opened calendars populate without waiting for the first tick.
-	go func() { _ = s.SyncAllSources(s.parentCtx) }()
+	s.bg.Add(1)
+	go func() {
+		defer s.bg.Done()
+		_ = s.SyncAllSources(s.parentCtx)
+	}()
 
 	return s.stop
 }
@@ -110,6 +118,10 @@ func (s *Syncer) stop() {
 	}
 }
 
+// wait blocks until every background goroutine has returned. Call it after
+// the stop func so the store can be closed or removed without a late write.
+func (s *Syncer) wait() { s.bg.Wait() }
+
 // AddSource starts a sync goroutine for a newly added source. Called by
 // the bridge after Calendar_AddCalDAVSource succeeds.
 func (s *Syncer) AddSource(sourceID string, intervalMin int) {
@@ -117,7 +129,9 @@ func (s *Syncer) AddSource(sourceID string, intervalMin int) {
 		intervalMin = 15
 	}
 	s.startSourceLoop(sourceID, time.Duration(intervalMin)*time.Minute)
+	s.bg.Add(1)
 	go func() {
+		defer s.bg.Done()
 		ctx, cancel := context.WithTimeout(s.parentCtx, 2*time.Minute)
 		defer cancel()
 		_ = s.SyncSource(ctx, sourceID)
@@ -339,7 +353,9 @@ func (s *Syncer) startSourceLoop(sourceID string, interval time.Duration) {
 	s.sourceCancels[sourceID] = cancel
 	s.mu.Unlock()
 
+	s.bg.Add(1)
 	go func() {
+		defer s.bg.Done()
 		ticker := time.NewTicker(interval)
 		defer ticker.Stop()
 		for {

@@ -136,6 +136,10 @@ Shared permission), and raw MIME over 25 MiB. This is a local submission ceiling
 not a verified provider allowance or a guarantee that a smaller message is accepted.
 For Gmail it measures `req.Raw` before the added Bcc header and base64url JSON
 encoding, so the request itself is larger ([SEND-2 evidence](validation/send-2.md)).
+Gmail preflight also runs the same exact-final-MIME validation as SMTP
+(`smtp.ValidateMessage`), so an invalid message fails locally with no HTTP
+request; the added Bcc header is folded at address boundaries so a long hidden
+list keeps every recipient within the 998-byte line limit.
 
 Outcome mapping: 2xx is accepted (not delivered); 4xx is a definitive
 rejection classified with `oauth2.ClassifyMailAPIError` (403 rate-limit bodies

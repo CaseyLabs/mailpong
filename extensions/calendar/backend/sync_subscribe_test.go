@@ -52,6 +52,10 @@ func TestSyncerSubscriptionsPerInstance(t *testing.T) {
 
 	stopFirst()
 	stopSecond()
+	// Let the initial background sync finish so it cannot write under the
+	// TempDir while t.TempDir's cleanup removes it.
+	first.wait()
+	second.wait()
 	for _, name := range []string{"system:wake", "system:network-online"} {
 		if got := bus.count(name); got != 0 {
 			t.Errorf("live %s subscriptions after stop = %d, want 0", name, got)

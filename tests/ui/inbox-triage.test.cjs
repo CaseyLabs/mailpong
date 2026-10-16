@@ -6,11 +6,10 @@ const ui = require('./harness.cjs')
 
 const row = (page, text) => page.locator('[data-chat-row]', { hasText: text })
 
-// Opens a row's context menu and picks an item by its exact accessible name. The chat's own items come
-// first, before the shared message items (which repeat Archive; ISSUES.md UI3).
+// Opens a row's context menu and picks an item by its exact accessible name. Archive must appear once.
 async function menu(page, rowText, item) {
   await row(page, rowText).click({ button: 'right' })
-  await page.getByRole('menuitem', { name: item, exact: true }).first().click()
+  await page.getByRole('menuitem', { name: item, exact: true }).click()
 }
 
 const undo = (page) => page.getByRole('button', { name: 'Undo', exact: true }).first().click()

@@ -100,12 +100,78 @@ func goodTokens() *credentials.OAuthTokens {
 		Scopes: []string{"https://www.googleapis.com/auth/gmail.modify"}}
 }
 
+func validHeaders(from string) string {
+	return "Date: Mon, 02 Jan 2006 15:04:05 +0000\r\nFrom: " + from + "\r\nTo: b@example.com\r\nMessage-ID: <id@example.com>\r\nSubject: s\r\n"
+}
+
+func TestPreflightRejectsInvalidFinalMIMEWithoutSubmission(t *testing.T) {
+	route := &account.MailAPIRoute{Route: account.MailRouteGmailAPI, State: account.MailRouteStateStaged}
+	cache := Cached{FetchedAt: time.Now(), Entries: []SendAs{{Email: "me@gmail.com", IsPrimary: true}}}
+	hits := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { hits++ }))
+	defer srv.Close()
+	old := sendURL
+	sendURL = srv.URL
+	defer func() { sendURL = old }()
+	valid := validHeaders("me@gmail.com") + "\r\nbody\r\n"
+	tests := map[string]string{
+		"missing Message-ID": strings.Replace(valid, "Message-ID: <id@example.com>\r\n", "", 1),
+		"missing Date":       strings.Replace(valid, "Date: Mon, 02 Jan 2006 15:04:05 +0000\r\n", "", 1),
+		"overlong line":      validHeaders("me@gmail.com") + "\r\n" + strings.Repeat("A", 999) + "\r\n",
+		"Bcc header":         "Bcc: x@example.com\r\n" + valid,
+		"NUL byte":           valid + "a\x00b\r\n",
+	}
+	for name, raw := range tests {
+		req := submission.Request{From: "me@gmail.com", Recipients: []string{"b@example.com"}, Raw: []byte(raw)}
+		if err := Preflight(route, goodTokens(), cache, req); err == nil {
+			t.Errorf("%s: preflight accepted the message", name)
+		}
+	}
+	good := submission.Request{From: "me@gmail.com", Recipients: []string{"b@example.com"}, Raw: []byte(valid)}
+	if err := Preflight(route, goodTokens(), cache, good); err != nil {
+		t.Errorf("valid message rejected: %v", err)
+	}
+	if hits != 0 {
+		t.Errorf("%d HTTP requests for preflight", hits)
+	}
+}
+
+func TestSendFoldsLongHiddenBccWithoutDroppingRecipients(t *testing.T) {
+	_, got := capture(t, 200)
+	raw := []byte(validHeaders("a@example.com") + "\r\nhi\r\n")
+	var rcpt []string
+	for i := 0; i < 200; i++ {
+		rcpt = append(rcpt, "hidden-recipient-"+strings.Repeat("x", 10)+string(rune('a'+i%26))+strings.Repeat("0", i%7)+"@example.com")
+	}
+	rcpt = append([]string{"b@example.com"}, rcpt...)
+	if _, err := send(t, submission.Request{From: "a@example.com", Recipients: rcpt, Raw: raw}); err != nil {
+		t.Fatal(err)
+	}
+	for _, line := range bytes.Split(*got, []byte("\r\n")) {
+		if len(line) > 998 {
+			t.Fatalf("physical line of %d bytes", len(line))
+		}
+	}
+	hidden, err := submission.HiddenBcc(*got, rcpt)
+	if err != nil || len(hidden) != 0 {
+		t.Fatalf("recipients missing from Bcc: %v %v", hidden, err)
+	}
+}
+
 func TestPreflight(t *testing.T) {
 	route := &account.MailAPIRoute{Route: account.MailRouteGmailAPI, State: account.MailRouteStateStaged}
 	now := time.Now()
 	cache := Cached{FetchedAt: now, Entries: []SendAs{{Email: "me@gmail.com", IsPrimary: true}, {Email: "alias@example.com", VerificationStatus: "accepted"}, {Email: "pending@example.com", VerificationStatus: "pending"}}}
 	req := func(from string, n int) submission.Request {
-		return submission.Request{From: from, Raw: make([]byte, n)}
+		raw := []byte(validHeaders(from) + "\r\n")
+		for len(raw) < n {
+			line := strings.Repeat("A", min(70, n-len(raw)))
+			if len(raw)+len(line)+2 <= n {
+				line += "\r\n"
+			}
+			raw = append(raw, line...)
+		}
+		return submission.Request{From: from, Raw: raw}
 	}
 	noSend := goodTokens()
 	noSend.Scopes = []string{"openid"}
@@ -119,16 +185,16 @@ func TestPreflight(t *testing.T) {
 		req    submission.Request
 		ok     bool
 	}{
-		{"primary", route, goodTokens(), cache, req("me@gmail.com", 10), true},
-		{"verified alias", route, goodTokens(), cache, req("ALIAS@example.com", 10), true},
-		{"pending alias", route, goodTokens(), cache, req("pending@example.com", 10), false},
-		{"unknown from", route, goodTokens(), cache, req("other@example.com", 10), false},
-		{"lookup failed", route, goodTokens(), failed, req("me@gmail.com", 10), false},
-		{"no route", nil, goodTokens(), cache, req("me@gmail.com", 10), false},
-		{"wrong route", &account.MailAPIRoute{Route: account.MailRouteGraphAPI, State: "staged"}, goodTokens(), cache, req("me@gmail.com", 10), false},
-		{"disabled state", &account.MailAPIRoute{Route: account.MailRouteGmailAPI, State: "off"}, goodTokens(), cache, req("me@gmail.com", 10), false},
-		{"no send capability", route, noSend, cache, req("me@gmail.com", 10), false},
-		{"unknown grant", route, &credentials.OAuthTokens{Provider: "google"}, cache, req("me@gmail.com", 10), false},
+		{"primary", route, goodTokens(), cache, req("me@gmail.com", 0), true},
+		{"verified alias", route, goodTokens(), cache, req("ALIAS@example.com", 0), true},
+		{"pending alias", route, goodTokens(), cache, req("pending@example.com", 0), false},
+		{"unknown from", route, goodTokens(), cache, req("other@example.com", 0), false},
+		{"lookup failed", route, goodTokens(), failed, req("me@gmail.com", 0), false},
+		{"no route", nil, goodTokens(), cache, req("me@gmail.com", 0), false},
+		{"wrong route", &account.MailAPIRoute{Route: account.MailRouteGraphAPI, State: "staged"}, goodTokens(), cache, req("me@gmail.com", 0), false},
+		{"disabled state", &account.MailAPIRoute{Route: account.MailRouteGmailAPI, State: "off"}, goodTokens(), cache, req("me@gmail.com", 0), false},
+		{"no send capability", route, noSend, cache, req("me@gmail.com", 0), false},
+		{"unknown grant", route, &credentials.OAuthTokens{Provider: "google"}, cache, req("me@gmail.com", 0), false},
 		{"at limit", route, goodTokens(), cache, req("me@gmail.com", MaxRawBytes), true},
 		{"over limit", route, goodTokens(), cache, req("me@gmail.com", MaxRawBytes+1), false},
 	}

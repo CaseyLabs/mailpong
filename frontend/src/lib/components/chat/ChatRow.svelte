@@ -198,6 +198,7 @@
   {onActionComplete}
   {onReply}
   {extraItems}
+  hideArchive
 >
   <div
     {id}
