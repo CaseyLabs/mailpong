@@ -2,6 +2,9 @@
   import Icon from '@iconify/svelte'
   import type { Editor } from '@tiptap/core'
   import { _ } from '$lib/i18n'
+  import EditorHintBadge from './EditorHintBadge.svelte'
+  import EditorColorMenu from './EditorColorMenu.svelte'
+  import EditorFontSizeMenu from './EditorFontSizeMenu.svelte'
 
   interface Props {
     editor: Editor | null
@@ -77,17 +80,6 @@
   let currentFontSize = $state<string>('')
   let showFontSizePicker = $state(false)
   let currentAlign = $state<'left' | 'center' | 'right'>('left')
-
-  // Preset colors
-  const presetColors = [
-    '#000000', '#374151', '#6b7280',
-    '#dc2626', '#ea580c', '#ca8a04',
-    '#16a34a', '#0891b2', '#2563eb',
-    '#7c3aed', '#c026d3', '#e11d48',
-  ]
-
-  // Font sizes
-  const fontSizes = ['10px', '12px', '14px', '15px', '16px', '18px', '20px', '24px', '28px', '32px']
 
   // Update active states from editor
   function updateActiveStates() {
@@ -255,9 +247,7 @@
     >
       <Icon icon="mdi:format-bold" class="w-5 h-5" />
     </button>
-    {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">1</span>
-    {/if}
+    <EditorHintBadge show={hintMode && !isPlainTextMode} label="1" />
   </div>
   <div class="relative">
     <button
@@ -271,9 +261,7 @@
     >
       <Icon icon="mdi:format-italic" class="w-5 h-5" />
     </button>
-    {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">2</span>
-    {/if}
+    <EditorHintBadge show={hintMode && !isPlainTextMode} label="2" />
   </div>
   <div class="relative">
     <button
@@ -287,9 +275,7 @@
     >
       <Icon icon="mdi:format-underline" class="w-5 h-5" />
     </button>
-    {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">3</span>
-    {/if}
+    <EditorHintBadge show={hintMode && !isPlainTextMode} label="3" />
   </div>
   <div class="relative">
     <button
@@ -303,9 +289,7 @@
     >
       <Icon icon="mdi:format-strikethrough" class="w-5 h-5" />
     </button>
-    {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">4</span>
-    {/if}
+    <EditorHintBadge show={hintMode && !isPlainTextMode} label="4" />
   </div>
 
   <div class="w-px h-5 bg-border mx-1"></div>
@@ -327,38 +311,10 @@
         style="background-color: {currentColor || '#000000'}"
       ></div>
     </button>
-    {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">5</span>
-    {/if}
+    <EditorHintBadge show={hintMode && !isPlainTextMode} label="5" />
 
     {#if showColorPicker && !isPlainTextMode}
-      <div class="absolute top-full left-0 mt-1 p-2 bg-popover border border-border rounded-md shadow-lg z-50">
-        <div class="grid grid-cols-4 gap-1 mb-2">
-          {#each presetColors as color (color)}
-            <button
-              onclick={() => setColor(color)}
-              class="w-6 h-6 rounded border border-border hover:scale-110 transition-transform"
-              style="background-color: {color}"
-              title={color}
-            ></button>
-          {/each}
-        </div>
-        <div class="flex items-center gap-2 pt-2 border-t border-border">
-          <input
-            type="color"
-            value={currentColor || '#000000'}
-            onchange={handleCustomColor}
-            class="w-6 h-6 rounded cursor-pointer"
-            title={$_('editor.customColor')}
-          />
-          <button
-            onclick={removeColor}
-            class="text-xs text-muted-foreground hover:text-foreground"
-          >
-            {$_('editor.reset')}
-          </button>
-        </div>
-      </div>
+      <EditorColorMenu {currentColor} onSetColor={setColor} onCustomColor={handleCustomColor} onReset={removeColor} />
     {/if}
   </div>
 
@@ -375,22 +331,10 @@
     >
       {currentFontSize || '15px'}
     </button>
-    {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">6</span>
-    {/if}
+    <EditorHintBadge show={hintMode && !isPlainTextMode} label="6" />
 
     {#if showFontSizePicker && !isPlainTextMode}
-      <div class="absolute top-full left-0 mt-1 py-1 bg-popover border border-border rounded-md shadow-lg z-50 min-w-[60px]">
-        {#each fontSizes as size (size)}
-          <button
-            onclick={() => setFontSize(size)}
-            class="w-full px-3 py-1 text-left text-sm hover:bg-muted transition-colors"
-            class:bg-muted={currentFontSize === size}
-          >
-            {size}
-          </button>
-        {/each}
-      </div>
+      <EditorFontSizeMenu {currentFontSize} onSetFontSize={setFontSize} />
     {/if}
   </div>
 
@@ -409,9 +353,7 @@
     >
       <Icon icon="mdi:format-align-left" class="w-5 h-5" />
     </button>
-    {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">7</span>
-    {/if}
+    <EditorHintBadge show={hintMode && !isPlainTextMode} label="7" />
   </div>
   <div class="relative">
     <button
@@ -425,9 +367,7 @@
     >
       <Icon icon="mdi:format-align-center" class="w-5 h-5" />
     </button>
-    {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">8</span>
-    {/if}
+    <EditorHintBadge show={hintMode && !isPlainTextMode} label="8" />
   </div>
   <div class="relative">
     <button
@@ -441,9 +381,7 @@
     >
       <Icon icon="mdi:format-align-right" class="w-5 h-5" />
     </button>
-    {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">9</span>
-    {/if}
+    <EditorHintBadge show={hintMode && !isPlainTextMode} label="9" />
   </div>
 
   <div class="w-px h-5 bg-border mx-1"></div>
@@ -460,9 +398,7 @@
     >
       <Icon icon="mdi:format-list-bulleted" class="w-5 h-5" />
     </button>
-    {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">a</span>
-    {/if}
+    <EditorHintBadge show={hintMode && !isPlainTextMode} label="a" />
   </div>
   <div class="relative">
     <button
@@ -476,9 +412,7 @@
     >
       <Icon icon="mdi:format-list-numbered" class="w-5 h-5" />
     </button>
-    {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">b</span>
-    {/if}
+    <EditorHintBadge show={hintMode && !isPlainTextMode} label="b" />
   </div>
   <div class="w-px h-5 bg-border mx-1"></div>
   <div class="relative">
@@ -493,9 +427,7 @@
     >
       <Icon icon="mdi:format-quote-close" class="w-5 h-5" />
     </button>
-    {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">c</span>
-    {/if}
+    <EditorHintBadge show={hintMode && !isPlainTextMode} label="c" />
   </div>
   <div class="relative">
     <button
@@ -509,9 +441,7 @@
     >
       <Icon icon="mdi:link" class="w-5 h-5" />
     </button>
-    {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">d</span>
-    {/if}
+    <EditorHintBadge show={hintMode && !isPlainTextMode} label="d" />
   </div>
   <div class="relative">
     <button
@@ -524,9 +454,7 @@
     >
       <Icon icon="mdi:image" class="w-5 h-5" />
     </button>
-    {#if hintMode && !isPlainTextMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">e</span>
-    {/if}
+    <EditorHintBadge show={hintMode && !isPlainTextMode} label="e" />
   </div>
 
   <!-- Spacer -->
@@ -544,8 +472,6 @@
       <Icon icon={isPlainTextMode ? 'mdi:format-text' : 'mdi:text'} class="w-5 h-5" />
       <span class="hidden sm:inline">{isPlainTextMode ? $_('editor.richText') : $_('editor.plainText')}</span>
     </button>
-    {#if hintMode}
-      <span class="absolute -top-1 -left-1 bg-primary text-primary-foreground text-2xs font-bold w-4 h-4 flex items-center justify-center rounded z-20">f</span>
-    {/if}
+    <EditorHintBadge show={hintMode} label="f" />
   </div>
 </div>

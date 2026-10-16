@@ -110,6 +110,8 @@ class Workflow(unittest.TestCase):
         self.assertEqual(unknown, [])
         self.assertEqual(CHECK.infer_scopes(['image.bin'])[1], ['image.bin'])
         self.assertEqual(CHECK.infer_scopes(['.agents/skills/test/SKILL.md'])[0], {'docs', 'tooling'})
+        self.assertEqual(CHECK.infer_scopes(['extensions/calendar/frontend/components/View.svelte']), ({'frontend'}, []))
+        self.assertEqual(CHECK.infer_scopes(['extensions/calendar/backend/store.go'])[0], {'go'})
         commands = CHECK.command_plan(self.root, {'go'}, 'HEAD')
         self.assertEqual([c['name'] for c in commands], ['whitespace', 'frontend-build', 'go'])
 

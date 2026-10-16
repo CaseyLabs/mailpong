@@ -1,17 +1,16 @@
 <script lang="ts">
-  import Icon from '@iconify/svelte'
   import * as Dialog from '$lib/components/ui/dialog'
   import * as Tabs from '$lib/components/ui/tabs'
-  import { Button } from '$lib/components/ui/button'
   import AccountForm, { type OAuthCredentials } from './AccountForm.svelte'
   import AccountGeneralTab from './account/AccountGeneralTab.svelte'
   import AccountIdentityTab from './account/AccountIdentityTab.svelte'
   import AccountServerTab from './account/AccountServerTab.svelte'
   import MailAPISection from './account/MailAPISection.svelte'
   import AccountSecurityTab from './account/AccountSecurityTab.svelte'
-  import AccountContactsHookPanel from '$extensions/contacts/frontend/hooks/AccountContactsHookPanel.svelte'
-  import AccountCalendarHookPanelGoogle from '$extensions/calendar/frontend/hooks/AccountCalendarHookPanelGoogle.svelte'
-  import AccountCalendarHookPanelMicrosoft from '$extensions/calendar/frontend/hooks/AccountCalendarHookPanelMicrosoft.svelte'
+  import AccountSetupHooksStep from './AccountSetupHooksStep.svelte'
+  import AccountEditTabList from './AccountEditTabList.svelte'
+  import AccountEditActions from './AccountEditActions.svelte'
+  import { isGenericProviderHost, createAccountFromWizard, reauthorizeAccount } from './accountDialogActions'
   import { loadAccountSetupHooks } from '$lib/stores/extensionRegistry.svelte'
   // @ts-ignore - wailsjs path
   import type { v1 } from '../../../../wailsjs/go/models'
@@ -46,14 +45,7 @@
   // Tab state (for edit mode)
   let activeTab = $state('general')
 
-  // True when editing a generic-provider account (non-Gmail/Outlook/etc).
-  // Controls visibility of the SMTP-authentication UI on the Server tab
-  // and the corresponding hint on the General tab.
-  const KNOWN_PROVIDER_HOSTS = ['gmail.com', 'googlemail.com', 'outlook.com', 'office365.com', 'yahoo.com', 'aol.com', 'icloud.com', 'me.com', 'mac.com']
-  const isGenericProvider = $derived(
-    (editAccount?.imapHost ?? '') !== ''
-    && !KNOWN_PROVIDER_HOSTS.some(h => (editAccount?.imapHost ?? '').includes(h))
-  )
+  const isGenericProvider = $derived(isGenericProviderHost(editAccount?.imapHost))
 
   // Form state (for edit mode)
   let name = $state('')
@@ -276,28 +268,7 @@
 
   // Handlers for new account wizard (delegated to AccountForm)
   async function handleSubmit(config: account.AccountConfig, oauthCredentials?: OAuthCredentials) {
-    let result: account.Account
-    let provider: string
-
-    const isOAuth = config.authType === 'oauth2' && !!oauthCredentials
-    provider = isOAuth ? oauthCredentials!.provider : 'imap'
-
-    switch (true) {
-      case isOAuth && provider === 'custom':
-        // Generic IMAP + user-supplied OAuth: pass the full config so the user's
-        // IMAP/SMTP server settings are used (not hardcoded provider servers).
-        result = await accountStore.addCustomOAuthAccount(config)
-        break
-      case isOAuth:
-        result = await accountStore.addOAuthAccount(
-          provider,
-          config,
-          oauthCredentials?.microsoftAccountType ?? ''
-        )
-        break
-      default:
-        result = await accountStore.addAccount(config)
-    }
+    const { result, provider } = await createAccountFromWizard(config, oauthCredentials)
 
     onSuccess?.(result)
 
@@ -361,37 +332,10 @@
     if (!editAccount) return
 
     // Capture account details before async operations (editAccount could become stale)
-    const accountId = editAccount.id
-    const accountName = editAccount.name
-
-    reauthorizing = true
-    reauthorizeSuccess = false
-    try {
-      await oauthStore.reauthorize(accountId)
-      reauthorizeSuccess = true
-      addToast({
-        type: 'success',
-        message: $_('toast.reauthorized', { values: { name: accountName } }),
-        duration: 5000,
-      })
-      // Trigger a sync to verify the new token works
-      await accountStore.syncAccount(accountId)
-      addToast({
-        type: 'success',
-        message: $_('toast.syncCompleted', { values: { name: accountName } }),
-        duration: 3000,
-      })
-    } catch (err) {
-      console.error('Failed to re-authorize:', err)
-      reauthorizeSuccess = false
-      addToast({
-        type: 'error',
-        message: $_('toast.failedToReauthorize'),
-        duration: 8000,
-      })
-    } finally {
-      reauthorizing = false
-    }
+    await reauthorizeAccount(editAccount.id, editAccount.name, {
+      setReauthorizing: (v) => (reauthorizing = v),
+      setSuccess: (v) => (reauthorizeSuccess = v),
+    })
   }
 </script>
 
@@ -411,24 +355,7 @@
     {#if editAccount}
       <!-- Edit Mode: Tabbed Interface -->
       <Tabs.Root bind:value={activeTab} class="flex-1 flex flex-col overflow-hidden">
-        <Tabs.List class="grid w-full grid-cols-4">
-          <Tabs.Trigger value="general" class="flex items-center gap-2">
-            <Icon icon="mdi:cog" class="w-4 h-4" />
-            {$_('account.general')}
-          </Tabs.Trigger>
-          <Tabs.Trigger value="identity" class="flex items-center gap-2">
-            <Icon icon="mdi:account-multiple" class="w-4 h-4" />
-            {$_('account.identity')}
-          </Tabs.Trigger>
-          <Tabs.Trigger value="server" class="flex items-center gap-2">
-            <Icon icon="mdi:server" class="w-4 h-4" />
-            {$_('account.server')}
-          </Tabs.Trigger>
-          <Tabs.Trigger value="security" class="flex items-center gap-2">
-            <Icon icon="mdi:shield-lock-outline" class="w-4 h-4" />
-            {$_('account.security')}
-          </Tabs.Trigger>
-        </Tabs.List>
+        <AccountEditTabList />
 
         <div class="flex-1 overflow-y-auto mt-4 pl-1 pr-3" style="max-height: calc(90vh - 220px);">
           <Tabs.Content value="general" class="mt-0">
@@ -527,67 +454,17 @@
           </Tabs.Content>
         </div>
 
-        <!-- Actions for General/Server tabs (not Identity - it has its own save) -->
-        {#if activeTab === 'identity' || activeTab === 'security'}
-          <div class="flex items-center justify-end gap-2 pt-4 border-t border-border mt-4">
-            <Button variant="ghost" onclick={handleCancel}>
-              {$_('common.close')}
-            </Button>
-          </div>
-        {:else}
-          <div class="flex items-center justify-end gap-2 pt-4 border-t border-border mt-4">
-            <Button variant="ghost" onclick={handleCancel} disabled={saving}>
-              {$_('common.cancel')}
-            </Button>
-            <Button onclick={handleSaveEdit} disabled={saving}>
-              {#if saving}
-                <Icon icon="mdi:loading" class="w-4 h-4 mr-2 animate-spin" />
-              {/if}
-              {$_('common.saveChanges')}
-            </Button>
-          </div>
-        {/if}
+        <AccountEditActions {activeTab} {saving} onCancel={handleCancel} onSave={handleSaveEdit} />
       </Tabs.Root>
     {:else if hookAccount && pendingHooks.length > 0}
       <!-- Post-Add Mode: Account-Setup Hooks -->
-      <div class="flex-1 overflow-y-auto pl-1 pr-3 pb-4" style="max-height: calc(90vh - 140px);">
-        <p class="text-sm text-muted-foreground mb-3">
-          Your account is added. Set up extras for this account, or skip.
-        </p>
-        {#each pendingHooks as hook (hook.extensionId)}
-          {#if !resolvedHooks.has(hook.extensionId)}
-            {#if hook.component === 'AccountContactsHookPanel'}
-              <AccountContactsHookPanel
-                {hook}
-                accountId={hookAccount.id}
-                accountName={hookAccount.name}
-                onResolved={() => resolveHook(hook.extensionId)}
-              />
-            {/if}
-            {#if hook.component === 'AccountCalendarHookPanelGoogle'}
-              <AccountCalendarHookPanelGoogle
-                {hook}
-                accountId={hookAccount.id}
-                accountName={hookAccount.name}
-                accountEmail={hookAccount.email ?? ''}
-                onResolved={() => resolveHook(hook.extensionId)}
-              />
-            {/if}
-            {#if hook.component === 'AccountCalendarHookPanelMicrosoft'}
-              <AccountCalendarHookPanelMicrosoft
-                {hook}
-                accountId={hookAccount.id}
-                accountName={hookAccount.name}
-                accountEmail={hookAccount.email ?? ''}
-                onResolved={() => resolveHook(hook.extensionId)}
-              />
-            {/if}
-          {/if}
-        {/each}
-        <div class="flex items-center justify-end gap-2 pt-2 border-t border-border mt-4">
-          <Button variant="ghost" onclick={skipRemainingHooks}>Skip all</Button>
-        </div>
-      </div>
+      <AccountSetupHooksStep
+        {hookAccount}
+        {pendingHooks}
+        {resolvedHooks}
+        onResolve={resolveHook}
+        onSkipAll={skipRemainingHooks}
+      />
     {:else}
       <!-- New Account Mode: Wizard -->
       <div class="flex-1 overflow-y-auto pl-1 pr-3 pb-4" style="max-height: calc(90vh - 140px);">

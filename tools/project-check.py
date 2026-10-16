@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
+import re
 import shlex
 import subprocess
 import sys
@@ -24,7 +25,7 @@ def infer_scopes(paths):
             scopes.add('docs')
             if name.startswith(('.agents/', '.claude/', '.codex/')):
                 scopes.add('tooling')
-        elif name.startswith(('frontend/', 'tests/ui/')):
+        elif name.startswith(('frontend/', 'tests/ui/')) or re.match(r'extensions/[^/]+/frontend/', name):
             scopes.add('frontend')
         elif name.endswith('.go') or name in ('go.mod', 'go.sum', 'Makefile'):
             scopes.add('go')

@@ -18,15 +18,14 @@
   import Linkified from './Linkified.svelte'
   import AttendeeListDisplay from './AttendeeListDisplay.svelte'
   import RSVPControls from './RSVPControls.svelte'
-  import { logger } from '$extensions/calendar/frontend/lib/logger'
+  import EventDetailAbout from './EventDetailAbout.svelte'
+  import { humanizeRRule } from './eventDetailRRule'
   import { accountStore } from '$lib/stores/accounts.svelte'
   import { toasts } from '$lib/stores/toast'
   // @ts-ignore - wailsjs bindings
   import { Calendar_DeleteEvent } from '$wailsjs/go/app/App.js'
   // @ts-ignore - wailsjs bindings
   import { Calendar_GetEvent } from '$wailsjs/go/app/App.js'
-  // @ts-ignore - wailsjs bindings
-  import { Calendar_OpenURL } from '$wailsjs/go/app/App.js'
   // @ts-ignore - wailsjs bindings
   import type { backend } from '$wailsjs/go/models'
 
@@ -40,26 +39,6 @@
   let event = $state<backend.Event | null>(null)
   let loading = $state(false)
   let loadError = $state<string | null>(null)
-
-  // Container for the sanitized HTML About body ({@html}). Its anchors are raw
-  // DOM nodes (not Linkified-generated), so we intercept their clicks here to
-  // route through the same hardened opener every other calendar link uses —
-  // Wails' default webview navigation doesn't reach the host browser (Flatpak).
-  let aboutEl = $state<HTMLElement | null>(null)
-  $effect(() => {
-    const el = aboutEl
-    if (!el) return
-    const onClick = (e: MouseEvent) => {
-      const anchor = (e.target as HTMLElement | null)?.closest('a')
-      const href = anchor?.getAttribute('href')
-      if (!href) return
-      e.preventDefault()
-      e.stopPropagation()
-      Calendar_OpenURL(href).catch((err: unknown) => logger.warn(`openURL failed: ${err}`))
-    }
-    el.addEventListener('click', onClick)
-    return () => el.removeEventListener('click', onClick)
-  })
 
   // Refetch when eventId changes. Null id → clear local state.
   $effect(() => {
@@ -192,7 +171,7 @@
 
   // Recurrence humanizer. Recognizes the common shapes; unknown shapes
   // fall through to the raw RRULE text in mono.
-  const repeatsLabel = $derived.by(() => humanizeRRule(event?.rruleText ?? ''))
+  const repeatsLabel = $derived.by(() => humanizeRRule(event?.rruleText ?? '', $_, dateFmt))
 
   // Last-sync relative label for the calendar.
   const lastSyncLabel = $derived.by(() => {
@@ -204,70 +183,6 @@
     if (elapsed < 86400) return $_('calendar.detail.lastSync', { values: { time: `${Math.floor(elapsed / 3600)}h ago` } })
     return $_('calendar.detail.lastSync', { values: { time: `${Math.floor(elapsed / 86400)}d ago` } })
   })
-
-  function humanizeRRule(rruleText: string): { human: string; raw: string } {
-    if (rruleText === '') return { human: '', raw: '' }
-    const parts = parseRRule(rruleText)
-    const freq = parts.FREQ
-    let base: string
-    if (freq === 'DAILY') {
-      base = $_('calendar.rrule.daily')
-    } else if (freq === 'WEEKLY') {
-      const days = parts.BYDAY ? humanizeByDay(parts.BYDAY) : ''
-      base = days !== ''
-        ? $_('calendar.rrule.weeklyOn', { values: { days } })
-        : $_('calendar.rrule.weekly')
-    } else if (freq === 'MONTHLY') {
-      base = $_('calendar.rrule.monthly')
-    } else if (freq === 'YEARLY') {
-      base = $_('calendar.rrule.yearly')
-    } else {
-      return { human: '', raw: rruleText }
-    }
-    if (parts.UNTIL) {
-      const untilDate = parseICSDate(parts.UNTIL)
-      if (untilDate) {
-        base += ' ' + $_('calendar.rrule.until', { values: { date: dateFmt.format(untilDate) } })
-      }
-    }
-    if (parts.COUNT) {
-      base += ' ' + $_('calendar.rrule.count', { values: { count: parts.COUNT } })
-    }
-    return { human: base, raw: rruleText }
-  }
-
-  function parseRRule(rrule: string): Record<string, string> {
-    const out: Record<string, string> = {}
-    // Strip optional "RRULE:" prefix; split on semicolons.
-    const body = rrule.startsWith('RRULE:') ? rrule.slice(6) : rrule
-    for (const segment of body.split(';')) {
-      const eq = segment.indexOf('=')
-      if (eq <= 0) continue
-      out[segment.slice(0, eq).toUpperCase().trim()] = segment.slice(eq + 1).trim()
-    }
-    return out
-  }
-
-  function humanizeByDay(byDay: string): string {
-    const map: Record<string, string> = {
-      MO: 'Monday', TU: 'Tuesday', WE: 'Wednesday', TH: 'Thursday',
-      FR: 'Friday', SA: 'Saturday', SU: 'Sunday',
-    }
-    const days = byDay.split(',')
-      .map(d => d.replace(/^[+-]?\d+/, '').toUpperCase())
-      .map(d => map[d] || d)
-    return days.join(', ')
-  }
-
-  function parseICSDate(s: string): Date | null {
-    // RFC 5545 DATE-TIME-UTC: 20251215T140000Z
-    // Or DATE: 20251215
-    const m = s.match(/^(\d{4})(\d{2})(\d{2})(T(\d{2})(\d{2})(\d{2})Z?)?$/)
-    if (!m) return null
-    const y = Number(m[1]), mo = Number(m[2]) - 1, d = Number(m[3])
-    if (m[4] === undefined) return new Date(Date.UTC(y, mo, d))
-    return new Date(Date.UTC(y, mo, d, Number(m[5]), Number(m[6]), Number(m[7])))
-  }
 
   // --- Edit / Delete (writable sources only) ---------------------------------
   // Local sources are always writable. CalDAV flips to writable after first
@@ -481,14 +396,7 @@
            Calendar_OpenURL resolver) inside a whitespace-pre-wrap wrapper so
            newlines survive. Guard blocks are mutually exclusive. -->
       {#if event.descriptionHTML && event.descriptionHTML !== ''}
-        <div>
-          <div class="text-xs uppercase tracking-wide text-muted-foreground mb-0.5">
-            {$_('calendar.detail.aboutLabel')}
-          </div>
-          <div class="cal-about-html text-foreground wrap-break-word text-sm" bind:this={aboutEl}>
-            {@html event.descriptionHTML}
-          </div>
-        </div>
+        <EventDetailAbout html={event.descriptionHTML} />
       {/if}
       {#if (!event.descriptionHTML || event.descriptionHTML === '') && event.description}
         <div>
@@ -579,31 +487,3 @@
   loading={deleting}
   onConfirm={performDelete}
 />
-
-<style>
-  .cal-about-html :global(p) {
-    margin: 0 0 0.5rem;
-  }
-  .cal-about-html :global(p:last-child) {
-    margin-bottom: 0;
-  }
-  .cal-about-html :global(ul),
-  .cal-about-html :global(ol) {
-    margin: 0 0 0.5rem;
-    padding-left: 1.25rem;
-  }
-  .cal-about-html :global(ul) {
-    list-style: disc;
-  }
-  .cal-about-html :global(ol) {
-    list-style: decimal;
-  }
-  .cal-about-html :global(a) {
-    color: hsl(var(--primary));
-    text-decoration: underline;
-  }
-  .cal-about-html :global(b),
-  .cal-about-html :global(strong) {
-    font-weight: 600;
-  }
-</style>

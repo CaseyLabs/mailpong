@@ -5,7 +5,9 @@
   import { getCached, setCache } from '../../stores/inlineAttachmentCache'
   import { isImageAllowedSync, refreshImageAllowlist } from '$lib/stores/imageAllowlist.svelte'
   import { setFocusedPane, focusPreviousPane, focusNextPane } from '$lib/stores/keyboard.svelte'
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu'
+  import EmailBodyImageBanner from './EmailBodyImageBanner.svelte'
+  import { checkForRemoteImages, extractDomain, getChromeBgHsl, linkifyText } from './emailBodyHtml'
+  import { buildIframeContent } from './emailBodyIframe'
   import { _ } from '$lib/i18n'
   import { toasts } from '$lib/stores/toast'
   import { getAlwaysLoadImages, getThemeMode } from '$lib/stores/settings.svelte'
@@ -56,342 +58,6 @@
     void getThemeMode()
     return darken ? getChromeBgHsl() : 'white'
   })
-
-  // Loading placeholder SVG
-  const loadingPlaceholder = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='80' viewBox='0 0 120 80'%3E%3Crect fill='%23f3f4f6' width='120' height='80' rx='4'/%3E%3Cg transform='translate(60,40)'%3E%3Ccircle cx='0' cy='0' r='12' fill='none' stroke='%239ca3af' stroke-width='2' stroke-dasharray='20 10'%3E%3CanimateTransform attributeName='transform' type='rotate' from='0' to='360' dur='1s' repeatCount='indefinite'/%3E%3C/circle%3E%3C/g%3E%3Ctext x='60' y='65' text-anchor='middle' fill='%239ca3af' font-size='9' font-family='sans-serif'%3ELoading...%3C/text%3E%3C/svg%3E`
-
-  // Regex pattern for CSS url() with remote http(s) URLs.
-  // Handles all quote styles: raw ' or ", decimal &#39;/&#34;, hex &#x27;/&#x22;, named &apos;/&quot;
-  // Used as a string so we can create fresh RegExp instances (avoids lastIndex issues with /g)
-  const CSS_QUOTE = `(?:['"]|&#(?:39|x27|34|x22);|&(?:apos|quot);)?`
-  const CSS_REMOTE_URL_PATTERN = `url\\(\\s*${CSS_QUOTE}\\s*https?://[^)]*?${CSS_QUOTE}\\s*\\)`
-
-  function checkForRemoteImages(html: string): boolean {
-    if (!html) return false
-    // Check <img> tags with remote src
-    if (/<img[^>]+src=["'](https?:\/\/[^"']+)["']/i.test(html)) return true
-    // Check CSS url() references with remote URLs (background-image, background, etc.)
-    if (new RegExp(CSS_REMOTE_URL_PATTERN, 'i').test(html)) return true
-    // Check HTML background attribute with remote URLs
-    if (/\bbackground\s*=\s*["'](https?:\/\/[^"']+)["']/i.test(html)) return true
-    return false
-  }
-
-  function processCidReferences(html: string): string {
-    if (!html) return html
-    return html.replace(
-      /src=["']cid:([^"']+)["']/gi,
-      (match, contentId) => `src="${loadingPlaceholder}" data-cid="${contentId}"`
-    )
-  }
-
-  function processHtml(html: string, blockImages: boolean): string {
-    if (!html) return ''
-    let processed = processCidReferences(html)
-    if (blockImages) {
-      // Block <img> tags with remote sources
-      processed = processed.replace(
-        /(<img[^>]+)src=["'](https?:\/\/[^"']+)["']([^>]*>)/gi,
-        (match, before, src, after) => {
-          const placeholder = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='60' viewBox='0 0 100 60'%3E%3Crect fill='%23e5e7eb' width='100' height='60'/%3E%3Ctext x='50' y='35' text-anchor='middle' fill='%239ca3af' font-size='10' font-family='sans-serif'%3EImage blocked%3C/text%3E%3C/svg%3E`
-          return `${before}src="${placeholder}" data-blocked-src="${encodeURIComponent(src)}"${after}`
-        }
-      )
-      // Block remote URLs in CSS url() references (covers background-image, background, etc.)
-      // Handles all quote encodings: raw, decimal entities, hex entities, named entities
-      processed = processed.replace(new RegExp(CSS_REMOTE_URL_PATTERN, 'gi'), 'url()')
-      // Block HTML background attribute with remote URLs
-      processed = processed.replace(
-        /\bbackground\s*=\s*["'](https?:\/\/[^"']+)["']/gi,
-        'background=""'
-      )
-    }
-    return processed
-  }
-
-  // Reads the active theme's chrome lightness so the dark-mail filter can tune
-  // its invert amount — pure black is too dark against most themes' chrome.
-  // For themes whose --background hue carries enough chromaticity that the
-  // partial-invert + hue-rotate composes into visible color shifts, declare
-  // --dark-mail-bg-l (number 0-100) to override with an explicit value.
-  function getChromeBgLightness(): number {
-    const styles = getComputedStyle(document.documentElement)
-    const override = styles.getPropertyValue('--dark-mail-bg-l').trim()
-    if (override) {
-      const n = parseFloat(override)
-      if (!Number.isNaN(n)) return Math.max(0, Math.min(1, n / 100))
-    }
-    const bg = styles.getPropertyValue('--background').trim()
-    const lMatch = bg.match(/(\d+(?:\.\d+)?)%\s*$/)
-    if (lMatch) {
-      const l = parseFloat(lMatch[1])
-      if (!Number.isNaN(l)) return Math.max(0, Math.min(1, l / 100))
-    }
-    return 0
-  }
-
-  // Returns the chrome bg as `hsl(...)` for the iframe element's outer
-  // background, matching the rendered dark-mail surface so the rounded
-  // corner clip has no color seam.
-  function getChromeBgHsl(): string {
-    const styles = getComputedStyle(document.documentElement)
-    const bg = styles.getPropertyValue('--background').trim()
-    return bg ? `hsl(${bg})` : '#000'
-  }
-
-  // Per-theme dark-mail saturation override. <1 desaturates the inverted
-  // email surface to cancel out the warm/red chromatic shift that partial
-  // invert + hue-rotate(180deg) leaves on the residual chromaticity of
-  // most input content. Default 1 (no change).
-  function getChromeBgSaturate(): number {
-    const override = getComputedStyle(document.documentElement)
-      .getPropertyValue('--dark-mail-saturate').trim()
-    if (override) {
-      const n = parseFloat(override)
-      if (!Number.isNaN(n) && n > 0) return n
-    }
-    return 1
-  }
-
-  // Per-theme dark-mail hue rotation override (degrees, signed). Shifts the
-  // residual chromaticity of the inverted email surface toward a specific
-  // hue family — e.g., -20 to cool down a cool-toned theme's surface that
-  // would otherwise read as warm gray. Default 0 (no shift, GPU-skipped).
-  function getChromeBgHueRotate(): number {
-    const override = getComputedStyle(document.documentElement)
-      .getPropertyValue('--dark-mail-hue').trim()
-    if (override) {
-      const n = parseFloat(override)
-      if (!Number.isNaN(n)) return n
-    }
-    return 0
-  }
-
-  function buildIframeContent(html: string, applyDarken: boolean): string {
-    const processedHtml = processHtml(html, imagesBlocked)
-    const imgSrc = imagesBlocked ? "'self' data:" : '* data:'
-
-    // Double-invert: page-level invert + image-level re-invert keeps photos
-    // looking normal while flipping text, backgrounds, and CSS-defined colors.
-    // Blocked-image placeholders intentionally skip the re-invert so they end
-    // up dark too — they're chrome, not content.
-    // color-scheme: dark switches the UA-default iframe viewport bg to dark so
-    // the rounded-corner edge has no white sliver bleeding through.
-    // Invert amount derived from theme's chrome lightness — pure invert(1)
-    // produces stark black against themes whose chrome isn't pure black.
-    const invertAmount = applyDarken ? 1 - getChromeBgLightness() : 1
-    const saturate = applyDarken ? getChromeBgSaturate() : 1
-    const hueRotate = applyDarken ? getChromeBgHueRotate() : 0
-    // Image filter compensates so photos see net saturate(1) + hue-rotate(0) —
-    // html's saturate(S) hue-rotate(H) composed with image's saturate(1/S)
-    // hue-rotate(-H) approximately cancels for non-grayscale image content.
-    const imageSaturate = 1 / saturate
-    const darkenStyles = applyDarken ? `
-    html { filter: invert(${invertAmount}) hue-rotate(180deg) saturate(${saturate}) hue-rotate(${hueRotate}deg); background: #fff; color-scheme: dark; }
-    img:not([data-blocked-src]), video, iframe, [data-no-invert] { filter: invert(${invertAmount}) hue-rotate(180deg) saturate(${imageSaturate}) hue-rotate(${-hueRotate}deg); }
-` : `
-    html { color-scheme: light; }
-`
-
-    const iframeScript = `
-      function sendHeight() {
-        var height = document.body.scrollHeight;
-        window.parent.postMessage({ type: 'iframe-height', height: height }, '*');
-      }
-      
-      function attachImageHandlers() {
-        document.querySelectorAll('img').forEach(function(img) {
-          if (!img.dataset.heightHandlerAttached) {
-            img.dataset.heightHandlerAttached = 'true';
-            img.onload = sendHeight;
-            img.onerror = sendHeight;
-          }
-        });
-      }
-      
-      window.addEventListener('message', function(e) {
-        if (e.data?.type === 'select-all') {
-          var range = document.createRange();
-          range.selectNodeContents(document.body);
-          var selection = window.getSelection();
-          if (selection) {
-            selection.removeAllRanges();
-            selection.addRange(range);
-          }
-          return;
-        }
-        if (e.data?.type === 'inline-images' && e.data.images) {
-          var images = e.data.images;
-          var replaced = 0;
-          Object.keys(images).forEach(function(cid) {
-            // querySelectorAll (not querySelector): a body can legitimately
-            // reference the same cid: from multiple <img> tags — e.g. the
-            // composer emits cid:c1 twice when the user pastes the same
-            // image twice and the dedup collapses both into one inline
-            // attachment. Single-querySelector would leave every <img>
-            // except the first stuck on the loading placeholder.
-            var imgs = document.querySelectorAll('img[data-cid="' + cid + '"]');
-            imgs.forEach(function(img) {
-              img.src = images[cid];
-              img.removeAttribute('data-cid');
-              replaced++;
-            });
-          });
-          if (replaced > 0) {
-            attachImageHandlers();
-            setTimeout(sendHeight, 50);
-            setTimeout(sendHeight, 150);
-            setTimeout(sendHeight, 300);
-          }
-        }
-        if (e.data?.type === 'request-print-html') {
-          var clone = document.body.cloneNode(true);
-          clone.querySelectorAll('script').forEach(function(s){ s.remove(); });
-          window.parent.postMessage({ type: 'print-html', html: clone.innerHTML }, '*');
-        }
-      });
-
-      window.addEventListener('load', function() {
-        attachImageHandlers();
-        sendHeight();
-        window.parent.postMessage({ type: 'iframe-ready' }, '*');
-      });
-      
-      window.addEventListener('resize', sendHeight);
-      new ResizeObserver(sendHeight).observe(document.body);
-      setTimeout(sendHeight, 50);
-      setTimeout(sendHeight, 200);
-      
-      document.addEventListener('click', function(e) {
-        var link = e.target.closest('a');
-        if (link && link.href) {
-          e.preventDefault();
-          window.parent.postMessage({ type: 'open-link', url: link.href }, '*');
-        }
-      });
-
-      // Handle link hover for tooltip
-      document.addEventListener('mouseover', function(e) {
-        var link = e.target.closest('a');
-        if (link && link.href) {
-          var rect = link.getBoundingClientRect();
-          window.parent.postMessage({
-            type: 'link-hover',
-            url: link.href,
-            x: rect.left,
-            y: rect.bottom
-          }, '*');
-        }
-      });
-
-      document.addEventListener('mouseout', function(e) {
-        var link = e.target.closest('a');
-        if (link && link.href) {
-          window.parent.postMessage({ type: 'link-hover-end' }, '*');
-        }
-      });
-
-      // Handle right-click context menu — always prevent native menu, show custom one
-      document.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-        var selection = window.getSelection();
-        var selectedText = (selection && selection.toString().trim().length > 0) ? selection.toString() : '';
-        var link = e.target.closest('a');
-        var linkUrl = (link && link.href) ? link.href : '';
-
-        window.parent.postMessage({
-          type: 'contextmenu',
-          text: selectedText,
-          url: linkUrl,
-          x: e.clientX,
-          y: e.clientY
-        }, '*');
-      });
-
-      // Forward keyboard events to parent for global shortcuts (only modifier keys and Escape)
-      document.addEventListener('keydown', function(e) {
-        // Only forward events that need global handling
-        if (e.altKey || e.ctrlKey || e.metaKey || e.key === 'Escape') {
-          // For pane navigation, blur inside iframe first
-          if (e.altKey && (e.key === 'ArrowLeft' || e.key === 'ArrowRight' || e.key === 'h' || e.key === 'l')) {
-            if (document.activeElement) {
-              document.activeElement.blur();
-            }
-            document.body.blur();
-            window.blur();
-          }
-          window.parent.postMessage({
-            type: 'iframe-keydown',
-            key: e.key,
-            code: e.code,
-            altKey: e.altKey,
-            ctrlKey: e.ctrlKey,
-            metaKey: e.metaKey,
-            shiftKey: e.shiftKey
-          }, '*');
-        }
-      });
-
-      // Notify parent when iframe receives focus/click (but not for links/buttons)
-      function isInteractiveElement(el) {
-        if (!el) return false;
-        var link = el.closest('a');
-        if (link && link.href) return true;
-        var button = el.closest('button');
-        if (button) return true;
-        if (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'TEXTAREA') return true;
-        return false;
-      }
-      document.addEventListener('click', function(e) {
-        if (!isInteractiveElement(e.target)) {
-          window.parent.postMessage({ type: 'iframe-focus' }, '*');
-        }
-      });
-      document.addEventListener('focus', function(e) {
-        if (!isInteractiveElement(e.target)) {
-          window.parent.postMessage({ type: 'iframe-focus' }, '*');
-        }
-      }, true);
-    `
-
-    return `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data:; img-src ${imgSrc}; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
-  <sty` + `le>${darkenStyles}
-    /* Minimal base styles - avoid overriding email's inline styles */
-    * { box-sizing: border-box; }
-    html, body {
-      margin: 0; padding: 0;
-      font-family: system-ui, sans-serif;
-      font-size: 15px; line-height: 1.5;
-      color: #1a1a0a; background-color: white;
-      overflow-x: auto; word-wrap: break-word;
-      scrollbar-width: none; /* Firefox */
-      -ms-overflow-style: none; /* IE/Edge */
-    }
-    html::-webkit-scrollbar, body::-webkit-scrollbar { display: none; /* Chrome/Safari/WebKit */ }
-    body { padding: 16px; }
-    img { max-width: 100%; height: auto; }
-    /* Ensure empty paragraphs (blank lines) render with visible height */
-    p:empty { min-height: 1em; }
-    p:has(> br:only-child) { min-height: 1em; }
-    img[data-cid] { min-width: 100px; min-height: 60px; }
-    a { color: #2563eb; }
-    /* Only apply defaults to elements without inline styles */
-    blockquote:not([style]) { margin: 0.5em 0; padding-left: 1em; border-left: 3px solid #e5e7eb; color: #6b7280; }
-    pre:not([style]) { background: #f3f4f6; padding: 0.5em; border-radius: 4px; overflow-x: auto; }
-    /* Remove table/td defaults that conflict with email layouts */
-  </sty` + `le>
-</head>
-<body>
-${processedHtml}
-<scr` + `ipt>${iframeScript}</scr` + `ipt>
-</body>
-</html>`
-  }
 
   // Handle a clicked link URL — routes mailto: to composer, others to system browser.
   // Used by both the iframe message handler and the plain text div click handler.
@@ -544,12 +210,6 @@ ${processedHtml}
     onImagesLoaded?.()
   }
 
-  // Extract domain from email address
-  function extractDomain(email: string): string {
-    const parts = email.split('@')
-    return parts.length === 2 ? parts[1] : ''
-  }
-
   // Handle "Always load for this sender" action
   async function handleAlwaysLoadSender() {
     if (!fromEmail) return
@@ -645,7 +305,7 @@ ${processedHtml}
     const applyDarken = darken
 
     if (iframeElement && html) {
-      const content = buildIframeContent(html, applyDarken)
+      const content = buildIframeContent(html, applyDarken, imagesBlocked)
       iframeElement.srcdoc = content
       iframeReady = false
       lastSentMessageId = null
@@ -696,22 +356,6 @@ ${processedHtml}
     return () => window.removeEventListener('open-always-load-dropdown', handleAlwaysLoadDropdownEvent)
   })
 
-  function linkifyText(text: string): string {
-    if (!text) return ''
-    // One pass with alternation so an address inside a URL stays part of
-    // that link instead of getting a nested mailto anchor.
-    const linkPattern = /(https?:\/\/[^\s<>"{}|\\^`[\]]+)|([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g
-    const escaped = text
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-    return escaped.replace(linkPattern, (_match, url: string | undefined, email: string | undefined) =>
-      url
-        ? `<a href="${url}" target="_blank" rel="noopener noreferrer" class="text-primary hover:underline">${url}</a>`
-        : `<a href="mailto:${email}" class="text-primary hover:underline">${email}</a>`,
-    )
-  }
-
   // Copy selected text to clipboard
   async function copyTextToClipboard() {
     if (!ctxMenuText) return
@@ -745,41 +389,13 @@ ${processedHtml}
   {#if bodyHtml}
     {#if hasRemoteImages && imagesBlocked}
       <!-- Compact split button instead of a banner: load once, or always via the chevron. -->
-      <div class="flex justify-end mb-2">
-        <div class="inline-flex items-stretch rounded-md border border-border text-xs text-muted-foreground">
-          <button
-            class="flex items-center gap-1.5 px-2 py-1 rounded-l-md hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring {fromEmail ? '' : 'rounded-r-md'}"
-            title={$_('viewer.remoteImagesBlocked')}
-            onclick={loadImages}
-          >
-            <Icon icon="mdi:image-off-outline" class="w-3.5 h-3.5 shrink-0" />
-            {$_('viewer.loadImages')}
-          </button>
-
-          {#if fromEmail}
-            <DropdownMenu.Root bind:open={alwaysLoadDropdownOpen}>
-              <DropdownMenu.Trigger
-                class="flex items-center px-1 border-l border-border rounded-r-md hover:bg-muted hover:text-foreground transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
-                title={$_('viewer.alwaysLoad')}
-                aria-label={$_('viewer.alwaysLoad')}
-              >
-                <Icon icon="mdi:chevron-down" class="w-3.5 h-3.5" />
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Content align="end">
-                <div class="px-2 py-1.5 text-xs font-medium text-muted-foreground">{$_('viewer.alwaysLoad')}</div>
-                <DropdownMenu.Item onSelect={handleAlwaysLoadDomain}>
-                  <Icon icon="mdi:domain" class="w-4 h-4 mr-2" />
-                  {$_('viewer.forDomain', { values: { domain: extractDomain(fromEmail) || 'this domain' } })}
-                </DropdownMenu.Item>
-                <DropdownMenu.Item onSelect={handleAlwaysLoadSender}>
-                  <Icon icon="mdi:account" class="w-4 h-4 mr-2" />
-                  {$_('viewer.forSender', { values: { email: fromEmail } })}
-                </DropdownMenu.Item>
-              </DropdownMenu.Content>
-            </DropdownMenu.Root>
-          {/if}
-        </div>
-      </div>
+      <EmailBodyImageBanner
+        {fromEmail}
+        bind:open={alwaysLoadDropdownOpen}
+        onLoadImages={loadImages}
+        onAlwaysLoadDomain={handleAlwaysLoadDomain}
+        onAlwaysLoadSender={handleAlwaysLoadSender}
+      />
     {/if}
 
     <iframe
