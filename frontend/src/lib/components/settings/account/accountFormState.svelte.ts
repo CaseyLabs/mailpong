@@ -99,7 +99,7 @@ export class AccountFormState {
   // detector fell back to it). The "Same as incoming server" toggle is
   // gated on this; pre-configured providers always reuse IMAP creds.
   isGenericProvider = $derived(this.selectedProvider?.id === 'custom' || this.selectedProvider?.id === 'generic')
-  syncPeriodDays = $state<string>('180')
+  syncPeriodDays = $state<string>('30')
   syncInterval = $state<string>('30') // Default: 30 minutes
   readReceiptRequestPolicy = $state<string>('never')
 

@@ -1,4 +1,4 @@
-// Pure chat logic (chatFormat.ts, chatSnooze.ts), imported in the page through Vite so the app's own
+// Pure chat logic (chatFormat.ts, chatSnooze.ts) and account form defaults, imported in the page through Vite so the app's own
 // TypeScript runs unchanged. Each test evaluates the functions in the browser and asserts in Node.
 const { describe, it } = require('node:test')
 const assert = require('node:assert/strict')
@@ -143,5 +143,15 @@ describe('chat logic', () => {
     })
     assert.deepEqual(r, ['sending', 'snoozed', 'unread', 'snoozed', null, 'sending'],
       'sending outranks snoozed, which outranks unread; a read, unsnoozed chat has no glyph')
+  }))
+})
+
+describe('account form logic', () => {
+  it('new accounts default to a one-month sync period', ui.run(opts, async (page) => {
+    const days = await page.evaluate(async () => {
+      const { AccountFormState } = await import('/src/lib/components/settings/account/accountFormState.svelte.ts')
+      return new AccountFormState({ editAccount: null }).syncPeriodDays
+    })
+    assert.equal(days, '30', 'the sync period starts at 1 month')
   }))
 })

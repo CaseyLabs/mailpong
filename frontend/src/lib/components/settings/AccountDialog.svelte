@@ -67,7 +67,7 @@
   let smtpAuthMechanism = $state('auto')
   let replyForwardIdentityID = $state('')
   let allIdentityGroups = $state<app.AccountIdentityGroup[]>([])
-  let syncPeriodDays = $state('180')
+  let syncPeriodDays = $state('30')
   let syncInterval = $state('30')
   let syncAllFolders = $state(false)
   let syncFoldersEnabled = $state(false)

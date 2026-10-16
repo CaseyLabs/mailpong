@@ -28,7 +28,7 @@ Alternatively, you can go to **Settings > Accounts > Add Account**.
    - For other providers: Enter app password
    - For manual setup: Enter your server details
 8. **Notable Advance Settings** - Some settings that you might care about:
-    - **Sync Period** - How much of the e-mail to sync from provider to local. Default: `6 Months`
+    - **Sync Period** - How much of the e-mail to sync from provider to local. Default: `1 Month`
     - **Check for New Mail** - Aside from push mail, how often to sync. Default: `1 hour`
     - **Request Read Receipts** - Read receipt settings for send. Default: `Never`
 9. **Click Add Account**
@@ -47,7 +47,7 @@ import DocCardList from '@theme/DocCardList';
 
 After adding your account, Mailven will sync your emails. This may take a long time depending on your mailbox size.
 
-By default, Mailven syncs emails from the last 180 days. You can adjust this in the account settings.
+By default, Mailven syncs emails from the last 30 days. You can adjust this in the account settings.
 
 ## Adding More Accounts
 

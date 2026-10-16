@@ -260,7 +260,7 @@ Click **Edit** on any account to modify:
 - **Credentials**:
     - **Password** - Password of your account
     - **Re-authorize** - Re-authorize oauth account 
-- **Sync Period** - How far back to sync (30, 90, 180 days, or all)
+- **Sync Period** - How far back to sync (1 week to 1 year, or all; default 1 month)
 
 #### Identity Tab
 

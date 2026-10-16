@@ -39,7 +39,7 @@ For Gmail and Outlook accounts:
 
 If emails you expect to see aren't showing up:
 
-1. **Check sync period** - By default, Mailven syncs the last 180 days
+1. **Check sync period** - By default, Mailven syncs the last 30 days
    - Go to **Settings > Accounts > Edit** to change this
    - For a Gmail account that reads through the Gmail API, and for any IMAP account, **Load older mail** at the end of the list brings in the next page of mail from before that period without changing it, and **Search the whole mailbox** under a search finds older matches. Mail brought in this way stays, and is removed only when it is deleted on the server. Microsoft Graph accounts only offer the period setting.
 2. **Check the folder** - Ensure you're looking in the correct folder
