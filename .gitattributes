@@ -1,0 +1,3 @@
+# Generated Wails bindings: keep the generator's exact output (it writes tabs on blank
+# lines) so app runs and builds leave no diff, and skip whitespace checks for them.
+frontend/wailsjs/** -whitespace

@@ -1,5 +1,5 @@
 export namespace account {
-
+	
 	export class Account {
 	    id: string;
 	    name: string;
@@ -37,11 +37,11 @@ export namespace account {
 	    createdAt: any;
 	    // Go type: time
 	    updatedAt: any;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Account(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -79,7 +79,7 @@ export namespace account {
 	        this.createdAt = this.convertValues(source["createdAt"], null);
 	        this.updatedAt = this.convertValues(source["updatedAt"], null);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -131,11 +131,11 @@ export namespace account {
 	    archiveFolderPath?: string;
 	    allMailFolderPath?: string;
 	    starredFolderPath?: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new AccountConfig(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.name = source["name"];
@@ -192,11 +192,11 @@ export namespace account {
 	    createdAt: any;
 	    // Go type: time
 	    updatedAt: any;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Identity(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -217,7 +217,7 @@ export namespace account {
 	        this.createdAt = this.convertValues(source["createdAt"], null);
 	        this.updatedAt = this.convertValues(source["updatedAt"], null);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -248,11 +248,11 @@ export namespace account {
 	    signatureForForward: boolean;
 	    signaturePlacement: string;
 	    signatureSeparator: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new IdentityConfig(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.email = source["email"];
@@ -272,11 +272,11 @@ export namespace account {
 	    accountId: string;
 	    folderId: string;
 	    error: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new SyncError(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.accountId = source["accountId"];
@@ -288,18 +288,18 @@ export namespace account {
 }
 
 export namespace apimigrate {
-
+	
 	export class Counts {
 	    folders: number;
 	    imapMessages: number;
 	    apiMessages: number;
 	    drafts: number;
 	    queuedSubmissions: number;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Counts(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.folders = source["folders"];
@@ -319,11 +319,11 @@ export namespace apimigrate {
 	    error: string;
 	    startedAt: number;
 	    updatedAt: number;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Record(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.accountId = source["accountId"];
@@ -341,21 +341,21 @@ export namespace apimigrate {
 }
 
 export namespace app {
-
+	
 	export class AccountIdentityGroup {
 	    account?: account.Account;
 	    identities: account.Identity[];
-
+	
 	    static createFrom(source: any = {}) {
 	        return new AccountIdentityGroup(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.account = this.convertValues(source["account"], account.Account);
 	        this.identities = this.convertValues(source["identities"], account.Identity);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -380,11 +380,11 @@ export namespace app {
 	    description: string;
 	    website: string;
 	    license: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new AppInfo(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.name = source["name"];
@@ -399,11 +399,11 @@ export namespace app {
 	    identifier: string;
 	    email: string;
 	    label: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new AuthContextInfo(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.kind = source["kind"];
@@ -418,11 +418,11 @@ export namespace app {
 	    text: string;
 	    replyAll: boolean;
 	    attachments: smtp.Attachment[];
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ChatDraft(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.draftId = source["draftId"];
@@ -431,7 +431,7 @@ export namespace app {
 	        this.replyAll = source["replyAll"];
 	        this.attachments = this.convertValues(source["attachments"], smtp.Attachment);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -460,11 +460,11 @@ export namespace app {
 	    reviewAttemptId?: string;
 	    senderReviewToken?: string;
 	    draftId: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ChatReply(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.accountId = source["accountId"];
@@ -477,7 +477,7 @@ export namespace app {
 	        this.senderReviewToken = source["senderReviewToken"];
 	        this.draftId = source["draftId"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -501,11 +501,11 @@ export namespace app {
 	    mode: string;
 	    messageId: string;
 	    draftId: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ComposeMode(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.accountId = source["accountId"];
@@ -519,11 +519,11 @@ export namespace app {
 	    contentType: string;
 	    size: number;
 	    data: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ComposerAttachment(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.filename = source["filename"];
@@ -537,11 +537,11 @@ export namespace app {
 	    error?: string;
 	    certificateRequired: boolean;
 	    certificate?: certificate.CertificateInfo;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ConnectionTestResult(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.success = source["success"];
@@ -549,7 +549,7 @@ export namespace app {
 	        this.certificateRequired = source["certificateRequired"];
 	        this.certificate = this.convertValues(source["certificate"], certificate.CertificateInfo);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -574,11 +574,11 @@ export namespace app {
 	    size: number;
 	    isInline: boolean;
 	    contentId: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new DecryptedAttachment(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.filename = source["filename"];
@@ -590,16 +590,16 @@ export namespace app {
 	}
 	export class DraftResult {
 	    draft?: draft.Draft;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new DraftResult(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.draft = this.convertValues(source["draft"], draft.Draft);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -627,11 +627,11 @@ export namespace app {
 	    minAerionVersion: string;
 	    capabilities: string[];
 	    enabled: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ExtensionInfo(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -647,11 +647,11 @@ export namespace app {
 	export class GmailServerSearchResult {
 	    found: number;
 	    added: number;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new GmailServerSearchResult(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.found = source["found"];
@@ -663,18 +663,18 @@ export namespace app {
 	    // Go type: time
 	    checkedAt: any;
 	    results: googlecheck.Result[];
-
+	
 	    static createFrom(source: any = {}) {
 	        return new GoogleSetupCheck(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.accountId = source["accountId"];
 	        this.checkedAt = this.convertValues(source["checkedAt"], null);
 	        this.results = this.convertValues(source["results"], googlecheck.Result);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -696,11 +696,11 @@ export namespace app {
 	export class IMAPServerSearchResult {
 	    found: number;
 	    added: number;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new IMAPServerSearchResult(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.found = source["found"];
@@ -714,11 +714,11 @@ export namespace app {
 	    provider: string;
 	    isLinked: boolean;
 	    hasContactScope: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new LinkedAccountInfo(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.accountId = source["accountId"];
@@ -737,11 +737,11 @@ export namespace app {
 	    pendingActions: number;
 	    blockers: string[];
 	    migration?: apimigrate.Record;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new MailAPIMigrationPlan(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.accountId = source["accountId"];
@@ -752,7 +752,7 @@ export namespace app {
 	        this.blockers = source["blockers"];
 	        this.migration = this.convertValues(source["migration"], apimigrate.Record);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -775,11 +775,11 @@ export namespace app {
 	    op: string;
 	    status: string;
 	    error: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new MailAPIRollbackAction(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.op = source["op"];
@@ -793,11 +793,11 @@ export namespace app {
 	    unfinished: MailAPIRollbackAction[];
 	    syncRequested: boolean;
 	    appliedSince: number;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new MailAPIRollbackReport(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.accountId = source["accountId"];
@@ -806,7 +806,7 @@ export namespace app {
 	        this.syncRequested = source["syncRequested"];
 	        this.appliedSince = source["appliedSince"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -831,11 +831,11 @@ export namespace app {
 	    shared: boolean;
 	    authorized: boolean;
 	    failure: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new MailAPIRouteStatus(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.route = source["route"];
@@ -851,11 +851,11 @@ export namespace app {
 	    bcc: string[];
 	    subject: string;
 	    body: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new MailtoData(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.to = source["to"];
@@ -868,11 +868,11 @@ export namespace app {
 	export class OAuthClientImportResult {
 	    slots: string[];
 	    clientIdFingerprint: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new OAuthClientImportResult(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.slots = source["slots"];
@@ -882,11 +882,11 @@ export namespace app {
 	export class OAuthCredsChoice {
 	    id: string;
 	    label: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new OAuthCredsChoice(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -899,11 +899,11 @@ export namespace app {
 	    current: string;
 	    hasUserOverride: boolean;
 	    clientIdFingerprint: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new OAuthCredsChoices(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.configId = source["configId"];
@@ -912,7 +912,7 @@ export namespace app {
 	        this.hasUserOverride = source["hasUserOverride"];
 	        this.clientIdFingerprint = source["clientIdFingerprint"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -936,11 +936,11 @@ export namespace app {
 	    hasUserOverride: boolean;
 	    hasShipped: boolean;
 	    clientIdFingerprint: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new OAuthCredsStatus(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.configId = source["configId"];
@@ -961,11 +961,11 @@ export namespace app {
 	    expiresAt: any;
 	    isExpired: boolean;
 	    needsReauth: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new OAuthStatus(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.microsoftAccountType = source["microsoftAccountType"];
@@ -979,7 +979,7 @@ export namespace app {
 	        this.isExpired = source["isExpired"];
 	        this.needsReauth = source["needsReauth"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -1002,11 +1002,11 @@ export namespace app {
 	    authorizationEndpoint: string;
 	    tokenEndpoint: string;
 	    userinfoEndpoint: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new OIDCDiscoveryResult(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.authorizationEndpoint = source["authorizationEndpoint"];
@@ -1018,11 +1018,11 @@ export namespace app {
 	    found: number;
 	    added: number;
 	    done: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new OlderMailResult(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.found = source["found"];
@@ -1039,11 +1039,11 @@ export namespace app {
 	    pgpEncrypted: boolean;
 	    inlineAttachments?: Record<string, string>;
 	    attachments?: DecryptedAttachment[];
-
+	
 	    static createFrom(source: any = {}) {
 	        return new PGPViewResult(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.bodyHtml = source["bodyHtml"];
@@ -1055,7 +1055,7 @@ export namespace app {
 	        this.inlineAttachments = source["inlineAttachments"];
 	        this.attachments = this.convertValues(source["attachments"], DecryptedAttachment);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -1083,11 +1083,11 @@ export namespace app {
 	    smimeEncrypted: boolean;
 	    inlineAttachments?: Record<string, string>;
 	    attachments?: DecryptedAttachment[];
-
+	
 	    static createFrom(source: any = {}) {
 	        return new SMIMEViewResult(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.bodyHtml = source["bodyHtml"];
@@ -1099,7 +1099,7 @@ export namespace app {
 	        this.inlineAttachments = source["inlineAttachments"];
 	        this.attachments = this.convertValues(source["attachments"], DecryptedAttachment);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -1122,11 +1122,11 @@ export namespace app {
 	    email: string;
 	    displayName: string;
 	    replyTo: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new SendAsAlias(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.email = source["email"];
@@ -1140,11 +1140,11 @@ export namespace app {
 	    fetched: boolean;
 	    identities: Record<string, string>;
 	    available: SendAsAlias[];
-
+	
 	    static createFrom(source: any = {}) {
 	        return new SendAsStatus(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.supported = source["supported"];
@@ -1153,7 +1153,7 @@ export namespace app {
 	        this.identities = source["identities"];
 	        this.available = this.convertValues(source["available"], SendAsAlias);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -1185,11 +1185,11 @@ export namespace app {
 	    sendAs: string;
 	    sendOnBehalf: string;
 	    sharedRead: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new SenderEvidence(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.email = source["email"];
@@ -1210,18 +1210,18 @@ export namespace app {
 	    certificateRequired: boolean;
 	    host?: string;
 	    certificate?: certificate.CertificateInfo;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ServerCertificateCheck(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.certificateRequired = source["certificateRequired"];
 	        this.host = source["host"];
 	        this.certificate = this.convertValues(source["certificate"], certificate.CertificateInfo);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -1256,11 +1256,11 @@ export namespace app {
 	    checks: setupdiagnostic.Check[];
 	    dns: setupdiagnostic.DNSResult;
 	    limitations: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new SetupDiagnosticReport(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.runId = source["runId"];
@@ -1279,7 +1279,7 @@ export namespace app {
 	        this.dns = this.convertValues(source["dns"], setupdiagnostic.DNSResult);
 	        this.limitations = source["limitations"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -1306,11 +1306,11 @@ export namespace app {
 	    domain: string;
 	    ownedDomain: boolean;
 	    dkimSelectors: string[];
-
+	
 	    static createFrom(source: any = {}) {
 	        return new SetupDiagnosticRequest(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.runId = source["runId"];
@@ -1326,7 +1326,7 @@ export namespace app {
 }
 
 export namespace appstate {
-
+	
 	export class UIState {
 	    selectedAccountId: string;
 	    selectedFolderId: string;
@@ -1345,11 +1345,11 @@ export namespace appstate {
 	    paneWidths?: Record<string, number>;
 	    chatGroupsExpanded?: Record<string, boolean>;
 	    chatGroupsShowFewer?: Record<string, boolean>;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new UIState(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.selectedAccountId = source["selectedAccountId"];
@@ -1375,7 +1375,7 @@ export namespace appstate {
 }
 
 export namespace backend {
-
+	
 	export class Attendee {
 	    email: string;
 	    cn?: string;
@@ -1385,11 +1385,11 @@ export namespace backend {
 	    cuType?: string;
 	    delegate?: string;
 	    scheduleStatus?: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Attendee(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.email = source["email"];
@@ -1410,11 +1410,11 @@ export namespace backend {
 	    rsvp?: boolean;
 	    cuType?: string;
 	    delegate?: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new AttendeeInput(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.email = source["email"];
@@ -1438,11 +1438,11 @@ export namespace backend {
 	    ctag?: string;
 	    lastSyncedAt: number;
 	    createdAt: number;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Calendar(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -1461,11 +1461,11 @@ export namespace backend {
 	export class Organizer {
 	    email: string;
 	    cn?: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Organizer(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.email = source["email"];
@@ -1493,11 +1493,11 @@ export namespace backend {
 	    visibility?: string;
 	    attendees?: Attendee[];
 	    organizer?: Organizer;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Event(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -1521,7 +1521,7 @@ export namespace backend {
 	        this.attendees = this.convertValues(source["attendees"], Attendee);
 	        this.organizer = this.convertValues(source["organizer"], Organizer);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -1543,11 +1543,11 @@ export namespace backend {
 	export class OrganizerInput {
 	    email: string;
 	    cn?: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new OrganizerInput(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.email = source["email"];
@@ -1556,11 +1556,11 @@ export namespace backend {
 	}
 	export class ReminderSpec {
 	    offsetMinutes: number;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ReminderSpec(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.offsetMinutes = source["offsetMinutes"];
@@ -1571,11 +1571,11 @@ export namespace backend {
 	    untilUnix: number;
 	    count: number;
 	    keep?: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new RecurrenceSpec(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.freq = source["freq"];
@@ -1601,11 +1601,11 @@ export namespace backend {
 	    attendees?: AttendeeInput[];
 	    organizer?: OrganizerInput;
 	    sendUpdates?: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new EventInput(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.calendarId = source["calendarId"];
@@ -1625,7 +1625,7 @@ export namespace backend {
 	        this.organizer = this.convertValues(source["organizer"], OrganizerInput);
 	        this.sendUpdates = source["sendUpdates"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -1669,11 +1669,11 @@ export namespace backend {
 	    instanceEndUnix: number;
 	    recurrenceIdUnix?: number;
 	    isRecurrenceOverride?: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new EventInstance(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -1701,7 +1701,7 @@ export namespace backend {
 	        this.recurrenceIdUnix = source["recurrenceIdUnix"];
 	        this.isRecurrenceOverride = source["isRecurrenceOverride"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -1739,11 +1739,11 @@ export namespace backend {
 	    attendees?: AttendeeInput[];
 	    organizer?: OrganizerInput;
 	    sendUpdates?: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new EventUpdateInput(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.eventId = source["eventId"];
@@ -1765,7 +1765,7 @@ export namespace backend {
 	        this.organizer = this.convertValues(source["organizer"], OrganizerInput);
 	        this.sendUpdates = source["sendUpdates"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -1789,11 +1789,11 @@ export namespace backend {
 	    startUnix: number;
 	    endUnix: number;
 	    status: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new FreeBusyBlock(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.email = source["email"];
@@ -1806,18 +1806,18 @@ export namespace backend {
 	    email: string;
 	    blocks: FreeBusyBlock[];
 	    source: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new FreeBusyResult(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.email = source["email"];
 	        this.blocks = this.convertValues(source["blocks"], FreeBusyBlock);
 	        this.source = source["source"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -1842,11 +1842,11 @@ export namespace backend {
 	    primary: boolean;
 	    accessRole: string;
 	    writable: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new GoogleCalendarChoice(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -1861,11 +1861,11 @@ export namespace backend {
 	    displayName: string;
 	    color?: string;
 	    writable: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new GoogleCalendarSelection(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -1879,11 +1879,11 @@ export namespace backend {
 	    name: string;
 	    isDefaultCalendar: boolean;
 	    writable: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new MicrosoftCalendarChoice(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -1897,11 +1897,11 @@ export namespace backend {
 	    displayName: string;
 	    color?: string;
 	    writable: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new MicrosoftCalendarSelection(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -1910,18 +1910,18 @@ export namespace backend {
 	        this.writable = source["writable"];
 	    }
 	}
-
-
-
-
+	
+	
+	
+	
 	export class ResizedContactPhoto {
 	    data: string;
 	    mediaType: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ResizedContactPhoto(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.data = source["data"];
@@ -1944,11 +1944,11 @@ export namespace backend {
 	    createdAt: number;
 	    itipMode?: string;
 	    organizerIdentities: string[];
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Source(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -1977,11 +1977,11 @@ export namespace backend {
 	    dtstartUnix: number;
 	    lastError: string;
 	    lastAttemptUnix: number;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new StuckWrite(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -1998,7 +1998,7 @@ export namespace backend {
 }
 
 export namespace carddav {
-
+	
 	export class Addressbook {
 	    id: string;
 	    source_id: string;
@@ -2008,11 +2008,11 @@ export namespace carddav {
 	    sync_token?: string;
 	    // Go type: time
 	    last_synced_at?: any;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Addressbook(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -2023,7 +2023,7 @@ export namespace carddav {
 	        this.sync_token = source["sync_token"];
 	        this.last_synced_at = this.convertValues(source["last_synced_at"], null);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -2046,11 +2046,11 @@ export namespace carddav {
 	    path: string;
 	    name: string;
 	    description?: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new AddressbookInfo(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.path = source["path"];
@@ -2076,11 +2076,11 @@ export namespace carddav {
 	    // Go type: time
 	    created_at: any;
 	    addressbooks?: Addressbook[];
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Source(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -2098,7 +2098,7 @@ export namespace carddav {
 	        this.created_at = this.convertValues(source["created_at"], null);
 	        this.addressbooks = this.convertValues(source["addressbooks"], Addressbook);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -2129,11 +2129,11 @@ export namespace carddav {
 	    sync_interval: number;
 	    enabled_addressbooks?: string[];
 	    addressbook_names?: Record<string, string>;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new SourceConfig(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.name = source["name"];
@@ -2155,11 +2155,11 @@ export namespace carddav {
 	    error: string;
 	    // Go type: time
 	    error_at: any;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new SourceError(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.source_id = source["source_id"];
@@ -2167,7 +2167,7 @@ export namespace carddav {
 	        this.error = source["error"];
 	        this.error_at = this.convertValues(source["error_at"], null);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -2190,7 +2190,7 @@ export namespace carddav {
 }
 
 export namespace certificate {
-
+	
 	export class CertificateInfo {
 	    host?: string;
 	    subject: string;
@@ -2201,11 +2201,11 @@ export namespace certificate {
 	    dnsNames: string[];
 	    isExpired: boolean;
 	    errorReason: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new CertificateInfo(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.host = source["host"];
@@ -2223,7 +2223,7 @@ export namespace certificate {
 }
 
 export namespace contact {
-
+	
 	export class Contact {
 	    email: string;
 	    display_name: string;
@@ -2235,11 +2235,11 @@ export namespace contact {
 	    last_used: any;
 	    // Go type: time
 	    created_at: any;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Contact(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.email = source["email"];
@@ -2251,7 +2251,7 @@ export namespace contact {
 	        this.last_used = this.convertValues(source["last_used"], null);
 	        this.created_at = this.convertValues(source["created_at"], null);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -2274,11 +2274,11 @@ export namespace contact {
 	    email: string;
 	    data: string;
 	    mediaType: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ContactPhoto(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.email = source["email"];
@@ -2290,7 +2290,7 @@ export namespace contact {
 }
 
 export namespace draft {
-
+	
 	export class Draft {
 	    id: string;
 	    accountId: string;
@@ -2319,11 +2319,11 @@ export namespace draft {
 	    createdAt: any;
 	    // Go type: time
 	    updatedAt: any;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Draft(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -2351,7 +2351,7 @@ export namespace draft {
 	        this.createdAt = this.convertValues(source["createdAt"], null);
 	        this.updatedAt = this.convertValues(source["updatedAt"], null);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -2374,7 +2374,7 @@ export namespace draft {
 }
 
 export namespace folder {
-
+	
 	export class Folder {
 	    id: string;
 	    accountId: string;
@@ -2390,11 +2390,11 @@ export namespace folder {
 	    // Go type: time
 	    lastSync?: any;
 	    subscribed: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Folder(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -2411,7 +2411,7 @@ export namespace folder {
 	        this.lastSync = this.convertValues(source["lastSync"], null);
 	        this.subscribed = source["subscribed"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -2433,17 +2433,17 @@ export namespace folder {
 	export class FolderTree {
 	    folder?: Folder;
 	    children?: FolderTree[];
-
+	
 	    static createFrom(source: any = {}) {
 	        return new FolderTree(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.folder = this.convertValues(source["folder"], Folder);
 	        this.children = this.convertValues(source["children"], FolderTree);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -2466,18 +2466,18 @@ export namespace folder {
 }
 
 export namespace googlecheck {
-
+	
 	export class Result {
 	    api: string;
 	    state: string;
 	    detail: string;
 	    enableUrl: string;
 	    project: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Result(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.api = source["api"];
@@ -2491,32 +2491,32 @@ export namespace googlecheck {
 }
 
 export namespace imap {
-
+	
 	export class Client {
-
-
+	
+	
 	    static createFrom(source: any = {}) {
 	        return new Client(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-
+	
 	    }
 	}
 
 }
 
 export namespace message {
-
+	
 	export class Address {
 	    name: string;
 	    email: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Address(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.name = source["name"];
@@ -2532,11 +2532,11 @@ export namespace message {
 	    contentId?: string;
 	    isInline: boolean;
 	    localPath?: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Attachment(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -2554,11 +2554,11 @@ export namespace message {
 	    quoted?: string;
 	    hasQuoted: boolean;
 	    isRich: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ChatText(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.text = source["text"];
@@ -2613,11 +2613,11 @@ export namespace message {
 	    receivedAt: any;
 	    chat?: ChatText;
 	    mine?: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Message(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -2664,7 +2664,7 @@ export namespace message {
 	        this.chat = this.convertValues(source["chat"], ChatText);
 	        this.mine = source["mine"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -2708,11 +2708,11 @@ export namespace message {
 	    snoozedUntil?: any;
 	    isLowPriority: boolean;
 	    recipients?: Address[];
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Chat(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.threadId = source["threadId"];
@@ -2738,7 +2738,7 @@ export namespace message {
 	        this.isLowPriority = source["isLowPriority"];
 	        this.recipients = this.convertValues(source["recipients"], Address);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -2783,11 +2783,11 @@ export namespace message {
 	    threadKey: string;
 	    senderEmail?: string;
 	    recipients?: Address[];
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ChatSearchResult(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.threadId = source["threadId"];
@@ -2815,7 +2815,7 @@ export namespace message {
 	        this.senderEmail = source["senderEmail"];
 	        this.recipients = this.convertValues(source["recipients"], Address);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -2834,7 +2834,7 @@ export namespace message {
 		    return a;
 		}
 	}
-
+	
 	export class Conversation {
 	    threadId: string;
 	    subject: string;
@@ -2853,11 +2853,11 @@ export namespace message {
 	    accountName?: string;
 	    accountColor?: string;
 	    folderId?: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Conversation(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.threadId = source["threadId"];
@@ -2877,7 +2877,7 @@ export namespace message {
 	        this.accountColor = source["accountColor"];
 	        this.folderId = source["folderId"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -2919,11 +2919,11 @@ export namespace message {
 	    highlightedFromName: string;
 	    folderName: string;
 	    folderType: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ConversationSearchResult(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.threadId = source["threadId"];
@@ -2948,7 +2948,7 @@ export namespace message {
 	        this.folderName = source["folderName"];
 	        this.folderType = source["folderType"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -2973,11 +2973,11 @@ export namespace message {
 	    totalCount: number;
 	    isComplete: boolean;
 	    lastIndexedAt?: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new FTSIndexStatus(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.folderId = source["folderId"];
@@ -2987,7 +2987,7 @@ export namespace message {
 	        this.lastIndexedAt = source["lastIndexedAt"];
 	    }
 	}
-
+	
 	export class MessageHeader {
 	    id: string;
 	    accountId: string;
@@ -3002,11 +3002,11 @@ export namespace message {
 	    isRead: boolean;
 	    isStarred: boolean;
 	    hasAttachments: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new MessageHeader(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -3022,7 +3022,7 @@ export namespace message {
 	        this.isStarred = source["isStarred"];
 	        this.hasAttachments = source["hasAttachments"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -3045,17 +3045,17 @@ export namespace message {
 }
 
 export namespace oauth2 {
-
+	
 	export class GoogleSetupStep {
 	    id: string;
 	    url: string;
 	    fallbackUrl: string;
 	    menuPath: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new GoogleSetupStep(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -3067,17 +3067,17 @@ export namespace oauth2 {
 	export class GoogleSetupGuide {
 	    steps: GoogleSetupStep[];
 	    scopes: string[];
-
+	
 	    static createFrom(source: any = {}) {
 	        return new GoogleSetupGuide(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.steps = this.convertValues(source["steps"], GoogleSetupStep);
 	        this.scopes = source["scopes"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -3100,7 +3100,7 @@ export namespace oauth2 {
 }
 
 export namespace pgp {
-
+	
 	export class Key {
 	    id: string;
 	    accountId: string;
@@ -3119,11 +3119,11 @@ export namespace pgp {
 	    hasPrivate: boolean;
 	    // Go type: time
 	    createdAt: any;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Key(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -3141,7 +3141,7 @@ export namespace pgp {
 	        this.hasPrivate = source["hasPrivate"];
 	        this.createdAt = this.convertValues(source["createdAt"], null);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -3164,18 +3164,18 @@ export namespace pgp {
 	    key?: Key;
 	    hasPrivate: boolean;
 	    subkeyCount: number;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ImportResult(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.key = this.convertValues(source["key"], Key);
 	        this.hasPrivate = source["hasPrivate"];
 	        this.subkeyCount = source["subkeyCount"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -3194,16 +3194,16 @@ export namespace pgp {
 		    return a;
 		}
 	}
-
+	
 	export class KeyServer {
 	    id: number;
 	    url: string;
 	    orderIndex: number;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new KeyServer(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -3228,11 +3228,11 @@ export namespace pgp {
 	    collectedAt: any;
 	    // Go type: time
 	    lastSeenAt: any;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new SenderKey(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -3248,7 +3248,7 @@ export namespace pgp {
 	        this.collectedAt = this.convertValues(source["collectedAt"], null);
 	        this.lastSeenAt = this.convertValues(source["lastSeenAt"], null);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -3271,17 +3271,17 @@ export namespace pgp {
 }
 
 export namespace settings {
-
+	
 	export class AllowlistEntry {
 	    id: number;
 	    type: string;
 	    value: string;
 	    createdAt: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new AllowlistEntry(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -3294,7 +3294,7 @@ export namespace settings {
 }
 
 export namespace setupdiagnostic {
-
+	
 	export class Check {
 	    name: string;
 	    status: string;
@@ -3302,11 +3302,11 @@ export namespace setupdiagnostic {
 	    evidenceAgeSeconds: number;
 	    detail: string;
 	    code: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Check(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.name = source["name"];
@@ -3326,11 +3326,11 @@ export namespace setupdiagnostic {
 	    ttlSeconds?: number;
 	    status: string;
 	    evidence: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new DNSCheck(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.query = source["query"];
@@ -3341,7 +3341,7 @@ export namespace setupdiagnostic {
 	        this.status = source["status"];
 	        this.evidence = source["evidence"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -3363,17 +3363,17 @@ export namespace setupdiagnostic {
 	export class DNSResult {
 	    domain: string;
 	    checks: DNSCheck[];
-
+	
 	    static createFrom(source: any = {}) {
 	        return new DNSResult(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.domain = source["domain"];
 	        this.checks = this.convertValues(source["checks"], DNSCheck);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -3396,7 +3396,7 @@ export namespace setupdiagnostic {
 }
 
 export namespace smime {
-
+	
 	export class Certificate {
 	    id: string;
 	    accountId: string;
@@ -3414,11 +3414,11 @@ export namespace smime {
 	    isSelfSigned: boolean;
 	    // Go type: time
 	    createdAt: any;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Certificate(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -3435,7 +3435,7 @@ export namespace smime {
 	        this.isSelfSigned = source["isSelfSigned"];
 	        this.createdAt = this.convertValues(source["createdAt"], null);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -3457,17 +3457,17 @@ export namespace smime {
 	export class ImportResult {
 	    certificate?: Certificate;
 	    chainLength: number;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ImportResult(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.certificate = this.convertValues(source["certificate"], Certificate);
 	        this.chainLength = source["chainLength"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -3501,11 +3501,11 @@ export namespace smime {
 	    collectedAt: any;
 	    // Go type: time
 	    lastSeenAt: any;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new SenderCert(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -3519,7 +3519,7 @@ export namespace smime {
 	        this.collectedAt = this.convertValues(source["collectedAt"], null);
 	        this.lastSeenAt = this.convertValues(source["lastSeenAt"], null);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -3542,15 +3542,15 @@ export namespace smime {
 }
 
 export namespace smtp {
-
+	
 	export class Address {
 	    name: string;
 	    address: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Address(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.name = source["name"];
@@ -3564,11 +3564,11 @@ export namespace smtp {
 	    content_base64?: string;
 	    content_id: string;
 	    inline: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Attachment(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.filename = source["filename"];
@@ -3599,11 +3599,11 @@ export namespace smtp {
 	    encrypt_message: boolean;
 	    pgp_sign_message: boolean;
 	    pgp_encrypt_message: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ComposeMessage(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.from = this.convertValues(source["from"], Address);
@@ -3626,7 +3626,7 @@ export namespace smtp {
 	        this.pgp_sign_message = source["pgp_sign_message"];
 	        this.pgp_encrypt_message = source["pgp_encrypt_message"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -3649,17 +3649,17 @@ export namespace smtp {
 }
 
 export namespace snapshotrestore {
-
+	
 	export class AccountCount {
 	    id: string;
 	    email: string;
 	    messages: number;
 	    drafts: number;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new AccountCount(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -3671,11 +3671,11 @@ export namespace snapshotrestore {
 	export class AccountRef {
 	    id: string;
 	    email: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new AccountRef(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -3692,11 +3692,11 @@ export namespace snapshotrestore {
 	    removedSince: string[];
 	    backupDir: string;
 	    undo: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Report(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.snapshotPath = source["snapshotPath"];
@@ -3709,7 +3709,7 @@ export namespace snapshotrestore {
 	        this.backupDir = source["backupDir"];
 	        this.undo = source["undo"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -3742,11 +3742,11 @@ export namespace snapshotrestore {
 	    needsReauth: string[];
 	    orphanedAccounts: AccountRef[];
 	    notice: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Result(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -3763,7 +3763,7 @@ export namespace snapshotrestore {
 	        this.orphanedAccounts = this.convertValues(source["orphanedAccounts"], AccountRef);
 	        this.notice = source["notice"];
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -3786,7 +3786,7 @@ export namespace snapshotrestore {
 }
 
 export namespace submission {
-
+	
 	export class Attempt {
 	    id: string;
 	    messageId: string;
@@ -3799,11 +3799,11 @@ export namespace submission {
 	    warnings: string;
 	    createdAt: number;
 	    updatedAt: number;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Attempt(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -3828,11 +3828,11 @@ export namespace submission {
 	    mode: string;
 	    state: string;
 	    evidence: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Copy(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.mailboxRoute = source["mailboxRoute"];
@@ -3850,11 +3850,11 @@ export namespace submission {
 	    accountId: string;
 	    folderPath: string;
 	    mode: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Destination(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.mailboxRoute = source["mailboxRoute"];
@@ -3866,17 +3866,17 @@ export namespace submission {
 	export class SentPolicy {
 	    route: string;
 	    destinations: Destination[];
-
+	
 	    static createFrom(source: any = {}) {
 	        return new SentPolicy(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.route = source["route"];
 	        this.destinations = this.convertValues(source["destinations"], Destination);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -3899,18 +3899,18 @@ export namespace submission {
 }
 
 export namespace v1 {
-
+	
 	export class AccountSetupHookRequest {
 	    extensionId: string;
 	    providers: string[];
 	    buttonLabel: string;
 	    description?: string;
 	    component: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new AccountSetupHookRequest(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.extensionId = source["extensionId"];
@@ -3925,11 +3925,11 @@ export namespace v1 {
 	    sourceId: string;
 	    name: string;
 	    path?: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Addressbook(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -3941,11 +3941,11 @@ export namespace v1 {
 	export class ContactIMPP {
 	    handle: string;
 	    type?: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ContactIMPP(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.handle = source["handle"];
@@ -3955,11 +3955,11 @@ export namespace v1 {
 	export class ContactURL {
 	    url: string;
 	    type?: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ContactURL(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.url = source["url"];
@@ -3973,11 +3973,11 @@ export namespace v1 {
 	    region?: string;
 	    postcode?: string;
 	    country?: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ContactAddress(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.type = source["type"];
@@ -3992,11 +3992,11 @@ export namespace v1 {
 	    number: string;
 	    type?: string;
 	    isPrimary?: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ContactPhone(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.number = source["number"];
@@ -4008,11 +4008,11 @@ export namespace v1 {
 	    email: string;
 	    type?: string;
 	    isPrimary?: boolean;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ContactEmail(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.email = source["email"];
@@ -4041,11 +4041,11 @@ export namespace v1 {
 	    sourceId?: string;
 	    // Go type: time
 	    updatedAt: any;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new Contact(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -4068,7 +4068,7 @@ export namespace v1 {
 	        this.sourceId = source["sourceId"];
 	        this.updatedAt = this.convertValues(source["updatedAt"], null);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -4087,16 +4087,16 @@ export namespace v1 {
 		    return a;
 		}
 	}
-
+	
 	export class ContactPhoto {
 	    data?: string;
 	    mediaType?: string;
 	    url?: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ContactPhoto(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.data = source["data"];
@@ -4121,11 +4121,11 @@ export namespace v1 {
 	    urls?: ContactURL[];
 	    impps?: ContactIMPP[];
 	    photo?: ContactPhoto;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ContactCreateInput(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.sourceId = source["sourceId"];
@@ -4145,7 +4145,7 @@ export namespace v1 {
 	        this.impps = this.convertValues(source["impps"], ContactIMPP);
 	        this.photo = this.convertValues(source["photo"], ContactPhoto);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -4164,8 +4164,8 @@ export namespace v1 {
 		    return a;
 		}
 	}
-
-
+	
+	
 	export class ContactPatch {
 	    name?: string;
 	    nickname?: string;
@@ -4180,11 +4180,11 @@ export namespace v1 {
 	    impps?: ContactIMPP[];
 	    categories?: string[];
 	    photo?: ContactPhoto;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ContactPatch(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.name = source["name"];
@@ -4201,7 +4201,7 @@ export namespace v1 {
 	        this.categories = source["categories"];
 	        this.photo = this.convertValues(source["photo"], ContactPhoto);
 	    }
-
+	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
 		    if (!a) {
 		        return a;
@@ -4220,19 +4220,19 @@ export namespace v1 {
 		    return a;
 		}
 	}
-
-
+	
+	
 	export class ContactSource {
 	    id: string;
 	    name: string;
 	    type: string;
 	    writable: boolean;
 	    accountId?: string;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new ContactSource(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
@@ -4242,18 +4242,18 @@ export namespace v1 {
 	        this.accountId = source["accountId"];
 	    }
 	}
-
+	
 	export class RailTabRequest {
 	    extensionId: string;
 	    label: string;
 	    icon: string;
 	    component: string;
 	    order?: number;
-
+	
 	    static createFrom(source: any = {}) {
 	        return new RailTabRequest(source);
 	    }
-
+	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.extensionId = source["extensionId"];

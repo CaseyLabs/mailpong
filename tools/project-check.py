@@ -29,7 +29,7 @@ def infer_scopes(paths):
             scopes.add('frontend')
         elif name.endswith('.go') or name in ('go.mod', 'go.sum', 'Makefile'):
             scopes.add('go')
-        elif name.startswith(('tools/', '.agents/', '.claude/', '.codex/', '.githooks/')) or name in ('.gitignore', 'CLAUDE.md'):
+        elif name.startswith(('tools/', '.agents/', '.claude/', '.codex/', '.githooks/')) or name in ('.gitignore', '.gitattributes', 'CLAUDE.md'):
             scopes.add('tooling')
         else:
             unknown.append(name)
