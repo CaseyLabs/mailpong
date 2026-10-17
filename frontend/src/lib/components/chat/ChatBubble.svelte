@@ -238,7 +238,7 @@
               {/if}
             </div>
           {:else if mode === 'reader'}
-            <ChatReaderMessage blocks={chat!.reader!} fromEmail={msg.fromEmail} {flat} {onOpenLink} {onImagesLoaded} />
+            <ChatReaderMessage blocks={chat!.reader!} inlineAttachments={pgp?.inlineAttachments ?? smime?.inlineAttachments} fromEmail={msg.fromEmail} {flat} {onOpenLink} {onImagesLoaded} />
           {:else if mode === 'card'}
             <ChatRichCard subject={displaySubject(msg.subject)} preview={chat?.text ?? ''} expanded={cardExpanded} onToggle={() => (cardExpanded = !cardExpanded)} body={emailBody} />
           {:else}

@@ -163,3 +163,36 @@ func TestIsReaderHidden(t *testing.T) {
 		}
 	}
 }
+
+func TestExtractViewChatTextCID(t *testing.T) {
+	body := `<table role="presentation"><tr><td><h1>Receipt</h1>
+<img src="cid:logo@example.com" width="200" alt="Logo">
+<img src="CID:%3Chero%40example.com%3E" alt="Hero">
+<img src="cid:" alt="empty"><img src="cid:a b" alt="space">
+<img src="cid:icon" width="16" height="16" alt="icon">
+<a href="https://example.com/x"><img src="cid:linked"></a>
+<p>` + strings.Repeat("Thanks for your order. ", 40) + `</p></td></tr></table>`
+	tests := []struct {
+		name string
+		view bool
+		want string
+	}{
+		{"view keeps cid pictures", true, "heading: Receipt\nimage: cid:logo@example.com | Logo\nimage: cid:hero@example.com | Hero\nimage: cid:linked |  | https://example.com/x"},
+		{"stored body drops them", false, "heading: Receipt"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ct := ExtractChatText("", body)
+			if tt.view {
+				ct = ExtractViewChatText("", body)
+			}
+			got := readerString(ct.Reader)
+			if i := strings.Index(got, "\ntext:"); i >= 0 {
+				got = got[:i]
+			}
+			if got != tt.want {
+				t.Errorf("reader =\n%s\nwant\n%s", got, tt.want)
+			}
+		})
+	}
+}

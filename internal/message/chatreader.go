@@ -51,8 +51,12 @@ type ReaderSpan struct {
 // readerFromHTML reduces a parsed HTML document to reader blocks. Layout
 // tables, hidden elements (preheaders), tracking pixels, icons, scripts and
 // quoted history are dropped.
-func readerFromHTML(doc *html.Node) []ReaderBlock {
-	w := &readerWalker{kind: ReaderText}
+//
+// keepCID keeps images sourced from a "cid:" content ID as "cid:<id>" blocks
+// for the view to resolve from the message's own inline attachments; without
+// it they are dropped, as the stored body has no attachment data to show.
+func readerFromHTML(doc *html.Node, keepCID bool) []ReaderBlock {
+	w := &readerWalker{kind: ReaderText, keepCID: keepCID}
 	w.walk(doc)
 	w.flush()
 	return w.blocks
@@ -83,6 +87,7 @@ type readerWalker struct {
 	dataTable int    // data (non-layout) table nesting
 	cellStart bool   // the next text starts a data table cell
 	dataBytes int    // bytes of inline data: image sources kept
+	keepCID   bool   // keep cid: image sources (decrypted view results)
 	stopped   bool   // an Outlook reply marker or the block limit was reached
 }
 
@@ -211,7 +216,7 @@ func (w *readerWalker) image(n *html.Node) {
 	if isTrackingPixel(n) {
 		return
 	}
-	src := safeReaderImageSrc(attr(n, "src"))
+	src := safeReaderImageSrc(attr(n, "src"), w.keepCID)
 	alt := strings.TrimSpace(spaceRunRe.ReplaceAllString(invisibleRe.ReplaceAllString(attr(n, "alt"), ""), " "))
 	if strings.HasPrefix(src, "data:") {
 		if w.dataBytes+len(src) > readerMaxDataTotal {
@@ -388,9 +393,21 @@ func safeReaderHref(raw string) string {
 }
 
 // safeReaderImageSrc returns an http(s) image URL, or a bounded data: URI of
-// a raster image type. Protocol-relative URLs become https.
-func safeReaderImageSrc(raw string) string {
+// a raster image type. Protocol-relative URLs become https. With keepCID a
+// "cid:" source becomes "cid:<id>" (percent-decoded, angle brackets removed).
+func safeReaderImageSrc(raw string, keepCID bool) string {
 	raw = strings.TrimSpace(raw)
+	if keepCID && len(raw) > 4 && strings.EqualFold(raw[:4], "cid:") {
+		id := strings.TrimSpace(raw[4:])
+		if dec, err := url.PathUnescape(id); err == nil {
+			id = dec
+		}
+		id = strings.Trim(id, "<>")
+		if id == "" || strings.ContainsAny(id, "\"'<> \t\r\n") {
+			return ""
+		}
+		return "cid:" + id
+	}
 	if strings.HasPrefix(raw, "//") {
 		raw = "https:" + raw
 	}

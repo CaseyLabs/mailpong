@@ -104,7 +104,7 @@ func attachChatText(m *message.Message) {
 // S/MIME and PGP view results. It bypasses chatTextCache so decrypted
 // plaintext is not kept after the view call.
 func viewChatText(bodyText, bodyHTML string) *message.ChatText {
-	chat := message.ExtractChatText(bodyText, bodyHTML)
+	chat := message.ExtractViewChatText(bodyText, bodyHTML)
 	return &chat
 }
 

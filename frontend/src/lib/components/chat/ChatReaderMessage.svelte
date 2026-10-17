@@ -3,7 +3,8 @@
   // sanitized chat content: the backend's reader blocks (headings, paragraphs,
   // list items, images; http/https/mailto links only). Long messages fold
   // after the first blocks. Remote images follow the same rules as the full
-  // body: allowlist, always-load setting, Load images and Ctrl+L.
+  // body: allowlist, always-load setting, Load images and Ctrl+L. A decrypted
+  // message's cid: pictures come from its inline attachments; unknown ones are dropped.
   import Icon from '@iconify/svelte'
   import { _ } from '$lib/i18n'
   import { AddImageAllowlist } from '../../../../wailsjs/go/app/App'
@@ -13,16 +14,19 @@
   import { isImageAllowedSync, refreshImageAllowlist } from '$lib/stores/imageAllowlist.svelte'
   import { getAlwaysLoadImages } from '$lib/stores/settings.svelte'
   import { linkify } from './chatFormat'
+  import { resolveReaderCids } from './chatReaderCid'
 
   interface Props {
     blocks: message.ReaderBlock[]
+    // Content ID → data URL of a decrypted message's embedded pictures.
+    inlineAttachments?: Record<string, string>
     fromEmail: string
     flat: boolean
     onOpenLink: (url: string) => void
     onImagesLoaded: () => void
   }
 
-  let { blocks, fromEmail, flat, onOpenLink, onImagesLoaded }: Props = $props()
+  let { blocks: rawBlocks, inlineAttachments, fromEmail, flat, onOpenLink, onImagesLoaded }: Props = $props()
 
   // Blocks shown before "Show more"; a fold must hide more than a couple.
   const FOLD_AT = 8
@@ -34,6 +38,7 @@
   let imagesLoaded = $state(false)
   let alwaysLoadOpen = $state(false)
 
+  const blocks = $derived(resolveReaderCids(rawBlocks, inlineAttachments))
   const foldable = $derived(blocks.length >= FOLD_AT + FOLD_MIN_HIDDEN)
   const shown = $derived(foldable && !expanded ? blocks.slice(0, FOLD_AT) : blocks)
   const isRemote = (src = '') => /^https?:/i.test(src)

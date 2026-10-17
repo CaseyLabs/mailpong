@@ -13,7 +13,7 @@ All Microsoft work, including Microsoft 365 and regular/personal Outlook.com, is
 - [SYNC — Mail synchronization and action reliability](#sync): [SY10](#sy10) (resolved: [SY9](#sy9), [SY7](#sy7), [SY8](#sy8), [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [GOAUTH — Google OAuth client setup](#goauth): [GO4](#go4) (resolved: [GO3](#go3), [GO1](#go1), [GO2](#go2))
 - [CHAT — Chat composer sender review](#chat): no unresolved issue recorded (resolved: [CH1](#ch1), [R1](#r1))
-- [MAINT — Maintenance and documentation](#maint): [D2](#d2) (resolved: UI9, UI8, [TF3](#tf3), [UI6](#ui6), [UI5](#ui5), [DOC6](#doc6), [UI3](#ui3), [TF1](#tf1), [TF2](#tf2), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI4](#ui4), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
+- [MAINT — Maintenance and documentation](#maint): [D2](#d2) (resolved: UI10, UI9, UI8, [TF3](#tf3), [UI6](#ui6), [UI5](#ui5), [DOC6](#doc6), [UI3](#ui3), [TF1](#tf1), [TF2](#tf2), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI4](#ui4), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
 - [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
 
@@ -521,14 +521,6 @@ Project: [MAINT](PLAN.md#maint).
 
 Project: [AI](PLAN.md#ai).
 
-<a id="ui10"></a>
-
-### UI10 — Embedded pictures missing from decrypted mail in the reader view
-
-- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-17](PLAN.md#maint-17); declined finding from the [UIX-8](PLAN.md#uix-8) review, documented limit.
-- **Severity / proposed priority / status:** unspecified / P3 / open.
-- **Problem / evidence:** reader extraction (`internal/message/chatreader.go`) drops `cid:` images, so a decrypted rich message shows no embedded pictures until Show original, although `SMIMEViewResult`/`PGPViewResult.inlineAttachments` already map content IDs to data URLs.
-- **Closure:** decrypted reader content shows its `cid:` pictures from `inlineAttachments` (within the existing inline-image size budget) without remote loading; unencrypted mail unchanged unless deliberately extended; Go and UI tests; user guide limit removed.
 
 <a id="ma10"></a>
 

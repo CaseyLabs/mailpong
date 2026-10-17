@@ -62,8 +62,19 @@ var (
 // history. HTML is preferred when present; plain text is used when there is
 // no HTML or the HTML has no text.
 func ExtractChatText(bodyText, bodyHTML string) ChatText {
+	return extractChatText(bodyText, bodyHTML, false)
+}
+
+// ExtractViewChatText is ExtractChatText for a verified or decrypted body: its
+// reader blocks keep "cid:<id>" pictures, which the view resolves from the
+// result's inline attachments.
+func ExtractViewChatText(bodyText, bodyHTML string) ChatText {
+	return extractChatText(bodyText, bodyHTML, true)
+}
+
+func extractChatText(bodyText, bodyHTML string, keepCID bool) ChatText {
 	if strings.TrimSpace(bodyHTML) != "" {
-		if ct, ok := chatTextFromHTML(bodyHTML); ok {
+		if ct, ok := chatTextFromHTML(bodyHTML, keepCID); ok {
 			return ct
 		}
 	}
@@ -82,7 +93,7 @@ func isLongText(s string) bool {
 
 // chatTextFromHTML renders HTML to quote-marked lines and applies the text
 // rules. ok is false when the HTML has no text.
-func chatTextFromHTML(bodyHTML string) (ChatText, bool) {
+func chatTextFromHTML(bodyHTML string, keepCID bool) (ChatText, bool) {
 	doc, err := html.Parse(strings.NewReader(bodyHTML))
 	if err != nil {
 		return ChatText{}, false
@@ -99,7 +110,7 @@ func chatTextFromHTML(bodyHTML string) (ChatText, bool) {
 		return ChatText{}, false
 	}
 	if ct.IsRich = r.isRich(hi) || isLongText(ct.Text); ct.IsRich {
-		ct.Reader = readerFromHTML(doc)
+		ct.Reader = readerFromHTML(doc, keepCID)
 	}
 	return ct, true
 }
