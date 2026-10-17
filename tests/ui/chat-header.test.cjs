@@ -1,4 +1,4 @@
-// The open chat's header: title, "More actions" menu beside it, Archive and Delete. Snooze and Pin live in the menu.
+// The open chat's header: the centred title, with Archive, Delete and the "More actions" menu to its left. Snooze and Pin live in the menu.
 // Writes resolve only for the bindings each test allows; assertions read the recorded binding calls.
 const { describe, it } = require('node:test')
 const assert = require('node:assert/strict')
@@ -26,6 +26,20 @@ describe('chat header', () => {
       for (const n of ['Archive', 'Delete', 'More actions']) assert.ok(names.includes(n), `${n} is in the header: ${names}`)
       for (const n of ['Pin', 'Unpin']) assert.ok(!names.includes(n), `${n} is not a header button`)
       assert.equal(await header(page).getByRole('button', { name: 'Snooze', exact: true }).locator('visible=true').count(), 0, 'Snooze has no header button')
+    }))
+  }
+
+  for (const width of [1200, 700]) {
+    it(`centres the title with the actions to its left at ${width}px`, ui.run({ width }, async (page) => {
+      await open(page, 'Omar Haddad')
+      const h = await header(page).boundingBox()
+      const title = await header(page).getByRole('heading', { level: 2 }).boundingBox()
+      const mid = title.x + title.width / 2
+      assert.ok(Math.abs(mid - (h.x + h.width / 2)) <= 2, `title centred: ${mid} vs ${h.x + h.width / 2}`)
+      for (const n of ['Archive', 'Delete', 'More actions']) {
+        const b = await header(page).getByRole('button', { name: n, exact: true }).boundingBox()
+        assert.ok(b.x + b.width <= title.x, `${n} sits left of the title`)
+      }
     }))
   }
 

@@ -1,13 +1,14 @@
 <script lang="ts">
-  // ChatViewHeader — the open chat's top bar, a single row. Left: Back (when
-  // the chat covers the list) and the title: every participant (the subject
-  // heads the stream instead), with a "Snoozed until" chip when snoozed.
-  // Beside the title: a "⋯" button that opens the shared thread context menu,
+  // ChatViewHeader — the open chat's top bar, a single row. Centre: the title,
+  // every participant (the subject heads the stream instead), with a "Snoozed
+  // until" chip when snoozed. Left: Back (when the chat covers the list), then
+  // the actions, ending with a "⋯" button that opens the shared thread context menu,
   // which holds Snooze, Pin, Reply, Spam, Read/Unread and the sender actions
   // (Reply also sits on each bubble and in the reply box). Forward joins it for
   // multi-message chats, which the menu itself does not offer.
-  // Right: Compose (when set; not on narrow panes, where the title needs the
-  // room and the list header offers it), the bordered Archive action and Delete.
+  // The actions: Compose (when set; not on narrow panes, where the title needs
+  // the room and the list header offers it), the bordered Archive action, Delete
+  // and "⋯".
   import Icon from '@iconify/svelte'
   import { _ } from '$lib/i18n'
   import ComposeButton from '$lib/components/common/ComposeButton.svelte'
@@ -137,19 +138,23 @@
 {/snippet}
 
 <header bind:clientWidth={width} class="flex min-h-header border-b border-divider">
-  <!-- Centred like the stream and reply box, so wide panes line up. -->
-  <div class="mx-auto w-full max-w-(--chat-column) flex items-center gap-3 px-3 py-2">
-    {#if showBackButton}
-      {@render iconButton('mdi:arrow-left', $_('responsive.back'), () => onBack?.())}
-    {/if}
-
-    <div class="min-w-0 flex-1 flex items-center gap-1">
-      <h2 class="min-w-0 px-1 text-body font-semibold text-fg-primary truncate" title={people.map((p) => p.email).join(', ')}>{title}</h2>
-      {#if snoozeLabel}
-        <span class="shrink-0 inline-flex items-center gap-1 text-xs text-fg-secondary">
-          <Icon icon="mdi:alarm-snooze" class="w-3.5 h-3.5" />{$_('chat.snoozedUntil', { values: { time: snoozeLabel } })}
-        </span>
+  <!-- Centred like the stream and reply box, so wide panes line up. The equal
+       outer columns keep the title centred; the actions sit to its left. -->
+  <div class="mx-auto w-full max-w-(--chat-column) grid grid-cols-[1fr_minmax(0,auto)_1fr] items-center gap-3 px-3 py-2">
+    <div class="flex items-center gap-2">
+      {#if showBackButton}
+        {@render iconButton('mdi:arrow-left', $_('responsive.back'), () => onBack?.())}
       {/if}
+      {#if onCompose && !narrow}<ComposeButton {compact} onclick={onCompose} />{/if}
+      <ToolbarButton icon="mdi:archive-outline" label={$_('viewer.archive')} {compact} onclick={onArchive} />
+      <ToolbarButton
+        ghost
+        icon={isTrash ? 'mdi:delete-forever' : 'mdi:delete-outline'}
+        label={$_('viewer.delete')}
+        title={$_(isTrash ? 'viewer.deletePermanently' : 'viewer.delete')}
+        {compact}
+        onclick={onDelete}
+      />
       <MessageContextMenu
         {messageIds}
         {accountId}
@@ -173,17 +178,15 @@
       {/if}
     </div>
 
-    <div class="flex items-center gap-2 shrink-0">
-      {#if onCompose && !narrow}<ComposeButton {compact} onclick={onCompose} />{/if}
-      <ToolbarButton icon="mdi:archive-outline" label={$_('viewer.archive')} {compact} onclick={onArchive} />
-      <ToolbarButton
-        ghost
-        icon={isTrash ? 'mdi:delete-forever' : 'mdi:delete-outline'}
-        label={$_('viewer.delete')}
-        title={$_(isTrash ? 'viewer.deletePermanently' : 'viewer.delete')}
-        {compact}
-        onclick={onDelete}
-      />
+    <div class="min-w-0 flex items-center justify-center gap-1">
+      <h2 class="min-w-0 px-1 text-body font-semibold text-fg-primary truncate" title={people.map((p) => p.email).join(', ')}>{title}</h2>
+      {#if snoozeLabel}
+        <span class="shrink-0 inline-flex items-center gap-1 text-xs text-fg-secondary">
+          <Icon icon="mdi:alarm-snooze" class="w-3.5 h-3.5" />{$_('chat.snoozedUntil', { values: { time: snoozeLabel } })}
+        </span>
+      {/if}
     </div>
+
+    <div aria-hidden="true"></div>
   </div>
 </header>
