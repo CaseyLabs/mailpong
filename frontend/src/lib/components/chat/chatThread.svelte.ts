@@ -9,45 +9,13 @@ import {
 } from '../../../../wailsjs/go/app/App'
 // @ts-ignore - wailsjs runtime
 import { EventsOn } from '../../../../wailsjs/runtime/runtime'
-import { message as messageModels } from '../../../../wailsjs/go/models'
+import { app as appModels, message as messageModels } from '../../../../wailsjs/go/models'
 import { isDialogGuardActive } from '$lib/stores/dialogGuard'
 import { senderEmailOf } from '$lib/stores/chat.svelte'
 import { toasts } from '$lib/stores/toast'
 import { _ } from '$lib/i18n'
 import { get } from 'svelte/store'
 import { nearBottom } from './chatScroll.svelte'
-
-export interface DecryptedAttachment {
-  filename: string
-  contentType: string
-  size: number
-  isInline: boolean
-  contentId: string
-}
-
-export interface SMIMEViewResult {
-  bodyHtml: string
-  bodyText: string
-  smimeStatus: string
-  smimeSignerEmail: string
-  smimeSignerSubject: string
-  smimeEncrypted: boolean
-  chat?: messageModels.ChatText
-  inlineAttachments?: Record<string, string>
-  attachments?: DecryptedAttachment[]
-}
-
-export interface PGPViewResult {
-  bodyHtml: string
-  bodyText: string
-  pgpStatus: string
-  pgpSignerEmail: string
-  pgpSignerKeyId: string
-  pgpEncrypted: boolean
-  chat?: messageModels.ChatText
-  inlineAttachments?: Record<string, string>
-  attachments?: DecryptedAttachment[]
-}
 
 export type ReadReceiptPolicy = 'never' | 'ask' | 'always'
 
@@ -69,9 +37,9 @@ export class ChatThread {
   conversation = $state<messageModels.Conversation | null>(null)
   loading = $state(false)
   error = $state<string | null>(null)
-  smimeResults = $state<Record<string, SMIMEViewResult>>({})
+  smimeResults = $state<Record<string, appModels.SMIMEViewResult>>({})
   smimeLoading = $state<Set<string>>(new Set())
-  pgpResults = $state<Record<string, PGPViewResult>>({})
+  pgpResults = $state<Record<string, appModels.PGPViewResult>>({})
   pgpLoading = $state<Set<string>>(new Set())
   // Messages whose body download failed; their bubble offers Retry.
   bodyErrors = $state<Set<string>>(new Set())

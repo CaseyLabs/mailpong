@@ -13,7 +13,7 @@ All Microsoft work, including Microsoft 365 and regular/personal Outlook.com, is
 - [SYNC — Mail synchronization and action reliability](#sync): [SY10](#sy10) (resolved: [SY9](#sy9), [SY7](#sy7), [SY8](#sy8), [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [GOAUTH — Google OAuth client setup](#goauth): [GO4](#go4) (resolved: [GO3](#go3), [GO1](#go1), [GO2](#go2))
 - [CHAT — Chat composer sender review](#chat): no unresolved issue recorded (resolved: [CH1](#ch1), [R1](#r1))
-- [MAINT — Maintenance and documentation](#maint): [D2](#d2) (resolved: UI10, UI9, UI8, [TF3](#tf3), [UI6](#ui6), [UI5](#ui5), [DOC6](#doc6), [UI3](#ui3), [TF1](#tf1), [TF2](#tf2), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI4](#ui4), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
+- [MAINT — Maintenance and documentation](#maint): [D2](#d2) (resolved: [MA10](#ma10), UI10, UI9, UI8, [TF3](#tf3), [UI6](#ui6), [UI5](#ui5), [DOC6](#doc6), [UI3](#ui3), [TF1](#tf1), [TF2](#tf2), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI4](#ui4), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
 - [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
 
@@ -527,9 +527,10 @@ Project: [AI](PLAN.md#ai).
 ### MA10 — Chat code review cleanups
 
 - **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-14](PLAN.md#maint-14) (shared helpers, done: `formatAddress` and `copyText`) and [MAINT-18](PLAN.md#maint-18); found 2026-10-16 by code reviews of 80107a7 and [UIX-8](PLAN.md#uix-8), verified by reading the code.
-- **Severity / proposed priority / status:** low / P3 / open.
+- **Severity / proposed priority / status:** low / P3 / resolved 2026-10-16.
 - **Problem / evidence:** `ChatPeopleMenu.svelte` `copyAll` repeats `ChatBubble.svelte`'s `copy()` clipboard and toast logic, and both build `Name <email>` separately; `chatThread.svelte.ts` hand-copies `SMIMEViewResult`/`PGPViewResult` instead of using the generated `app.*` models; `chatCompact.ts` `subjectSections` tests `entry.kind === 'message'` twice.
 - **Closure:** one shared copy helper and address formatter in the chat modules; the thread uses the generated view-result types; the redundant test removed; behavior unchanged (frontend checks and full UI suite pass).
+- **Resolution:** [MAINT-14](PLAN.md#maint-14) added the shared `copyText` and `formatAddress`; [MAINT-18](PLAN.md#maint-18) made `chatThread.svelte.ts` use the generated `app.SMIMEViewResult`/`app.PGPViewResult` (and dropped its hand-copied `DecryptedAttachment`) and removed the duplicate `entry.kind` test in `subjectSections`. Evidence: [validation](docs/validation/maint-18.md).
 
 <a id="tf1"></a>
 

@@ -64,8 +64,7 @@ export interface StreamSection {
 export function subjectSections(entries: StreamEntry[]): StreamSection[] {
   const out: StreamSection[] = []
   for (const entry of entries) {
-    const subject = entry.kind === 'message' ? entry.item.subject : undefined
-    if (subject !== undefined && entry.kind === 'message') out.push({ id: entry.item.msg.id, subject, entries: [entry] })
+    if (entry.kind === 'message' && entry.item.subject !== undefined) out.push({ id: entry.item.msg.id, subject: entry.item.subject, entries: [entry] })
     else if (out.length) out[out.length - 1].entries.push(entry)
     else out.push({ id: null, entries: [entry] })
   }
