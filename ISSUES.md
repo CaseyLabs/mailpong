@@ -379,7 +379,7 @@ Project: [MAINT](PLAN.md#maint).
 
 ### MA9 — `make generate` writes the Wails runtime files as 0755
 
-- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-14](PLAN.md#maint-14); found during [UIX-8](PLAN.md#uix-8).
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-19](PLAN.md#maint-19); found during [UIX-8](PLAN.md#uix-8).
 - **Severity / proposed priority / status:** low / P3 / open.
 - **Problem / reproduction (2026-10-16, umask 022):** `make generate` (`wails generate module`) leaves `frontend/wailsjs/runtime/{package.json,runtime.d.ts,runtime.js}` with mode 0755, a mode-only diff against the 0644 committed in 4b8bc63. [Regenerating Wails bindings](CONTRIBUTING.md#regenerating-wails-bindings) says the runtime files come out 0644; that holds for `wails dev`/`wails build` per 4b8bc63 but not for `generate module`.
 - **Workaround:** `chmod 644 frontend/wailsjs/runtime/*` after `make generate`.
@@ -534,7 +534,7 @@ Project: [AI](PLAN.md#ai).
 
 ### UI8 — Sticky subject heading covers the day label after the unread jump
 
-- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-14](PLAN.md#maint-14); found 2026-10-16 by a code review of 80107a7, verified the same day.
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-15](PLAN.md#maint-15); found 2026-10-16 by a code review of 80107a7, verified the same day.
 - **Severity / proposed priority / status:** low / P3 / open.
 - **Problem / evidence:** `chatScroll.svelte.ts` `apply()` puts the anchored message a fixed 48 px below the scroller top, and `ChatView.svelte` uses a separate fixed `scroll-pt-10`. A message that starts a subject on a new day has the sticky `ChatSubjectHeading` (about 32 px) and a tight `ChatDaySeparator` above it, more than 48 px. Probe in the backend-free UI harness (trip chat, 500 px high, scroll as `apply()` does): heading at 0–32 px, day label text at 12–30 px, so the date is fully hidden under the heading's opaque background.
 - **Closure:** the anchor offset and scroll padding derive from the rendered heading (or use `scroll-margin-top` with `scrollIntoView`) so the anchored message's day label and sender line stay visible; UI regression test asserting the label is not covered.
@@ -543,7 +543,7 @@ Project: [AI](PLAN.md#ai).
 
 ### UI9 — Sticky subject heading covers message hover actions
 
-- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-14](PLAN.md#maint-14); found 2026-10-16 by a code review of 80107a7, verified the same day.
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-16](PLAN.md#maint-16); found 2026-10-16 by a code review of 80107a7, verified the same day.
 - **Severity / proposed priority / status:** low / P3 / open.
 - **Problem / evidence:** `ChatSubjectHeading.svelte` is `sticky z-10` with an opaque background; the bubble action toolbar (`ChatBubble.svelte`, absolute, no z-index) of a message scrolled partly under it paints beneath. Probe: with the Reply button's top 6 px under the heading, `elementFromPoint` there returns the `H3`, not the button.
 - **Closure:** a hovered or focused message's actions stay clickable when its top is under the heading (stacking above it, or offset below it); UI regression test.
@@ -552,7 +552,7 @@ Project: [AI](PLAN.md#ai).
 
 ### UI10 — Embedded pictures missing from decrypted mail in the reader view
 
-- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-14](PLAN.md#maint-14); declined finding from the [UIX-8](PLAN.md#uix-8) review, documented limit.
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-17](PLAN.md#maint-17); declined finding from the [UIX-8](PLAN.md#uix-8) review, documented limit.
 - **Severity / proposed priority / status:** unspecified / P3 / open.
 - **Problem / evidence:** reader extraction (`internal/message/chatreader.go`) drops `cid:` images, so a decrypted rich message shows no embedded pictures until Show original, although `SMIMEViewResult`/`PGPViewResult.inlineAttachments` already map content IDs to data URLs.
 - **Closure:** decrypted reader content shows its `cid:` pictures from `inlineAttachments` (within the existing inline-image size budget) without remote loading; unencrypted mail unchanged unless deliberately extended; Go and UI tests; user guide limit removed.
@@ -561,7 +561,7 @@ Project: [AI](PLAN.md#ai).
 
 ### MA10 — Chat code review cleanups
 
-- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-14](PLAN.md#maint-14); found 2026-10-16 by code reviews of 80107a7 and [UIX-8](PLAN.md#uix-8), verified by reading the code.
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-14](PLAN.md#maint-14) (shared helpers) and [MAINT-18](PLAN.md#maint-18); found 2026-10-16 by code reviews of 80107a7 and [UIX-8](PLAN.md#uix-8), verified by reading the code.
 - **Severity / proposed priority / status:** low / P3 / open.
 - **Problem / evidence:** `ChatPeopleMenu.svelte` `copyAll` repeats `ChatBubble.svelte`'s `copy()` clipboard and toast logic, and both build `Name <email>` separately; `chatThread.svelte.ts` hand-copies `SMIMEViewResult`/`PGPViewResult` instead of using the generated `app.*` models; `chatCompact.ts` `subjectSections` tests `entry.kind === 'message'` twice.
 - **Closure:** one shared copy helper and address formatter in the chat modules; the thread uses the generated view-result types; the redundant test removed; behavior unchanged (frontend checks and full UI suite pass).
