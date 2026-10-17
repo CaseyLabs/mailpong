@@ -374,7 +374,7 @@
 
     <div
       bind:this={scroll.scroller}
-      class="flex-1 min-h-0 overflow-y-auto scroll-pt-10 scrollbar-thin"
+      class="flex-1 min-h-0 overflow-y-auto scrollbar-thin"
       role="log"
       aria-label={$_('chat.threadLabel')}
       onfocusin={() => setFocusedPane('viewer')}

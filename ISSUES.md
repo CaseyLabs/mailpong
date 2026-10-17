@@ -13,7 +13,7 @@ All Microsoft work, including Microsoft 365 and regular/personal Outlook.com, is
 - [SYNC — Mail synchronization and action reliability](#sync): [SY10](#sy10) (resolved: [SY9](#sy9), [SY7](#sy7), [SY8](#sy8), [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [GOAUTH — Google OAuth client setup](#goauth): [GO4](#go4) (resolved: [GO3](#go3), [GO1](#go1), [GO2](#go2))
 - [CHAT — Chat composer sender review](#chat): no unresolved issue recorded (resolved: [CH1](#ch1), [R1](#r1))
-- [MAINT — Maintenance and documentation](#maint): [D2](#d2) (resolved: [TF3](#tf3), [UI6](#ui6), [UI5](#ui5), [DOC6](#doc6), [UI3](#ui3), [TF1](#tf1), [TF2](#tf2), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI4](#ui4), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
+- [MAINT — Maintenance and documentation](#maint): [D2](#d2) (resolved: UI8, [TF3](#tf3), [UI6](#ui6), [UI5](#ui5), [DOC6](#doc6), [UI3](#ui3), [TF1](#tf1), [TF2](#tf2), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI4](#ui4), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
 - [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
 
@@ -520,15 +520,6 @@ Project: [MAINT](PLAN.md#maint).
 ## AI — AI development workflows
 
 Project: [AI](PLAN.md#ai).
-
-<a id="ui8"></a>
-
-### UI8 — Sticky subject heading covers the day label after the unread jump
-
-- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-15](PLAN.md#maint-15); found 2026-10-16 by a code review of 80107a7, verified the same day.
-- **Severity / proposed priority / status:** low / P3 / open.
-- **Problem / evidence:** `chatScroll.svelte.ts` `apply()` puts the anchored message a fixed 48 px below the scroller top, and `ChatView.svelte` uses a separate fixed `scroll-pt-10`. A message that starts a subject on a new day has the sticky `ChatSubjectHeading` (about 32 px) and a tight `ChatDaySeparator` above it, more than 48 px. Probe in the backend-free UI harness (trip chat, 500 px high, scroll as `apply()` does): heading at 0–32 px, day label text at 12–30 px, so the date is fully hidden under the heading's opaque background.
-- **Closure:** the anchor offset and scroll padding derive from the rendered heading (or use `scroll-margin-top` with `scrollIntoView`) so the anchored message's day label and sender line stay visible; UI regression test asserting the label is not covered.
 
 <a id="ui9"></a>
 

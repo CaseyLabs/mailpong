@@ -8,6 +8,9 @@ import { tick } from 'svelte'
 const ANCHOR_MS = 2000
 const SCROLL_AMOUNT = 100
 const BOTTOM_SLOP_PX = 40
+// Space kept above the anchored message, below the sticky subject heading.
+const ANCHOR_GAP_PX = 16
+const SCROLL_GAP_PX = 8
 
 // Whether the scroller is at (or within a few pixels of) the bottom.
 export function nearBottom(el: HTMLElement): boolean {
@@ -72,9 +75,30 @@ export class ChatScroll {
       this.anchor = null
       return
     }
-    const el = anchor.id ? this.messageEl(anchor.id) : null
-    if (!el) return toBottom(scroller)
-    scroller.scrollTop = el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - 48
+    const msg = anchor.id ? this.messageEl(anchor.id) : null
+    if (!msg) return toBottom(scroller)
+    // A message that starts a day has its day label just above it; keep that in view too.
+    const el = this.dayLabelOf(msg) ?? msg
+    scroller.scrollTop = el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - this.headingHeight() - ANCHOR_GAP_PX
+  }
+
+  // The day label row directly above a message, if it starts a day. The bubble
+  // may sit inside wrapper elements, so climb to the level that has a sibling.
+  private dayLabelOf(msg: HTMLElement): Element | null {
+    let node: HTMLElement = msg
+    while (!node.previousElementSibling && node.parentElement && node.parentElement !== this.content) node = node.parentElement
+    const prev = node.previousElementSibling
+    return prev?.querySelector('[role="separator"]') ? prev : null
+  }
+
+  // Height of the sticky subject heading covering the top of the scroller (0 without one).
+  private headingHeight(): number {
+    return this.scroller?.querySelector<HTMLElement>('[data-subject-heading]')?.offsetHeight ?? 0
+  }
+
+  // Focusing a message scrolls it clear of the sticky heading.
+  private syncScrollPadding() {
+    this.scroller?.style.setProperty('scroll-padding-top', `${this.headingHeight() + SCROLL_GAP_PX}px`)
   }
 
   // Bodies (iframes) grow after render; re-apply the anchor as they do.
@@ -88,6 +112,7 @@ export class ChatScroll {
       atBottom = nearBottom(scroller)
     }
     const observer = new ResizeObserver(() => {
+      this.syncScrollPadding()
       if (this.applyKeep()) return
       if (this.anchor) this.apply()
       else if (atBottom) toBottom(scroller)
