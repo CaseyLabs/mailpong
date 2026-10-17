@@ -6,7 +6,9 @@ exactly that milestone's local scope, and starts a headless session that runs th
 project-next-milestone skill, including its finish step and one local commit. It cross-checks
 the commit and the plan status, continues a committed handoff in a fresh session, skips blocked
 milestones, and waits out usage limits. Progress lives in PLAN.md and Git history, so an
-interrupted run resumes by rerunning. It never reads credentials, pushes or lands.
+interrupted run resumes by rerunning. It never reads credentials. Sessions never push or land;
+with --land the runner itself checks each completed milestone's branch, lands it with
+tools/project-land.sh and starts the next milestone on a fresh branch from main.
 """
 import argparse
 import datetime as dt
@@ -25,6 +27,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from project_common import WorkflowError, git, repository, resolve_path  # noqa: E402
 
 SKILL = 'project-next-milestone'
+MAIN = 'main'
+TITLE_RE = re.compile(r'^(?:feat|fix|docs|refactor|test|chore):\s+\S')
 SCHEMA = {
     'type': 'object',
     'properties': {
@@ -421,6 +425,44 @@ def run_milestone(args, root, run_dir, plan, plan_rel, ident):
     raise Stop(2, f'{ident} handed off more than --max-handoffs ({args.max_handoffs}) times; check its checkpoint.')
 
 
+def milestone_branch(root, ident):
+    """With --land, start each milestone off main on its own branch; keep the branch a run started on."""
+    if (branch := git(root, 'branch', '--show-current').stdout.strip()) != MAIN:
+        return branch
+    branch = f'milestone/{ident.lower()}'
+    if git(root, 'rev-parse', '--verify', '--quiet', f'refs/heads/{branch}', check=False).returncode == 0:
+        raise Stop(1, f'Branch {branch} already exists; land or remove it, or rerun from it.')
+    git(root, 'switch', '-qc', branch)
+    log(f'Working on new branch {branch}')
+    return branch
+
+
+def land_milestone(root, run_dir, plan, ident, branch):
+    """Check the whole branch against main, then land it with the guarded landing helper."""
+    checks = run_dir / f'checks-{ident}'
+    check_log, land_log = run_dir / f'check-{ident}.log', run_dir / f'land-{ident}.log'
+    log(f'Checking {branch} against {MAIN} before landing {ident}; log {check_log}')
+    proc = subprocess.run([sys.executable, str(root / 'tools/project-check.py'), '--base', MAIN, '--run',
+                           '--output-dir', str(checks)], cwd=root, capture_output=True, text=True)
+    check_log.write_text(proc.stdout + proc.stderr)
+    if proc.returncode:
+        raise Stop(2, f'Checks failed before landing {ident}; {branch} retained, nothing landed. See {check_log}.')
+    title = git(root, 'log', '-1', '--format=%s').stdout.strip()
+    if not TITLE_RE.match(title):
+        name = next(m['title'] for m in parse_plan(plan.read_text()) if m['id'] == ident)
+        title = f'feat: {name} ({ident})'
+    body = run_dir / f'body-{ident}.txt'
+    body.write_text((git(root, 'log', '-1', '--format=%b').stdout.strip() or f'Milestone {ident}.') + '\n')
+    proc = subprocess.run([str(root / 'tools/project-land.sh'), branch, '--evidence', str(checks / 'evidence.json'),
+                           '--title', title, '--body-file', str(body), '--execute'],
+                          cwd=root, capture_output=True, text=True)
+    land_log.write_text(proc.stdout + proc.stderr)
+    if proc.returncode:
+        tail = (proc.stdout + proc.stderr).strip().splitlines()[-3:]
+        raise Stop(2, f'Landing {ident} failed; see {land_log}.\n' + '\n'.join(tail))
+    log(f'Landed {ident} on {MAIN}: {title}')
+
+
 def next_milestone(plan, explicit, attempted):
     milestones = parse_plan(plan.read_text())
     if explicit is None:
@@ -463,6 +505,9 @@ def parse_args(argv):
     p.add_argument('--sandbox', choices=['read-only', 'workspace-write', 'danger-full-access'], default='danger-full-access',
                    help='Codex only, with approvals off. workspace-write keeps .git read-only, which blocks the milestone commit')
     p.add_argument('--verify-command', help='Optional independent shell verification after each completed milestone')
+    p.add_argument('--land', action='store_true',
+                   help=f'After each completed milestone, rerun the branch checks and land it on {MAIN} with '
+                        f'tools/project-land.sh (pushes {MAIN}); each later milestone gets a new branch from {MAIN}')
     args = p.parse_args(argv)
     if min(args.max_milestones, args.max_turns, args.retry_minutes) < 1 or args.max_handoffs < 0 or args.max_wait_hours <= 0:
         p.error('Milestone, turn, retry and maximum wait values must be positive')
@@ -497,8 +542,13 @@ def main(argv=None):
     if not (root / '.agents/skills' / SKILL / 'SKILL.md').is_file():
         p.error(f'Missing project skill .agents/skills/{SKILL}/SKILL.md')
     branch = git(root, 'branch', '--show-current').stdout.strip()
-    if branch in ('', 'main', 'master'):
-        p.error('Run on a feature branch: sessions commit milestones locally and never land them')
+    if not branch:
+        p.error('Run on a branch, not a detached HEAD')
+    if branch in (MAIN, 'master') and not (args.land and branch == MAIN):
+        p.error('Run on a feature branch: sessions commit milestones locally and never land them '
+                f'(or pass --land to land each milestone from {MAIN})')
+    if args.land and not (root / 'tools/project-land.sh').is_file():
+        p.error('Missing tools/project-land.sh, which --land uses')
     if git_dirty(root):
         p.error('The checkout has uncommitted changes; commit or stash them first')
     if os.name == 'nt':
@@ -516,7 +566,8 @@ def main(argv=None):
     run_dir = Path(tempfile.mkdtemp(prefix=dt.datetime.now().strftime('%Y%m%d-%H%M%S-'), dir=cache))
     log(f'Plan: {plan_rel} | branch {branch} | {args.agent} | '
         f'{"milestones " + ", ".join(explicit) if explicit else "auto-selection"} | '
-        f'up to {args.max_milestones} milestone{"s" * (args.max_milestones != 1)} | logs {run_dir}')
+        f'up to {args.max_milestones} milestone{"s" * (args.max_milestones != 1)}'
+        f'{" | landing each" if args.land else ""} | logs {run_dir}')
     completed, attempted, blocked = 0, set(), []
     try:
         while completed < args.max_milestones:
@@ -526,13 +577,20 @@ def main(argv=None):
                 break
             attempted.add(ident)
             log(f'Selected {ident}')
+            if args.land:
+                branch = milestone_branch(root, ident)
             if run_milestone(args, root, run_dir, plan, plan_rel, ident) == 'blocked':
                 blocked.append(ident)
+                if args.land:
+                    raise Stop(2, f'{ident} is blocked; its record stays unlanded on {branch}. '
+                                  'Resolve it, then land or rerun from that branch.')
                 continue
             if args.verify_command:
                 log(f'External verification: {args.verify_command}')
                 if (check := subprocess.run(args.verify_command, shell=True, cwd=root)).returncode:
                     raise Stop(2, f'External verification failed ({check.returncode}) after {ident}.')
+            if args.land:
+                land_milestone(root, run_dir, plan, ident, branch)
             completed += 1
         else:
             log(f'Maximum milestones for this run reached ({completed}). Rerun to continue.')

@@ -170,6 +170,24 @@ class Parsing(unittest.TestCase):
         self.assertEqual((data['session_id'], data['is_error']), ('t1', False))
         self.assertEqual(RUN.parse_result(data), body)
 
+# Stand-ins for the checkout's check and landing helpers, used by --land.
+FAKE_CHECK = r'''#!/usr/bin/env python3
+import os, sys
+from pathlib import Path
+out = Path(sys.argv[sys.argv.index('--output-dir') + 1])
+out.mkdir(parents=True)
+(out / 'evidence.json').write_text('{}')
+sys.exit(1 if os.environ.get('FAKE_CHECK_FAIL') else 0)
+'''
+FAKE_LAND = r'''#!/bin/sh
+set -eu
+echo "$1 $5" >> "$FAKE_STATE/landed"
+git switch -q main
+git merge -q --squash "$1"
+git commit -qm "$5"
+git branch -qD "$1"
+'''
+
 
 class Runner(unittest.TestCase):
     def setUp(self):
@@ -236,6 +254,43 @@ class Runner(unittest.TestCase):
         proc = self.run_tool('--milestones', 'ALPHA-2', plan={'ALPHA-2': ['dirty']})
         self.assertEqual(proc.returncode, 2)
         self.assertIn('left uncommitted changes', proc.stdout)
+
+    def land_fixture(self):
+        tools = self.root / 'tools'
+        tools.mkdir()
+        (tools / 'project-check.py').write_text(FAKE_CHECK)
+        (tools / 'project-land.sh').write_text(FAKE_LAND)
+        (tools / 'project-land.sh').chmod(0o755)
+        self.git('switch', '-q', 'main')
+        self.git('add', 'tools')
+        self.git('commit', '-qm', 'test: landing fixtures')
+
+    def test_land_lands_each_milestone_from_main(self):
+        self.land_fixture()
+        proc = self.run_tool('--land', '--milestones', 'ALPHA-4,ALPHA-2')
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.assertEqual((self.state / 'landed').read_text().splitlines(),
+                         ['milestone/alpha-4 feat: ALPHA-4 success', 'milestone/alpha-2 feat: ALPHA-2 success'])
+        self.assertEqual(self.git('branch', '--show-current').strip(), 'main')
+        self.assertEqual(self.git('branch', '--list', 'milestone/*'), '')
+        self.assertEqual(self.git('log', '-2', '--format=%s').splitlines(),
+                         ['feat: ALPHA-2 success', 'feat: ALPHA-4 success'])
+
+    def test_land_stops_without_landing_on_failed_checks_or_blocked(self):
+        self.land_fixture()
+        proc = self.run_tool('--land', '--milestones', 'ALPHA-4', plan={})
+        self.assertEqual(proc.returncode, 0, proc.stdout + proc.stderr)
+        self.env['FAKE_CHECK_FAIL'] = '1'
+        proc = self.run_tool('--land', '--milestones', 'ALPHA-2')
+        self.assertEqual(proc.returncode, 2, proc.stdout + proc.stderr)
+        self.assertIn('Checks failed before landing ALPHA-2', proc.stdout)
+        self.assertEqual(self.git('branch', '--show-current').strip(), 'milestone/alpha-2')
+        self.assertEqual(len((self.state / 'landed').read_text().splitlines()), 1)
+        self.git('switch', '-q', 'main')
+        proc = self.run_tool('--land', '--milestones', 'GAMMA-1', plan={'GAMMA-1': ['blocked']})
+        self.assertEqual(proc.returncode, 2, proc.stdout + proc.stderr)
+        self.assertIn('GAMMA-1 is blocked', proc.stdout)
+        self.assertEqual(self.git('branch', '--show-current').strip(), 'milestone/gamma-1')
 
     def test_preconditions(self):
         proc = self.run_tool('--milestones', 'ALPHA-5,BETA-9')

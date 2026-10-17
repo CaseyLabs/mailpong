@@ -485,7 +485,7 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 ### MAINT-14 — Quoted names in Copy addresses
 
 - **Status / proposed priority:** proposed / P2. **Dependencies / gates:** none.
-- **Authorization:** owner approved this milestone and the rest of the MAINT chat follow-up sequence on 2026-10-16 for sequential local implementation, including unattended `make milestone` runs.
+- **Authorization:** owner approved this milestone and the rest of the MAINT chat follow-up sequence on 2026-10-16 for sequential implementation, including unattended `make milestone ARGS='--land'` runs that land each milestone on `main`.
 - **Scope / deliverable:** quote display names that need it (RFC 5322 quoted-string) when copying a chat's addresses, through one shared address formatter and copy helper in the chat modules (the helper half of [MA10](ISSUES.md#ma10)), used by `ChatPeopleMenu` and `ChatBubble`.
 - **Acceptance:** a name with a comma, quote or angle bracket round-trips as one recipient; the bubble's recipients title uses the same formatter; [UI7](ISSUES.md#ui7) closure holds.
 - **Validation:** logic test of the formatter (table-driven: plain, comma, quote, no name), UI regression test of Copy addresses, frontend lint/check, full `make test-ui`.
@@ -496,7 +496,7 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 ### MAINT-15 — Day label clear of the sticky heading after the unread jump
 
 - **Status / proposed priority:** proposed / P3. **Dependencies / gates:** [MAINT-14](#maint-14).
-- **Authorization:** owner approved this milestone and the rest of the MAINT chat follow-up sequence on 2026-10-16 for sequential local implementation, including unattended `make milestone` runs.
+- **Authorization:** owner approved this milestone and the rest of the MAINT chat follow-up sequence on 2026-10-16 for sequential implementation, including unattended `make milestone ARGS='--land'` runs that land each milestone on `main`.
 - **Scope / deliverable:** derive the unread-anchor offset in `chatScroll.svelte.ts` and the stream's scroll padding from the rendered subject heading (or `scroll-margin-top` with `scrollIntoView`) instead of the fixed 48 px and `scroll-pt-10`.
 - **Acceptance:** opening a chat at an unread message that starts a subject on a new day shows its day label and sender line below the heading; [UI8](ISSUES.md#ui8) closure holds; audit passes in both Accounts states.
 - **Validation:** UI regression test measuring the heading against the day label after the jump, frontend lint/check, full `make test-ui`.
@@ -507,7 +507,7 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 ### MAINT-16 — Message actions clickable under the sticky heading
 
 - **Status / proposed priority:** proposed / P3. **Dependencies / gates:** [MAINT-15](#maint-15).
-- **Authorization:** owner approved this milestone and the rest of the MAINT chat follow-up sequence on 2026-10-16 for sequential local implementation, including unattended `make milestone` runs.
+- **Authorization:** owner approved this milestone and the rest of the MAINT chat follow-up sequence on 2026-10-16 for sequential implementation, including unattended `make milestone ARGS='--land'` runs that land each milestone on `main`.
 - **Scope / deliverable:** a hovered or focused message's action toolbar stacks above (or sits clear of) the sticky `ChatSubjectHeading`.
 - **Acceptance:** with a message's top under the heading, its Reply and Message actions buttons receive clicks; keyboard focus still reaches them; [UI9](ISSUES.md#ui9) closure holds.
 - **Validation:** UI regression test using `elementFromPoint` on the toolbar under the heading, frontend lint/check, full `make test-ui`.
@@ -518,7 +518,7 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 ### MAINT-17 — Embedded pictures in decrypted reader mail
 
 - **Status / proposed priority:** proposed / P3. **Dependencies / gates:** [MAINT-16](#maint-16).
-- **Authorization:** owner approved this milestone and the rest of the MAINT chat follow-up sequence on 2026-10-16 for sequential local implementation, including unattended `make milestone` runs.
+- **Authorization:** owner approved this milestone and the rest of the MAINT chat follow-up sequence on 2026-10-16 for sequential implementation, including unattended `make milestone ARGS='--land'` runs that land each milestone on `main`.
 - **Scope / deliverable:** reader extraction keeps `cid:` image blocks for decrypted view results, and `ChatReaderMessage` resolves them from `inlineAttachments` data URLs within the existing inline-image budget; unencrypted mail unchanged.
 - **Acceptance:** a decrypted rich message shows its embedded pictures in the reader with no remote request; unknown content IDs are dropped; user guide limit removed; [UI10](ISSUES.md#ui10) closure holds.
 - **Validation:** table-driven Go test for `cid:` handling, UI regression test with a faked PGP or S/MIME result, frontend lint/check, `make test`, full `make test-ui`.
@@ -529,7 +529,7 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 ### MAINT-18 — Chat code cleanups
 
 - **Status / proposed priority:** proposed / P3. **Dependencies / gates:** [MAINT-17](#maint-17).
-- **Authorization:** owner approved this milestone and the rest of the MAINT chat follow-up sequence on 2026-10-16 for sequential local implementation, including unattended `make milestone` runs.
+- **Authorization:** owner approved this milestone and the rest of the MAINT chat follow-up sequence on 2026-10-16 for sequential implementation, including unattended `make milestone ARGS='--land'` runs that land each milestone on `main`.
 - **Scope / deliverable:** `chatThread.svelte.ts` uses the generated `app.SMIMEViewResult`/`app.PGPViewResult` models instead of hand-copied interfaces; `subjectSections` in `chatCompact.ts` drops its duplicate `entry.kind` test.
 - **Acceptance:** no behavior change; [MA10](ISSUES.md#ma10) closure holds (with MAINT-14's shared helpers).
 - **Validation:** frontend lint/check/build, full `make test-ui`.
@@ -540,7 +540,7 @@ CHAT-1 is done and R1 resolved. MAINT-1 is done and DOC4/DOC5 resolved. MAINT-2 
 ### MAINT-19 — Binding generation leaves no file-mode diff
 
 - **Status / proposed priority:** proposed / P3. **Dependencies / gates:** [MAINT-18](#maint-18).
-- **Authorization:** owner approved this milestone and the rest of the MAINT chat follow-up sequence on 2026-10-16 for sequential local implementation, including unattended `make milestone` runs.
+- **Authorization:** owner approved this milestone and the rest of the MAINT chat follow-up sequence on 2026-10-16 for sequential implementation, including unattended `make milestone ARGS='--land'` runs that land each milestone on `main`.
 - **Scope / deliverable:** `make generate` leaves `frontend/wailsjs/runtime/` at the committed 0644 (for example a `chmod` in the target), and the [Regenerating Wails bindings](CONTRIBUTING.md#regenerating-wails-bindings) note describes every generator path.
 - **Acceptance:** stopping Mailven, running `make generate` and then `git status --short frontend/wailsjs` prints nothing; [MA9](ISSUES.md#ma9) closure holds.
 - **Validation:** `make generate` followed by `git status --short frontend/wailsjs`, `make lint`.

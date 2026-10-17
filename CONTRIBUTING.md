@@ -142,7 +142,7 @@ Validate changes to helpers with `python3 -m unittest discover -s tools/tests -p
 
 ### Unattended milestone runs
 
-`tools/project-run.py` works through roadmap milestones without a user. Each milestone gets one fresh headless Claude Code (`claude -p`, default) or Codex (`--agent codex`) session running `project-next-milestone`, including its finish step and one local commit. From a clean feature-branch checkout:
+`tools/project-run.py` works through roadmap milestones without a user. Each milestone gets one fresh headless Claude Code (`claude -p`, default) or Codex (`--agent codex`) session running `project-next-milestone`, including its finish step and one local commit. From a clean feature-branch checkout (or a clean `main` with `--land`):
 
 ```bash
 python3 tools/project-run.py --list                  # Ranked eligible milestones; runs nothing
@@ -150,13 +150,16 @@ python3 tools/project-run.py                         # Best eligible milestone, 
 python3 tools/project-run.py --milestones GOAUTH-4 --max-milestones 1
 python3 tools/project-run.py --agent codex --verify-command 'make lint && make test'
 make milestone ARGS='--list'                        # Same runner; options go in ARGS
+make milestone ARGS='--land'                        # Also check and land each completed milestone
 ```
 
 `make milestone` unsets every variable defined in `.env`/`.env.local` (which the Makefile otherwise exports) and make's own variables, so sessions never inherit OAuth credentials; their own `make` runs read those files again.
 
 **Selection.** Without `--milestones`, the runner rereads `PLAN.md` before each milestone and picks the best eligible one: `active` first (resuming interrupted work), then `proposed`. Within each group, lower `P` priority wins, then plan order. A milestone is eligible only when its project isn't `blocked`, `deferred` or `done` and every milestone ID under its **Dependencies / gates** (links, bare IDs and ranges such as `UIX-1–5`) is `done`. Any milestone ID there counts as a dependency, which errs toward waiting. Deferred, blocked and done milestones are never selected, and issues without a milestone aren't candidates. `--milestones` runs the listed IDs in order and accepts only `active` or `proposed` ones.
 
-**Authorization.** Starting the runner authorizes each selected milestone's local scope, one session at a time; the session records that authorization in its checkpoint. It never reopens deferred work and never permits live provider access, test emails, credential changes, mailbox migration, dependency upgrades, pushing or landing. Sessions leave those steps unrun and recorded. Review the commits and land the branch yourself.
+**Authorization.** Starting the runner authorizes each selected milestone's local scope, one session at a time; the session records that authorization in its checkpoint. It never reopens deferred work and never permits live provider access, test emails, credential changes, mailbox migration, dependency upgrades, pushing or landing. Sessions leave those steps unrun and recorded. Without `--land`, review the commits and land the branch yourself.
+
+**Landing.** `--land` makes the runner itself, never a session, land each completed milestone: it reruns `project-check.py --base main --run` for the whole branch, then calls `tools/project-land.sh <branch> --execute` with that evidence, the milestone commit's subject as the title (or `feat: <milestone title> (<ID>)` when the subject lacks a prefix) and its body. Started on `main`, the runner creates `milestone/<id>` for each milestone; started on a feature branch, the first milestone lands with that branch's earlier commits. Starting the runner with `--land` is the owner's authorization to push each landed milestone to `main`'s upstream; the session's own review and acceptance check (the finish step) are the review. A blocked milestone, failed checks or a failed landing stop the run with the branch and recovery branches retained; check and landing logs go to the run's log directory.
 
 **Outcomes.** Each session returns `success` (milestone marked done and committed), `handoff` (checkpoint committed at a sub-step boundary; the runner continues the milestone in a fresh session, up to `--max-handoffs`) or `blocked` (blocker recorded; the runner skips to the next candidate). After each session the runner requires a clean tree, a new commit for success or handoff, and a `done` plan status for success. With `--verify-command` it then runs that command after each completed milestone. Exit codes: 0 when nothing eligible remains or `--max-milestones` is reached; 2 when a milestone was blocked, left uncommitted changes, exceeded its handoffs or failed verification; 1 on a session error or an inconsistent result; 130 on Ctrl+C. Rerun to resume.
 
