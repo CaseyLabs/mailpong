@@ -125,6 +125,7 @@ dev-race: credentials
 generate:
 	@echo "Generating Wails bindings..."
 	wails generate module
+	@chmod 644 frontend/wailsjs/runtime/*
 
 ## Code Quality
 

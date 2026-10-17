@@ -13,7 +13,7 @@ All Microsoft work, including Microsoft 365 and regular/personal Outlook.com, is
 - [SYNC — Mail synchronization and action reliability](#sync): [SY10](#sy10) (resolved: [SY9](#sy9), [SY7](#sy7), [SY8](#sy8), [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [GOAUTH — Google OAuth client setup](#goauth): [GO4](#go4) (resolved: [GO3](#go3), [GO1](#go1), [GO2](#go2))
 - [CHAT — Chat composer sender review](#chat): no unresolved issue recorded (resolved: [CH1](#ch1), [R1](#r1))
-- [MAINT — Maintenance and documentation](#maint): [D2](#d2) (resolved: [MA10](#ma10), UI10, UI9, UI8, [TF3](#tf3), [UI6](#ui6), [UI5](#ui5), [DOC6](#doc6), [UI3](#ui3), [TF1](#tf1), [TF2](#tf2), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI4](#ui4), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
+- [MAINT — Maintenance and documentation](#maint): [D2](#d2) (resolved: [MA9](#ma9), [MA10](#ma10), UI10, UI9, UI8, [TF3](#tf3), [UI6](#ui6), [UI5](#ui5), [DOC6](#doc6), [UI3](#ui3), [TF1](#tf1), [TF2](#tf2), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI4](#ui4), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
 - [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
 
@@ -380,10 +380,11 @@ Project: [MAINT](PLAN.md#maint).
 ### MA9 — `make generate` writes the Wails runtime files as 0755
 
 - **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-19](PLAN.md#maint-19); found during [UIX-8](PLAN.md#uix-8).
-- **Severity / proposed priority / status:** low / P3 / open.
+- **Severity / proposed priority / status:** low / P3 / resolved 2026-10-16.
 - **Problem / reproduction (2026-10-16, umask 022):** `make generate` (`wails generate module`) leaves `frontend/wailsjs/runtime/{package.json,runtime.d.ts,runtime.js}` with mode 0755, a mode-only diff against the 0644 committed in 4b8bc63. [Regenerating Wails bindings](CONTRIBUTING.md#regenerating-wails-bindings) says the runtime files come out 0644; that holds for `wails dev`/`wails build` per 4b8bc63 but not for `generate module`.
 - **Workaround:** `chmod 644 frontend/wailsjs/runtime/*` after `make generate`.
 - **Closure:** make `make generate` leave no mode diff (for example a `chmod` in the target) and correct the CONTRIBUTING note.
+- **Resolution:** [MAINT-19](PLAN.md#maint-19): the `generate` target runs `chmod 644 frontend/wailsjs/runtime/*` after `wails generate module`, and the CONTRIBUTING note describes all three generator paths. Evidence: [validation](docs/validation/maint-19.md).
 
 <a id="d2"></a>
 
