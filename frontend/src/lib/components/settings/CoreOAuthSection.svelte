@@ -2,8 +2,8 @@
   // CoreOAuthSection — Settings → Accounts disclosure section for
   // Mailven CORE's OAuth client credentials (google-mail, microsoft-mail).
   //
-  // COLLAPSED by default — this is advanced power-user territory. Most users
-  // never expand it; Mailven ships verified mail creds out of the box.
+  // COLLAPSED by default — this is advanced territory. Builds with credentials need no edits here; release builds bundle no
+  // Google client, so Google sign-in needs one imported here or in Add Account.
   //
   // Per-extension OAuth slots (google-contacts, microsoft-contacts, etc.)
   // live inside that extension's own settings dialog, NOT here.
@@ -40,10 +40,9 @@
   {#if isExpanded}
     <div class="mt-3 space-y-3">
       <p class="text-sm text-muted-foreground">
-        Override the OAuth Client ID and Secret used for adding Google and Microsoft
-        email accounts. Most users should leave these on the shipped defaults.
-        Use your own credentials if your organization requires it, or to bypass
-        Mailven's quota / verification status.
+        The OAuth Client ID and Secret used for adding Google and Microsoft email
+        accounts. Unless this build includes a client, Sign in with Google needs
+        one of your own: the checklist below walks you through creating it.
       </p>
       <GoogleSetupGuide />
       <GoogleClientImport onImported={() => { importedCount++ }} />

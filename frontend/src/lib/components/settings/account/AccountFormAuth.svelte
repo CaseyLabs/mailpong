@@ -11,7 +11,7 @@
     getOAuthProviderType,
     type EmailProvider,
   } from '$lib/config/providers'
-  import { canUseOAuth, startOAuthFlow, cancelOAuthFlow, handleCopyOAuthLink, discoverCustomOAuth, getOAuthButtonIcon } from './accountFormOAuth'
+  import { canUseOAuth, checkOAuthConfiguration, startOAuthFlow, cancelOAuthFlow, handleCopyOAuthLink, discoverCustomOAuth, getOAuthButtonIcon } from './accountFormOAuth'
   import type { AccountFormState } from './accountFormState.svelte'
   import { _ } from '$lib/i18n'
 
@@ -171,7 +171,7 @@
       {#if s.authMethod === 'oauth2'}
         {@render oauthFlowStatus(getOAuthProviderType(s.selectedProvider!) === 'microsoft' && !s.microsoftAccountType)}
         {#if getOAuthProviderType(s.selectedProvider!) === 'google'}
-          <GoogleSetupGuide />
+          <GoogleSetupGuide inlineImport />
         {/if}
       {:else}
         <!-- Password field for app password -->
@@ -376,6 +376,13 @@
       </div>
     </div>
   {:else}
+    {#if !s.editAccount && s.selectedProvider && getOAuthProviderType(s.selectedProvider) === 'google'}
+      <!-- No Google client yet: Sign in with Google appears once one is imported -->
+      <div class="space-y-3">
+        <p class="text-sm text-muted-foreground">{$_('account.googleClientNeeded')}</p>
+        <GoogleSetupGuide inlineImport onImported={() => checkOAuthConfiguration(s)} />
+      </div>
+    {/if}
     <!-- Standard password field -->
     <div class="space-y-2">
       <Label for="password">

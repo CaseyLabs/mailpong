@@ -794,6 +794,7 @@
     "tryAgain": "Try again",
     "leaveEmptyToKeep": "Leave empty to keep current",
     "notesGoogle": "Sign in with Google or use an App Password",
+    "googleClientNeeded": "To sign in with Google, Mailven needs a Google Cloud client of your own. Follow the checklist and import the JSON file; Sign in with Google then appears here. Or use an App Password below.",
     "notesYahoo": "Requires App Password (enable 2-Step Verification first)",
     "notesIcloud": "Requires App-Specific Password from appleid.apple.com",
     "notesProton": "Requires ProtonMail Bridge running locally",
@@ -1424,7 +1425,7 @@
     "dismiss": "Dismiss"
   },
   "googleGuide": {
-    "help": "No Google client yet? Follow a checklist to create your own in Google Cloud. It takes a few minutes and no command line.",
+    "help": "Set up your own Google Cloud client with this checklist. It takes a few minutes and no command line.",
     "button": "Setup checklist",
     "markDone": "Mark done: {step}",
     "scopeList": "Scopes to add",
@@ -1451,12 +1452,12 @@
       },
       "audience": {
         "title": "Choose the audience",
-        "body": "Pick External. In Testing status, sign-ins expire after 7 days. In production status, an unverified app shows Google's warning screen; personal use by a few users you know is exempt from verification.",
+        "body": "Pick External. While the app is in Testing, add your Google address under Test users: only listed users can sign in, and sign-ins expire after 7 days. Publish the app to remove the expiry; Google then shows a warning screen for unverified apps, and personal use by a few users you know is exempt from verification.",
         "open": "Open Audience"
       },
       "scopes": {
         "title": "Add the data access scopes",
-        "body": "Open Data Access, choose Add or remove scopes, and add these scopes.",
+        "body": "Open Data Access and choose Add or remove scopes. Copy the scopes below, paste them into Manually add scopes at the bottom of the panel, choose Add to table, then Update and Save.",
         "open": "Open Data Access"
       },
       "clients": {
@@ -1466,7 +1467,8 @@
       },
       "import": {
         "title": "Import the JSON",
-        "body": "Open Settings → Accounts → OAuth Credentials and choose Import JSON…, or paste the Client ID and Secret."
+        "body": "Choose Import JSON… below this checklist, or paste the Client ID and Secret into Google Mail.",
+        "bodyInline": "Choose Import JSON… and pick the file you downloaded. Sign in with Google then uses your client."
       },
       "signin": {
         "title": "Sign in and check",

@@ -272,6 +272,7 @@
         onReply={openReply}
         onRowActionComplete={() => viewerRef?.refreshFlags()}
         onCompose={openNewMessage}
+        onAddAccount={() => sidebarRef?.openAddAccount()}
         onUnifiedInboxSelect={selectUnifiedInbox}
         onFolderSelect={handleFolderSelect}
         isFocused={getFocusedPane() === 'messageList'}

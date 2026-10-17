@@ -11,7 +11,7 @@ Mailven ships with no Google OAuth credentials, so Gmail OAuth, the Calendar ext
 - The redirect used by the sign-in flow is a local `http://localhost` address, which a Desktop app client allows automatically.
 :::
 
-Mailven also has a **Setup checklist** with the same steps: in **Settings → Accounts → OAuth Credentials**, or on the Google sign-in form, press **Setup checklist**. It opens each console page in your browser and offers a copy button for the scope list.
+Mailven also has a **Setup checklist** with the same steps: in **Settings → Accounts → OAuth Credentials**, or on the Google sign-in form, press **Setup checklist**. It opens each console page in your browser, offers a copy button for the scope list and, on the sign-in form, an **Import JSON…** button, so you can finish without leaving the Add Account dialog.
 
 :::note If a link opens the wrong page
 Google moves its console pages from time to time. Each checklist step also names the menu path to follow from the console home page.
@@ -61,7 +61,7 @@ You can also add your own Google accounts as test users under **Audience → Tes
 
 1. Go to **Google Auth Platform → Data Access** ([link](https://console.cloud.google.com/auth/scopes)). The checklist's **Copy scopes** button copies this list
 2. Click **Add or remove scopes**
-3. Add the following scopes:
+3. Paste the scopes below into **Manually add scopes** at the bottom of the panel (one per line) and click **Add to table**, or tick them in the table:
 
 | Scope | Used For |
 |-------|----------|
@@ -91,7 +91,7 @@ You can also add your own Google accounts as test users under **Audience → Tes
 3. Under **Google Mail**, select **Custom** from the dropdown menu
 4. Copy and paste the **Client ID** and **Client Secret** into their respective fields and save
 
-**Or import the downloaded file:** above the Google Mail editor, click **Import JSON…**, tick the slots to fill (Google Mail, Google Contacts, Google Calendar — all ticked by default) and choose the file. Mailven reads the Desktop app client from it and saves it to every ticked slot at once, so steps 7 and 8 need no pasting. A file for any other client type (such as **Web application**), or one that is not valid Google JSON, is rejected with a message and changes nothing. Mailven never shows the secret after saving.
+**Or import the downloaded file:** above the Google Mail editor (or in step 7 of the checklist on the Google sign-in form), click **Import JSON…**, tick the slots to fill (Google Mail, Google Contacts, Google Calendar — all ticked by default) and choose the file. Mailven reads the Desktop app client from it and saves it to every ticked slot at once, so steps 7 and 8 need no pasting. A file for any other client type (such as **Web application**), or one that is not valid Google JSON, is rejected with a message and changes nothing. Mailven never shows the secret after saving.
 
 If you already added your Gmail account, re-authorize it so it starts using your credentials: **Settings → Accounts → Edit** on the account → **Re-authorize**. Otherwise just [add your account with OAuth](/docs/getting-started/first-account/gmail) as usual.
 

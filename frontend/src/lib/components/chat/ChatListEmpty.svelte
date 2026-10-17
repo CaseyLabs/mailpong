@@ -1,9 +1,11 @@
 <script lang="ts">
   // ChatListEmpty — the chat list's load-error and empty states: failed load
-  // with retry, inbox zero, a folder that was never synced, or no matches.
+  // with retry, no accounts yet, inbox zero, a folder that was never synced, or no matches.
   import Icon from '@iconify/svelte'
   import { _ } from '$lib/i18n'
   import { chatList, type ChatFilter } from '$lib/stores/chat.svelte'
+  import { accountStore } from '$lib/stores/accounts.svelte'
+  import { Button } from '$lib/components/ui/button'
   import ChatServerSearch from './ChatServerSearch.svelte'
 
   interface Props {
@@ -13,9 +15,13 @@
     neverSynced: boolean
     syncBusy: boolean
     onSyncNow: () => void
+    onAddAccount?: () => void
   }
 
-  let { failed, folderType, neverSynced, syncBusy, onSyncNow }: Props = $props()
+  let { failed, folderType, neverSynced, syncBusy, onSyncNow, onAddAccount }: Props = $props()
+
+  // Without accounts an empty inbox is not "inbox zero": point to Add Account.
+  const noAccounts = $derived(!accountStore.loading && accountStore.accounts.length === 0)
 
   // Inbox zero: nothing left in an inbox under the All filter.
   const inboxZero = $derived(
@@ -39,6 +45,16 @@
     <Icon icon="mdi:alert-circle-outline" class="w-10 h-10" />
     <p>{$_('chat.loadFailed')}</p>
     <button class="text-sm text-primary hover:underline" onclick={() => chatList.reload()}>{$_('messageList.tryAgain')}</button>
+  {:else if noAccounts}
+    <Icon icon="mdi:email-plus-outline" class="w-12 h-12" />
+    <p class="text-base font-medium text-foreground">{$_('sidebar.noAccountsYet')}</p>
+    <p class="text-sm">{$_('sidebar.addFirstAccount')}</p>
+    {#if onAddAccount}
+      <Button size="sm" class="mt-2" onclick={onAddAccount}>
+        <Icon icon="mdi:plus" class="w-4 h-4 mr-1" />
+        {$_('sidebar.addAccount')}
+      </Button>
+    {/if}
   {:else if inboxZero}
     <Icon icon="mdi:check-circle-outline" class="w-12 h-12 text-primary" />
     <p class="text-base font-medium text-foreground">{$_('chat.inboxZero')}</p>

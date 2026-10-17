@@ -187,8 +187,8 @@
     onFolderSelect?.(accountId, folderId, folderPath, folderName, folderType)
   }
 
-  // Open add account dialog
-  function openAddAccount() {
+  // Open add account dialog (also used by the chat list when there are no accounts)
+  export function openAddAccount() {
     editingAccount = null
     showAccountDialog = true
   }

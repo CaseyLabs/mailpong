@@ -3,7 +3,8 @@
   // slots. Picks Google's downloaded client_secret JSON natively; the backend
   // parses it and saves the client to the chosen slots, so the secret never
   // reaches the UI. Lives beside (not inside) the kit slot editor so the kit
-  // stays provider-agnostic.
+  // stays provider-agnostic. Buttons are type="button" because the setup
+  // guide also shows this inside the Add Account form.
 
   import Icon from '@iconify/svelte'
   import { _ } from 'svelte-i18n'
@@ -54,7 +55,7 @@
 <div class="border border-border rounded-md p-4 bg-card">
   <div class="flex items-center justify-between gap-3 flex-wrap">
     <p class="text-sm text-muted-foreground flex-1 min-w-0">{$_('oauthImport.help')}</p>
-    <Button size="sm" variant="outline" onclick={() => { open = !open; error = '' }} aria-expanded={open}>
+    <Button type="button" size="sm" variant="outline" onclick={() => { open = !open; error = '' }} aria-expanded={open}>
       <Icon icon="mdi:file-import-outline" class="w-4 h-4 mr-1" />
       {$_('oauthImport.button')}
     </Button>
@@ -73,7 +74,7 @@
       <p class="mt-2 text-sm text-destructive" role="alert">{error}</p>
     {/if}
     <div class="mt-3 flex justify-end">
-      <Button size="sm" onclick={chooseFile} disabled={busy || selected.length === 0}>
+      <Button type="button" size="sm" onclick={chooseFile} disabled={busy || selected.length === 0}>
         {#if busy}
           <Icon icon="mdi:loading" class="w-4 h-4 mr-1 animate-spin" />
         {/if}

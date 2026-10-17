@@ -11,7 +11,7 @@ All Microsoft work, including Microsoft 365 and regular/personal Outlook.com, is
 - [SEND — Sending, privacy and compatibility](#send): [MA1](#ma1), [PD2](#pd2), [DAV1](#dav1), [DAV2](#dav2), [DAV3](#dav3) (resolved: [PD10](#pd10), [CD2](#cd2))
 - [API — Provider API activation and migration](#api): [MA4](#ma4) (resolved: [MA7](#ma7), [MA8](#ma8), [F5b-1](#f5b-1), [F5b-3](#f5b-3))
 - [SYNC — Mail synchronization and action reliability](#sync): [SY10](#sy10) (resolved: [SY9](#sy9), [SY7](#sy7), [SY8](#sy8), [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
-- [GOAUTH — Google OAuth client setup](#goauth): no unresolved issue recorded (resolved: [GO1](#go1), [GO2](#go2))
+- [GOAUTH — Google OAuth client setup](#goauth): [GO4](#go4) (resolved: [GO3](#go3), [GO1](#go1), [GO2](#go2))
 - [CHAT — Chat composer sender review](#chat): no unresolved issue recorded (resolved: [CH1](#ch1), [R1](#r1))
 - [MAINT — Maintenance and documentation](#maint): [D2](#d2) (resolved: [TF3](#tf3), [UI6](#ui6), [UI5](#ui5), [DOC6](#doc6), [UI3](#ui3), [TF1](#tf1), [TF2](#tf2), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI4](#ui4), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
@@ -276,6 +276,22 @@ Project: [SYNC](PLAN.md#sync).
 ## GOAUTH — Google OAuth client setup
 
 Project: [GOAUTH](PLAN.md#goauth).
+
+<a id="go4"></a>
+
+### GO4 — Add Account does not show which Google client signs in
+
+- **Owner / milestone:** [GOAUTH](PLAN.md#goauth) / unscheduled; found in the 2026-10-16 Gmail setup walkthrough.
+- **Severity / proposed priority / status:** low / P3 / open.
+- **Details:** the Google sign-in form does not say whether **Sign in with Google** uses Mailven's client or an imported custom one, so a user who imported a client cannot confirm it took effect before signing in. The setup checklist's ticks live only in the component and are lost when the dialog closes. The form also shows a **Username** field that OAuth sign-in does not use.
+
+<a id="go3"></a>
+
+### GO3 — Setup checklist buttons submit the Add Account form
+
+- **Owner / milestone:** [GOAUTH](PLAN.md#goauth) / independent fix; found in the 2026-10-16 Gmail setup walkthrough.
+- **Severity / proposed priority / status:** medium / P1 / resolved.
+- **Resolution / evidence:** the shared `Button` has no default `type`, so inside the Add Account `<form>` the checklist's buttons were submit buttons: **Setup checklist** showed "Display name is required", and once the form was valid any checklist button could add the account. The guide and **Import JSON…** buttons are now `type="button"`; the checklist also offers **Import JSON…** inline on the sign-in form and names the Test users and **Manually add scopes** steps. Release builds bundle no Google client, so the Gmail form used to show only App Password with no route to the checklist; it now shows the checklist there and offers **Sign in with Google** once a client is imported. With no accounts, the chat list says so and offers **Add Account** instead of "Inbox zero". Regression test: `tests/ui/google-add-account.test.cjs`, which fails without the fix.
 
 <a id="go1"></a>
 

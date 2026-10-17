@@ -45,13 +45,14 @@
     onReply?: (mode: 'reply' | 'reply-all' | 'forward', messageId: string) => void
     onRowActionComplete?: () => void
     onCompose: () => void
+    onAddAccount?: () => void
     onUnifiedInboxSelect: () => void
     onFolderSelect: (accountId: string, folderId: string, folderPath: string, folderName: string, folderType: string) => void
   }
 
   let {
     accountId, folderId, folderName, folderType, isFocused = false, isFlashing = false, openThreadId = null, openAccountId = null,
-    onConversationSelect, onReply, onRowActionComplete, onCompose, onUnifiedInboxSelect, onFolderSelect,
+    onConversationSelect, onReply, onRowActionComplete, onCompose, onAddAccount, onUnifiedInboxSelect, onFolderSelect,
   }: Props = $props()
 
   let listRef = $state<HTMLDivElement | null>(null)
@@ -461,7 +462,7 @@
     onscroll={maybeLoadMore}
   >
     {#if chatList.items.length === 0 && (chatList.error || !chatList.loading)}
-      <ChatListEmpty failed={!!chatList.error} {folderType} {neverSynced} {syncBusy} onSyncNow={toggleFolderSync} />
+      <ChatListEmpty failed={!!chatList.error} {folderType} {neverSynced} {syncBusy} onSyncNow={toggleFolderSync} {onAddAccount} />
     {:else}
       {#if pinned.length > 0}{@render group($_('chat.pinned'), pinnedShown, 'pinned', pinnedFewer, true)}{/if}
       {#if grouped}
