@@ -1,4 +1,4 @@
-// The open chat's header: the centred title, with Archive, Delete and the "More actions" menu to its left. Snooze and Pin live in the menu.
+// The open chat's header: the centred title (which lists the participants), with Archive, Delete and the "More actions" menu to its left. Snooze and Pin live in the menu.
 // Writes resolve only for the bindings each test allows; assertions read the recorded binding calls.
 const { describe, it } = require('node:test')
 const assert = require('node:assert/strict')
@@ -12,6 +12,8 @@ async function open(page, text) {
   if (!(await header(page).isVisible())) await page.locator('[data-chat-row]', { hasText: text }).click()
   await header(page).getByRole('button', { name: 'More actions' }).waitFor()
 }
+
+const clipboard = `Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async (t) => { window.__copied = t } } })`
 
 async function argsOf(page, name) {
   await page.waitForFunction((n) => window.__calls.some((x) => x.name === n), name, { timeout: 5000 }).catch(() => {})
@@ -62,5 +64,21 @@ describe('chat header', () => {
     await archive.focus()
     await page.keyboard.press('Enter')
     assert.equal((await argsOf(page, 'Archive')).length, 1, 'Archive runs from the keyboard')
+  }))
+
+  it('the title lists every participant and composes to one', ui.run({ beforeMount: clipboard }, async (page) => {
+    await open(page, 'Priya Shah')
+    const title = header(page).getByRole('heading', { level: 2 }).getByRole('button')
+    await title.click()
+    const items = page.getByRole('menuitem')
+    const texts = await items.allInnerTexts()
+    assert.ok(texts.some((t) => /Priya Shah[\s\S]*priya@example\.net/.test(t)), `a participant shows with their address: ${texts}`)
+    await page.getByRole('menuitem', { name: 'Copy addresses' }).click()
+    assert.match(await page.evaluate(() => window.__copied), /Priya Shah <priya@example\.net>/, 'Copy addresses copies name and address')
+    await title.focus()
+    await page.keyboard.press('Enter')
+    await page.getByRole('menuitem', { name: /priya@example\.net/ }).click()
+    await page.getByRole('region', { name: 'Email composer' }).waitFor()
+    assert.match(await page.getByRole('region', { name: 'Email composer' }).innerText(), /priya@example\.net/, 'the composer opens to that participant')
   }))
 })

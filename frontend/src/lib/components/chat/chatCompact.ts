@@ -50,3 +50,24 @@ export function compactItems(items: ThreadItem[], expanded: ReadonlySet<string>,
   }
   return out
 }
+
+export interface StreamSection {
+  // The subject heading's message ID; the leading section before the first heading has none.
+  id: string | null
+  subject?: string
+  entries: StreamEntry[]
+}
+
+// subjectSections splits the stream at each subject heading so a heading can
+// stick to the top of the scroller until the next one pushes it away. Folded
+// runs never hold a heading message, so runs stay inside one section.
+export function subjectSections(entries: StreamEntry[]): StreamSection[] {
+  const out: StreamSection[] = []
+  for (const entry of entries) {
+    const subject = entry.kind === 'message' ? entry.item.subject : undefined
+    if (subject !== undefined && entry.kind === 'message') out.push({ id: entry.item.msg.id, subject, entries: [entry] })
+    else if (out.length) out[out.length - 1].entries.push(entry)
+    else out.push({ id: null, entries: [entry] })
+  }
+  return out
+}

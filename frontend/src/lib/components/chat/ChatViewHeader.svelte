@@ -1,9 +1,9 @@
 <script lang="ts">
   // ChatViewHeader — the open chat's top bar, a single row. Centre: the title,
-  // every participant (the subject heads the stream instead), with a "Snoozed
-  // until" chip when snoozed. Left: Back (when the chat covers the list), then
-  // the actions, ending with a "⋯" button that opens the shared thread context menu,
-  // which holds Snooze, Pin, Reply, Spam, Read/Unread and the sender actions
+  // every participant (the subject heads the stream instead), which opens the
+  // participant list, with a "Snoozed until" chip when snoozed. Left: Back
+  // (when the chat covers the list), then the actions, ending with a "⋯"
+  // button that opens the shared thread context menu, which holds Snooze, Pin, Reply, Spam, Read/Unread and the sender actions
   // (Reply also sits on each bubble and in the reply box). Forward joins it for
   // multi-message chats, which the menu itself does not offer.
   // The actions: Compose (when set; not on narrow panes, where the title needs
@@ -16,6 +16,7 @@
   import MessageContextMenu from '$lib/components/common/MessageContextMenu.svelte'
   import { ContextMenuItem } from '$lib/components/ui/context-menu'
   import { canToggleSenderChat, chatSender, displayName, type Person, type ReplyMode } from './chatFormat'
+  import ChatPeopleMenu from './ChatPeopleMenu.svelte'
   import ChatSnoozeMenu from './ChatSnoozeMenu.svelte'
   import { formatSnoozedUntil } from './chatSnooze'
 
@@ -39,6 +40,8 @@
     onBack?: () => void
     // Set only when the chat covers the list, which otherwise holds Compose.
     onCompose?: () => void
+    // Starts a message to one participant, from the participant list.
+    onComposeTo?: (to: string) => void
     onArchive: () => void
     onForward: () => void
     onDelete: () => void
@@ -55,7 +58,7 @@
 
   let {
     people: allPeople, senderEmail, messageIds, accountId, folderId, folderType, isStarred, allRead, isPinned, snoozedUntil, isLowPriority, canTriage, isTrash,
-    showBackButton, onBack, onCompose, onArchive, onForward, onDelete, onSpam, onPin, onSnooze, onUnsnooze, onToggleRead, onToggleSenderLow, onToggleSenderChat, onActionComplete, onReply,
+    showBackButton, onBack, onCompose, onComposeTo, onArchive, onForward, onDelete, onSpam, onPin, onSnooze, onUnsnooze, onToggleRead, onToggleSenderLow, onToggleSenderChat, onActionComplete, onReply,
   }: Props = $props()
 
   // A sender chat shows just its sender.
@@ -179,7 +182,7 @@
     </div>
 
     <div class="min-w-0 flex items-center justify-center gap-1">
-      <h2 class="min-w-0 px-1 text-body font-semibold text-fg-primary truncate" title={people.map((p) => p.email).join(', ')}>{title}</h2>
+      <h2 class="min-w-0 flex"><ChatPeopleMenu {people} {title} {onComposeTo} /></h2>
       {#if snoozeLabel}
         <span class="shrink-0 inline-flex items-center gap-1 text-xs text-fg-secondary">
           <Icon icon="mdi:alarm-snooze" class="w-3.5 h-3.5" />{$_('chat.snoozedUntil', { values: { time: snoozeLabel } })}

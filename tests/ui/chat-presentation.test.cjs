@@ -1,11 +1,12 @@
 // Chat presentation in the open chat: incoming/outgoing bubbles and sender runs, quoted text and signatures
-// behind the "⋯" marker, the subject heading, subject headings in a sender chat, and combining/splitting sender chats.
+// behind the "⋯" marker, the sticky subject heading, subject headings in a sender chat, and combining/splitting sender chats.
 const { describe, it } = require('node:test')
 const assert = require('node:assert/strict')
 const ui = require('./harness.cjs')
 
 const bubble = (page, id) => page.locator(`[data-message-id="${id}"]`)
 const row = (page, text) => page.locator('[data-chat-row]', { hasText: text })
+const subjects = (page) => page.getByRole('log').getByRole('heading', { level: 3 }).allInnerTexts()
 
 // The trip chat's last message carries quoted history and a signature (the backend moves both to chat.quoted).
 const quotedFake = `{ const A = window.go.app.App, get = A.GetConversation
@@ -47,10 +48,21 @@ describe('chat presentation', () => {
 
   it('the subject heads the stream, not the header', ui.run({}, async (page) => {
     await bubble(page, 'trip-5').waitFor()
-    const headings = await page.locator('[role="separator"] span.font-semibold').allInnerTexts()
-    assert.deepEqual(headings, ['Weekend trip to the coast'], 'one subject heading, above the first message')
+    assert.deepEqual(await subjects(page), ['Weekend trip to the coast'], 'one subject heading, above the first message')
     const header = page.locator('header', { has: page.getByRole('heading', { level: 2 }) })
     assert.doesNotMatch(await header.innerText(), /Weekend trip/, 'the header shows only participants and actions')
+  }))
+
+  it('the subject heading sticks to the top of the stream while scrolling', ui.run({ height: 500 }, async (page) => {
+    await bubble(page, 'trip-5').waitFor()
+    const log = page.getByRole('log')
+    const heading = log.getByRole('heading', { level: 3 })
+    await log.evaluate((el) => { el.scrollTop = el.scrollHeight })
+    await page.waitForFunction(() => document.querySelector('[role="log"]').scrollTop > 100)
+    const [l, h] = [await log.boundingBox(), await heading.boundingBox()]
+    assert.ok(Math.abs(h.y - l.y) <= 1, `heading pinned to the top of the stream: ${h.y} vs ${l.y}`)
+    const top = await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.closest('h3')?.textContent?.trim(), { x: h.x + 30, y: h.y + h.height / 2 })
+    assert.equal(top, 'Weekend trip to the coast', 'the heading paints over the messages scrolling under it')
   }))
 
   it('quoted text and signature hide behind the marker', ui.run({ beforeMount: quotedFake }, async (page) => {
@@ -73,9 +85,10 @@ describe('chat presentation', () => {
     await page.getByRole('button', { name: 'Low priority (2)' }).click()
     await row(page, 'Trail Magazine').click()
     await bubble(page, 'news-3').waitFor()
-    const headings = await page.locator('[role="separator"] span.font-semibold').allInnerTexts()
-    assert.deepEqual(headings, ['Ten autumn hikes', 'Members-only gear sale'], 'each subject run gets one heading; Re: continues it')
+    assert.deepEqual(await subjects(page), ['Ten autumn hikes', 'Members-only gear sale'], 'each subject run gets one heading; Re: continues it')
     assert.match(await bubble(page, 'news-3').innerText(), /Trail Magazine/, 'a new subject starts a new run')
+    const sections = await page.getByRole('log').locator('section').evaluateAll((els) => els.map((s) => [...s.querySelectorAll('[data-message-id]')].map((m) => m.dataset.messageId)))
+    assert.deepEqual(sections, [['news-1', 'news-2'], ['news-3']], 'each subject run is its own section, so the next heading pushes the last away')
     assert.doesNotMatch(await bubble(page, 'news-2').innerText(), /Trail Magazine/)
   }))
 

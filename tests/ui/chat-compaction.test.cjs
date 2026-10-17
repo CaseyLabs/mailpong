@@ -55,6 +55,20 @@ describe('chat compaction', () => {
     assert.deepEqual(r.keep.slice(0, 5), ['m0@', 'm1', 'm2', 'm3', 'm4'], 'a kept message splits the run below the minimum')
   }))
 
+  it('subjectSections splits the stream at each subject heading', ui.run({}, async (page) => {
+    const r = await page.evaluate(async () => {
+      const { subjectSections } = await import('/src/lib/components/chat/chatCompact.ts')
+      const m = (id, subject) => ({ kind: 'message', item: { msg: { id }, subject } })
+      const shape = (ss) => ss.map((s) => [s.subject ?? '-', ...s.entries.map((e) => (e.kind === 'run' ? 'run' + e.count : e.item.msg.id))])
+      return {
+        lead: shape(subjectSections([m('m0'), m('m1', 'Hikes'), { kind: 'run', id: 'm2', count: 3, open: false }, m('m5'), m('m6', 'Gear'), m('m7')])),
+        empty: shape(subjectSections([])),
+      }
+    })
+    assert.deepEqual(r.lead, [['-', 'm0'], ['Hikes', 'm1', 'run3', 'm5'], ['Gear', 'm6', 'm7']], 'messages before the first heading lead without one; runs stay in their section')
+    assert.deepEqual(r.empty, [])
+  }))
+
   it('folds runs of earlier read messages and never the unread or recent ones', ui.run({ beforeMount: longTrip }, async (page) => {
     await rows(page).first().waitFor()
     assert.deepEqual(await articles(page), ['trip-0', 'trip-4', 'trip-9', 'trip-10', 'trip-11', 'trip-12', 'trip-13'], 'only the subject-heading opener, the unread message and the latest five show')
