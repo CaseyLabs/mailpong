@@ -2,11 +2,22 @@
 
 Paths in commands are relative to the active checkout root; helper filenames refer to `.agents/skills/run-mailven/`. Read the core SKILL.md safeguards first.
 
-## Retaking the README screenshot
+## Retaking the README screenshots
 
-`docs/ss.png` (1040×660, Dark theme, mail sidebar collapsed) must show only made-up
-mail. `screenshot-fakes.js` fakes the read bindings: two accounts, a chat list
-and a short group chat. It also blocks every write binding and saves nothing.
+The README has three shots, all of made-up mail only:
+
+- `docs/ss.png`: 1040×660, Dark theme, mail sidebar collapsed.
+- `docs/ss-light.png`: 1040×690, Light theme, Accounts column expanded, chat scrolled to its subject heading.
+- `docs/ss-narrow.png`: 480×750, single-pane layout, chat scrolled to its subject heading.
+
+The quickest route is headless: `node .agents/skills/run-mailven/headless-shot.js <outdir>`
+writes all three (see [Playwright](playwright.md)). The heights of the last two end the
+chat between messages; recheck them after changing the fake conversation. The browser
+steps below retake `docs/ss.png` only.
+
+`screenshot-fakes.js` fakes the read bindings: two accounts, a chat list
+and a short group chat. It also blocks every write binding, saves nothing, and
+pins the in-app title bar on so the shots don't depend on the dev profile.
 Edit the data there, not in the page.
 
 1. Start the dev server and `serve-fakes.py` (both with the host background facility).

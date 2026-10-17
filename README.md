@@ -6,6 +6,10 @@
 
 ![Mailven chat mail view](docs/ss.png)
 
+| Light theme with all accounts and folders | Narrow window |
+| --- | --- |
+| ![Mailven in the light theme with the Accounts column open, showing a combined inbox for two accounts](docs/ss-light.png) | ![Mailven in a narrow window, showing a single chat that starts with its subject heading](docs/ss-narrow.png) |
+
 _Note_: this is a personal project that is alpha software under active development. User-caution is heavily emphasized, no guarantees or warranties provided. 
 
 ## History

@@ -36,7 +36,7 @@ Read only the reference needed for the check:
 
 - [Playwright](references/playwright.md): repeatable screenshots, theme/layout matrix, fake server and headless setup.
 - [Browser](references/browser.md): interactive navigation, store inspection, viewport and focus checks using the host's available browser APIs.
-- [Screenshot](references/screenshot.md): retaking `docs/ss.png` with made-up data only.
+- [Screenshot](references/screenshot.md): retaking the README screenshots (`docs/ss*.png`) with made-up data only.
 - [Composer](references/composer.md): composer/undo-send checks with blocked real writes; also read Playwright for launcher setup.
 - [Troubleshooting](references/troubleshooting.md): hidden tabs, OAuth failures, dev themes, bindings and shutdown problems, only when encountered.
 

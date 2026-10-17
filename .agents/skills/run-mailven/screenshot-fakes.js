@@ -1,4 +1,4 @@
-// Fake bindings for the README screenshot (docs/ss.png); see "Retaking the README screenshot" in SKILL.md.
+// Fake bindings for the README screenshots (docs/ss*.png); see "Retaking the README screenshots" in references/screenshot.md.
 // Call window.__installFakes(iframe.contentWindow) before the app mounts. Blocks every non-read binding.
 window.__installFakes = (win) => {
   const A = win.go.app.App
@@ -63,6 +63,8 @@ window.__installFakes = (win) => {
     GetConversation: async (id) => convo(id),
     GetSenderChat: async (acc, sender) => convo('sender:' + sender),
     GetChatDraft: async () => null,
+    // Pin the in-app title bar so the shot doesn't depend on the dev profile's setting.
+    GetShowTitleBar: async () => true, GetNativeTitleBar: async () => false,
   })
   return 'ok'
 }

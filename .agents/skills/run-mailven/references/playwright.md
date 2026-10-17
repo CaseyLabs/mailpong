@@ -11,7 +11,7 @@ Set `SCRATCH` to an absolute output directory and `prefix` to a descriptive file
 ```bash
 # If a display is missing, start Xvfb as described in the core workflow.
 .agents/skills/run-mailven/dev.sh start          # host background facility; then dev.sh wait
-node .agents/skills/run-mailven/headless-shot.js "$SCRATCH"          # ss.png plus vc-<theme>-<state>.png
+node .agents/skills/run-mailven/headless-shot.js "$SCRATCH"          # README shots plus vc-<theme>-<state>.png
 node .agents/skills/run-mailven/ui-matrix.js "$SCRATCH" "$prefix"     # the full matrix
 ```
 
@@ -24,9 +24,9 @@ Its leading setup-module import runs before entry-point dependencies, so a
 It captures persisted UI/extension state from a bindings-only page, removes fakes
 by reloading, waits for debounced saves, asserts state is unchanged, and always
 closes the browser. Neither helper needs `serve-fakes.py`; the composer helpers
-still use that server. `headless-shot.js` writes the README shot plus the
-dark/light x Accounts-column expanded/collapsed crops. When retaking the README screenshot, copy `ss.png` to
-`docs/ss.png` as is.
+still use that server. `headless-shot.js` writes the three README shots (`ss.png`, `ss-light.png`,
+`ss-narrow.png`) plus the dark/light x Accounts-column expanded/collapsed crops.
+When retaking the README screenshots, copy those three files to `docs/` as is.
 
 `ui-matrix.js <outdir> <prefix>` uses the same page setup and writes 36 PNGs:
 `<prefix>-<dark|light>-<1400|900|700>-<expanded|collapsed>-<previews|nopreviews>.png`
