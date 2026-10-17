@@ -221,7 +221,7 @@ Start with checks relevant to the change. Add Go tests for meaningful behavior a
 
 ### Regenerating Wails bindings
 
-`frontend/wailsjs/` holds generated bindings. Stop any running Mailven first (`.agents/skills/run-mailven/dev.sh stop`): the single-instance lock makes the generator exit without writing anything. `wails dev` and `wails build` (so `make dev`, `make build` and the run-mailven `dev.sh`) also regenerate the bindings. The committed files are the generator's exact output, including its executable file mode and the tabs it writes on blank lines, so an unchanged API leaves no diff. Don't strip that whitespace or change the modes: `.gitattributes` exempts `frontend/wailsjs/**` from whitespace checks, so `git diff --check` stays clean. Commit any remaining diff with the Go API change that caused it.
+`frontend/wailsjs/` holds generated bindings. Stop any running Mailven first (`.agents/skills/run-mailven/dev.sh stop`): the single-instance lock makes the generator exit without writing anything. `wails dev` and `wails build` (so `make dev`, `make build` and the run-mailven `dev.sh`) also regenerate the bindings. The committed files are the generator's exact output, including its file modes (`0755` under `go/`, `0644` under `runtime/`, which Wails extracts with the default umask) and the tabs it writes on blank lines, so an unchanged API leaves no diff. Don't strip that whitespace or change the modes: `.gitattributes` exempts `frontend/wailsjs/**` from whitespace checks, so `git diff --check` stays clean. Commit any remaining diff with the Go API change that caused it.
 
 ## Localization and Security
 
