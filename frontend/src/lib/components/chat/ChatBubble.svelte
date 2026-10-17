@@ -246,7 +246,7 @@
           {/if}
 
           <!-- Hover / focus actions -->
-          <div class="absolute {actionsPos} flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 group-has-focus-visible:opacity-100 has-data-[state=open]:opacity-100 transition-opacity">
+          <div class="absolute {actionsPos} flex items-center gap-0.5 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 group-has-focus-visible:opacity-100 has-data-[state=open]:opacity-100 group-hover:z-20 group-focus-visible:z-20 group-has-focus-visible:z-20 has-data-[state=open]:z-20 transition-opacity">
             {#if msg.isDraft && onEditDraft}
               <button class="p-1 rounded hover:bg-muted" title={$_('viewer.editDraft')} onclick={() => onEditDraft(msg.id)}>
                 <Icon icon="mdi:pencil" class="w-4 h-4 text-muted-foreground" />

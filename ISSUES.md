@@ -13,7 +13,7 @@ All Microsoft work, including Microsoft 365 and regular/personal Outlook.com, is
 - [SYNC — Mail synchronization and action reliability](#sync): [SY10](#sy10) (resolved: [SY9](#sy9), [SY7](#sy7), [SY8](#sy8), [R2](#r2), [R3](#r3), [R4](#r4), [SY2](#sy2), [SY3](#sy3), [SY4](#sy4), [SY5](#sy5), [SY6](#sy6))
 - [GOAUTH — Google OAuth client setup](#goauth): [GO4](#go4) (resolved: [GO3](#go3), [GO1](#go1), [GO2](#go2))
 - [CHAT — Chat composer sender review](#chat): no unresolved issue recorded (resolved: [CH1](#ch1), [R1](#r1))
-- [MAINT — Maintenance and documentation](#maint): [D2](#d2) (resolved: UI8, [TF3](#tf3), [UI6](#ui6), [UI5](#ui5), [DOC6](#doc6), [UI3](#ui3), [TF1](#tf1), [TF2](#tf2), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI4](#ui4), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
+- [MAINT — Maintenance and documentation](#maint): [D2](#d2) (resolved: UI9, UI8, [TF3](#tf3), [UI6](#ui6), [UI5](#ui5), [DOC6](#doc6), [UI3](#ui3), [TF1](#tf1), [TF2](#tf2), [L2](#l2), [L3](#l3), [UI1](#ui1), [UI2](#ui2), [UI4](#ui4), [DOC4](#doc4), [DOC5](#doc5), [MA2](#ma2), [MA6](#ma6), [SY1](#sy1))
 - [AI — AI development workflows](#ai): [AI6](#ai6)
 - [WAILS — Desktop framework migration assessment](#wails): no unresolved issue recorded
 
@@ -520,15 +520,6 @@ Project: [MAINT](PLAN.md#maint).
 ## AI — AI development workflows
 
 Project: [AI](PLAN.md#ai).
-
-<a id="ui9"></a>
-
-### UI9 — Sticky subject heading covers message hover actions
-
-- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-16](PLAN.md#maint-16); found 2026-10-16 by a code review of 80107a7, verified the same day.
-- **Severity / proposed priority / status:** low / P3 / open.
-- **Problem / evidence:** `ChatSubjectHeading.svelte` is `sticky z-10` with an opaque background; the bubble action toolbar (`ChatBubble.svelte`, absolute, no z-index) of a message scrolled partly under it paints beneath. Probe: with the Reply button's top 6 px under the heading, `elementFromPoint` there returns the `H3`, not the button.
-- **Closure:** a hovered or focused message's actions stay clickable when its top is under the heading (stacking above it, or offset below it); UI regression test.
 
 <a id="ui10"></a>
 

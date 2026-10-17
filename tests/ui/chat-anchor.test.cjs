@@ -39,3 +39,40 @@ describe('chat unread anchor', () => {
     }))
   }
 })
+
+// UI9: a message whose top is under the sticky heading keeps its Reply and Message actions clickable.
+describe('chat message actions under the sticky heading', () => {
+  for (const accounts of ['expanded', 'collapsed']) {
+    it(`the toolbar receives clicks above the heading (Accounts ${accounts})`, ui.run({ height: 500, accounts, beforeMount: twoSubjects }, async (page) => {
+      await page.locator('[data-message-id="trip-9"]').waitFor()
+      await page.waitForTimeout(2300)
+      // Scroll so trip-9's top sits 6 px below the heading's top edge, i.e. mostly under the heading.
+      await page.evaluate(() => {
+        const msg = document.querySelector('[data-message-id="trip-9"]')
+        let sc = msg.parentElement
+        while (sc && getComputedStyle(sc).overflowY !== 'auto') sc = sc.parentElement
+        const stuck = [...document.querySelectorAll('[data-subject-heading]')].find((h) => h.getBoundingClientRect().top >= sc.getBoundingClientRect().top - 1 && h.getBoundingClientRect().top < sc.getBoundingClientRect().top + 1)
+        sc.scrollTop += msg.getBoundingClientRect().top - (stuck.getBoundingClientRect().bottom - 6)
+      })
+      const msg = page.locator('[data-message-id="trip-9"]')
+      const bubble = msg.locator('p, div').filter({ hasText: 'Message 9' }).first()
+      await bubble.hover({ position: { x: 20, y: 20 }, force: true })
+      const probe = () => page.evaluate(() => {
+        const msg = document.querySelector('[data-message-id="trip-9"]')
+        const heading = [...document.querySelectorAll('[data-subject-heading]')].find((h) => h.getBoundingClientRect().top >= 0 && h.getBoundingClientRect().top < 200 && h.getBoundingClientRect().bottom > msg.getBoundingClientRect().top)
+        const out = {}
+        for (const [k, sel] of [['reply', 'button[title="Reply"]'], ['more', 'button[aria-label="Message actions"]']]) {
+          const b = msg.querySelector(sel).getBoundingClientRect()
+          const y = Math.max(b.top, heading.getBoundingClientRect().top) + 2
+          const hit = document.elementFromPoint(b.left + b.width / 2, y)
+          out[k] = { under: b.top < heading.getBoundingClientRect().bottom, hit: !!hit && !!hit.closest(sel) }
+        }
+        return out
+      })
+      const r = await probe()
+      assert.ok(r.reply.under, 'the Reply button starts under the heading')
+      assert.ok(r.reply.hit, 'the Reply button receives clicks under the heading')
+      assert.ok(r.more.hit, 'the Message actions button receives clicks under the heading')
+    }))
+  }
+})
