@@ -36,7 +36,7 @@
   let replyTo = $state('')
   let signatureHtml = $state('')
   let signatureText = $state('')
-  let signatureEnabled = $state(true)
+  let signatureEnabled = $state(false)
   let signatureForNew = $state(true)
   let signatureForReply = $state(true)
   let signatureForForward = $state(true)
@@ -56,7 +56,7 @@
         replyTo = identity.replyTo || ''
         signatureHtml = identity.signatureHtml || ''
         signatureText = identity.signatureText || ''
-        signatureEnabled = identity.signatureEnabled ?? true
+        signatureEnabled = identity.signatureEnabled ?? false
         signatureForNew = identity.signatureForNew ?? true
         signatureForReply = identity.signatureForReply ?? true
         signatureForForward = identity.signatureForForward ?? true
@@ -69,7 +69,7 @@
         replyTo = ''
         signatureHtml = ''
         signatureText = ''
-        signatureEnabled = true
+        signatureEnabled = false
         signatureForNew = true
         signatureForReply = true
         signatureForForward = true

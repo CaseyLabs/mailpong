@@ -162,8 +162,8 @@ func (s *Store) Create(config *AccountConfig) (*Account, error) {
 	}
 
 	_, err = s.db.Exec(`
-		INSERT INTO identities (id, account_id, email, name, is_default, order_index, created_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO identities (id, account_id, email, name, is_default, order_index, created_at, signature_enabled)
+		VALUES (?, ?, ?, ?, ?, ?, ?, 0)
 	`, identity.ID, identity.AccountID, identity.Email, identity.Name, identity.IsDefault, identity.OrderIndex, identity.CreatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create default identity: %w", err)

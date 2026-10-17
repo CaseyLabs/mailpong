@@ -173,7 +173,7 @@ type Identity struct {
 	SignatureText string `json:"signatureText,omitempty"`
 
 	// Signature behavior settings
-	SignatureEnabled    bool   `json:"signatureEnabled"`    // Master toggle (default: true)
+	SignatureEnabled    bool   `json:"signatureEnabled"`    // Master toggle (default: false)
 	SignatureForNew     bool   `json:"signatureForNew"`     // Append to new messages (default: true)
 	SignatureForReply   bool   `json:"signatureForReply"`   // Append to replies (default: true)
 	SignatureForForward bool   `json:"signatureForForward"` // Append to forwards (default: true)

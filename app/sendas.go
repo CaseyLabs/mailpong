@@ -229,7 +229,6 @@ func (ops *composeOps) importSendAs(accountID string, emails []string, withSigna
 		cfg := account.IdentityConfig{
 			Email:               e.Email,
 			Name:                e.DisplayName,
-			SignatureEnabled:    true,
 			SignatureForNew:     true,
 			SignatureForReply:   true,
 			SignatureForForward: true,
@@ -243,6 +242,7 @@ func (ops *composeOps) importSendAs(accountID string, emails []string, withSigna
 		}
 		if withSignature {
 			cfg.SignatureHTML = e.Signature
+			cfg.SignatureEnabled = e.Signature != ""
 		}
 		id, err := ops.accountStore.CreateIdentity(accountID, &cfg)
 		if err != nil {

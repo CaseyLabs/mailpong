@@ -265,6 +265,17 @@ func TestStoreCreate(t *testing.T) {
 	if !acct.Enabled {
 		t.Error("Create() account should be enabled by default")
 	}
+
+	ids, err := store.GetIdentities(acct.ID)
+	if err != nil {
+		t.Fatalf("GetIdentities() error = %v", err)
+	}
+	if len(ids) != 1 || !ids[0].IsDefault {
+		t.Fatalf("Create() identities = %+v, want one default identity", ids)
+	}
+	if ids[0].SignatureEnabled {
+		t.Error("Create() default identity should have signatures disabled")
+	}
 }
 
 func TestStoreGet(t *testing.T) {
