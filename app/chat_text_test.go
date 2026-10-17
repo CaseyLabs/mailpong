@@ -33,3 +33,27 @@ func TestAttachChatText(t *testing.T) {
 		})
 	}
 }
+
+func TestViewChatText(t *testing.T) {
+	tests := []struct {
+		name               string
+		bodyText, bodyHTML string
+		wantText           string
+		wantQuoted         bool
+	}{
+		{"empty body (attachments only)", "", " \n", "", false},
+		{"plain text", "hi\n\n> old", "", "hi", true},
+		{"html", "", "<p>Hello <b>there</b></p>", "Hello there", false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := viewChatText(tt.bodyText, tt.bodyHTML)
+			if got == nil {
+				t.Fatal("viewChatText returned nil")
+			}
+			if got.Text != tt.wantText || got.HasQuoted != tt.wantQuoted {
+				t.Errorf("got Text %q HasQuoted %v, want %q %v", got.Text, got.HasQuoted, tt.wantText, tt.wantQuoted)
+			}
+		})
+	}
+}

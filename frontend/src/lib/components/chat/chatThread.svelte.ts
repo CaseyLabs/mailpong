@@ -32,6 +32,7 @@ export interface SMIMEViewResult {
   smimeSignerEmail: string
   smimeSignerSubject: string
   smimeEncrypted: boolean
+  chat?: messageModels.ChatText
   inlineAttachments?: Record<string, string>
   attachments?: DecryptedAttachment[]
 }
@@ -43,6 +44,7 @@ export interface PGPViewResult {
   pgpSignerEmail: string
   pgpSignerKeyId: string
   pgpEncrypted: boolean
+  chat?: messageModels.ChatText
   inlineAttachments?: Record<string, string>
   attachments?: DecryptedAttachment[]
 }

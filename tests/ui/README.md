@@ -29,6 +29,7 @@ npm install --prefix ~/.cache/mailven-upnote-ui --no-save playwright@1.63.0
 | `viewer-focus.test.cjs` | Mail and shared detail-pane viewers reject focus while closed at medium and narrow widths; opening, Back, thread focus mode and resizing preserve interaction |
 | `logic.test.cjs` | Pure chat logic (`chatFormat.ts`, `chatSnooze.ts`): reply recipients and default mode, reply identity, bubble grouping, subject headings, list groups, snooze presets |
 | `chat-reader.test.cjs` | Rich mail in the reader view: sanitized blocks in a bubble or flat, blocked remote images and Load images, links through the app, Show more/less, Show original, the card setting (fake in `reader-fake.cjs`) |
+| `chat-secure.test.cjs` | Signed and decrypted mail as chat bubbles with their badges from faked S/MIME and PGP view results, Show original, Original layout, failed decryption |
 | `chat-presentation.test.cjs` | Incoming/outgoing bubbles and sender runs, quoted text and signature, sender chats with several subjects, combine/split with Undo |
 | `inbox-triage.test.cjs` | Pin, snooze, archive, read/unread, the automatic Low priority group, sender priority overrides, Undo |
 | `chat-compose.test.cjs` | Reply vs Reply All, draft autosave and restore, undo-send, reply identity, a refused reply (ISSUES.md R1) |

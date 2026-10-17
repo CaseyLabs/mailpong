@@ -197,6 +197,10 @@ Options for the chat-style mail list, thread view, and reply box.
 
 **Bubbles** (default) shows messages in colored speech bubbles. **Flat** shows a plain transcript: no bubbles or avatars, a name and time above each message, and a thin accent line beside your own messages, which stay on the left with everyone else's. Email cards, full bodies, the "N earlier messages" lines and the chat list work the same in both styles.
 
+### Email Layout
+
+**Readable text** (default) shows all mail as chat content: plain mail as bubbles; newsletters, receipts and long mail as headings, paragraphs, lists, links and pictures without the page layout; and signed mail, and encrypted mail once decrypted, the same way, with its security badge or banner. **Original layout** shows newsletters and long mail as a short card that expands into the original layout, and signed or encrypted mail in full. Either way, **Show original** in a message's ⋯ menu shows that message in full.
+
 ### Reading Width
 
 How wide message bubbles can grow in an open chat: **Narrow**, **Standard** (default) or **Wide**. Messages always use the whole conversation pane, with other people's on the left and yours on the right. **Wide** also widens email cards and full email bodies, which stay wide enough for a 600 px HTML email at every setting.

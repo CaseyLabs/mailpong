@@ -375,6 +375,16 @@ Project: [MAINT](PLAN.md#maint).
 - **Evidence (2026-10-14):** `docs/PROVIDERS.md` Switching routes says full snapshot restoration is not implemented, and `docs/user-guide/features/settings.md` Mail API route says restoring the full snapshot is unavailable. These conflict with the implemented [API-3](PLAN.md#api-3) workflow in `app/snapshot_restore.go` and the current snapshot section of `docs/MAIL_APIS.md`.
 - **Impact / closure:** users may miss the offline whole-database restore/undo option. Correct both guides to describe current restore scope and link its consent/backup/undo instructions, preserving that ordinary route rollback does not restore the snapshot or undo provider changes. Documentation links/source review must pass; do not reopen live restore testing or migration work.
 
+<a id="ma9"></a>
+
+### MA9 — `make generate` writes the Wails runtime files as 0755
+
+- **Owner / milestone:** [MAINT](PLAN.md#maint); found during [UIX-8](PLAN.md#uix-8), fix not selected.
+- **Severity / proposed priority / status:** low / P3 / open.
+- **Problem / reproduction (2026-10-16, umask 022):** `make generate` (`wails generate module`) leaves `frontend/wailsjs/runtime/{package.json,runtime.d.ts,runtime.js}` with mode 0755, a mode-only diff against the 0644 committed in 4b8bc63. [Regenerating Wails bindings](CONTRIBUTING.md#regenerating-wails-bindings) says the runtime files come out 0644; that holds for `wails dev`/`wails build` per 4b8bc63 but not for `generate module`.
+- **Workaround:** `chmod 644 frontend/wailsjs/runtime/*` after `make generate`.
+- **Closure:** make `make generate` leave no mode diff (for example a `chmod` in the target) and correct the CONTRIBUTING note.
+
 <a id="d2"></a>
 
 ### D2 — TypeScript 7 tooling compatibility
@@ -510,6 +520,15 @@ Project: [MAINT](PLAN.md#maint).
 ## AI — AI development workflows
 
 Project: [AI](PLAN.md#ai).
+
+<a id="ui7"></a>
+
+### UI7 — Copy addresses does not quote display names
+
+- **Owner / milestone:** [MAINT](PLAN.md#maint); found 2026-10-16 by a code review of 80107a7 during [UIX-8](PLAN.md#uix-8), fix not selected.
+- **Severity / proposed priority / status:** low / P3 / open.
+- **Problem / evidence:** `frontend/src/lib/components/chat/ChatPeopleMenu.svelte:22` formats each person as `Name <email>` without quoting and joins with `, `, so a name containing a comma, quote or angle bracket (`Shah, Priya <priya@example.net>`) pastes back into a recipient field as two bogus recipients. `ChatBubble.svelte`'s recipients title uses the same unquoted form (display only).
+- **Closure:** quote display names that need it (RFC 5322 quoted-string) in the copied list, with a logic or UI regression test for a comma in a name.
 
 <a id="tf1"></a>
 

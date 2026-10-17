@@ -90,14 +90,22 @@ func (a *App) FetchMessageBody(messageID string) (*message.Message, error) {
 var chatTextCache = message.NewChatTextCache()
 
 // attachChatText fills m.Chat for chat bubbles. Encrypted or signed messages
-// are skipped: their stored body is the raw envelope, and the chat view
-// renders the decrypted body instead.
+// are skipped: their stored body is the raw envelope; their chat text comes
+// with the S/MIME or PGP view result (see viewChatText).
 func attachChatText(m *message.Message) {
 	if m == nil || !m.BodyFetched || m.HasSMIME || m.HasPGP {
 		return
 	}
 	chat := chatTextCache.Extract(m.ID, m.BodyText, m.BodyHTML)
 	m.Chat = &chat
+}
+
+// viewChatText returns the chat text of a verified or decrypted body for the
+// S/MIME and PGP view results. It bypasses chatTextCache so decrypted
+// plaintext is not kept after the view call.
+func viewChatText(bodyText, bodyHTML string) *message.ChatText {
+	chat := message.ExtractChatText(bodyText, bodyHTML)
+	return &chat
 }
 
 // GetConversations returns conversations (threaded messages) for a folder with pagination
@@ -179,6 +187,7 @@ type SMIMEViewResult struct {
 	SMIMESignerEmail   string                `json:"smimeSignerEmail"`
 	SMIMESignerSubject string                `json:"smimeSignerSubject"`
 	SMIMEEncrypted     bool                  `json:"smimeEncrypted"`
+	Chat               *message.ChatText     `json:"chat,omitempty"`              // chat bubble text of the unwrapped body
 	InlineAttachments  map[string]string     `json:"inlineAttachments,omitempty"` // contentID → dataURL
 	Attachments        []DecryptedAttachment `json:"attachments,omitempty"`       // metadata for attachment list
 }
@@ -230,12 +239,14 @@ func (a *App) ProcessSMIMEMessage(messageID string) (*SMIMEViewResult, error) {
 
 	// Step 2: Verify if the inner content is signed
 	var sigResult *smime.SignatureResult
+	unwrapFailed := false
 	ct := extractContentType(innerBytes)
 	if smime.IsSMIMESigned(ct) {
 		sigResult, innerBytes = a.smimeVerifier.VerifyAndUnwrap(innerBytes)
 		if innerBytes == nil {
 			// Verification unwrap failed, use the encrypted content as-is
 			innerBytes = rawBody
+			unwrapFailed = true
 		}
 		if sigResult != nil {
 			sigResult.CheckSender(msg.FromEmail)
@@ -253,6 +264,10 @@ func (a *App) ProcessSMIMEMessage(messageID string) (*SMIMEViewResult, error) {
 	parsed := a.syncEngine.ParseDecryptedBody(innerBytes, messageID)
 	result.BodyHTML = parsed.BodyHTML
 	result.BodyText = parsed.BodyText
+	if !unwrapFailed {
+		// The raw envelope is no chat text; it keeps the full body.
+		result.Chat = viewChatText(parsed.BodyText, parsed.BodyHTML)
+	}
 
 	// Step 5: Build inline attachment map and attachment list from decrypted content
 	result.InlineAttachments = buildInlineAttachmentMap(parsed.Attachments)
@@ -301,6 +316,7 @@ type PGPViewResult struct {
 	PGPSignerEmail    string                `json:"pgpSignerEmail"`
 	PGPSignerKeyID    string                `json:"pgpSignerKeyId"`
 	PGPEncrypted      bool                  `json:"pgpEncrypted"`
+	Chat              *message.ChatText     `json:"chat,omitempty"`              // chat bubble text of the unwrapped body
 	InlineAttachments map[string]string     `json:"inlineAttachments,omitempty"` // contentID → dataURL
 	Attachments       []DecryptedAttachment `json:"attachments,omitempty"`       // metadata for attachment list
 }
@@ -352,12 +368,14 @@ func (a *App) ProcessPGPMessage(messageID string) (*PGPViewResult, error) {
 
 	// Step 2: Verify if the inner content is signed
 	var sigResult *pgp.SignatureResult
+	unwrapFailed := false
 	ct := extractContentType(innerBytes)
 	if pgp.IsPGPSigned(ct) {
 		sigResult, innerBytes = a.pgpVerifier.VerifyAndUnwrap(innerBytes)
 		if innerBytes == nil {
 			// Verification unwrap failed, use the encrypted content as-is
 			innerBytes = rawBody
+			unwrapFailed = true
 		}
 		if sigResult != nil {
 			sigResult.CheckSender(msg.FromEmail)
@@ -375,6 +393,10 @@ func (a *App) ProcessPGPMessage(messageID string) (*PGPViewResult, error) {
 	parsed := a.syncEngine.ParseDecryptedBody(innerBytes, messageID)
 	result.BodyHTML = parsed.BodyHTML
 	result.BodyText = parsed.BodyText
+	if !unwrapFailed {
+		// The raw envelope is no chat text; it keeps the full body.
+		result.Chat = viewChatText(parsed.BodyText, parsed.BodyHTML)
+	}
 
 	// Step 5: Build inline attachment map and attachment list from decrypted content
 	result.InlineAttachments = buildInlineAttachmentMap(parsed.Attachments)

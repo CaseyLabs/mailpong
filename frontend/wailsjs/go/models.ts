@@ -1037,6 +1037,7 @@ export namespace app {
 	    pgpSignerEmail: string;
 	    pgpSignerKeyId: string;
 	    pgpEncrypted: boolean;
+	    chat?: message.ChatText;
 	    inlineAttachments?: Record<string, string>;
 	    attachments?: DecryptedAttachment[];
 	
@@ -1052,6 +1053,7 @@ export namespace app {
 	        this.pgpSignerEmail = source["pgpSignerEmail"];
 	        this.pgpSignerKeyId = source["pgpSignerKeyId"];
 	        this.pgpEncrypted = source["pgpEncrypted"];
+	        this.chat = this.convertValues(source["chat"], message.ChatText);
 	        this.inlineAttachments = source["inlineAttachments"];
 	        this.attachments = this.convertValues(source["attachments"], DecryptedAttachment);
 	    }
@@ -1081,6 +1083,7 @@ export namespace app {
 	    smimeSignerEmail: string;
 	    smimeSignerSubject: string;
 	    smimeEncrypted: boolean;
+	    chat?: message.ChatText;
 	    inlineAttachments?: Record<string, string>;
 	    attachments?: DecryptedAttachment[];
 	
@@ -1096,6 +1099,7 @@ export namespace app {
 	        this.smimeSignerEmail = source["smimeSignerEmail"];
 	        this.smimeSignerSubject = source["smimeSignerSubject"];
 	        this.smimeEncrypted = source["smimeEncrypted"];
+	        this.chat = this.convertValues(source["chat"], message.ChatText);
 	        this.inlineAttachments = source["inlineAttachments"];
 	        this.attachments = this.convertValues(source["attachments"], DecryptedAttachment);
 	    }
