@@ -238,8 +238,9 @@ export interface ThreadItem {
   newDay: boolean
   // First message of a same-sender run: show avatar and name.
   groupStart: boolean
-  // Set on the first message of every subject run in a sender chat with two
-  // or more distinct subjects: render a heading before it.
+  // Set on the first message with a subject, and on the first message of
+  // every later subject run in a sender chat with two or more distinct
+  // subjects: render a heading before it.
   subject?: string
 }
 
@@ -257,19 +258,20 @@ export function baseSubject(subject: string): string {
   return displaySubject(subject).toLowerCase()
 }
 
-// buildThreadItems groups messages into bubble runs. labelSubjects (a
-// sender chat, which mixes threads) labels the first message of each subject
-// run, and starts a new bubble run there, when the chat has two or more
-// distinct subjects. Empty subjects continue the previous run.
+// buildThreadItems groups messages into bubble runs. The first message with a
+// subject is labelled with it (the header shows only names). labelSubjects (a
+// sender chat, which mixes threads) also labels the first message of each
+// later subject run, and starts a new bubble run there, when the chat has two
+// or more distinct subjects. Empty subjects continue the previous run.
 export function buildThreadItems(messages: messageModels.Message[], labelSubjects = false): ThreadItem[] {
-  const bases = labelSubjects ? messages.map((m) => baseSubject(m.subject || '')) : []
-  const multiSubject = new Set(bases.filter(Boolean)).size >= 2
+  const bases = messages.map((m) => baseSubject(m.subject || ''))
+  const multiSubject = labelSubjects && new Set(bases.filter(Boolean)).size >= 2
   const items: ThreadItem[] = []
   let prev: ThreadItem | null = null
   let prevBase: string | null = null
   messages.forEach((msg, i) => {
-    const base = bases[i] ?? ''
-    const subject = multiSubject && base && base !== prevBase ? displaySubject(msg.subject) : undefined
+    const base = bases[i]
+    const subject = base && (prevBase === null || (multiSubject && base !== prevBase)) ? displaySubject(msg.subject) : undefined
     if (base) prevBase = base
     const date = new Date(msg.date)
     const mine = !!msg.mine

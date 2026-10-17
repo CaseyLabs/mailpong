@@ -20,7 +20,7 @@
   import ChatComposer from './ChatComposer.svelte'
   import { ChatThread } from './chatThread.svelte'
   import { ChatComposer as ComposerState } from './chatComposerState.svelte'
-  import { baseSubject, buildThreadItems, displaySubject, myAddresses, replyAlias, replyRecipients, replyTarget, threadPeople, type ReplyMode } from './chatFormat'
+  import { buildThreadItems, displaySubject, myAddresses, replyAlias, replyRecipients, replyTarget, threadPeople, type ReplyMode } from './chatFormat'
   import { ChatScroll } from './chatScroll.svelte'
   import { ChatActions } from './chatActions.svelte'
 
@@ -341,10 +341,8 @@
   {:else if thread.conversation}
     <ChatViewHeader
       bind:this={header}
-      subject={displaySubject(thread.conversation.subject)}
       senderEmail={senderEmailOf(threadId)}
       {people}
-      subjectCount={Math.max(1, new Set(items.flatMap((i) => (i.subject ? [baseSubject(i.subject)] : []))).size)}
       {messageIds}
       accountId={accountId ?? ''}
       folderId={folderId ?? ''}

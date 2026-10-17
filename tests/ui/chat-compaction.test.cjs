@@ -57,8 +57,8 @@ describe('chat compaction', () => {
 
   it('folds runs of earlier read messages and never the unread or recent ones', ui.run({ beforeMount: longTrip }, async (page) => {
     await rows(page).first().waitFor()
-    assert.deepEqual(await articles(page), ['trip-4', 'trip-9', 'trip-10', 'trip-11', 'trip-12', 'trip-13'], 'only the unread message and the latest five show')
-    assert.deepEqual(await rows(page).allInnerTexts(), ['4 earlier messages', '4 earlier messages'])
+    assert.deepEqual(await articles(page), ['trip-0', 'trip-4', 'trip-9', 'trip-10', 'trip-11', 'trip-12', 'trip-13'], 'only the subject-heading opener, the unread message and the latest five show')
+    assert.deepEqual(await rows(page).allInnerTexts(), ['3 earlier messages', '4 earlier messages'])
     assert.equal(await rows(page).first().getAttribute('aria-expanded'), 'false')
   }))
 
@@ -73,12 +73,12 @@ describe('chat compaction', () => {
     await first.focus()
     await page.keyboard.press('Enter')
     assert.equal(await first.getAttribute('aria-expanded'), 'true')
-    assert.match(await first.innerText(), /Hide 4 earlier messages/)
+    assert.match(await first.innerText(), /Hide 3 earlier messages/)
     assert.deepEqual((await articles(page)).slice(0, 5), ['trip-0', 'trip-1', 'trip-2', 'trip-3', 'trip-4'], 'the run shows in order')
     assert.match(await page.locator('[data-message-id="trip-3"]').innerText(), /Message 3\./, "expanded messages render")
     await page.keyboard.press('Space')
     assert.equal(await first.getAttribute('aria-expanded'), 'false')
-    assert.deepEqual((await articles(page)).slice(0, 2), ['trip-4', 'trip-9'], 'and fold again')
+    assert.deepEqual((await articles(page)).slice(0, 3), ['trip-0', 'trip-4', 'trip-9'], 'and fold again')
   }))
 
   it('Tab reaches folded-run rows between messages, in order', ui.run({ beforeMount: longTrip }, async (page) => {

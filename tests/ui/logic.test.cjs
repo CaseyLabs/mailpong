@@ -95,6 +95,7 @@ describe('chat logic', () => {
         thread: pick(buildThreadItems(thread)),
         sender: pick(buildThreadItems(sender, true)),
         oneSubject: pick(buildThreadItems(sender.slice(0, 2), true)),
+        emptyFirst: pick(buildThreadItems([window.__msg('x', sam, { subject: '', date: at(9) }), window.__msg('y', sam, { subject: 'Re: Late', date: at(9, 1) })])),
         subjects: ['Re: Re: Hi', 'AW: Hallo', 'SV:Hej', 'Fwd: Re[3]: x'].map(displaySubject),
       }
     }, formatModule)
@@ -103,7 +104,9 @@ describe('chat logic', () => {
     assert.deepEqual(r.thread.map((i) => i.newDay), [true, false, false, false, true])
     assert.deepEqual(r.sender.map((i) => i.subject), ['Invoice 12', null, 'Delivery', null], 'a sender chat labels each subject run; Re: continues it')
     assert.deepEqual(r.sender.map((i) => i.groupStart), [true, false, true, false], 'a new subject starts a new run')
-    assert.ok(r.oneSubject.every((i) => i.subject === null), 'one distinct subject needs no headings')
+    assert.deepEqual(r.thread.map((i) => i.subject), ['Plans', null, null, null, null], 'a thread labels only its first message with the subject')
+    assert.deepEqual(r.oneSubject.map((i) => i.subject), ['Invoice 12', null], 'one distinct subject gets one heading')
+    assert.deepEqual(r.emptyFirst.map((i) => i.subject), [null, 'Late'], 'the heading goes on the first message with a subject')
     assert.deepEqual(r.subjects, ['Hi', 'Hallo', 'Hej', 'x'])
   }))
 

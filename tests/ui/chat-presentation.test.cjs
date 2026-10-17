@@ -1,5 +1,5 @@
 // Chat presentation in the open chat: incoming/outgoing bubbles and sender runs, quoted text and signatures
-// behind the "⋯" marker, subject headings in a sender chat, and combining/splitting sender chats.
+// behind the "⋯" marker, the subject heading, subject headings in a sender chat, and combining/splitting sender chats.
 const { describe, it } = require('node:test')
 const assert = require('node:assert/strict')
 const ui = require('./harness.cjs')
@@ -43,6 +43,14 @@ describe('chat presentation', () => {
     assert.match(await bubble(page, 'trip-2').innerText(), /Sam Rivera/, 'a different sender starts a new run')
     assert.doesNotMatch(await bubble(page, 'trip-1').innerText(), /Alex Morgan/, 'outgoing bubbles do not name me')
     assert.doesNotMatch(await bubble(page, 'trip-5').innerText(), /Priya Shah/, 'a same-sender follow-up joins the run without a name')
+  }))
+
+  it('the subject heads the stream, not the header', ui.run({}, async (page) => {
+    await bubble(page, 'trip-5').waitFor()
+    const headings = await page.locator('[role="separator"] span.font-semibold').allInnerTexts()
+    assert.deepEqual(headings, ['Weekend trip to the coast'], 'one subject heading, above the first message')
+    const header = page.locator('header', { has: page.getByRole('heading', { level: 2 }) })
+    assert.doesNotMatch(await header.innerText(), /Weekend trip/, 'the header shows only participants and actions')
   }))
 
   it('quoted text and signature hide behind the marker', ui.run({ beforeMount: quotedFake }, async (page) => {

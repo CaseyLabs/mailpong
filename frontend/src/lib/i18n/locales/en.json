@@ -145,8 +145,6 @@
     "hasAttachments": "Has attachments",
     "encrypted": "Encrypted",
     "andMore": "+{count}",
-    "subjectCount": "{count, plural, one {# subject} other {# subjects}}",
-    "messageCount": "{count, plural, one {# message} other {# messages}}",
     "loadFailed": "Couldn't load chats",
     "selectChat": "Select a chat to read",
     "threadLabel": "Messages",

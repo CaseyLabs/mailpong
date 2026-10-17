@@ -1,7 +1,7 @@
 <script lang="ts">
   // ChatViewHeader — the open chat's top bar, a single row. Left: Back (when
-  // the chat covers the list) and the title block: every participant, then a
-  // subtitle (the subject, or subject and message counts for a sender chat with several subjects).
+  // the chat covers the list) and the title: every participant (the subject
+  // heads the stream instead), with a "Snoozed until" chip when snoozed.
   // Beside the title: a "⋯" button that opens the shared thread context menu,
   // which holds Snooze, Pin, Reply, Spam, Read/Unread and the sender actions
   // (Reply also sits on each bubble and in the reply box). Forward joins it for
@@ -19,10 +19,7 @@
   import { formatSnoozedUntil } from './chatSnooze'
 
   interface Props {
-    subject: string
     people: Person[]
-    // Distinct subjects in a sender chat (1 when it has none).
-    subjectCount: number
     // Set for a sender chat: the header names the sender, not a subject.
     senderEmail: string
     messageIds: string[]
@@ -56,7 +53,7 @@
   }
 
   let {
-    subject, people: allPeople, subjectCount, senderEmail, messageIds, accountId, folderId, folderType, isStarred, allRead, isPinned, snoozedUntil, isLowPriority, canTriage, isTrash,
+    people: allPeople, senderEmail, messageIds, accountId, folderId, folderType, isStarred, allRead, isPinned, snoozedUntil, isLowPriority, canTriage, isTrash,
     showBackButton, onBack, onCompose, onArchive, onForward, onDelete, onSpam, onPin, onSnooze, onUnsnooze, onToggleRead, onToggleSenderLow, onToggleSenderChat, onActionComplete, onReply,
   }: Props = $props()
 
@@ -81,11 +78,6 @@
     const names = people.slice(0, MAX_NAMES).map(displayName).join(', ')
     return people.length > MAX_NAMES ? `${names} ${$_('chat.andMore', { values: { count: people.length - MAX_NAMES } })}` : names
   })
-  const subtitle = $derived(
-    senderEmail && subjectCount > 1
-      ? `${$_('chat.subjectCount', { values: { count: subjectCount } })} · ${$_('chat.messageCount', { values: { count: messageIds.length } })}`
-      : subject || $_('viewer.noSubject'),
-  )
   const snoozeLabel = $derived(snoozedUntil ? formatSnoozedUntil(snoozedUntil) : '')
 
   export function openSnooze() { snoozeMenu?.open() }
@@ -97,10 +89,6 @@
     menuAnchor.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: r.right, clientY: r.bottom }))
   }
 </script>
-
-{#snippet snoozed()}
-  {#if snoozeLabel}<Icon icon="mdi:alarm-snooze" class="inline w-3.5 h-3.5 -mt-0.5" /> {$_('chat.snoozedUntil', { values: { time: snoozeLabel } })} · {/if}
-{/snippet}
 
 {#snippet iconButton(icon: string, label: string, onclick: () => void, active?: boolean, disabled = false)}
   <!-- aria-pressed only for toggles (active passed); plain actions omit it. -->
@@ -156,12 +144,12 @@
     {/if}
 
     <div class="min-w-0 flex-1 flex items-center gap-1">
-      <div class="min-w-0 px-1">
-        <h2 class="text-body font-semibold text-fg-primary truncate" title={people.map((p) => p.email).join(', ')}>{title}</h2>
-        <p class="text-body text-fg-secondary truncate" title={senderEmail ? undefined : subject}>
-          {@render snoozed()}{subtitle}
-        </p>
-      </div>
+      <h2 class="min-w-0 px-1 text-body font-semibold text-fg-primary truncate" title={people.map((p) => p.email).join(', ')}>{title}</h2>
+      {#if snoozeLabel}
+        <span class="shrink-0 inline-flex items-center gap-1 text-xs text-fg-secondary">
+          <Icon icon="mdi:alarm-snooze" class="w-3.5 h-3.5" />{$_('chat.snoozedUntil', { values: { time: snoozeLabel } })}
+        </span>
+      {/if}
       <MessageContextMenu
         {messageIds}
         {accountId}
@@ -180,7 +168,7 @@
         </span>
       </MessageContextMenu>
       {#if canTriage}
-        <!-- Anchors the snooze menu opened from "⋯" or the H key; its state shows in the subtitle. -->
+        <!-- Anchors the snooze menu opened from "⋯" or the H key; its state shows beside the title. -->
         <ChatSnoozeMenu bind:this={snoozeMenu} hiddenTrigger {snoozedUntil} {onSnooze} {onUnsnooze} />
       {/if}
     </div>
