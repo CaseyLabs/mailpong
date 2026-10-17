@@ -40,6 +40,17 @@ export function displayName(p: Person): string {
   return p.name || p.email.split('@')[0] || p.email
 }
 
+// formatAddress renders "Name <email>" for a recipient list or title, quoting
+// the name (RFC 5322 quoted-string) when it holds a special such as a comma,
+// quote or angle bracket so the text pastes back as one recipient. A person
+// without an address gets the bare display name; without a name, the address.
+export function formatAddress(p: Person): string {
+  if (!p.email) return displayName(p)
+  if (!p.name) return p.email
+  const name = /[()<>[\]:;@\\,."]/.test(p.name) ? `"${p.name.replace(/[\\"]/g, '\\$&')}"` : p.name
+  return `${name} <${p.email}>`
+}
+
 // chatPeople lists a chat's participants once each, latest sender first,
 // without my own addresses. When I sent every message (Sent folder rows) it
 // falls back to the recipients, and to me only for a note to self. allMine

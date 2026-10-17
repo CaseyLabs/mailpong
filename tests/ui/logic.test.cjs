@@ -18,6 +18,28 @@ const opts = { beforeMount: helpers }
 const formatModule = '/src/lib/components/chat/chatFormat.ts'
 
 describe('chat logic', () => {
+  it('formats addresses so a name with specials stays one recipient', ui.run(opts, async (page) => {
+    const r = await page.evaluate(async (mod) => {
+      const { formatAddress } = await import(mod)
+      return [
+        { name: 'Priya Shah', email: 'priya@example.net' },
+        { name: 'Shah, Priya', email: 'priya@example.net' },
+        { name: 'Priya "PS" Shah', email: 'priya@example.net' },
+        { name: 'Shah <ops>', email: 'priya@example.net' },
+        { name: '', email: 'priya@example.net' },
+        { name: 'Priya Shah', email: '' },
+      ].map(formatAddress)
+    }, formatModule)
+    assert.deepEqual(r, [
+      'Priya Shah <priya@example.net>',
+      '"Shah, Priya" <priya@example.net>',
+      '"Priya \\"PS\\" Shah" <priya@example.net>',
+      '"Shah <ops>" <priya@example.net>',
+      'priya@example.net',
+      'Priya Shah',
+    ])
+  }))
+
   it('reply and reply all recipients', ui.run(opts, async (page) => {
     const r = await page.evaluate(async (mod) => {
       const { replyRecipients } = await import(mod)

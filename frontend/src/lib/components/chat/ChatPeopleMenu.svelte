@@ -8,8 +8,8 @@
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu'
   import Avatar from '$lib/components/kit/Avatar.svelte'
   import { contactPhotos } from '$lib/stores/contactPhotos.svelte'
-  import { toasts } from '$lib/stores/toast'
-  import { displayName, type Person } from './chatFormat'
+  import { copyText } from './chatClipboard'
+  import { displayName, formatAddress, type Person } from './chatFormat'
 
   interface Props {
     people: Person[]
@@ -19,17 +19,9 @@
 
   let { people, title, onComposeTo }: Props = $props()
 
-  const addresses = $derived(people.filter((p) => p.email).map((p) => (p.name ? `${p.name} <${p.email}>` : p.email)))
+  const addresses = $derived(people.filter((p) => p.email).map(formatAddress))
 
-  async function copyAll() {
-    const label = $_('chat.addresses')
-    try {
-      await navigator.clipboard.writeText(addresses.join(', '))
-      toasts.success($_('viewer.copiedToClipboard', { values: { label } }))
-    } catch {
-      toasts.error($_('viewer.failedToCopy'))
-    }
-  }
+  const copyAll = () => copyText(addresses.join(', '), $_('chat.addresses'))
 </script>
 
 <DropdownMenu.Root>

@@ -20,6 +20,13 @@ async function argsOf(page, name) {
   return (await ui.calls(page, name)).map((c) => c.args)
 }
 
+// The trip chat's sender is named "Shah, Priya", a name that needs quoting.
+const commaName = `{ const A = window.go.app.App, get = A.GetConversation
+  A.GetConversation = async (id) => {
+    const c = await get(id)
+    return { ...c, messages: c.messages.map((m) => (m.mine ? m : { ...m, fromName: 'Shah, Priya' })) }
+  } }`
+
 describe('chat header', () => {
   for (const width of [1200, 700, 500]) {
     it(`shows only Archive, Delete and More actions at ${width}px`, ui.run({ width }, async (page) => {
@@ -80,5 +87,12 @@ describe('chat header', () => {
     await page.getByRole('menuitem', { name: /priya@example\.net/ }).click()
     await page.getByRole('region', { name: 'Email composer' }).waitFor()
     assert.match(await page.getByRole('region', { name: 'Email composer' }).innerText(), /priya@example\.net/, 'the composer opens to that participant')
+  }))
+
+  it('Copy addresses quotes a name with a comma', ui.run({ beforeMount: clipboard + ';' + commaName }, async (page) => {
+    await open(page, 'Priya Shah')
+    await header(page).getByRole('heading', { level: 2 }).getByRole('button').click()
+    await page.getByRole('menuitem', { name: 'Copy addresses' }).click()
+    assert.match(await page.evaluate(() => window.__copied), /^"Shah, Priya" <priya@example\.net>, /, 'the copied name is one quoted recipient')
   }))
 })

@@ -521,15 +521,6 @@ Project: [MAINT](PLAN.md#maint).
 
 Project: [AI](PLAN.md#ai).
 
-<a id="ui7"></a>
-
-### UI7 — Copy addresses does not quote display names
-
-- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-14](PLAN.md#maint-14); found 2026-10-16 by a code review of 80107a7 during [UIX-8](PLAN.md#uix-8).
-- **Severity / proposed priority / status:** low / P2 / open.
-- **Problem / evidence:** `frontend/src/lib/components/chat/ChatPeopleMenu.svelte:22` formats each person as `Name <email>` without quoting and joins with `, `, so a name containing a comma, quote or angle bracket (`Shah, Priya <priya@example.net>`) pastes back into a recipient field as two bogus recipients. `ChatBubble.svelte`'s recipients title uses the same unquoted form (display only).
-- **Closure:** quote display names that need it (RFC 5322 quoted-string) in the copied list, through one shared address formatter (see [MA10](#ma10)), with a logic or UI regression test for a comma in a name.
-
 <a id="ui8"></a>
 
 ### UI8 — Sticky subject heading covers the day label after the unread jump
@@ -561,7 +552,7 @@ Project: [AI](PLAN.md#ai).
 
 ### MA10 — Chat code review cleanups
 
-- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-14](PLAN.md#maint-14) (shared helpers) and [MAINT-18](PLAN.md#maint-18); found 2026-10-16 by code reviews of 80107a7 and [UIX-8](PLAN.md#uix-8), verified by reading the code.
+- **Owner / milestone:** [MAINT](PLAN.md#maint) / [MAINT-14](PLAN.md#maint-14) (shared helpers, done: `formatAddress` and `copyText`) and [MAINT-18](PLAN.md#maint-18); found 2026-10-16 by code reviews of 80107a7 and [UIX-8](PLAN.md#uix-8), verified by reading the code.
 - **Severity / proposed priority / status:** low / P3 / open.
 - **Problem / evidence:** `ChatPeopleMenu.svelte` `copyAll` repeats `ChatBubble.svelte`'s `copy()` clipboard and toast logic, and both build `Name <email>` separately; `chatThread.svelte.ts` hand-copies `SMIMEViewResult`/`PGPViewResult` instead of using the generated `app.*` models; `chatCompact.ts` `subjectSections` tests `entry.kind === 'message'` twice.
 - **Closure:** one shared copy helper and address formatter in the chat modules; the thread uses the generated view-result types; the redundant test removed; behavior unchanged (frontend checks and full UI suite pass).

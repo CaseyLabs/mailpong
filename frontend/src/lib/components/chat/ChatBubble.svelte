@@ -16,12 +16,13 @@
   import { contactPhotos } from '$lib/stores/contactPhotos.svelte'
   import { getDarkMailContent, getChatDisplayStyle, getChatRichStyle } from '$lib/stores/settings.svelte'
   import { getIsDarkActive } from '$lib/stores/theme.svelte'
-  import { toasts } from '$lib/stores/toast'
   import ChatRichCard from './ChatRichCard.svelte'
   import ChatReaderMessage from './ChatReaderMessage.svelte'
   import ChatSecurityBanners from './ChatSecurityBanners.svelte'
+  import { toasts } from '$lib/stores/toast'
+  import { copyText } from './chatClipboard'
   import { securityStatus, TONES } from './chatSecurity'
-  import { linkify, parseRecipients, displayName, displaySubject, MINE_BUBBLE_GUTTER, type ReplyMode, type ThreadItem } from './chatFormat'
+  import { linkify, parseRecipients, formatAddress, displaySubject, MINE_BUBBLE_GUTTER, type ReplyMode, type ThreadItem } from './chatFormat'
   import { formatStamp } from '$lib/utils/date'
   import type { ChatThread } from './chatThread.svelte'
 
@@ -98,23 +99,14 @@
   const badges = $derived(security.filter((l) => l.badge))
   const recipientsTitle = $derived(
     [
-      `${$_('viewer.from')} ${msg.fromName ? `${msg.fromName} <${msg.fromEmail}>` : msg.fromEmail}`,
+      `${$_('viewer.from')} ${formatAddress({ name: msg.fromName, email: msg.fromEmail })}`,
       ...[['viewer.to', msg.toList], ['viewer.cc', msg.ccList], ['viewer.bcc', msg.bccList]]
         .map(([label, raw]) => [label, parseRecipients(raw)] as const)
         .filter(([, list]) => list.length > 0)
-        .map(([label, list]) => `${$_(label!)} ${list.map((p) => p.email ? `${displayName(p)} <${p.email}>` : displayName(p)).join(', ')}`),
+        .map(([label, list]) => `${$_(label!)} ${list.map(formatAddress).join(', ')}`),
       item.date.toLocaleString(),
     ].join('\n'),
   )
-
-  async function copy(text: string, label: string) {
-    try {
-      await navigator.clipboard.writeText(text)
-      toasts.success($_('viewer.copiedToClipboard', { values: { label } }))
-    } catch {
-      toasts.error($_('viewer.failedToCopy'))
-    }
-  }
 
   async function toggleSource() {
     sourceOpen = !sourceOpen
@@ -283,7 +275,7 @@
                   </DropdownMenu.Item>
                 {/if}
                 <DropdownMenu.Item onSelect={toggleSource}><Icon icon="mdi:code-tags" class="w-4 h-4 mr-2" />{sourceOpen ? $_('viewer.hideSource') : $_('viewer.viewSource')}</DropdownMenu.Item>
-                <DropdownMenu.Item onSelect={() => copy(chat?.text || bodyText || '', $_('chat.messageText'))}><Icon icon="mdi:content-copy" class="w-4 h-4 mr-2" />{$_('chat.copyText')}</DropdownMenu.Item>
+                <DropdownMenu.Item onSelect={() => copyText(chat?.text || bodyText || '', $_('chat.messageText'))}><Icon icon="mdi:content-copy" class="w-4 h-4 mr-2" />{$_('chat.copyText')}</DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu.Root>
           </div>
@@ -303,7 +295,7 @@
               <button
                 class="absolute top-2 right-2 p-1.5 rounded bg-muted hover:bg-muted/80"
                 title={$_('viewer.copySource')}
-                onclick={() => copy(source ?? '', $_('viewer.viewSource'))}
+                onclick={() => copyText(source ?? '', $_('viewer.viewSource'))}
               >
                 <Icon icon="mdi:content-copy" class="w-4 h-4" />
               </button>
