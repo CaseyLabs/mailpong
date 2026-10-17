@@ -284,6 +284,8 @@ export function GetChatNotifyPriorityOnly():Promise<boolean>;
 
 export function GetChatReadingWidth():Promise<string>;
 
+export function GetChatRichStyle():Promise<string>;
+
 export function GetChatSendKey():Promise<string>;
 
 export function GetChatSenderEvidence(arg1:app.ChatReply):Promise<app.SenderEvidence>;
@@ -709,6 +711,8 @@ export function SetChatIncludeQuote(arg1:boolean):Promise<void>;
 export function SetChatNotifyPriorityOnly(arg1:boolean):Promise<void>;
 
 export function SetChatReadingWidth(arg1:string):Promise<void>;
+
+export function SetChatRichStyle(arg1:string):Promise<void>;
 
 export function SetChatSendKey(arg1:string):Promise<void>;
 

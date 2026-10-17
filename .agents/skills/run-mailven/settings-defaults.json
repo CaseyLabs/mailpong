@@ -10,6 +10,7 @@
   "GetChatIncludeQuote": true,
   "GetChatNotifyPriorityOnly": true,
   "GetChatReadingWidth": "standard",
+  "GetChatRichStyle": "reader",
   "GetChatSendKey": "ctrl-enter",
   "GetChatShowLowGroup": true,
   "GetComposerFormat": "rich",

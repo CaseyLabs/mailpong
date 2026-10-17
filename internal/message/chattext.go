@@ -24,6 +24,9 @@ type ChatText struct {
 	// IsRich marks layout-heavy HTML (newsletters, receipts) or very long
 	// text that should render as a collapsed card instead of a bubble.
 	IsRich bool `json:"isRich"`
+	// Reader is the sanitized content of a rich message for the chat reader
+	// view; nil when the message is not rich or yields no blocks.
+	Reader []ReaderBlock `json:"reader,omitempty"`
 }
 
 const (
@@ -66,7 +69,9 @@ func ExtractChatText(bodyText, bodyHTML string) ChatText {
 	}
 	lines := splitLines(bodyText)
 	ct, _ := splitChatLines(lines, len(lines))
-	ct.IsRich = isLongText(ct.Text)
+	if ct.IsRich = isLongText(ct.Text); ct.IsRich {
+		ct.Reader = readerFromText(ct.Text)
+	}
 	return ct
 }
 
@@ -93,7 +98,9 @@ func chatTextFromHTML(bodyHTML string) (ChatText, bool) {
 	if ct.Text == "" {
 		return ChatText{}, false
 	}
-	ct.IsRich = r.isRich(hi) || isLongText(ct.Text)
+	if ct.IsRich = r.isRich(hi) || isLongText(ct.Text); ct.IsRich {
+		ct.Reader = readerFromHTML(doc)
+	}
 	return ct, true
 }
 

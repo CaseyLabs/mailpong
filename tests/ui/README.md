@@ -24,10 +24,11 @@ npm install --prefix ~/.cache/mailven-upnote-ui --no-save playwright@1.63.0
 
 | File | Covers |
 | --- | --- |
-| `ui-quality.test.cjs` | Audit matrix: light/dark × 1400/900/700 px × Accounts expanded/collapsed × previews on/off |
+| `ui-quality.test.cjs` | Audit matrix: light/dark × 1400/900/700 px × Accounts expanded/collapsed × previews on/off, plus flat-mode and reader-view variants |
 | `sidebar-focus.test.cjs` | Mail and shared extension sidebars reject focus while closed at narrow widths; opening, closing and resizing preserve interaction |
 | `viewer-focus.test.cjs` | Mail and shared detail-pane viewers reject focus while closed at medium and narrow widths; opening, Back, thread focus mode and resizing preserve interaction |
 | `logic.test.cjs` | Pure chat logic (`chatFormat.ts`, `chatSnooze.ts`): reply recipients and default mode, reply identity, bubble grouping, subject headings, list groups, snooze presets |
+| `chat-reader.test.cjs` | Rich mail in the reader view: sanitized blocks in a bubble or flat, blocked remote images and Load images, links through the app, Show more/less, Show original, the card setting (fake in `reader-fake.cjs`) |
 | `chat-presentation.test.cjs` | Incoming/outgoing bubbles and sender runs, quoted text and signature, sender chats with several subjects, combine/split with Undo |
 | `inbox-triage.test.cjs` | Pin, snooze, archive, read/unread, the automatic Low priority group, sender priority overrides, Undo |
 | `chat-compose.test.cjs` | Reply vs Reply All, draft autosave and restore, undo-send, reply identity, a refused reply (ISSUES.md R1) |

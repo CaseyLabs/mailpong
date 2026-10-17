@@ -10,6 +10,7 @@
     sendKey: string
     readingWidth: string
     displayStyle: string
+    richStyle: string
     includeQuote: boolean
     autoAdvance: string
     notifyPriorityOnly: boolean
@@ -21,6 +22,7 @@
     sendKey = $bindable(),
     readingWidth = $bindable(),
     displayStyle = $bindable(),
+    richStyle = $bindable(),
     includeQuote = $bindable(),
     autoAdvance = $bindable(),
     notifyPriorityOnly = $bindable(),
@@ -42,6 +44,11 @@
   const displayStyleOptions = $derived([
     { value: 'bubbles', label: $_('settingsChat.displayStyleBubbles') },
     { value: 'flat', label: $_('settingsChat.displayStyleFlat') },
+  ])
+
+  const richStyleOptions = $derived([
+    { value: 'reader', label: $_('settingsChat.richStyleReader') },
+    { value: 'card', label: $_('settingsChat.richStyleCard') },
   ])
 
   const autoAdvanceOptions = $derived([
@@ -82,6 +89,21 @@
       </Select.Content>
     </Select.Root>
     <p class="text-xs text-muted-foreground">{$_('settingsChat.displayStyleDescription')}</p>
+  </div>
+
+  <div class="space-y-2">
+    <Label>{$_('settingsChat.richStyle')}</Label>
+    <Select.Root value={richStyle} onValueChange={(v) => { if (v) richStyle = v }}>
+      <Select.Trigger aria-label={$_('settingsChat.richStyle')}>
+        <Select.Value placeholder={$_('settingsChat.richStyle')}>{label(richStyleOptions, richStyle)}</Select.Value>
+      </Select.Trigger>
+      <Select.Content>
+        {#each richStyleOptions as opt (opt.value)}
+          <Select.Item value={opt.value} label={opt.label} />
+        {/each}
+      </Select.Content>
+    </Select.Root>
+    <p class="text-xs text-muted-foreground">{$_('settingsChat.richStyleDescription')}</p>
   </div>
 
   <div class="space-y-2">

@@ -2,6 +2,7 @@ package message
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -12,7 +13,7 @@ func TestChatTextCache(t *testing.T) {
 	if first.Text != "hello" {
 		t.Fatalf("Text = %q, want %q", first.Text, "hello")
 	}
-	if got := c.Extract("m1", "hello", ""); got != first {
+	if got := c.Extract("m1", "hello", ""); !reflect.DeepEqual(got, first) {
 		t.Errorf("cached result = %+v, want %+v", got, first)
 	}
 	if got := c.Extract("m1", "changed", ""); got.Text != "changed" {

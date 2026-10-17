@@ -1,8 +1,9 @@
 <script lang="ts">
   // ChatBubble — one message in the chat thread. New text renders as a
   // bubble (quoted history behind a "⋯" marker after the text); rich mail
-  // renders as a card; encrypted mail, mail without chat text, and "Show
-  // original" render the full sandboxed body. Right-click keeps the shared message context menu.
+  // renders as sanitized reader content, or as a card when the setting asks;
+  // encrypted mail, mail without chat text, and "Show original" render the
+  // full sandboxed body. Right-click keeps the shared message context menu.
   import Icon from '@iconify/svelte'
   import { _ } from '$lib/i18n'
   import { GetMessageSource } from '../../../../wailsjs/go/app/App'
@@ -12,10 +13,11 @@
   import MessageContextMenu from '$lib/components/common/MessageContextMenu.svelte'
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu'
   import { contactPhotos } from '$lib/stores/contactPhotos.svelte'
-  import { getDarkMailContent, getChatDisplayStyle } from '$lib/stores/settings.svelte'
+  import { getDarkMailContent, getChatDisplayStyle, getChatRichStyle } from '$lib/stores/settings.svelte'
   import { getIsDarkActive } from '$lib/stores/theme.svelte'
   import { toasts } from '$lib/stores/toast'
   import ChatRichCard from './ChatRichCard.svelte'
+  import ChatReaderMessage from './ChatReaderMessage.svelte'
   import ChatSecurityBanners from './ChatSecurityBanners.svelte'
   import { securityStatus, TONES } from './chatSecurity'
   import { linkify, parseRecipients, displayName, displaySubject, MINE_BUBBLE_GUTTER, type ReplyMode, type ThreadItem } from './chatFormat'
@@ -58,17 +60,18 @@
   let source = $state<string | null>(null)
   let sourceOpen = $state(false)
 
-  type Mode = 'loading' | 'bubble' | 'card' | 'full'
+  type Mode = 'loading' | 'bubble' | 'reader' | 'card' | 'full'
   const mode = $derived.by<Mode>(() => {
     if (notFetched || decrypting) return 'loading'
     if (encrypted || showOriginal || !msg.chat) return 'full'
-    return msg.chat.isRich ? 'card' : 'bubble'
+    if (!msg.chat.isRich) return 'bubble'
+    return getChatRichStyle() === 'reader' && msg.chat.reader?.length ? 'reader' : 'card'
   })
   // Flat transcript: no bubble, avatar column or alignment; my messages carry
   // an accent rule and a name line instead.
   const flat = $derived(getChatDisplayStyle() === 'flat')
   // Email cards and full bodies (and the flat transcript) use the wider stream; the rest the chat column.
-  const wide = $derived(mode === 'card' || mode === 'full' || flat)
+  const wide = $derived(mode === 'reader' || mode === 'card' || mode === 'full' || flat)
   // Attachment-only mail: no empty colored bubble above the attachment list.
   const bare = $derived(mode === 'bubble' && msg.hasAttachments && !msg.chat?.hasQuoted && !msg.chat?.text.trim())
 
@@ -203,7 +206,7 @@
         <ChatSecurityBanners {msg} {thread} lines={security} />
 
         <div
-          class="relative w-full {flat ? 'rounded-none' : 'rounded-2xl'} {flat && item.mine ? 'border-l-2 border-primary/50 pl-3' : ''} group-focus-visible:ring-2 group-focus-visible:ring-primary/40 {mode === 'bubble' && !bare && !flat ? `w-auto text-foreground ${item.mine ? 'rounded-br-md bg-bubble-own' : 'rounded-bl-md bg-muted'}` : ''}"
+          class="relative w-full {flat ? 'rounded-none' : 'rounded-2xl'} {flat && item.mine ? 'border-l-2 border-primary/50 pl-3' : ''} group-focus-visible:ring-2 group-focus-visible:ring-primary/40 {(mode === 'bubble' && !bare || mode === 'reader') && !flat ? `${mode === 'bubble' ? 'w-auto ' : ''}text-foreground ${item.mine ? 'rounded-br-md bg-bubble-own' : 'rounded-bl-md bg-muted'}` : ''}"
         >
           {#if notFetched && thread.bodyErrors.has(msg.id)}
             <div class="flex items-center gap-2 px-3.5 py-2 text-sm text-muted-foreground bg-muted rounded-2xl">
@@ -237,6 +240,8 @@
                 {/if}
               {/if}
             </div>
+          {:else if mode === 'reader'}
+            <ChatReaderMessage blocks={msg.chat!.reader!} fromEmail={msg.fromEmail} {flat} {onOpenLink} {onImagesLoaded} />
           {:else if mode === 'card'}
             <ChatRichCard subject={displaySubject(msg.subject)} preview={msg.chat?.text ?? ''} expanded={cardExpanded} onToggle={() => (cardExpanded = !cardExpanded)} body={emailBody} />
           {:else}

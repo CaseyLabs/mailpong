@@ -6,6 +6,7 @@ const assert = require('node:assert/strict')
 const ui = require('./harness.cjs')
 const audit = require('./ui-audit.cjs')
 const allow = require('./ui-audit-allow.cjs')
+const { readerFake } = require('./reader-fake.cjs')
 
 const matrix = []
 for (const theme of ['light', 'dark']) {
@@ -23,6 +24,11 @@ for (const theme of ['light', 'dark']) {
   for (const width of [1400, 900]) {
     for (const accounts of ['expanded', 'collapsed']) matrix.push({ theme, width, accounts, previews: false, style: 'flat', beforeMount: flatStyle })
   }
+}
+
+// The open chat ends with a newsletter in the reader view (chat_rich_style 'reader', the default).
+for (const theme of ['light', 'dark']) {
+  for (const accounts of ['expanded', 'collapsed']) matrix.push({ theme, width: 1400, accounts, previews: false, style: 'reader', beforeMount: readerFake })
 }
 
 describe('UI quality audit', () => {

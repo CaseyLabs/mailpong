@@ -300,6 +300,16 @@ func (a *App) SetChatDisplayStyle(style string) error {
 	return a.settingsStore.SetChatDisplayStyle(style)
 }
 
+// GetChatRichStyle returns how rich mail renders in chat ("reader" or "card")
+func (a *App) GetChatRichStyle() (string, error) {
+	return a.settingsStore.GetChatRichStyle()
+}
+
+// SetChatRichStyle sets how rich mail renders in chat
+func (a *App) SetChatRichStyle(style string) error {
+	return a.settingsStore.SetChatRichStyle(style)
+}
+
 // GetChatReadingWidth returns the chat reading column width ("narrow",
 // "standard" or "wide")
 func (a *App) GetChatReadingWidth() (string, error) {

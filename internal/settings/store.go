@@ -52,6 +52,7 @@ const (
 	KeyChatShowLowGroup           = "chat_show_low_group"       // show the Low priority group under the All filter (defaults on)
 	KeySMIMEOnlineRevocation      = "smime_online_revocation"   // opt-in online certificate revocation checking
 	KeyChatDisplayStyle           = "chat_display_style"        // "bubbles" or "flat": how chat messages render
+	KeyChatRichStyle              = "chat_rich_style"           // "reader" or "card": how newsletters and other rich mail render in chat
 	KeyChatCombineSenders         = "chat_combine_senders"      // combine each sender's threads into one chat (defaults on); read in SQL by message.senderCombinedExpr
 )
 
@@ -118,6 +119,9 @@ const (
 const (
 	ChatDisplayStyleBubbles = "bubbles"
 	ChatDisplayStyleFlat    = "flat"
+
+	ChatRichStyleReader = "reader"
+	ChatRichStyleCard   = "card"
 )
 
 // Chat reading widths
@@ -728,6 +732,25 @@ func (s *Store) SetChatDisplayStyle(style string) error {
 		return s.Set(KeyChatDisplayStyle, style)
 	}
 	return fmt.Errorf("invalid chat display style: %s", style)
+}
+
+// GetChatRichStyle returns how newsletters and other rich mail render in
+// chat: "reader" (default, sanitized content) or "card" (collapsed card).
+func (s *Store) GetChatRichStyle() (string, error) {
+	value, err := s.Get(KeyChatRichStyle)
+	if value == ChatRichStyleCard {
+		return value, err
+	}
+	return ChatRichStyleReader, err
+}
+
+// SetChatRichStyle sets how rich mail renders in chat.
+func (s *Store) SetChatRichStyle(style string) error {
+	switch style {
+	case ChatRichStyleReader, ChatRichStyleCard:
+		return s.Set(KeyChatRichStyle, style)
+	}
+	return fmt.Errorf("invalid chat rich style: %s", style)
 }
 
 // GetChatIncludeQuote returns whether chat replies quote the replied-to
